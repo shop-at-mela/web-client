@@ -1,9 +1,9 @@
-# Mela Marketplace: Customer Acquisition & Engagement PRD
+# Laem Marketplace: Customer Acquisition & Engagement PRD
 
 ## Executive Summary
 
-**Product**: Mela - Indian Baby & Children's Products Marketplace for Global Diaspora  
-**Target Market**: 5M+ Indian diaspora families in Western countries + extended circles  
+**Product**: Laem - Indian Baby & Children's Products Marketplace for US Indian Diaspora  
+**Target Market**: 2M+ Indian diaspora families in the United States + extended circles  
 **Business Model**: Affiliate marketplace (MVP) connecting diaspora families to trusted Indian brands  
 **Primary Success Metrics**:
 - New user acquisition through SEO channels
@@ -15,7 +15,7 @@
 ## 1. Market Opportunity
 
 ### Target Audience
-- **Primary**: Indian diaspora parents (ages 25-40) in US, UK, Canada, Australia
+- **Primary**: Indian diaspora parents (ages 25-40) in the United States
 - **Secondary**: Extended family circles interested in authentic Indian baby products
 - **Pain Points**:
   - Limited access to trusted Indian baby brands abroad
@@ -24,9 +24,9 @@
   - High shipping costs from individual Indian retailers
 
 ### Market Size
-- 5M+ Indian diaspora families globally
-- $419B projected global baby care market by 2032
-- Growing trend toward authentic, traditional products
+- 2M+ Indian diaspora families in the USA
+- $60B+ US baby care market, growing 8% annually
+- 4.5M Indian Americans (fastest growing immigrant group)
 - Underserved niche with high emotional investment in product choices
 
 ---
@@ -37,18 +37,18 @@
 
 #### Long-Tail Keyword Strategy
 **Target Keywords**:
-- "Indian baby clothes online USA/UK/Canada"
+- "Indian baby clothes online USA"
 - "Traditional Indian baby products diaspora"
 - "Authentic ayurvedic baby care products"
 - "Indian baby brands [specific brand name] where to buy"
-- "[City] Indian baby products store"
+- "[US City] Indian baby products store"
 - "Natural baby products from India"
 
 #### Content Pillars
 1. **Brand Discovery**: "Best Indian Baby Brands You Need to Know"
 2. **Cultural Heritage**: "Traditional Indian Baby Care Practices for Modern Parents"
 3. **Product Guides**: "Complete Guide to Ayurvedic Baby Care Products"
-4. **Location-Based**: "Where to Buy Indian Baby Products in [Major Cities]"
+4. **Location-Based**: "Where to Buy Indian Baby Products in [Major US Cities]"
 5. **Comparison**: "Indian vs Western Baby Products: What's the Difference"
 
 ### 2.2 Content Marketing Strategy
@@ -71,10 +71,10 @@
 ### 2.3 Local SEO for Diaspora Communities
 
 #### Geographic Targeting
-- **Primary Cities**: San Francisco, New York, Toronto, London, Sydney, Vancouver
-- **Google My Business**: Optimize for "Indian baby products near me"
-- **Local Directories**: List in Indian community directories and parenting forums
-- **Community Events**: Sponsor local Indian cultural events and parenting groups
+- **Primary US Cities**: San Francisco Bay Area, New York/New Jersey, Los Angeles, Seattle, Austin, Boston, Chicago, Atlanta
+- **Google My Business**: Optimize for "Indian baby products near me" in US locations
+- **Local Directories**: List in US Indian community directories and parenting forums
+- **Community Events**: Sponsor local Indian cultural events and parenting groups in target US cities
 
 ---
 
@@ -82,7 +82,7 @@
 
 ### 3.1 Site Structure
 ```
-Mela.com
+Laem.com
 ├── /brands/
 │   ├── /masilo-baby-products/
 │   ├── /superbottoms-cloth-diapers/
@@ -102,15 +102,17 @@ Mela.com
 │   ├── /product-reviews/
 │   └── /parenting-tips/
 └── /locations/
-    ├── /usa/
-    ├── /canada/
-    └── /uk/
+    ├── /california/
+    ├── /new-york/
+    ├── /texas/
+    ├── /washington/
+    └── /[us-states]/
 ```
 
 ### 3.2 Page Optimization Strategy
 
 #### Product Pages
-- **Title Format**: "[Product Name] by [Brand] - Authentic Indian Baby Products | Mela"
+- **Title Format**: "[Product Name] by [Brand] - Authentic Indian Baby Products | Laem"
 - **Meta Descriptions**: Include brand, benefits, cultural relevance
 - **Schema Markup**: Product, Brand, Organization, Review schemas
 - **Internal Linking**: Link to related products, brand pages, categories
@@ -140,13 +142,13 @@ Mela.com
 - **Onboarding Quiz**: Child's age, preferences, location for personalized recommendations
 - **Wishlist & Favorites**: Easy saving with email reminders
 - **Recently Viewed**: Encourage return visits
-- **Location-Based**: Show relevant shipping and availability information
+- **Location-Based**: Show US shipping costs, delivery times, and state-specific availability
 
 ### 4.3 Community Building
 - **Product Reviews**: Verified purchase reviews with photos
 - **Parent Stories**: How traditional Indian products helped their parenting journey
 - **Expert Content**: Collaboration with pediatricians, traditional medicine experts
-- **Social Proof**: "Join 10,000+ Indian parents who trust Mela"
+- **Social Proof**: "Join 10,000+ Indian American parents who trust Laem"
 
 ---
 
@@ -248,18 +250,18 @@ Mela.com
 - **Competition**: Established players like Amazon entering the niche
 - **Supply Chain**: Ensuring reliable inventory from Indian partners
 - **Trust Building**: Establishing credibility as a new platform
-- **Regulation**: Compliance with international shipping and tax laws
+- **Regulation**: Compliance with US state tax laws and import regulations
 
 ### Mitigation Strategies
 - **Unique Value Proposition**: Focus on curation and cultural authenticity
 - **Partnership Strategy**: Build exclusive relationships with select brands
 - **Social Proof**: Leverage user reviews and expert endorsements
-- **Legal Compliance**: Work with international commerce experts
+- **Legal Compliance**: Work with US commerce and tax experts
 
 ---
 
 ## Conclusion
 
-This PRD outlines a comprehensive customer acquisition strategy for Mela marketplace, focusing on SEO-driven organic growth and community engagement within the Indian diaspora. Success will be measured primarily by new user acquisition through organic channels and affiliate conversion rates to partner brand sites.
+This PRD outlines a comprehensive customer acquisition strategy for Laem marketplace, focusing on SEO-driven organic growth and community engagement within the US Indian diaspora. Success will be measured primarily by new user acquisition through organic channels and affiliate conversion rates to partner brand sites.
 
-The strategy emphasizes authentic content marketing, local SEO for diaspora communities, and building trust through cultural relevance and social proof. With proper execution, Mela can capture a significant share of the underserved Indian diaspora baby products market while creating a sustainable affiliate revenue model.
+The strategy emphasizes authentic content marketing, local SEO for US diaspora communities, and building trust through cultural relevance and social proof. With proper execution, Laem can capture a significant share of the underserved US Indian diaspora baby products market while creating a sustainable affiliate revenue model. Once proven in the US market and product-market fit is achieved, the platform will rebrand to "Mela" (funded by early success) and expand to other countries with large Indian populations.
