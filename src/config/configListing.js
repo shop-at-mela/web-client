@@ -53,6 +53,39 @@
  *   - requiredMessage (optional):    Message for those fields, which are mandatory.
  */
 export const listingFields = [
+  // Brand field for Indian baby product brands
+  {
+    key: 'brand',
+    scope: 'public',
+    schemaType: 'enum',
+    enumOptions: [
+      { option: 'masilo', label: 'Masilo' },
+      { option: 'superbottoms', label: 'Superbottoms' },
+      { option: 'meemee', label: 'MeeMee' },
+      { option: 'greendigo', label: 'Greendigo' },
+      { option: 'midulceanya', label: 'Mi Dulce Anya' },
+      { option: 'aagghhoo', label: 'Aagghhoo' },
+      { option: 'earthytweens', label: 'Earthy Tweens' },
+      { option: 'kicksandcrawl', label: 'Kicks and Crawl' },
+      { option: 'littleweststreet', label: 'Little West Street' },
+    ],
+    filterConfig: {
+      indexForSearch: true,
+      label: 'Brand',
+      group: 'primary',
+      filterType: 'SelectSingleFilter',
+    },
+    showConfig: {
+      label: 'Brand',
+      isDetail: true,
+    },
+    saveConfig: {
+      label: 'Brand',
+      placeholderMessage: 'Select a brand…',
+      isRequired: true,
+      requiredMessage: 'You need to select a brand.',
+    },
+  },
   // {
   //   "scope": "public",
   //   "label": "Gears",
