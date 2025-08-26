@@ -260,6 +260,30 @@ Laem.com
 
 ---
 
+## 11. Pending Technical Implementation Tasks
+
+### Brand Filtering Enhancement
+- **Category-Specific Brand Fields**: Implement 5 popular brands per category in dropdown filters
+  - Baby Clothing: Top 5 most popular clothing brands
+  - Baby Care: Top 5 most popular care brands  
+  - Feeding: Top 5 most popular feeding brands
+  - Toys & Books: Top 5 most popular toy/book brands
+
+- **"Show More Brands" Functionality**:
+  - Add "Show More Brands..." option in each category filter
+  - Create API endpoint to fetch all brands for specific categories
+  - Implement dynamic brand list expansion on user click
+  - Add search/filter capability within expanded brand list
+
+- **Data Analysis Requirements**:
+  - Create script to analyze brand popularity from classified CSV files
+  - Generate category-specific popular brand configurations
+  - Automate brand configuration updates based on inventory data
+
+- **Implementation Priority**: Phase 2 (Months 3-4) - After initial content scale
+
+---
+
 ## Conclusion
 
 This PRD outlines a comprehensive customer acquisition strategy for Laem marketplace, focusing on SEO-driven organic growth and community engagement within the US Indian diaspora. Success will be measured primarily by new user acquisition through organic channels and affiliate conversion rates to partner brand sites.
