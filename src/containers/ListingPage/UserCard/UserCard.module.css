@@ -17,6 +17,15 @@
   flex: 1;
 }
 
+.brandName {
+  composes: marketplaceSmallFontStyles from global;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--marketplaceColor);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
 .heading {
   composes: p from global;
   margin: 0;
