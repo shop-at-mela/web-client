@@ -361,7 +361,8 @@ export class SearchPageComponent extends Component {
       searchParamsInURL || {},
       intl,
       routeConfiguration,
-      config
+      config,
+      location
     );
 
     // Set topbar class based on if a modal is open in

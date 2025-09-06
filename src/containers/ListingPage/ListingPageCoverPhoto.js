@@ -279,10 +279,28 @@ export const ListingPageComponent = props => {
     `${config.layout.listingImage.variantPrefix}-2x`
   ).map(img => img.url);
   const marketplaceName = config.marketplaceName;
-  const schemaTitle = intl.formatMessage(
-    { id: 'ListingPage.schemaTitle' },
-    { title, price: formattedPrice, marketplaceName }
-  );
+  // SEO ONLY: Browser tab title and search engine results title
+  // This does NOT affect the visible product page content
+  // Format: "[Product Name] by [Brand] - Authentic Indian Baby Products | Laem"
+  // Used for: <title> tag, Open Graph, Twitter Cards
+  const brandName = publicData.brand;
+  const brandPart = brandName ? ` by ${brandName}` : '';
+  const schemaTitle = `${title}${brandPart} - Authentic Indian Baby Products | ${marketplaceName}`;
+
+  // SEO ONLY: Meta description for search engines and social media sharing
+  // This does NOT replace the visible product description on the page
+  // The original product description still displays in SectionTextMaybe component
+  // This is only used for: <meta name="description">, Open Graph, Twitter Cards
+  const generateSEODescription = (title, brandName, description, price) => {
+    const brandPart = brandName ? `${brandName} ` : '';
+    const priceText = formattedPrice ? ` at ${formattedPrice}` : '';
+    const truncatedDesc = description ? description.substring(0, 100) : '';
+    
+    // Creates SEO-focused description targeting "Indian diaspora families" keywords
+    return `Shop authentic ${brandPart}${title} for Indian diaspora families${priceText}. ${truncatedDesc} Trusted Indian baby products delivered to USA. Cultural heritage meets modern parenting.`.substring(0, 160);
+  };
+  
+  const seoDescription = generateSEODescription(title, brandName, description, price);
   // You could add reviews, sku, etc. into page schema
   // Read more about product schema
   // https://developers.google.com/search/docs/advanced/structured-data/product
@@ -336,24 +354,55 @@ export const ListingPageComponent = props => {
 
   return (
     <Page
-      title={schemaTitle}
+      title={schemaTitle} // SEO ONLY: Browser tab title, NOT visible on page
       scrollingDisabled={scrollingDisabled}
       author={authorDisplayName}
-      description={description}
+      description={seoDescription} // SEO ONLY: Meta description for search engines, NOT visible on page
       facebookImages={facebookImages}
       twitterImages={twitterImages}
       schema={{
+        // SEO ONLY: JSON-LD structured data for search engines (Google, Bing, etc.)
+        // This is invisible to users but helps search engines understand the product
+        // Appears as <script type="application/ld+json"> in page head
         '@context': 'http://schema.org',
         '@type': 'Product',
-        description: description,
-        name: schemaTitle,
-        image: schemaImages,
+        name: title, // Product name for structured data
+        description: seoDescription, // SEO description for structured data
+        image: schemaImages, // Product images for rich snippets
+        brand: brandName ? {
+          '@type': 'Brand',
+          name: brandName // Helps Google show brand in search results
+        } : undefined,
+        category: publicData.category, // Product category for search engines
         offers: {
           '@type': 'Offer',
           url: productURL,
-          ...priceForSchemaMaybe(price),
-          ...availabilityMaybe,
+          seller: {
+            '@type': 'Organization',
+            name: marketplaceName,
+            description: 'Authentic Indian Baby Products Marketplace for US Indian Diaspora'
+          },
+          ...priceForSchemaMaybe(price), // Price for Google Shopping/rich snippets
+          ...availabilityMaybe, // Stock status for search engines
         },
+        audience: {
+          // SEO: Helps search engines understand target audience for better ranking
+          '@type': 'Audience',
+          name: 'Indian Diaspora Parents in USA'
+        },
+        additionalProperty: [
+          {
+            // SEO: Custom properties to highlight cultural relevance
+            '@type': 'PropertyValue',
+            name: 'Cultural Heritage',
+            value: 'Authentic Indian Products'
+          },
+          {
+            '@type': 'PropertyValue', 
+            name: 'Target Market',
+            value: 'US Indian Diaspora Families'
+          }
+        ]
       }}
     >
       <LayoutSingleColumn className={css.pageRoot} topbar={topbar} footer={<FooterContainer />}>
@@ -399,6 +448,38 @@ export const ListingPageComponent = props => {
               categoryConfiguration={config.categoryConfiguration}
               intl={intl}
             />
+
+            {/* VISIBLE ON PAGE: Internal linking section for SEO and user navigation */}
+            {/* This DOES appear on the visible product page as clickable links */}
+            {/* Benefits: SEO link juice + user discovery of related products */}
+            <div className={css.seoLinksContainer}>
+              {brandName && (
+                <div className={css.brandLink}>
+                  {/* Shows: "Explore more [Brand Name]" as clickable link */}
+                  <FormattedMessage id="ListingPage.exploreBrand" />
+                  <NamedLink 
+                    name="BrandPage" 
+                    params={{ brandSlug: brandName.toLowerCase().replace(/\s+/g, '-') }}
+                    className={css.internalLink}
+                  >
+                    {brandName}
+                  </NamedLink>
+                </div>
+              )}
+              {publicData.category && (
+                <div className={css.categoryLink}>
+                  {/* Shows: "Shop more in [Category Name]" as clickable link */}
+                  <FormattedMessage id="ListingPage.exploreCategory" />
+                  <NamedLink 
+                    name="CategoryPage" 
+                    params={{ categorySlug: publicData.category.toLowerCase().replace(/\s+/g, '-') }}
+                    className={css.internalLink}
+                  >
+                    {publicData.category}
+                  </NamedLink>
+                </div>
+              )}
+            </div>
 
             <SectionMapMaybe
               geolocation={geolocation}

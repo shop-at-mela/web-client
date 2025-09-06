@@ -832,3 +832,40 @@
   width: 100%;
   height: 100%;
 }
+
+/* VISIBLE ON PAGE: Styles for SEO internal linking section */
+/* This section appears on the product page as clickable links like:
+   "Explore more Masilo" and "Shop more in Clothing"
+   Benefits: Helps users discover related products + SEO link building */
+.seoLinksContainer {
+  padding: 0 24px;
+  margin: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  @media (--viewportMedium) {
+    padding: 0;
+    flex-direction: row;
+    gap: 24px;
+  }
+}
+
+.brandLink,
+.categoryLink {
+  composes: textSmall from global;
+  color: var(--colorGrey700);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.internalLink {
+  color: var(--marketplaceColor);
+  text-decoration: none;
+  font-weight: var(--fontWeightMedium);
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}

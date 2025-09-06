@@ -469,7 +469,8 @@ export const createSearchResultSchema = (
   mainSearchData,
   intl,
   routeConfiguration,
-  config
+  config,
+  location
 ) => {
   // Schema for search engines (helps them to understand what this page is about)
   // http://schema.org
@@ -477,13 +478,44 @@ export const createSearchResultSchema = (
   const marketplaceName = config.marketplaceName;
   const { address, keywords } = mainSearchData;
   const keywordsMaybe = keywords ? `"${keywords}"` : null;
-  const searchTitle =
-    address || keywordsMaybe || intl.formatMessage({ id: 'SearchPage.schemaForSearch' });
-  const schemaDescription = intl.formatMessage({ id: 'SearchPage.schemaDescription' });
-  const schemaTitle = intl.formatMessage(
-    { id: 'SearchPage.schemaTitle' },
-    { searchTitle, marketplaceName }
-  );
+  
+  // SEO OPTIMIZATION: Custom titles and descriptions for category and brand pages
+  // This affects BROWSER TAB TITLES and SEARCH ENGINE RESULTS, not visible page content
+  // Category pages like /categories/clothing get "Clothing - Authentic Indian Baby Products | Laem"
+  // Brand pages like /brands/masilo get "Masilo Products - Authentic Indian Baby Brand | Laem"
+  const pathname = location?.pathname || '';
+  const isCategoryPage = pathname.startsWith('/categories/');
+  const isBrandPage = pathname.startsWith('/brands/');
+  
+  let searchTitle, schemaDescription, schemaTitle;
+  
+  if (isCategoryPage) {
+    // Extract category from URL slug and format for SEO
+    const categorySlug = pathname.replace('/categories/', '');
+    const categoryName = categorySlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    
+    // SEO ONLY: These are for search engine results and browser tabs
+    searchTitle = `${categoryName} Products for Indian Babies`;
+    schemaDescription = `Discover authentic Indian ${categoryName.toLowerCase()} products perfect for Indian diaspora families. Trusted brands, cultural heritage, modern parenting solutions.`;
+    schemaTitle = `${categoryName} - Authentic Indian Baby Products | ${marketplaceName}`;
+  } else if (isBrandPage) {
+    // Extract brand from URL slug and format for SEO
+    const brandSlug = pathname.replace('/brands/', '');
+    const brandName = brandSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    
+    // SEO ONLY: These are for search engine results and browser tabs
+    searchTitle = `${brandName} Baby Products`;
+    schemaDescription = `Shop ${brandName} authentic Indian baby products for US diaspora families. Trusted quality, cultural heritage, delivered to America.`;
+    schemaTitle = `${brandName} Products - Authentic Indian Baby Brand | ${marketplaceName}`;
+  } else {
+    // Default behavior for regular search pages (unchanged)
+    searchTitle = address || keywordsMaybe || intl.formatMessage({ id: 'SearchPage.schemaForSearch' });
+    schemaDescription = intl.formatMessage({ id: 'SearchPage.schemaDescription' });
+    schemaTitle = intl.formatMessage(
+      { id: 'SearchPage.schemaTitle' },
+      { searchTitle, marketplaceName }
+    );
+  }
 
   const schemaListings = listings.map((l, i) => {
     const title = l.attributes.title;
