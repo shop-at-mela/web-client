@@ -81,7 +81,7 @@ const UserCard = props => {
     setMounted(true);
   }, []);
 
-  const { rootClassName, className, user, currentUser, onContactUser, showContact = true } = props;
+  const { rootClassName, className, user, currentUser, onContactUser, showContact = true, brand } = props;
 
   const userIsCurrentUser = user && user.type === 'currentUser';
   const ensuredUser = userIsCurrentUser ? ensureCurrentUser(user) : ensureUser(user);
@@ -147,6 +147,11 @@ const UserCard = props => {
       <div className={css.content}>
         <AvatarLarge className={css.avatar} user={user} />
         <div className={css.info}>
+          {brand && (
+            <div className={css.brandName}>
+              <FormattedMessage id="UserCard.brand" values={{ brandName: brand }} />
+            </div>
+          )}
           <div className={css.headingRow}>
             <FormattedMessage id="UserCard.heading" values={{ name: displayName }} />
             {editProfileDesktop}

@@ -92,6 +92,16 @@
   margin: 0;
 }
 
+.brandName {
+  /* Font */
+  composes: marketplaceTinyFontStyles from global;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--marketplaceColor);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
 .authorInfo {
   /* Font */
   composes: marketplaceTinyFontStyles from global;

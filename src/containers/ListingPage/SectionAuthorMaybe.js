@@ -30,6 +30,9 @@ const SectionAuthorMaybe = props => {
   const transactionProcessAlias = listing?.attributes?.publicData?.transactionProcessAlias || '';
   const processName = resolveLatestProcessName(transactionProcessAlias.split('/')[0]);
   const isInquiryProcess = processName === INQUIRY_PROCESS_NAME;
+  
+  // Extract brand from listing publicData
+  const brand = listing?.attributes?.publicData?.brand || null;
 
   return (
     <section id="author" className={css.sectionAuthor}>
@@ -41,6 +44,7 @@ const SectionAuthorMaybe = props => {
         currentUser={currentUser}
         onContactUser={onContactUser}
         showContact={!isInquiryProcess}
+        brand={brand}
       />
       <Modal
         id="ListingPage.inquiry"

@@ -185,6 +185,9 @@ export const ListingCard = props => {
 
   const author = ensureUser(listing.author);
   const authorName = author.attributes.profile.displayName;
+  
+  // Extract brand from publicData
+  const brand = publicData?.brand || null;
 
   const { listingType, cardStyle } = publicData || {};
   const validListingTypes = config.listing.listingTypes;
@@ -238,7 +241,14 @@ export const ListingCard = props => {
           )}
           {showAuthorInfo ? (
             <div className={css.authorInfo}>
-              <FormattedMessage id="ListingCard.author" values={{ authorName }} />
+              {brand && (
+                <div className={css.brandName}>
+                  <FormattedMessage id="ListingCard.brand" values={{ brandName: brand }} />
+                </div>
+              )}
+              <div className={css.author}>
+                <FormattedMessage id="ListingCard.author" values={{ authorName }} />
+              </div>
             </div>
           ) : null}
         </div>

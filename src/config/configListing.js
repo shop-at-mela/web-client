@@ -53,6 +53,28 @@
  *   - requiredMessage (optional):    Message for those fields, which are mandatory.
  */
 export const listingFields = [
+  // Brand field - uses text schema for dynamic brands instead of enum
+  {
+    key: 'brand',
+    scope: 'public',
+    schemaType: 'text',
+    filterConfig: {
+      indexForSearch: true,
+      label: 'Brand',
+      group: 'primary',
+      filterType: 'SelectSingleFilter',
+    },
+    showConfig: {
+      label: 'Brand',
+      isDetail: true,
+    },
+    saveConfig: {
+      label: 'Brand',
+      placeholderMessage: 'Enter brand name…',
+      isRequired: true,
+      requiredMessage: 'You need to enter a brand name.',
+    },
+  },
   // {
   //   "scope": "public",
   //   "label": "Gears",

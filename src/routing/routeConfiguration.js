@@ -102,6 +102,20 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       loadData: pageDataLoadingAPI.SearchPage.loadData,
     },
     {
+      path: '/categories/:categorySlug',
+      name: 'CategoryPage',
+      ...authForPrivateMarketplace,
+      component: SearchPage,
+      loadData: pageDataLoadingAPI.SearchPage.loadData,
+    },
+    {
+      path: '/brands/:brandSlug',
+      name: 'BrandPage',
+      ...authForPrivateMarketplace,
+      component: SearchPage,
+      loadData: pageDataLoadingAPI.SearchPage.loadData,
+    },
+    {
       path: '/l',
       name: 'ListingBasePage',
       component: RedirectToLandingPage,

@@ -277,10 +277,25 @@ export const ListingPageComponent = props => {
     `${config.layout.listingImage.variantPrefix}-2x`
   ).map(img => img.url);
   const marketplaceName = config.marketplaceName;
-  const schemaTitle = intl.formatMessage(
-    { id: 'ListingPage.schemaTitle' },
-    { title, price: formattedPrice, marketplaceName }
-  );
+  // SEO ONLY: Browser tab title and search engine results title
+  // This does NOT affect the visible product page content
+  // Format: "[Product Name] by [Brand] - Authentic Indian Baby Products | Laem"
+  const brandName = publicData.brand;
+  const brandPart = brandName ? ` by ${brandName}` : '';
+  const schemaTitle = `${title}${brandPart} - Authentic Indian Baby Products | ${marketplaceName}`;
+
+  // SEO ONLY: Meta description for search engines and social media sharing
+  // This does NOT replace the visible product description on the page
+  // The original product description still displays in SectionTextMaybe component
+  const generateSEODescription = (title, brandName, description, price) => {
+    const brandPart = brandName ? `${brandName} ` : '';
+    const priceText = formattedPrice ? ` at ${formattedPrice}` : '';
+    const truncatedDesc = description ? description.substring(0, 100) : '';
+    
+    return `Shop authentic ${brandPart}${title} for Indian diaspora families${priceText}. ${truncatedDesc} Trusted Indian baby products delivered to USA. Cultural heritage meets modern parenting.`.substring(0, 160);
+  };
+  
+  const seoDescription = generateSEODescription(title, brandName, description, price);
   // You could add reviews, sku, etc. into page schema
   // Read more about product schema
   // https://developers.google.com/search/docs/advanced/structured-data/product
@@ -299,21 +314,47 @@ export const ListingPageComponent = props => {
       title={schemaTitle}
       scrollingDisabled={scrollingDisabled}
       author={authorDisplayName}
-      description={description}
+      description={seoDescription}
       facebookImages={facebookImages}
       twitterImages={twitterImages}
       schema={{
         '@context': 'http://schema.org',
         '@type': 'Product',
-        description: description,
-        name: schemaTitle,
+        name: title,
+        description: seoDescription,
         image: schemaImages,
+        brand: brandName ? {
+          '@type': 'Brand',
+          name: brandName
+        } : undefined,
+        category: publicData.category,
         offers: {
           '@type': 'Offer',
           url: productURL,
+          seller: {
+            '@type': 'Organization',
+            name: marketplaceName,
+            description: 'Authentic Indian Baby Products Marketplace for US Indian Diaspora'
+          },
           ...priceForSchemaMaybe(price),
           ...availabilityMaybe,
         },
+        audience: {
+          '@type': 'Audience',
+          name: 'Indian Diaspora Parents in USA'
+        },
+        additionalProperty: [
+          {
+            '@type': 'PropertyValue',
+            name: 'Cultural Heritage',
+            value: 'Authentic Indian Products'
+          },
+          {
+            '@type': 'PropertyValue', 
+            name: 'Target Market',
+            value: 'US Indian Diaspora Families'
+          }
+        ]
       }}
     >
       <LayoutSingleColumn className={css.pageRoot} topbar={topbar} footer={<FooterContainer />}>
@@ -370,6 +411,34 @@ export const ListingPageComponent = props => {
               categoryConfiguration={config.categoryConfiguration}
               intl={intl}
             />
+
+            {/* Internal linking for SEO - Brand and Category links */}
+            <div className={css.seoLinksContainer}>
+              {brandName && (
+                <div className={css.brandLink}>
+                  <FormattedMessage id="ListingPage.exploreBrand" />
+                  <NamedLink 
+                    name="BrandPage" 
+                    params={{ brandSlug: brandName.toLowerCase().replace(/\s+/g, '-') }}
+                    className={css.internalLink}
+                  >
+                    {brandName}
+                  </NamedLink>
+                </div>
+              )}
+              {publicData.category && (
+                <div className={css.categoryLink}>
+                  <FormattedMessage id="ListingPage.exploreCategory" />
+                  <NamedLink 
+                    name="CategoryPage" 
+                    params={{ categorySlug: publicData.category.toLowerCase().replace(/\s+/g, '-') }}
+                    className={css.internalLink}
+                  >
+                    {publicData.category}
+                  </NamedLink>
+                </div>
+              )}
+            </div>
 
             <SectionMapMaybe
               geolocation={geolocation}
