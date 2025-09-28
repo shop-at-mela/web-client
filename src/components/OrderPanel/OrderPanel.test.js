@@ -575,4 +575,193 @@ describe('OrderPanel', () => {
       expect(getByText('OrderPanel.ctaButtonMessageInquiry')).toBeInTheDocument();
     });
   });
+
+  // Affiliate brand button tests
+  describe('Affiliate brand button functionality', () => {
+    const createListingWithBrand = (additionalData = {}) => {
+      return createListing('listing-with-brand', {
+        title: 'Brand Product',
+        description: 'Product from a brand',
+        price: new Money(2500, 'USD'),
+        publicData: {
+          listingType: 'sell-bicycles',
+          transactionProcessAlias: 'default-purchase/release-1',
+          unitType: 'item',
+          brand: 'TestBrand',
+          productUrl: 'https://testbrand.com/product/123',
+          pickupEnabled: true,
+          ...additionalData
+        },
+      }, {
+        currentStock: createStock('stock-id', { quantity: 5 }),
+      });
+    };
+
+    const createOutOfStockListing = (additionalData = {}) => {
+      return createListing('out-of-stock-listing', {
+        title: 'Out of Stock Product',
+        description: 'Product that is out of stock',
+        price: new Money(2500, 'USD'),
+        publicData: {
+          listingType: 'sell-bicycles',
+          transactionProcessAlias: 'default-purchase/release-1',
+          unitType: 'item',
+          brand: 'TestBrand',
+          productUrl: 'https://testbrand.com/product/456',
+          pickupEnabled: true,
+          // Add all the same fields as the working purchase test
+          amenities: ['dog_1'],
+          location: {
+            address: 'Main Street 123',
+            building: 'A 1',
+          },
+          ...additionalData
+        },
+      }, {
+        currentStock: createStock('stock-id', { quantity: 0 }),
+      });
+    };
+
+    beforeEach(() => {
+      // Mock window.open
+      global.window.open = jest.fn();
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('renders "Shop from Brand" button when brand and productUrl exist', async () => {
+      const listing = createListingWithBrand();
+      const config = getConfig();
+      const props = { ...commonProps, listing, isOwnListing: false, validListingTypes };
+
+      render(<OrderPanel {...props} />, { config, routeConfiguration });
+
+      await waitFor(() => {
+        expect(screen.getByText('OrderPanel.ctaButtonMessageShopFromBrand')).toBeInTheDocument();
+      });
+    });
+
+    it('opens brand product URL when "Shop from Brand" button is clicked', async () => {
+      const listing = createListingWithBrand();
+      const config = getConfig();
+      const props = { ...commonProps, listing, isOwnListing: false, validListingTypes };
+
+      render(<OrderPanel {...props} />, { config, routeConfiguration });
+
+      await waitFor(() => {
+        const shopButton = screen.getByText('OrderPanel.ctaButtonMessageShopFromBrand');
+        shopButton.click();
+      });
+
+      expect(global.window.open).toHaveBeenCalledWith(
+        'https://testbrand.com/product/123',
+        '_blank',
+        'noopener,noreferrer'
+      );
+    });
+
+    it('renders "View on Brand" button for out of stock items', async () => {
+      const listing = createOutOfStockListing();
+      const config = getConfig();
+      const props = { ...commonProps, listing, isOwnListing: false, validListingTypes };
+
+      render(<OrderPanel {...props} />, { config, routeConfiguration });
+
+      await waitFor(() => {
+        expect(screen.getByText('OrderPanel.ctaButtonMessageViewOnBrand')).toBeInTheDocument();
+      });
+    });
+
+    it('opens brand product URL when "View on Brand" button is clicked for out of stock', async () => {
+      const listing = createOutOfStockListing();
+      const config = getConfig();
+      const props = { ...commonProps, listing, isOwnListing: false, validListingTypes };
+
+      render(<OrderPanel {...props} />, { config, routeConfiguration });
+
+      await waitFor(() => {
+        const viewButton = screen.getByText('OrderPanel.ctaButtonMessageViewOnBrand');
+        viewButton.click();
+      });
+
+      expect(global.window.open).toHaveBeenCalledWith(
+        'https://testbrand.com/product/456',
+        '_blank',
+        'noopener,noreferrer'
+      );
+    });
+
+    it('falls back to traditional behavior when brand or productUrl is missing', async () => {
+      const listing = createListing('listing-no-brand', {
+        title: 'Product without brand',
+        description: 'Regular product',
+        price: new Money(2500, 'USD'),
+        publicData: {
+          listingType: 'sell-bicycles',
+          transactionProcessAlias: 'default-purchase/release-1',
+          unitType: 'item',
+        },
+      });
+
+      const config = getConfig();
+      const props = { ...commonProps, listing, isOwnListing: false, validListingTypes };
+
+      render(<OrderPanel {...props} />, { config, routeConfiguration });
+
+      await waitFor(() => {
+        // Should not find affiliate buttons
+        expect(screen.queryByText(/Shop from/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/View on/i)).not.toBeInTheDocument();
+      });
+    });
+
+    it('handles missing productUrl gracefully', async () => {
+      const listing = createListingWithBrand({ productUrl: undefined });
+      const config = getConfig();
+      const props = { ...commonProps, listing, isOwnListing: false, validListingTypes };
+
+      render(<OrderPanel {...props} />, { config, routeConfiguration });
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Shop from TestBrand/i)).not.toBeInTheDocument();
+      });
+    });
+
+    it('handles missing brand name gracefully', async () => {
+      const listing = createListingWithBrand({ brand: undefined });
+      const config = getConfig();
+      const props = { ...commonProps, listing, isOwnListing: false, validListingTypes };
+
+      render(<OrderPanel {...props} />, { config, routeConfiguration });
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Shop from/i)).not.toBeInTheDocument();
+      });
+    });
+
+    it('displays correct button text for different stock states', async () => {
+      // Test in-stock scenario
+      const inStockListing = createListingWithBrand();
+      const inStockConfig = getConfig();
+      const inStockProps = { ...commonProps, listing: inStockListing, isOwnListing: false, validListingTypes };
+
+      const { rerender } = render(<OrderPanel {...inStockProps} />, { config: inStockConfig, routeConfiguration });
+
+      await waitFor(() => {
+        expect(screen.getByText('OrderPanel.ctaButtonMessageShopFromBrand')).toBeInTheDocument();
+      });
+
+      // Test out-of-stock scenario
+      const outOfStockListing = createOutOfStockListing();
+      const outOfStockProps = { ...commonProps, listing: outOfStockListing, isOwnListing: false, validListingTypes };
+
+      rerender(<OrderPanel {...outOfStockProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('OrderPanel.ctaButtonMessageViewOnBrand')).toBeInTheDocument();
+      });
+    });
+  });
 });

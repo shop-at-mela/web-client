@@ -254,6 +254,17 @@
   text-align: center;
 }
 
+.outOfStockIndicator {
+  composes: h6 from global;
+  color: var(--colorAttentionText);
+  background-color: var(--colorAttention);
+  text-align: center;
+  padding: 8px 16px;
+  margin-top: 8px;
+  border-radius: 4px;
+  font-weight: var(--fontWeightSemiBold);
+}
+
 .receipt {
   flex-shrink: 0;
 }

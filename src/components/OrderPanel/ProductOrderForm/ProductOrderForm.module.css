@@ -76,6 +76,21 @@
   text-align: center;
 }
 
+.outOfStockIndicator {
+  composes: h6 from global;
+  color: var(--colorAttentionText);
+  background-color: var(--colorAttention);
+  text-align: center;
+  padding: 8px 16px;
+  margin: 8px 24px 0 24px;
+  border-radius: 4px;
+  font-weight: var(--fontWeightSemiBold);
+
+  @media (--viewportMedium) {
+    margin: 8px 0 0 0;
+  }
+}
+
 .error {
   composes: h4 from global;
   color: var(--colorFail);

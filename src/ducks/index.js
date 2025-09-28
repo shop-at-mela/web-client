@@ -11,6 +11,7 @@ import ui from './ui.duck';
 import hostedAssets from './hostedAssets.duck';
 import marketplaceData from './marketplaceData.duck';
 import paymentMethods from './paymentMethods.duck';
+import recommendedProducts from './recommendedProducts.duck';
 import stripe from './stripe.duck';
 import stripeConnectAccount from './stripeConnectAccount.duck';
 import user from './user.duck';
@@ -23,6 +24,7 @@ export {
   hostedAssets,
   marketplaceData,
   paymentMethods,
+  recommendedProducts,
   stripe,
   stripeConnectAccount,
   user,

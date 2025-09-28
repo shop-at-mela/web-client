@@ -44,6 +44,19 @@
 - "[US City] Indian baby products store"
 - "Natural baby products from India"
 
+#### Technical SEO Foundation (Sharetribe Implementation)
+**Schema.org Structured Data**:
+- **Comprehensive Coverage**: JSON-LD implementation across all page types
+- **Rich Results Optimization**: Product, Organization, WebSite, and SearchResultsPage schemas
+- **Cultural Context Enhancement**: Custom schema properties highlighting Indian heritage and diaspora targeting
+- **Search Engine Visibility**: Structured data enables enhanced snippets, product carousels, and knowledge panels
+
+**Platform SEO Advantages**:
+- **Built-in Best Practices**: Sharetribe's SEO-optimized architecture reduces technical implementation time
+- **Mobile-First Indexing**: Responsive templates ensure consistent schema markup across devices
+- **Page Speed Optimization**: Framework supports fast-loading pages critical for SEO rankings
+- **Canonical URL Management**: Automatic handling of duplicate content issues
+
 #### Content Pillars
 1. **Brand Discovery**: "Best Indian Baby Brands You Need to Know"
 2. **Cultural Heritage**: "Traditional Indian Baby Care Practices for Modern Parents"
@@ -117,6 +130,26 @@ Laem.com
 - **Schema Markup**: Product, Brand, Organization, Review schemas
 - **Internal Linking**: Link to related products, brand pages, categories
 
+#### Schema.org Implementation (Current Sharetribe Integration)
+**Comprehensive Structured Data Coverage**:
+- **JSON-LD Format**: Modern implementation using `application/ld+json` in page head
+- **Organization Schema**: Marketplace details, contact information, and branding
+- **WebSite Schema**: Site description and navigation structure
+- **Product Schema**: Complete product data including:
+  - Name, description, images, brand information
+  - Offers with pricing and availability status
+  - Seller organization details
+  - Target audience (Indian Diaspora Parents in USA)
+  - Cultural heritage properties for authentic Indian products
+- **SearchResultsPage Schema**: Structured listing results with ItemList ordering
+- **Rich Snippets Ready**: Optimized for Google's enhanced search results
+
+**Sharetribe Platform Benefits**:
+- Built-in schema.org compliance reduces development overhead
+- Automatic structured data generation for all product and category pages
+- SEO-optimized page templates with proper markup hierarchy
+- Mobile-responsive implementation ensuring consistent schema across devices
+
 #### Category Pages
 - **SEO-Rich Descriptions**: 300-500 words about category significance in Indian culture
 - **Featured Products**: Highlight top-rated items with affiliate links
@@ -150,20 +183,38 @@ Laem.com
 - **Expert Content**: Collaboration with pediatricians, traditional medicine experts
 - **Social Proof**: "Join 10,000+ Indian American parents who trust Laem"
 
+### 4.4 Cross-Selling Strategy
+- **"You May Also Like" Recommendations**: Increase session value and affiliate click-through rates
+- **Strategic Product Pairing**: Drive discovery of complementary Indian baby products
+- **Enhanced User Journey**: Keep users engaged longer, reducing bounce rates
+
+### 4.5 Category Navigation Enhancement
+- **Hierarchical Breadcrumb Navigation**: Complete category hierarchy with clickable links on every product page
+- **Enhanced Product Discovery**: Users can navigate up category levels to find related products
+- **SEO Category Pages**: Each category level drives traffic to filtered search results
+
 ---
 
 ## 5. Conversion Optimization (Affiliate Focus)
 
 ### 5.1 CTA Strategy
-- **Primary CTA**: "Shop at [Brand Name]" (clear affiliate link)
+- **Primary CTA**: "Shop from [Brand Name]" (clear affiliate link)
+- **Out-of-Stock CTA**: "View on [Brand Name]" (maintains engagement)
 - **Secondary CTA**: "Add to Wishlist", "Compare Products"
 - **Trust CTAs**: "Read Reviews", "Learn About Brand"
+- **Cross-Sell CTA**: "You May Also Like" recommendations
 
 ### 5.2 Affiliate Link Optimization
+- **Primary CTA Integration**: "Shop from [Brand Name]" buttons replace traditional cart functionality
+- **Dynamic Button Behavior**:
+  - In Stock: "Shop from [Brand]" → Opens brand's product page
+  - Out of Stock: "View on [Brand]" → Enables restock notifications and alternatives
+  - No Brand/URL: Falls back to traditional marketplace behavior
 - **Strategic Placement**: Within product descriptions, comparison tables, reviews
 - **Transparent Labeling**: Clear "Affiliate Link" disclaimers for trust
-- **Multiple Options**: "Buy on Amazon", "Shop Direct", "Compare Prices"
+- **Multiple Options**: Direct brand links, comparison features
 - **Tracking Parameters**: UTM codes for detailed analytics
+- **Cross-Selling Enhancement**: "You May Also Like" module drives additional affiliate traffic
 
 ### 5.3 Exit Intent & Retention
 - **Exit Intent Popups**: "Wait! Get 10% off your first purchase"

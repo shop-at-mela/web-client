@@ -444,6 +444,153 @@ describe('Duck', () => {
     });
   });
 
+  // CategoryBreadcrumb integration tests
+  describe('CategoryBreadcrumb integration', () => {
+    const renderListingPageWithCategory = (category, variantType = 'coverPhoto') => {
+      const listingWithCategory = createListing(
+        'listing-with-category',
+        {
+          publicData: {
+            category: category,
+            listingType: 'rent-bicycles-daily'
+          }
+        },
+        {
+          author: createUser('user1'),
+          currentStock: 1
+        }
+      );
+
+      const config = getConfig(variantType);
+      const props = {
+        params: { id: 'listing-with-category', slug: 'listing-slug' },
+        listing: listingWithCategory,
+        reviews: [],
+        fetchReviewsInProgress: false,
+        fetchReviewsError: null,
+        sendReviewInProgress: false,
+        sendReviewError: null,
+        monthlyTimeSlots: {},
+        fetchTimeSlotsError: null,
+        filterConfig: [],
+        showListingError: null,
+        callSetInitialValues: jest.fn(),
+        onManageDisableScrolling: jest.fn(),
+        onFetchTimeSlots: jest.fn(),
+        onFetchReviews: jest.fn(),
+        onSendReview: jest.fn(),
+        scrollingDisabled: false,
+        inquiryModalOpenForListingId: null,
+        lineItems: null,
+        fetchLineItemsInProgress: false,
+        fetchLineItemsError: null,
+        onContactUser: jest.fn(),
+        onSubmitInquiry: jest.fn(),
+        history: { push: jest.fn() },
+        location: { search: '', pathname: '/l/listing-slug/listing-with-category' },
+      };
+
+      return render(<ListingPageComponent {...props} />, {
+        config,
+        routeConfiguration: getRouteConfiguration()
+      });
+    };
+
+    it('renders CategoryBreadcrumb when category exists in coverPhoto variant', () => {
+      const category = 'Baby Products > Clothing > Organic Cotton';
+      const { container } = renderListingPageWithCategory(category, 'coverPhoto');
+
+      expect(testingLibrary.screen.getByText('Home')).toBeInTheDocument();
+      expect(testingLibrary.screen.getByText('Baby Products')).toBeInTheDocument();
+      expect(testingLibrary.screen.getByText('Clothing')).toBeInTheDocument();
+      expect(testingLibrary.screen.getByText('Organic Cotton')).toBeInTheDocument();
+    });
+
+    it('renders CategoryBreadcrumb when category exists in carousel variant', () => {
+      const category = 'Toys > Educational > STEM Learning';
+      const { container } = renderListingPageWithCategory(category, 'carousel');
+
+      expect(testingLibrary.screen.getByText('Home')).toBeInTheDocument();
+      expect(testingLibrary.screen.getByText('Toys')).toBeInTheDocument();
+      expect(testingLibrary.screen.getByText('Educational')).toBeInTheDocument();
+      expect(testingLibrary.screen.getByText('STEM Learning')).toBeInTheDocument();
+    });
+
+    it('does not render CategoryBreadcrumb when category is missing', () => {
+      const listingWithoutCategory = createListing(
+        'listing-without-category',
+        {
+          publicData: { listingType: 'rent-bicycles-daily' }
+        },
+        {
+          author: createUser('user1'),
+          currentStock: 1
+        }
+      );
+
+      const config = getConfig('coverPhoto');
+      const props = {
+        params: { id: 'listing-without-category', slug: 'listing-slug' },
+        listing: listingWithoutCategory,
+        reviews: [],
+        fetchReviewsInProgress: false,
+        fetchReviewsError: null,
+        sendReviewInProgress: false,
+        sendReviewError: null,
+        monthlyTimeSlots: {},
+        fetchTimeSlotsError: null,
+        filterConfig: [],
+        showListingError: null,
+        callSetInitialValues: jest.fn(),
+        onManageDisableScrolling: jest.fn(),
+        onFetchTimeSlots: jest.fn(),
+        onFetchReviews: jest.fn(),
+        onSendReview: jest.fn(),
+        scrollingDisabled: false,
+        inquiryModalOpenForListingId: null,
+        lineItems: null,
+        fetchLineItemsInProgress: false,
+        fetchLineItemsError: null,
+        onContactUser: jest.fn(),
+        onSubmitInquiry: jest.fn(),
+        history: { push: jest.fn() },
+        location: { search: '', pathname: '/l/listing-slug/listing-without-category' },
+      };
+
+      render(<ListingPageComponent {...props} />, {
+        config,
+        routeConfiguration: getRouteConfiguration()
+      });
+
+      // CategoryBreadcrumb should not be present
+      expect(testingLibrary.screen.queryByText('Home')).not.toBeInTheDocument();
+    });
+
+    it('creates correct search links for category hierarchy', () => {
+      const category = 'Baby > Clothing > Organic';
+      renderListingPageWithCategory(category);
+
+      const homeLink = testingLibrary.screen.getByRole('link', { name: 'Home' });
+      const babyLink = testingLibrary.screen.getByRole('link', { name: 'Baby' });
+      const clothingLink = testingLibrary.screen.getByRole('link', { name: 'Clothing' });
+
+      expect(homeLink).toHaveAttribute('href', '/s');
+      expect(babyLink).toHaveAttribute('href', '/s?pub_category=Baby');
+      expect(clothingLink).toHaveAttribute('href', '/s?pub_category=Baby%20%3E%20Clothing');
+
+      // Last category level should not be a link
+      expect(testingLibrary.screen.getByText('Organic')).not.toHaveAttribute('href');
+    });
+
+    it('applies categoryBreadcrumb CSS class', () => {
+      const category = 'Baby Products';
+      const { container } = renderListingPageWithCategory(category);
+
+      const breadcrumbElement = container.querySelector('.categoryBreadcrumb');
+      expect(breadcrumbElement).toBeInTheDocument();
+    });
+  });
+
   it("loadData() for currentUser with no viewing rights does not load someone else's listing", () => {
     const uuid = new UUID(id);
     const currentUser = createCurrentUser('currentUser');

@@ -237,6 +237,27 @@ export const validFilterParams = (params, filterConfigs, dropNonFilterParams = t
 };
 
 /**
+ * Converts hierarchical category path parameters to query parameters
+ * Example: { level1: 'Baby-Clothes-Accessories', level2: 'Baby-Clothing', level3: 'Baby-Clothing-Sleepwear-Loungewear' }
+ * Becomes: { pub_categoryLevel1: 'Baby-Clothes-Accessories', pub_categoryLevel2: 'Baby-Clothing', pub_categoryLevel3: 'Baby-Clothing-Sleepwear-Loungewear' }
+ */
+const convertCategoryPathParamsToQueryParams = (pathParams) => {
+  const categoryQueryParams = {};
+  
+  if (pathParams.level1) {
+    categoryQueryParams.pub_categoryLevel1 = pathParams.level1;
+  }
+  if (pathParams.level2) {
+    categoryQueryParams.pub_categoryLevel2 = pathParams.level2;
+  }
+  if (pathParams.level3) {
+    categoryQueryParams.pub_categoryLevel3 = pathParams.level3;
+  }
+  
+  return categoryQueryParams;
+};
+
+/**
  * Helper to pick only valid values of search params from URL (location)
  * Note: location.search might look like: '?pub_category=men&pub_amenities=towels,bathroom'
  *
@@ -249,6 +270,10 @@ export const validUrlQueryParamsFromProps = props => {
   const { defaultFilters: defaultFiltersConfig } = config?.search || {};
   const activeListingTypes = config?.listing?.listingTypes.map(config => config.listingType);
   const listingCategories = config.categoryConfiguration.categories;
+  
+  // Convert hierarchical category path parameters to query parameters
+  const categoryQueryParams = convertCategoryPathParamsToQueryParams(currentPathParams);
+  
   const filterConfigs = {
     listingFieldsConfig,
     defaultFiltersConfig,
@@ -262,9 +287,16 @@ export const validUrlQueryParamsFromProps = props => {
     latlng: ['origin'],
     latlngBounds: ['bounds'],
   });
+  
+  // Merge category parameters from path with query parameters from URL
+  const allSearchParams = {
+    ...searchInURL,
+    ...categoryQueryParams,
+  };
+  
   // urlQueryParams doesn't contain page specific url params
   // like mapSearch, page or origin (origin depends on config.maps.search.sortSearchByDistance)
-  return validFilterParams(searchInURL, filterConfigs, false);
+  return validFilterParams(allSearchParams, filterConfigs, false);
 };
 
 /**
@@ -490,12 +522,24 @@ export const createSearchResultSchema = (
   let searchTitle, schemaDescription, schemaTitle;
   
   if (isCategoryPage) {
-    // Extract category from URL slug and format for SEO
-    const categorySlug = pathname.replace('/categories/', '');
-    const categoryName = categorySlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    // Extract hierarchical category path from URL and format for SEO
+    // URL format: /categories/level1/level2/level3
+    const categoryPath = pathname.replace('/categories/', '');
+    const categoryLevels = categoryPath.split('/').filter(Boolean);
+    
+    // Get the most specific (deepest) category for display
+    const deepestCategory = categoryLevels[categoryLevels.length - 1];
+    const categoryName = deepestCategory.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    
+    // Create breadcrumb-style title for nested categories
+    const categoryBreadcrumb = categoryLevels
+      .map(level => level.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()))
+      .join(' > ');
     
     // SEO ONLY: These are for search engine results and browser tabs
-    searchTitle = `${categoryName} Products for Indian Babies`;
+    searchTitle = categoryLevels.length > 1 
+      ? `${categoryName} in ${categoryBreadcrumb.split(' > ').slice(0, -1).join(' > ')}` 
+      : `${categoryName} Products for Indian Babies`;
     schemaDescription = `Discover authentic Indian ${categoryName.toLowerCase()} products perfect for Indian diaspora families. Trusted brands, cultural heritage, modern parenting solutions.`;
     schemaTitle = `${categoryName} - Authentic Indian Baby Products | ${marketplaceName}`;
   } else if (isBrandPage) {
@@ -591,10 +635,26 @@ export const getSearchPageResourceLocatorStringParams = (routes, location) => {
   const matchedRoutes = matchPathname(location.pathname, routes);
   const searchPageRoute = 'SearchPage';
   const searchPageListingTypeRoute = 'SearchPageWithListingType';
+  const categoryPageRoute = 'CategoryPage';
+  const brandPageRoute = 'BrandPage';
 
   if (matchedRoutes.length > 0) {
     const matched = matchedRoutes[0];
     const { params: pathParams, route } = matched;
+    
+    // Return the specific route name for category and brand pages
+    if (route.name === categoryPageRoute) {
+      return {
+        routeName: categoryPageRoute,
+        pathParams,
+      };
+    } else if (route.name === brandPageRoute) {
+      return {
+        routeName: brandPageRoute,
+        pathParams,
+      };
+    }
+    
     const routeName =
       route.name === searchPageListingTypeRoute ? searchPageListingTypeRoute : searchPageRoute;
 

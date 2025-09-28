@@ -1,0 +1,76 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CategoryBreadcrumb matches snapshot with hierarchical category 1`] = `
+<nav
+  aria-label="Category breadcrumb"
+  class="root"
+>
+  <ol
+    class="breadcrumbList"
+  >
+    <li
+      class="breadcrumbItem"
+    >
+      <a
+        class="homeLink"
+        href="/s"
+        title="View all products"
+      >
+        <span>
+          CategoryBreadcrumb.home
+        </span>
+      </a>
+      <span
+        aria-hidden="true"
+        class="separator"
+      >
+        &gt;
+      </span>
+    </li>
+    <li
+      class="breadcrumbItem"
+    >
+      <a
+        class="categoryLink"
+        href="/s?pub_category=Baby%20Products"
+        title="View all products in Baby Products"
+      >
+        Baby Products
+      </a>
+      <span
+        aria-hidden="true"
+        class="separator"
+      >
+        &gt;
+      </span>
+    </li>
+    <li
+      class="breadcrumbItem"
+    >
+      <a
+        class="categoryLink"
+        href="/s?pub_category=Baby%20Products%20%3E%20Clothing"
+        title="View all products in Clothing"
+      >
+        Clothing
+      </a>
+      <span
+        aria-hidden="true"
+        class="separator"
+      >
+        &gt;
+      </span>
+    </li>
+    <li
+      class="breadcrumbItem"
+    >
+      <span
+        aria-current="page"
+        class="currentCategory"
+      >
+        Organic Cotton
+      </span>
+    </li>
+  </ol>
+</nav>
+`;

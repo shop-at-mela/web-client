@@ -1,0 +1,3 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`RecommendedProducts matches snapshot with recommended products 1`] = `null`;

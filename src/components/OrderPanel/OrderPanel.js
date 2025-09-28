@@ -300,7 +300,7 @@ const OrderPanel = props => {
   } = props;
 
   const publicData = listing?.attributes?.publicData || {};
-  const { listingType, unitType, transactionProcessAlias = '', priceVariants, startTimeInterval } =
+  const { listingType, unitType, transactionProcessAlias = '', priceVariants, startTimeInterval, brand, productUrl } =
     publicData || {};
 
   const processName = resolveLatestProcessName(transactionProcessAlias.split('/')[0]);
@@ -508,6 +508,8 @@ const OrderPanel = props => {
             shippingEnabled={shippingEnabled && displayShipping}
             displayDeliveryMethod={displayPickup || displayShipping}
             onContactUser={onContactUser}
+            brand={brand}
+            productUrl={productUrl}
             {...sharedProps}
           />
         ) : showInquiryForm ? (
@@ -532,6 +534,16 @@ const OrderPanel = props => {
           <div className={css.closedListingButton}>
             <FormattedMessage id="OrderPanel.closedListingButtonText" />
           </div>
+        ) : brand && productUrl ? (
+          <PrimaryButton
+            onClick={() => window.open(productUrl, '_blank', 'noopener,noreferrer')}
+          >
+            {isOutOfStock ? (
+              <FormattedMessage id="OrderPanel.ctaButtonMessageViewOnBrand" values={{ brand }} />
+            ) : (
+              <FormattedMessage id="OrderPanel.ctaButtonMessageShopFromBrand" values={{ brand }} />
+            )}
+          </PrimaryButton>
         ) : (
           <PrimaryButton
             onClick={handleSubmit(
@@ -544,10 +556,10 @@ const OrderPanel = props => {
             )}
             disabled={isOutOfStock}
           >
-            {isBooking ? (
-              <FormattedMessage id="OrderPanel.ctaButtonMessageBooking" />
-            ) : isOutOfStock ? (
+            {isOutOfStock ? (
               <FormattedMessage id="OrderPanel.ctaButtonMessageNoStock" />
+            ) : isBooking ? (
+              <FormattedMessage id="OrderPanel.ctaButtonMessageBooking" />
             ) : isPurchase ? (
               <FormattedMessage id="OrderPanel.ctaButtonMessagePurchase" />
             ) : (
@@ -555,6 +567,12 @@ const OrderPanel = props => {
             )}
           </PrimaryButton>
         )}
+
+        {brand && productUrl && isOutOfStock ? (
+          <div className={css.outOfStockIndicator}>
+            <FormattedMessage id="OrderPanel.outOfStockMessage" />
+          </div>
+        ) : null}
       </div>
     </div>
   );

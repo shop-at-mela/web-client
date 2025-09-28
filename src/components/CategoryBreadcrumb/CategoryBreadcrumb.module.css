@@ -1,0 +1,137 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  margin: 16px 0;
+  padding: 0 24px;
+
+  @media (--viewportMedium) {
+    margin: 24px 0;
+    padding: 0;
+  }
+}
+
+.breadcrumbList {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 8px;
+
+  @media (--viewportMedium) {
+    gap: 12px;
+  }
+}
+
+.breadcrumbItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  @media (--viewportMedium) {
+    gap: 12px;
+  }
+}
+
+.homeLink,
+.categoryLink {
+  color: var(--colorGrey600);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: var(--fontWeightMedium);
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--colorGrey800);
+    background-color: var(--colorGrey100);
+    text-decoration: none;
+  }
+
+  &:focus {
+    outline: 2px solid var(--colorPrimary);
+    outline-offset: 2px;
+  }
+
+  @media (--viewportMedium) {
+    font-size: 15px;
+    padding: 6px 12px;
+  }
+}
+
+.homeLink {
+  color: var(--colorPrimary);
+  font-weight: var(--fontWeightSemiBold);
+
+  &:hover {
+    color: var(--colorPrimaryDark);
+    background-color: var(--colorPrimary50);
+  }
+}
+
+.currentCategory {
+  color: var(--colorGrey800);
+  font-size: 14px;
+  font-weight: var(--fontWeightSemiBold);
+  padding: 4px 8px;
+
+  @media (--viewportMedium) {
+    font-size: 15px;
+    padding: 6px 12px;
+  }
+}
+
+.separator {
+  color: var(--colorGrey400);
+  font-size: 12px;
+  font-weight: var(--fontWeightMedium);
+  user-select: none;
+
+  @media (--viewportMedium) {
+    font-size: 14px;
+  }
+}
+
+/* Responsive behavior for mobile */
+@media (--viewportSmall) {
+  .breadcrumbList {
+    font-size: 13px;
+  }
+
+  .homeLink,
+  .categoryLink,
+  .currentCategory {
+    font-size: 13px;
+    padding: 3px 6px;
+  }
+
+  .separator {
+    font-size: 11px;
+  }
+}
+
+/* Ensure proper wrapping on very small screens */
+@media (max-width: 480px) {
+  .breadcrumbList {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .breadcrumbItem {
+    gap: 6px;
+  }
+
+  .separator {
+    display: none;
+  }
+
+  .breadcrumbItem:not(:last-child)::after {
+    content: '>';
+    color: var(--colorGrey400);
+    font-size: 11px;
+    margin-left: 6px;
+  }
+}

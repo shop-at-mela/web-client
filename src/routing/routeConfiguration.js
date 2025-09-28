@@ -102,7 +102,7 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       loadData: pageDataLoadingAPI.SearchPage.loadData,
     },
     {
-      path: '/categories/:categorySlug',
+      path: '/categories/:level1/:level2?/:level3?',
       name: 'CategoryPage',
       ...authForPrivateMarketplace,
       component: SearchPage,

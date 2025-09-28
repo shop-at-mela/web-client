@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
+import loadable from '@loadable/component';
 import classNames from 'classnames';
 
 // Contexts
@@ -54,6 +55,7 @@ import {
   NamedRedirect,
   OrderPanel,
   LayoutSingleColumn,
+  CategoryBreadcrumb,
 } from '../../components';
 
 // Related components and modules
@@ -85,6 +87,11 @@ import SectionAuthorMaybe from './SectionAuthorMaybe';
 import SectionMapMaybe from './SectionMapMaybe';
 import CustomListingFields from './CustomListingFields';
 import ActionBarMaybe from './ActionBarMaybe';
+
+// Lazy-loaded components
+const RecommendedProducts = loadable(() =>
+  import(/* webpackChunkName: "RecommendedProducts" */ '../../components/RecommendedProducts/RecommendedProducts')
+);
 
 import css from './ListingPage.module.css';
 
@@ -439,6 +446,15 @@ export const ListingPageComponent = props => {
                 </H3>
               )}
             </div>
+
+            {/* Category Breadcrumb Navigation */}
+            {publicData.category && (
+              <CategoryBreadcrumb
+                category={publicData.category}
+                className={css.categoryBreadcrumb}
+              />
+            )}
+
             <SectionTextMaybe text={description} showAsIngress />
 
             <CustomListingFields
@@ -537,6 +553,14 @@ export const ListingPageComponent = props => {
             />
           </div>
         </div>
+
+        {/* Recommended Products Section */}
+        {publicData.recommendedProducts && publicData.recommendedProducts.length > 0 && (
+          <RecommendedProducts
+            recommendedProductSKUs={publicData.recommendedProducts}
+            onManageDisableScrolling={onManageDisableScrolling}
+          />
+        )}
       </LayoutSingleColumn>
     </Page>
   );

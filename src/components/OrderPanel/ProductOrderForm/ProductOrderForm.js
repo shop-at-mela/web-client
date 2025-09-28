@@ -133,6 +133,8 @@ const renderForm = formRenderProps => {
     price,
     payoutDetailsWarning,
     marketplaceName,
+    brand,
+    productUrl,
     values,
   } = formRenderProps;
 
@@ -278,13 +280,31 @@ const renderForm = formRenderProps => {
       <FetchLineItemsError error={fetchLineItemsError} />
 
       <div className={css.submitButton}>
-        <PrimaryButton type="submit" inProgress={submitInProgress} disabled={submitDisabled}>
-          {hasStock ? (
-            <FormattedMessage id="ProductOrderForm.ctaButton" />
-          ) : (
-            <FormattedMessage id="ProductOrderForm.ctaButtonNoStock" />
-          )}
-        </PrimaryButton>
+        {brand && productUrl ? (
+          <PrimaryButton
+            onClick={() => window.open(productUrl, '_blank', 'noopener,noreferrer')}
+          >
+            {hasStock ? (
+              <FormattedMessage id="ProductOrderForm.ctaButtonShopFromBrand" values={{ brand }} />
+            ) : (
+              <FormattedMessage id="ProductOrderForm.ctaButtonViewOnBrand" values={{ brand }} />
+            )}
+          </PrimaryButton>
+        ) : (
+          <PrimaryButton type="submit" inProgress={submitInProgress} disabled={submitDisabled}>
+            {hasStock ? (
+              <FormattedMessage id="ProductOrderForm.ctaButton" />
+            ) : (
+              <FormattedMessage id="ProductOrderForm.ctaButtonNoStock" />
+            )}
+          </PrimaryButton>
+        )}
+
+        {brand && productUrl && !hasStock ? (
+          <div className={css.outOfStockIndicator}>
+            <FormattedMessage id="ProductOrderForm.outOfStockMessage" />
+          </div>
+        ) : null}
       </div>
       <p className={css.finePrint}>
         {payoutDetailsWarning ? (

@@ -864,8 +864,17 @@
   color: var(--marketplaceColor);
   text-decoration: none;
   font-weight: var(--fontWeightMedium);
-  
+
   &:hover {
     text-decoration: underline;
+  }
+}
+
+/* Category Breadcrumb Integration */
+.categoryBreadcrumb {
+  margin: 16px 0 24px 0;
+
+  @media (--viewportMedium) {
+    margin: 24px 0 32px 0;
   }
 }
