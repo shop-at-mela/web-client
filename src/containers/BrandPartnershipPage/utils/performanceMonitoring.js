@@ -2,41 +2,18 @@
  * Performance monitoring utilities for the Brand Partnership page
  */
 
-// Web Vitals tracking - gracefully handles missing dependency
+// Web Vitals tracking - disabled to prevent deployment issues
 export const trackWebVitals = () => {
   if (typeof window === 'undefined') return;
 
-  // Check if module exists before trying to import
-  const loadWebVitals = async () => {
-    try {
-      // Use dynamic import with error handling
-      const webVitalsModule = await import('web-vitals');
+  // TODO: Re-implement web vitals tracking after resolving deployment dependency issues
+  // For now, we use basic performance tracking to maintain functionality
+  console.log('Web Vitals tracking temporarily disabled due to deployment constraints');
 
-      if (webVitalsModule && typeof webVitalsModule.onCLS === 'function') {
-        const { onCLS, onFID, onFCP, onLCP, onTTFB } = webVitalsModule;
-
-        // Initialize web vitals tracking
-        onCLS(sendToAnalytics);
-        onFID(sendToAnalytics);
-        onFCP(sendToAnalytics);
-        onLCP(sendToAnalytics);
-        onTTFB(sendToAnalytics);
-
-        console.log('Web Vitals tracking initialized');
-      } else {
-        console.warn('web-vitals module loaded but functions not available');
-      }
-    } catch (error) {
-      // Silently fail if web-vitals is not available
-      // This prevents build failures while maintaining functionality when possible
-      if (process.env.NODE_ENV === 'development') {
-        console.info('web-vitals not available - performance tracking disabled:', error.message);
-      }
-    }
-  };
-
-  // Load web vitals asynchronously
-  loadWebVitals();
+  // Basic performance tracking as fallback
+  if ('performance' in window && window.performance.mark) {
+    window.performance.mark('webvitals-tracking-disabled');
+  }
 };
 
 // Performance thresholds (can be configured via environment variables)
