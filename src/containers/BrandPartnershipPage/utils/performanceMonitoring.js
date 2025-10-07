@@ -7,14 +7,18 @@ export const trackWebVitals = () => {
   if (typeof window === 'undefined') return;
 
   // Track Core Web Vitals
-  if ('web-vital' in window) {
+  try {
     import('web-vitals').then(({ onCLS, onFID, onFCP, onLCP, onTTFB }) => {
       onCLS(sendToAnalytics);
       onFID(sendToAnalytics);
       onFCP(sendToAnalytics);
       onLCP(sendToAnalytics);
       onTTFB(sendToAnalytics);
+    }).catch(error => {
+      console.warn('web-vitals library not available:', error);
     });
+  } catch (error) {
+    console.warn('Failed to import web-vitals:', error);
   }
 };
 
