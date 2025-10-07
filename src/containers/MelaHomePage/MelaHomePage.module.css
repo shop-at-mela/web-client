@@ -1,0 +1,108 @@
+/* Mobile-first responsive design for Mela Homepage */
+
+.root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Hero Section */
+.heroSection {
+  width: 100%;
+  padding: 1rem 0 2rem;
+  background: linear-gradient(135deg, #f8fffe 0%, #f1f8f6 100%);
+
+  @media (min-width: 768px) {
+    padding: 2rem 0 3rem;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 3rem 0 4rem;
+  }
+}
+
+/* Category Section */
+.categorySection {
+  width: 100%;
+  padding: 2rem 0;
+  background: #ffffff;
+
+  @media (min-width: 768px) {
+    padding: 3rem 0;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 4rem 0;
+  }
+}
+
+/* Customer Favorites Section */
+.favoritesSection {
+  width: 100%;
+  padding: 2rem 0;
+  background: #fafbfc;
+
+  @media (min-width: 768px) {
+    padding: 3rem 0;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 4rem 0;
+  }
+}
+
+/* Featured Brands Section */
+.brandsSection {
+  width: 100%;
+  padding: 2rem 0;
+  background: #ffffff;
+
+  @media (min-width: 768px) {
+    padding: 3rem 0;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 4rem 0;
+  }
+}
+
+/* Trust Assurance Section */
+.trustSection {
+  width: 100%;
+  padding: 2rem 0 3rem;
+  background: #f8fffe;
+  border-top: 1px solid #e7f4f1;
+
+  @media (min-width: 768px) {
+    padding: 3rem 0 4rem;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 4rem 0 5rem;
+  }
+}
+
+/* Shared responsive container */
+.container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem;
+
+  @media (min-width: 640px) {
+    padding: 0 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    padding: 0 2rem;
+    max-width: 768px;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 0 2rem;
+    max-width: 1024px;
+  }
+
+  @media (min-width: 1280px) {
+    padding: 0 2rem;
+    max-width: 1200px;
+  }
+}

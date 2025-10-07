@@ -47,12 +47,13 @@ describe('recommendedProducts.duck', () => {
 
     it('creates FETCH_RECOMMENDED_PRODUCTS_SUCCESS action', () => {
       const productIds = ['listing-SKU001', 'listing-SKU002'];
+      const products = [createMockListing('SKU001'), createMockListing('SKU002')];
       const expectedAction = {
         type: FETCH_RECOMMENDED_PRODUCTS_SUCCESS,
-        payload: { productIds },
+        payload: { productIds, products },
       };
 
-      expect(fetchRecommendedProductsSuccess(productIds)).toEqual(expectedAction);
+      expect(fetchRecommendedProductsSuccess(productIds, products)).toEqual(expectedAction);
     });
 
     it('creates FETCH_RECOMMENDED_PRODUCTS_ERROR action', () => {
@@ -69,6 +70,7 @@ describe('recommendedProducts.duck', () => {
   describe('Reducer', () => {
     const initialState = {
       recommendedProductIds: null,
+      recommendedProducts: [],
       fetchRecommendedProductsInProgress: false,
       fetchRecommendedProductsError: null,
     };
@@ -93,9 +95,10 @@ describe('recommendedProducts.duck', () => {
 
     it('handles FETCH_RECOMMENDED_PRODUCTS_SUCCESS', () => {
       const productIds = ['listing-SKU001', 'listing-SKU002'];
+      const products = [createMockListing('SKU001'), createMockListing('SKU002')];
       const action = {
         type: FETCH_RECOMMENDED_PRODUCTS_SUCCESS,
-        payload: { productIds },
+        payload: { productIds, products },
       };
 
       const loadingState = {
@@ -108,6 +111,7 @@ describe('recommendedProducts.duck', () => {
         fetchRecommendedProductsInProgress: false,
         fetchRecommendedProductsError: null,
         recommendedProductIds: productIds,
+        recommendedProducts: products,
       };
 
       expect(RecommendedProductsReducer(loadingState, action)).toEqual(expectedState);
@@ -171,6 +175,7 @@ describe('recommendedProducts.duck', () => {
 
     it('dispatches request and success actions on successful fetch', async () => {
       const skus = ['SKU001', 'SKU002'];
+      const config = { listing: { listingFields: [] } };
       const mockListings = [createMockListing('SKU001'), createMockListing('SKU002')];
       const mockResponse = {
         data: {
@@ -181,20 +186,21 @@ describe('recommendedProducts.duck', () => {
 
       mockSdk.listings.query.mockResolvedValue(mockResponse);
 
-      await fetchRecommendedProducts(skus)(mockDispatch, mockGetState, mockSdk);
+      await fetchRecommendedProducts(skus, config)(mockDispatch, mockGetState, mockSdk);
 
       expect(mockDispatch).toHaveBeenCalledWith(fetchRecommendedProductsRequest());
-      expect(mockDispatch).toHaveBeenCalledWith(fetchRecommendedProductsSuccess(mockListings.map(l => l.id)));
+      expect(mockDispatch).toHaveBeenCalledWith(fetchRecommendedProductsSuccess(mockListings.map(l => l.id), mockListings));
     });
 
     it('dispatches request and error actions on failed fetch', async () => {
       const skus = ['SKU001', 'SKU002'];
+      const config = { listing: { listingFields: [] } };
       const mockError = new Error('Network error');
 
       mockSdk.listings.query.mockRejectedValue(mockError);
 
       try {
-        await fetchRecommendedProducts(skus)(mockDispatch, mockGetState, mockSdk);
+        await fetchRecommendedProducts(skus, config)(mockDispatch, mockGetState, mockSdk);
       } catch (e) {
         // Expected to throw
       }
@@ -205,6 +211,7 @@ describe('recommendedProducts.duck', () => {
 
     it('calls SDK with correct query parameters', async () => {
       const skus = ['SKU001', 'SKU002', 'SKU003'];
+      const config = { listing: { listingFields: [] } };
       const mockResponse = {
         data: {
           data: [],
@@ -214,29 +221,34 @@ describe('recommendedProducts.duck', () => {
 
       mockSdk.listings.query.mockResolvedValue(mockResponse);
 
-      await fetchRecommendedProducts(skus)(mockDispatch, mockGetState, mockSdk);
+      await fetchRecommendedProducts(skus, config)(mockDispatch, mockGetState, mockSdk);
 
       expect(mockSdk.listings.query).toHaveBeenCalledWith({
-        keywords: 'pub_sku:SKU001 OR pub_sku:SKU002 OR pub_sku:SKU003',
-        pub_listingType: 'product',
+        pub_sku: skus,
         states: ['published'],
         include: ['images'],
         'fields.listing': ['title', 'price', 'publicData', 'images'],
-        perPage: 3,
+        'fields.image': ['variants.listing-card', 'variants.listing-card-2x'],
+        'imageVariant.listing-card': 'w:400;h:300;fit:crop',
+        'imageVariant.listing-card-2x': 'w:800;h:600;fit:crop',
+        perPage: 20,
       });
     });
 
     it('handles empty SKUs array', async () => {
       const skus = [];
+      const config = { listing: { listingFields: [] } };
 
-      await fetchRecommendedProducts(skus)(mockDispatch, mockGetState, mockSdk);
+      await fetchRecommendedProducts(skus, config)(mockDispatch, mockGetState, mockSdk);
 
       expect(mockDispatch).not.toHaveBeenCalled();
       expect(mockSdk.listings.query).not.toHaveBeenCalled();
     });
 
     it('handles null or undefined SKUs', async () => {
-      await fetchRecommendedProducts(null)(mockDispatch, mockGetState, mockSdk);
+      const config = { listing: { listingFields: [] } };
+
+      await fetchRecommendedProducts(null, config)(mockDispatch, mockGetState, mockSdk);
 
       expect(mockDispatch).not.toHaveBeenCalled();
       expect(mockSdk.listings.query).not.toHaveBeenCalled();
@@ -244,6 +256,7 @@ describe('recommendedProducts.duck', () => {
 
     it('handles duplicate SKUs in query', async () => {
       const skusWithDuplicates = ['SKU001', 'SKU002', 'SKU001', 'SKU003', 'SKU002'];
+      const config = { listing: { listingFields: [] } };
       const mockResponse = {
         data: {
           data: [],
@@ -253,11 +266,11 @@ describe('recommendedProducts.duck', () => {
 
       mockSdk.listings.query.mockResolvedValue(mockResponse);
 
-      await fetchRecommendedProducts(skusWithDuplicates)(mockDispatch, mockGetState, mockSdk);
+      await fetchRecommendedProducts(skusWithDuplicates, config)(mockDispatch, mockGetState, mockSdk);
 
       expect(mockSdk.listings.query).toHaveBeenCalledWith(
         expect.objectContaining({
-          keywords: 'pub_sku:SKU001 OR pub_sku:SKU002 OR pub_sku:SKU001 OR pub_sku:SKU003 OR pub_sku:SKU002',
+          pub_sku: skusWithDuplicates,
         })
       );
     });

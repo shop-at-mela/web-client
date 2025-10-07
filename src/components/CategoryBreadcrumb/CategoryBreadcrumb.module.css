@@ -1,137 +1,139 @@
 @import '../../styles/customMediaQueries.css';
 
 .root {
-  margin: 16px 0;
-  padding: 0 24px;
-
-  @media (--viewportMedium) {
-    margin: 24px 0;
-    padding: 0;
-  }
+  margin: 0;
+  padding: 0;
 }
 
+/* Main breadcrumb list - follows eBay's inline-flex structure */
 .breadcrumbList {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   list-style: none;
   margin: 0;
   padding: 0;
-  gap: 8px;
+  font-size: 0.8125rem; /* Mobile first - matches item specifics exactly */
 
   @media (--viewportMedium) {
-    gap: 12px;
+    font-size: 0.875rem; /* Desktop font size */
   }
 }
 
+/* Each breadcrumb item with inline-flex */
 .breadcrumbItem {
-  display: flex;
   align-items: center;
-  gap: 8px;
-
-  @media (--viewportMedium) {
-    gap: 12px;
-  }
+  display: inline-flex;
+  vertical-align: middle;
 }
 
-.homeLink,
-.categoryLink {
-  color: var(--colorGrey600);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: var(--fontWeightMedium);
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+/* Links in breadcrumb - follows eBay's styling */
+.breadcrumbLink {
+  color: var(--matterColor);
+  max-width: 168px;
+  outline-offset: 5px;
+  text-decoration: underline;
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+  font-size: 0.8125rem; /* Ensure mobile font size matches item specifics */
 
+  /* Ensure spans inside get ellipsis */
+  & > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    max-width: 100%;
+    vertical-align: top;
+  }
+
+  /* Hover and focus states */
   &:hover {
-    color: var(--colorGrey800);
-    background-color: var(--colorGrey100);
-    text-decoration: none;
+    text-decoration: underline;
+    color: var(--marketplaceColor);
   }
 
   &:focus {
-    outline: 2px solid var(--colorPrimary);
+    outline: 2px solid var(--marketplaceColor);
     outline-offset: 2px;
   }
 
   @media (--viewportMedium) {
-    font-size: 15px;
-    padding: 6px 12px;
+    max-width: 200px;
+    font-size: 0.875rem; /* Desktop font size to match item specifics */
   }
 }
 
-.homeLink {
-  color: var(--colorPrimary);
-  font-weight: var(--fontWeightSemiBold);
+/* Current category (last item) - should also have underline to show it's clickable */
+.currentCategory {
+  color: var(--matterColor);
+  max-width: 168px;
+  font-weight: inherit;
+  display: inline-block;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.8125rem; /* Ensure mobile font size matches item specifics */
+
+  /* Ensure spans inside get ellipsis */
+  & > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    max-width: 100%;
+    vertical-align: top;
+  }
 
   &:hover {
-    color: var(--colorPrimaryDark);
-    background-color: var(--colorPrimary50);
+    color: var(--marketplaceColor);
   }
-}
-
-.currentCategory {
-  color: var(--colorGrey800);
-  font-size: 14px;
-  font-weight: var(--fontWeightSemiBold);
-  padding: 4px 8px;
 
   @media (--viewportMedium) {
-    font-size: 15px;
-    padding: 6px 12px;
+    max-width: 200px;
+    font-size: 0.875rem; /* Desktop font size to match item specifics */
   }
 }
 
-.separator {
-  color: var(--colorGrey400);
-  font-size: 12px;
-  font-weight: var(--fontWeightMedium);
-  user-select: none;
-
-  @media (--viewportMedium) {
-    font-size: 14px;
-  }
+/* Chevron icon separator - eBay style */
+.chevronIcon {
+  width: 12px;
+  height: 12px;
+  margin: 0 4px;
+  color: var(--matterColorAnti);
+  fill: currentColor;
+  flex-shrink: 0;
+  display: inline-block;
 }
 
-/* Responsive behavior for mobile */
-@media (--viewportSmall) {
-  .breadcrumbList {
-    font-size: 13px;
-  }
-
-  .homeLink,
-  .categoryLink,
+/* Responsive adjustments for mobile */
+@media (max-width: 767px) {
+  .breadcrumbLink,
   .currentCategory {
-    font-size: 13px;
-    padding: 3px 6px;
+    max-width: 120px;
   }
 
-  .separator {
-    font-size: 11px;
+  .chevronIcon {
+    width: 10px;
+    height: 10px;
+    margin: 0 3px;
   }
 }
 
-/* Ensure proper wrapping on very small screens */
+/* Very small screens - allow wrapping but keep structure */
 @media (max-width: 480px) {
   .breadcrumbList {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+    flex-wrap: wrap;
+    gap: 2px;
   }
 
-  .breadcrumbItem {
-    gap: 6px;
+  .breadcrumbLink,
+  .currentCategory {
+    max-width: 100px;
   }
 
-  .separator {
-    display: none;
-  }
-
-  .breadcrumbItem:not(:last-child)::after {
-    content: '>';
-    color: var(--colorGrey400);
-    font-size: 11px;
-    margin-left: 6px;
+  .chevronIcon {
+    width: 8px;
+    height: 8px;
+    margin: 0 2px;
   }
 }

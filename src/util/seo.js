@@ -154,9 +154,18 @@ export const metaTagProps = (tagData, config) => {
   const googleSiteVerificationMaybe = googleSiteVerification
     ? [{ name: 'google-site-verification', content: googleSiteVerification }]
     : [];
+  const keywordsMaybe = tagData.keywords
+    ? [{ name: 'keywords', content: tagData.keywords }]
+    : [];
+  const robotsMaybe = tagData.robots
+    ? [{ name: 'robots', content: tagData.robots }]
+    : [{ name: 'robots', content: 'index, follow' }];
+
   const defaultMeta = [
     { name: 'description', content: tagData.description },
     { name: 'author', content: author },
+    ...keywordsMaybe,
+    ...robotsMaybe,
     ...googleSiteVerificationMaybe,
   ];
 

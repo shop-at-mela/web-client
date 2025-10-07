@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { compose } from 'redux';
@@ -8,7 +8,7 @@ import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { propTypes } from '../../util/types';
 import { formatMoney } from '../../util/currency';
 import { createSlug } from '../../util/urlHelpers';
-import { getMarketplaceEntities } from '../../ducks/marketplaceData.duck';
+import { useConfiguration } from '../../context/configurationContext';
 import { H3, NamedLink, ResponsiveImage } from '../../components';
 
 import { fetchRecommendedProducts } from '../../ducks/recommendedProducts.duck';
@@ -38,7 +38,7 @@ const RecommendedProductCard = ({ product, intl }) => {
             rootClassName={css.productImage}
             alt={title}
             image={primaryImage}
-            variants={['landscape-crop', 'landscape-crop2x']}
+            variants={['listing-card', 'listing-card-2x']}
             sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
           />
         ) : (
@@ -59,27 +59,38 @@ const RecommendedProductCard = ({ product, intl }) => {
  * RecommendedProducts component displays a "You may also like" section
  * with products fetched based on SKUs from publicData.recommendedProducts
  */
-const RecommendedProductsComponent = props => {
-  const {
-    rootClassName,
-    className,
-    recommendedProductSKUs,
-    recommendedProducts,
-    fetchRecommendedProductsInProgress,
-    fetchRecommendedProductsError,
-    onFetchRecommendedProducts,
-  } = props;
+const RecommendedProductsComponent = ({
+  rootClassName = null,
+  className = null,
+  recommendedProductSKUs,
+  recommendedProducts = [],
+  fetchRecommendedProductsInProgress = false,
+  fetchRecommendedProductsError = null,
+  onFetchRecommendedProducts,
+  brandName = null,
+}) => {
 
   const intl = useIntl();
+  const config = useConfiguration();
+  const prevSkusRef = useRef();
+
+  // Create a stable string representation for comparison
+  const skusString = useMemo(() => {
+    return recommendedProductSKUs && Array.isArray(recommendedProductSKUs)
+      ? recommendedProductSKUs.join(',')
+      : '';
+  }, [recommendedProductSKUs]);
 
   useEffect(() => {
-    if (recommendedProductSKUs && recommendedProductSKUs.length > 0) {
-      onFetchRecommendedProducts(recommendedProductSKUs);
+    // Only fetch if SKUs have actually changed
+    if (skusString && skusString !== prevSkusRef.current && recommendedProductSKUs?.length > 0) {
+      prevSkusRef.current = skusString;
+      onFetchRecommendedProducts(recommendedProductSKUs, config);
     }
-  }, [recommendedProductSKUs, onFetchRecommendedProducts]);
+  }, [skusString, config]);
 
   // Don't render if no recommended product SKUs
-  if (!recommendedProductSKUs || recommendedProductSKUs.length === 0) {
+  if (!recommendedProductSKUs || !Array.isArray(recommendedProductSKUs) || recommendedProductSKUs.length === 0) {
     return null;
   }
 
@@ -91,7 +102,11 @@ const RecommendedProductsComponent = props => {
   return (
     <div className={classes}>
       <H3 as="h2" className={css.title}>
-        <FormattedMessage id="RecommendedProducts.title" />
+        {brandName ? (
+          <FormattedMessage id="RecommendedProducts.titleWithBrand" values={{ brandName }} />
+        ) : (
+          <FormattedMessage id="RecommendedProducts.title" />
+        )}
       </H3>
 
       {hasError ? (
@@ -103,15 +118,28 @@ const RecommendedProductsComponent = props => {
           <FormattedMessage id="RecommendedProducts.loading" />
         </div>
       ) : hasProducts ? (
-        <div className={css.productsGrid}>
-          {recommendedProducts.map(product => (
-            <RecommendedProductCard
-              key={product.id.uuid}
-              product={product}
-              intl={intl}
-            />
-          ))}
-        </div>
+        <>
+          <div className={css.productsGrid}>
+            {recommendedProducts.map(product => (
+              <RecommendedProductCard
+                key={product.id.uuid}
+                product={product}
+                intl={intl}
+              />
+            ))}
+          </div>
+          {brandName && (
+            <div className={css.viewMoreContainer}>
+              <NamedLink
+                name="BrandPage"
+                params={{ brandSlug: brandName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') }}
+                className={css.viewMoreLink}
+              >
+                <FormattedMessage id="RecommendedProducts.viewMoreFromBrand" values={{ brandName }} />
+              </NamedLink>
+            </div>
+          )}
+        </>
       ) : (
         <div className={css.noProducts}>
           <FormattedMessage id="RecommendedProducts.noProducts" />
@@ -121,13 +149,6 @@ const RecommendedProductsComponent = props => {
   );
 };
 
-RecommendedProductsComponent.defaultProps = {
-  rootClassName: null,
-  className: null,
-  recommendedProducts: [],
-  fetchRecommendedProductsInProgress: false,
-  fetchRecommendedProductsError: null,
-};
 
 RecommendedProductsComponent.propTypes = {
   rootClassName: string,
@@ -137,32 +158,26 @@ RecommendedProductsComponent.propTypes = {
   fetchRecommendedProductsInProgress: bool,
   fetchRecommendedProductsError: propTypes.error,
   onFetchRecommendedProducts: func.isRequired,
+  brandName: string,
 };
 
 const mapStateToProps = (state, ownProps) => {
   const {
     recommendedProductIds,
+    recommendedProducts,
     fetchRecommendedProductsInProgress,
     fetchRecommendedProductsError,
   } = state.recommendedProducts || {};
 
-  // Get products from marketplace data if we have the IDs
-  const recommendedProducts = recommendedProductIds
-    ? getMarketplaceEntities(
-        state,
-        recommendedProductIds.map(id => ({ id, type: 'listing' }))
-      )
-    : [];
-
   return {
-    recommendedProducts,
+    recommendedProducts: recommendedProducts || [],
     fetchRecommendedProductsInProgress,
     fetchRecommendedProductsError,
   };
 };
 
 const mapDispatchToProps = dispatch => ({
-  onFetchRecommendedProducts: skus => dispatch(fetchRecommendedProducts(skus)),
+  onFetchRecommendedProducts: (skus, config) => dispatch(fetchRecommendedProducts(skus, config)),
 });
 
 const RecommendedProducts = compose(

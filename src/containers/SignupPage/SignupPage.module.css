@@ -1,0 +1,232 @@
+@import '../../styles/customMediaQueries.css';
+
+/* MOBILE-FIRST DESIGN */
+
+.layoutWrapperMain {
+}
+
+.root {
+  flex-grow: 1;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  min-height: calc(100vh - 120px);
+}
+
+.contentContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  min-height: calc(100vh - 180px);
+
+  @media (--viewportMedium) {
+    padding: 3rem 2rem;
+  }
+}
+
+.content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  padding: 2rem;
+  max-width: 500px;
+  margin: 0 auto;
+
+  @media (--viewportMedium) {
+    padding: 3rem;
+    max-width: 600px;
+  }
+}
+
+/* ================ Form Section ================ */
+
+.formSection {
+  margin: 2rem 0;
+
+  @media (--viewportMedium) {
+    margin: 2.5rem 0;
+  }
+}
+
+/* ================ Login Section ================ */
+
+.loginSection {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+
+  @media (--viewportMedium) {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+  }
+}
+
+.loginText {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-right: 0.5rem;
+
+  @media (--viewportMedium) {
+    font-size: 1rem;
+  }
+}
+
+.loginLink {
+  background: none;
+  border: none;
+  color: var(--marketplaceColor);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  transition: color 0.3s ease;
+
+  &:hover,
+  &:focus {
+    color: var(--marketplaceColorDark);
+  }
+
+  @media (--viewportMedium) {
+    font-size: 1rem;
+  }
+}
+
+/* ================ Errors ================ */
+
+.error {
+  composes: marketplaceModalPasswordMargins from global;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  color: #dc2626;
+  font-size: 0.875rem;
+  text-align: center;
+
+  @media (--viewportMedium) {
+    font-size: 1rem;
+  }
+}
+
+/* ================ Responsive Design ================ */
+
+@media (max-width: 767px) {
+  .content {
+    padding: 1rem;
+  }
+}
+
+/* ================ Back Navigation ================ */
+
+.backNavigation {
+  margin-bottom: 1.5rem;
+  text-align: left;
+
+  @media (--viewportMedium) {
+    margin-bottom: 2rem;
+  }
+}
+
+.backButton {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  transition: color 0.3s ease;
+
+  &:hover,
+  &:focus {
+    color: var(--marketplaceColor);
+  }
+
+  @media (--viewportMedium) {
+    font-size: 1rem;
+  }
+}
+
+/* ================ Provider CTA ================ */
+
+.providerCta {
+  background: rgba(93, 43, 192, 0.05);
+  border: 1px solid rgba(93, 43, 192, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+  text-align: center;
+
+  @media (--viewportMedium) {
+    padding: 2rem;
+    margin-top: 2.5rem;
+  }
+}
+
+.providerCtaTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--matterColor);
+  margin: 0 0 0.75rem 0;
+
+  @media (--viewportMedium) {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+}
+
+.providerCtaDescription {
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0 0 1.25rem 0;
+
+  @media (--viewportMedium) {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+.providerCtaButton {
+  background: linear-gradient(135deg, var(--marketplaceColor) 0%, var(--marketplaceColorDark) 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(93, 43, 192, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  @media (--viewportMedium) {
+    font-size: 1rem;
+    padding: 1rem 2rem;
+    border-radius: 10px;
+  }
+}
+
+/* ================ Animation ================ */
+
+.content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

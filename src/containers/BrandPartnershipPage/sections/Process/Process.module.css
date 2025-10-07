@@ -1,0 +1,487 @@
+@import '../../../../styles/customMediaQueries.css';
+
+/* MOBILE-FIRST PROCESS SECTION */
+
+.section {
+  /* Mobile: Comfortable section spacing */
+  padding: 3rem 0;
+  background: #fafbfc;
+
+  /* Tablet: More spacing */
+  @media (--viewportMedium) {
+    padding: 4rem 0;
+  }
+
+  /* Desktop: Standard spacing */
+  @media (--viewportLarge) {
+    padding: 5rem 0;
+  }
+}
+
+.container {
+  /* Mobile: Full-width container with proper constraints */
+  width: 100%;
+  max-width: 100vw;
+  margin: 0 auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+
+  /* Small screens: More padding */
+  @media (--viewportSmall) {
+    padding: 0 1.5rem;
+    max-width: 550px;
+  }
+
+  /* Tablet: Constrained width */
+  @media (--viewportMedium) {
+    max-width: 900px;
+    padding: 0 2rem;
+  }
+
+  /* Desktop: Standard container */
+  @media (--viewportLarge) {
+    max-width: 1200px;
+    padding: 0 2rem;
+  }
+}
+
+.header {
+  /* Mobile: Centered header */
+  text-align: center;
+  margin-bottom: 2rem;
+
+  /* Tablet: More spacing */
+  @media (--viewportMedium) {
+    margin-bottom: 3rem;
+  }
+}
+
+.title {
+  /* Mobile: Clear title */
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+
+  /* Small screens: Optimized title */
+  @media (--viewportSmall) {
+    font-size: 1.875rem;
+  }
+
+  /* Tablet: Optimized size */
+  @media (--viewportMedium) {
+    font-size: 1.875rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Desktop: Optimized size */
+  @media (--viewportLarge) {
+    font-size: 2rem;
+  }
+}
+
+.subtitle {
+  /* Mobile: Readable subtitle */
+  font-size: 1.125rem;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0;
+
+  /* Tablet: Optimized text */
+  @media (--viewportMedium) {
+    font-size: 1.125rem;
+  }
+}
+
+/* MOBILE ACCORDION STEPS */
+.mobileSteps {
+  /* Mobile: Show accordion */
+  display: block;
+
+  /* Tablet: Hide on larger screens */
+  @media (--viewportMedium) {
+    display: none;
+  }
+}
+
+.stepCard {
+  /* Mobile: Card-based step */
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+
+  &.active {
+    box-shadow: 0 4px 20px rgba(93, 43, 192, 0.15);
+    border: 2px solid #5d2bc0;
+  }
+}
+
+.stepHeader {
+  /* Mobile: Touchable header */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  gap: 0.75rem;
+  min-height: 60px; /* Touch target */
+  box-sizing: border-box;
+
+  &:focus {
+    outline: 2px solid #5d2bc0;
+    outline-offset: 2px;
+  }
+
+  /* Small screens: More padding */
+  @media (--viewportSmall) {
+    padding: 1.25rem;
+    gap: 1rem;
+  }
+}
+
+.stepNumber {
+  /* Mobile: Prominent step number */
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #5d2bc0 0%, #7c3aed 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.stepInfo {
+  /* Mobile: Step information */
+  flex: 1;
+  min-width: 0; /* Allow text to truncate */
+}
+
+.stepTitle {
+  /* Mobile: Bold step title */
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+  line-height: 1.3;
+}
+
+.stepShortDesc {
+  /* Mobile: Brief description */
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.stepIcon {
+  /* Mobile: Emoji icon */
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.expandIcon {
+  /* Mobile: Expand/collapse indicator */
+  font-size: 1.25rem;
+  color: #5d2bc0;
+  font-weight: 700;
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+}
+
+.stepDetails {
+  /* Mobile: Expandable details */
+  padding: 0 1.25rem 1.25rem;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.stepFullDesc {
+  /* Mobile: Full description */
+  font-size: 1rem;
+  color: #374151;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.stepDetailsList {
+  /* Mobile: Details list */
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    font-size: 0.875rem;
+    color: #6b7280;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f3f4f6;
+    position: relative;
+    padding-left: 1.5rem;
+
+    &:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+/* DESKTOP FLOW STEPS */
+.desktopSteps {
+  /* Mobile: Hidden */
+  display: none;
+
+  /* Tablet: Show flow layout */
+  @media (--viewportMedium) {
+    display: block;
+  }
+}
+
+.desktopStep {
+  /* Tablet: Horizontal step layout */
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  position: relative;
+
+  /* Desktop: More spacing */
+  @media (--viewportLarge) {
+    gap: 3rem;
+    margin-bottom: 4rem;
+  }
+}
+
+.desktopStepIcon {
+  /* Tablet: Icon container */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.desktopStepNumber {
+  /* Tablet: Large step number */
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #5d2bc0 0%, #7c3aed 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+
+  /* Desktop: Even larger */
+  @media (--viewportLarge) {
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+  }
+}
+
+.desktopStepEmoji {
+  /* Tablet: Emoji below number */
+  font-size: 2rem;
+
+  /* Desktop: Larger emoji */
+  @media (--viewportLarge) {
+    font-size: 3rem;
+  }
+}
+
+.desktopStepContent {
+  /* Tablet: Step content */
+  flex: 1;
+}
+
+.desktopStepTitle {
+  /* Tablet: Step title */
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+
+  /* Desktop: Optimized title */
+  @media (--viewportLarge) {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+.desktopStepDesc {
+  /* Tablet: Step description */
+  font-size: 1.125rem;
+  color: #374151;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+
+  /* Desktop: Optimized text */
+  @media (--viewportLarge) {
+    font-size: 1.125rem;
+  }
+}
+
+.desktopStepDetails {
+  /* Tablet: Details list */
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+
+  /* Desktop: More spacing */
+  @media (--viewportLarge) {
+    gap: 1rem;
+  }
+
+  li {
+    font-size: 1rem;
+    color: #6b7280;
+    position: relative;
+    padding-left: 1.5rem;
+
+    &:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    /* Desktop: Larger text */
+    @media (--viewportLarge) {
+      font-size: 1.125rem;
+    }
+  }
+}
+
+.desktopConnector {
+  /* Tablet: Connecting line */
+  position: absolute;
+  left: 30px;
+  top: 80px;
+  width: 2px;
+  height: 60px;
+  background: linear-gradient(180deg, #5d2bc0 0%, #e5e7eb 100%);
+
+  /* Desktop: Adjusted position */
+  @media (--viewportLarge) {
+    left: 40px;
+    top: 100px;
+    height: 80px;
+  }
+}
+
+/* TRUST SECTION */
+.trustSection {
+  /* Mobile: Trust builder */
+  margin-top: 2rem;
+
+  /* Tablet: More spacing */
+  @media (--viewportMedium) {
+    margin-top: 3rem;
+  }
+}
+
+.trustBadge {
+  /* Mobile: Trust badge */
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, rgba(38, 34, 97, 0.05) 0%, rgba(230, 126, 113, 0.05) 100%);
+  border: 2px solid #262261;
+  border-radius: 16px;
+  padding: 1.25rem;
+
+  /* Tablet: More padding */
+  @media (--viewportMedium) {
+    padding: 1.5rem 2rem;
+  }
+}
+
+.trustIcon {
+  /* Mobile: Trust icon */
+  font-size: 2rem;
+  flex-shrink: 0;
+
+  /* Tablet: Larger icon */
+  @media (--viewportMedium) {
+    font-size: 2.5rem;
+  }
+}
+
+.trustText {
+  /* Mobile: Trust text */
+  flex: 1;
+
+  strong {
+    display: block;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #065f46;
+    margin-bottom: 0.25rem;
+
+    /* Tablet: Larger text */
+    @media (--viewportMedium) {
+      font-size: 1.25rem;
+    }
+  }
+
+  span {
+    font-size: 0.875rem;
+    color: #047857;
+    line-height: 1.4;
+
+    /* Tablet: Larger text */
+    @media (--viewportMedium) {
+      font-size: 1rem;
+    }
+  }
+}
+
+/* Mobile touch enhancements */
+@media (max-width: 767px) {
+  .stepHeader {
+    min-height: 60px;
+  }
+
+  .stepCard {
+    margin-bottom: 0.75rem;
+  }
+
+  .trustBadge {
+    min-height: 60px;
+  }
+}

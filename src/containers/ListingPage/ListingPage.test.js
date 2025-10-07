@@ -39,6 +39,7 @@ import {
 } from './ListingPage.duck';
 
 import ActionBarMaybe from './ActionBarMaybe';
+import { ListingPageComponent } from './ListingPageCarousel';
 import { currentUserShowRequest, currentUserShowSuccess } from '../../ducks/user.duck';
 import { authInfoRequest, authInfoSuccess } from '../../ducks/auth.duck';
 
@@ -446,12 +447,12 @@ describe('Duck', () => {
 
   // CategoryBreadcrumb integration tests
   describe('CategoryBreadcrumb integration', () => {
-    const renderListingPageWithCategory = (category, variantType = 'coverPhoto') => {
+    const renderListingPageWithCategory = (categoryData, variantType = 'coverPhoto') => {
       const listingWithCategory = createListing(
         'listing-with-category',
         {
           publicData: {
-            category: category,
+            ...categoryData,
             listingType: 'rent-bicycles-daily'
           }
         },
@@ -497,23 +498,31 @@ describe('Duck', () => {
     };
 
     it('renders CategoryBreadcrumb when category exists in coverPhoto variant', () => {
-      const category = 'Baby Products > Clothing > Organic Cotton';
-      const { container } = renderListingPageWithCategory(category, 'coverPhoto');
+      const categoryData = {
+        categoryLevel1: 'Baby-Products',
+        categoryLevel2: 'Clothing',
+        categoryLevel3: 'Organic-Cotton'
+      };
+      const { container } = renderListingPageWithCategory(categoryData, 'coverPhoto');
 
       expect(testingLibrary.screen.getByText('Home')).toBeInTheDocument();
-      expect(testingLibrary.screen.getByText('Baby Products')).toBeInTheDocument();
+      expect(testingLibrary.screen.getByText('Baby-Products')).toBeInTheDocument();
       expect(testingLibrary.screen.getByText('Clothing')).toBeInTheDocument();
-      expect(testingLibrary.screen.getByText('Organic Cotton')).toBeInTheDocument();
+      expect(testingLibrary.screen.getByText('Organic-Cotton')).toBeInTheDocument();
     });
 
     it('renders CategoryBreadcrumb when category exists in carousel variant', () => {
-      const category = 'Toys > Educational > STEM Learning';
-      const { container } = renderListingPageWithCategory(category, 'carousel');
+      const categoryData = {
+        categoryLevel1: 'Toys',
+        categoryLevel2: 'Educational',
+        categoryLevel3: 'STEM-Learning'
+      };
+      const { container } = renderListingPageWithCategory(categoryData, 'carousel');
 
       expect(testingLibrary.screen.getByText('Home')).toBeInTheDocument();
       expect(testingLibrary.screen.getByText('Toys')).toBeInTheDocument();
       expect(testingLibrary.screen.getByText('Educational')).toBeInTheDocument();
-      expect(testingLibrary.screen.getByText('STEM Learning')).toBeInTheDocument();
+      expect(testingLibrary.screen.getByText('STEM-Learning')).toBeInTheDocument();
     });
 
     it('does not render CategoryBreadcrumb when category is missing', () => {
@@ -562,29 +571,33 @@ describe('Duck', () => {
         routeConfiguration: getRouteConfiguration()
       });
 
-      // CategoryBreadcrumb should not be present
+      // CategoryBreadcrumb should not be present (no category levels defined)
       expect(testingLibrary.screen.queryByText('Home')).not.toBeInTheDocument();
     });
 
     it('creates correct search links for category hierarchy', () => {
-      const category = 'Baby > Clothing > Organic';
-      renderListingPageWithCategory(category);
+      const categoryData = {
+        categoryLevel1: 'Baby',
+        categoryLevel2: 'Clothing',
+        categoryLevel3: 'Organic'
+      };
+      renderListingPageWithCategory(categoryData);
 
       const homeLink = testingLibrary.screen.getByRole('link', { name: 'Home' });
       const babyLink = testingLibrary.screen.getByRole('link', { name: 'Baby' });
       const clothingLink = testingLibrary.screen.getByRole('link', { name: 'Clothing' });
 
       expect(homeLink).toHaveAttribute('href', '/s');
-      expect(babyLink).toHaveAttribute('href', '/s?pub_category=Baby');
-      expect(clothingLink).toHaveAttribute('href', '/s?pub_category=Baby%20%3E%20Clothing');
+      expect(babyLink).toHaveAttribute('href', '/s?pub_categoryLevel1=Baby');
+      expect(clothingLink).toHaveAttribute('href', '/s?pub_categoryLevel1=Baby&pub_categoryLevel2=Clothing');
 
       // Last category level should not be a link
       expect(testingLibrary.screen.getByText('Organic')).not.toHaveAttribute('href');
     });
 
     it('applies categoryBreadcrumb CSS class', () => {
-      const category = 'Baby Products';
-      const { container } = renderListingPageWithCategory(category);
+      const categoryData = { categoryLevel1: 'Baby-Products' };
+      const { container } = renderListingPageWithCategory(categoryData);
 
       const breadcrumbElement = container.querySelector('.categoryBreadcrumb');
       expect(breadcrumbElement).toBeInTheDocument();

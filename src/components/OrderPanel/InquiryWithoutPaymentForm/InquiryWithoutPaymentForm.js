@@ -10,15 +10,23 @@ import css from './InquiryWithoutPaymentForm.module.css';
 
 const renderForm = formRenderProps => {
   // FormRenderProps from final-form
-  const { formId, className, rootClassName, handleSubmit } = formRenderProps;
+  const { formId, className, rootClassName, handleSubmit, brand, productUrl } = formRenderProps;
   const classes = classNames(rootClassName || css.root, className);
 
   return (
     <Form id={formId} onSubmit={handleSubmit} className={classes}>
       <div className={css.submitButton}>
-        <PrimaryButton type="submit">
-          <FormattedMessage id="InquiryWithoutPaymentForm.ctaButton" />
-        </PrimaryButton>
+        {brand && productUrl ? (
+          <PrimaryButton
+            onClick={() => window.open(productUrl, '_blank', 'noopener,noreferrer')}
+          >
+            <FormattedMessage id="ProductOrderForm.ctaButtonShopFromBrand" values={{ brand }} />
+          </PrimaryButton>
+        ) : (
+          <PrimaryButton type="submit">
+            <FormattedMessage id="InquiryWithoutPaymentForm.ctaButton" />
+          </PrimaryButton>
+        )}
       </div>
     </Form>
   );

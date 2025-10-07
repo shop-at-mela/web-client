@@ -266,18 +266,21 @@
 }
 
 .contentWrapperForHeroLayout {
+  /* Add bottom padding on mobile to account for fixed OrderPanel */
+  padding-bottom: 120px;
+
   @media (--viewportMedium) {
     width: 100%;
     max-width: var(--contentMaxWidth);
     margin: 0 auto;
-    padding: 0 24px;
+    padding: 0 24px 120px 24px;
     display: flex;
     position: relative;
   }
 
   @media (--viewportLarge) {
     max-width: calc(var(--contentMaxWidth) + 72px);
-    padding: 0 36px;
+    padding: 0 36px 0 36px;
     margin: 0 auto 117px;
   }
 
@@ -300,7 +303,20 @@
 }
 
 .orderColumnForProductLayout {
+  /* Mobile: fixed at bottom */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: white;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+
   @media (--viewportMedium) {
+    position: static;
+    background: none;
+    box-shadow: none;
+    z-index: auto;
   }
   @media (--viewportLarge) {
     display: block;
@@ -312,11 +328,13 @@
 
 .contentWrapperForProductLayout {
   margin: 0 0 56px 0;
+  /* Add bottom padding on mobile to account for fixed OrderPanel */
+  padding-bottom: 120px;
 
   @media (--viewportMedium) {
     width: 100%;
     max-width: var(--contentMaxWidth);
-    padding: 0 24px 0 24px;
+    padding: 0 24px 120px 24px;
     margin: 0 auto 56px auto;
   }
 
@@ -327,6 +345,15 @@
     width: min(calc(var(--contentMaxWidth) + 72px), 100vw);
     padding: 64px 36px 0 36px;
     margin: 0 auto 117px auto;
+
+    /* CSS Custom Properties for desktop-only dynamic layout */
+    --order-column-width: 312px;
+    --order-column-margin: 48px;
+    --total-order-space: calc(var(--order-column-width) + var(--order-column-margin));
+
+    /* Enable container queries for desktop layout detection */
+    container-type: inline-size;
+    container-name: product-layout;
   }
 }
 
@@ -352,7 +379,20 @@
 }
 
 .orderColumnForHeroLayout {
+  /* Mobile: fixed at bottom */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: white;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+
   @media (--viewportMedium) {
+    position: static;
+    background: none;
+    box-shadow: none;
+    z-index: auto;
   }
   @media (--viewportLarge) {
     display: block;
@@ -374,9 +414,9 @@
 }
 
 .productOrderPanel {
-  @media (--viewportLarge) {
-    display: block;
-  }
+  /* Always display - mobile gets fixed positioning from parent */
+  display: block;
+
   /* Note: panel height might be too much on small viewport - hence min-height */
   @media (--viewportLarge) and (min-height: 950px) {
     position: sticky;
@@ -876,5 +916,40 @@
 
   @media (--viewportMedium) {
     margin: 24px 0 32px 0;
+  }
+}
+
+/* Desktop-only dynamic layout classes */
+.fullWidthContentSection {
+  /* Mobile and tablet: no change from normal flow */
+
+  @media (--viewportLarge) {
+    /* Desktop: break out of main column constraints */
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    padding-left: 36px;
+    padding-right: 36px;
+    max-width: min(calc(var(--contentMaxWidth) + 72px), 100vw);
+    margin-left: calc(-1 * (min(calc(var(--contentMaxWidth) + 72px), 100vw) - 100%) / 2);
+    margin-right: calc(-1 * (min(calc(var(--contentMaxWidth) + 72px), 100vw) - 100%) / 2);
+  }
+}
+
+.adaptiveWidthContentSection {
+  /* Mobile and tablet: no change */
+
+  @media (--viewportLarge) {
+    /* Desktop: expand to use available space when OrderPanel is not constraining */
+    transition: max-width 0.3s ease, margin 0.3s ease;
+
+    /* Default to constrained width, will be overridden by JavaScript */
+    max-width: calc(100% - var(--total-order-space, 360px));
+
+    /* When OrderPanel is not constraining (added via JS) */
+    &.expandedWidth {
+      max-width: 100%;
+      width: 100%;
+    }
   }
 }

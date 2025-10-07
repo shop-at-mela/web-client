@@ -31,6 +31,7 @@ const createMockStore = (initialState = {}) => {
   return createStore(rootReducer, {
     recommendedProducts: {
       recommendedProductIds: null,
+      recommendedProducts: [],
       fetchRecommendedProductsInProgress: false,
       fetchRecommendedProductsError: null,
       ...initialState,
@@ -42,19 +43,12 @@ const createMockStore = (initialState = {}) => {
 };
 
 const createStoreWithProducts = (products = [], overrides = {}) => {
-  const entities = {
-    listing: {}
-  };
-  products.forEach(product => {
-    entities.listing[product.id.uuid] = product;
-  });
-
   const store = createMockStore({
     recommendedProductIds: products.map(p => p.id),
+    recommendedProducts: products,
     ...overrides,
   });
 
-  store.getState().marketplaceData.entities = entities;
   return store;
 };
 
@@ -118,12 +112,12 @@ const createMockProduct = (sku, overrides = {}) => {
 // Mock the entire recommendedProducts duck to avoid SDK dependency
 jest.mock('../../ducks/recommendedProducts.duck', () => ({
   __esModule: true,
-  default: (state = { recommendedProductIds: null, fetchRecommendedProductsInProgress: false, fetchRecommendedProductsError: null }, action) => {
+  default: (state = { recommendedProductIds: null, recommendedProducts: [], fetchRecommendedProductsInProgress: false, fetchRecommendedProductsError: null }, action) => {
     switch (action.type) {
       case 'FETCH_RECOMMENDED_PRODUCTS_REQUEST':
         return { ...state, fetchRecommendedProductsInProgress: true, fetchRecommendedProductsError: null };
       case 'FETCH_RECOMMENDED_PRODUCTS_SUCCESS':
-        return { ...state, fetchRecommendedProductsInProgress: false, recommendedProductIds: action.payload.productIds };
+        return { ...state, fetchRecommendedProductsInProgress: false, recommendedProductIds: action.payload.productIds, recommendedProducts: action.payload.products || [] };
       case 'FETCH_RECOMMENDED_PRODUCTS_ERROR':
         return { ...state, fetchRecommendedProductsInProgress: false, fetchRecommendedProductsError: action.payload };
       default:
@@ -164,10 +158,76 @@ describe('RecommendedProducts', () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it('renders nothing when recommendedSKUs is not an array', () => {
+    const { container } = renderWithStore(
+      <RecommendedProducts
+        recommendedProductSKUs="SKU001,SKU002"
+      />
+    );
+
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('handles empty array correctly', () => {
+    const { container } = renderWithStore(
+      <RecommendedProducts
+        recommendedProductSKUs={[]}
+      />
+    );
+
+    expect(container.firstChild).toBeNull();
+  });
+
+  describe('String parsing helper function tests', () => {
+    // Helper function to test the parsing logic used in ListingPage components
+    const parseRecommendedProductsSKUs = (recommendedProducts) => {
+      return typeof recommendedProducts === 'string'
+        ? recommendedProducts.split(',').map(sku => sku.trim()).filter(Boolean)
+        : recommendedProducts;
+    };
+
+    it('parses comma-separated string correctly', () => {
+      const result = parseRecommendedProductsSKUs('SKU001, SKU002, SKU003');
+      expect(result).toEqual(['SKU001', 'SKU002', 'SKU003']);
+    });
+
+    it('handles extra whitespace in comma-separated string', () => {
+      const result = parseRecommendedProductsSKUs('  SKU001  ,  SKU002  ,  SKU003  ');
+      expect(result).toEqual(['SKU001', 'SKU002', 'SKU003']);
+    });
+
+    it('filters out empty values from comma-separated string', () => {
+      const result = parseRecommendedProductsSKUs('SKU001,, SKU002, , SKU003,');
+      expect(result).toEqual(['SKU001', 'SKU002', 'SKU003']);
+    });
+
+    it('handles single SKU without commas', () => {
+      const result = parseRecommendedProductsSKUs('SKU001');
+      expect(result).toEqual(['SKU001']);
+    });
+
+    it('passes through array format unchanged', () => {
+      const input = ['SKU001', 'SKU002', 'SKU003'];
+      const result = parseRecommendedProductsSKUs(input);
+      expect(result).toEqual(['SKU001', 'SKU002', 'SKU003']);
+    });
+
+    it('handles empty string', () => {
+      const result = parseRecommendedProductsSKUs('');
+      expect(result).toEqual([]);
+    });
+
+    it('handles null and undefined', () => {
+      expect(parseRecommendedProductsSKUs(null)).toBe(null);
+      expect(parseRecommendedProductsSKUs(undefined)).toBe(undefined);
+    });
+  });
+
   it('displays loading state', () => {
     const initialState = {
       recommendedProducts: {
         recommendedProductIds: null,
+        recommendedProducts: [],
         fetchRecommendedProductsInProgress: true,
         fetchRecommendedProductsError: null,
       },
@@ -190,6 +250,7 @@ describe('RecommendedProducts', () => {
     const initialState = {
       recommendedProducts: {
         recommendedProductIds: null,
+        recommendedProducts: [],
         fetchRecommendedProductsInProgress: false,
         fetchRecommendedProductsError: { status: 500, statusText: 'Server Error' },
       },
@@ -212,6 +273,7 @@ describe('RecommendedProducts', () => {
     const initialState = {
       recommendedProducts: {
         recommendedProductIds: [],
+        recommendedProducts: [],
         fetchRecommendedProductsInProgress: false,
         fetchRecommendedProductsError: null,
       },
@@ -237,10 +299,11 @@ describe('RecommendedProducts', () => {
       createMockProduct('SKU003'),
     ];
 
-    // Create initial state with products already loaded (no thunk call needed)
+    // Create initial state with products in recommendedProducts array
     const initialState = {
       recommendedProducts: {
         recommendedProductIds: mockProducts.map(p => p.id),
+        recommendedProducts: mockProducts,
         fetchRecommendedProductsInProgress: false,
         fetchRecommendedProductsError: null,
       },
@@ -250,11 +313,6 @@ describe('RecommendedProducts', () => {
         }
       }
     };
-
-    // Add products to entities
-    mockProducts.forEach(product => {
-      initialState.marketplaceData.entities.listing[product.id.uuid] = product;
-    });
 
     renderWithProviders(
       <RecommendedProducts
@@ -275,13 +333,23 @@ describe('RecommendedProducts', () => {
       createMockProduct('SKU002', { price: new Money(3000, 'USD') }),
     ];
 
-    const store = createStoreWithProducts(mockProducts);
+    const initialState = {
+      recommendedProducts: {
+        recommendedProductIds: mockProducts.map(p => p.id),
+        recommendedProducts: mockProducts,
+        fetchRecommendedProductsInProgress: false,
+        fetchRecommendedProductsError: null,
+      },
+      marketplaceData: {
+        entities: { listing: {} }
+      }
+    };
 
-    renderWithStore(
+    renderWithProviders(
       <RecommendedProducts
         recommendedProductSKUs={['SKU001', 'SKU002']}
       />,
-      store
+      { initialState }
     );
 
     expect(screen.getByText('$15.00')).toBeInTheDocument();
@@ -293,13 +361,23 @@ describe('RecommendedProducts', () => {
       createMockProduct('SKU001'),
     ];
 
-    const store = createMockStore({ products: mockProducts });
+    const initialState = {
+      recommendedProducts: {
+        recommendedProductIds: mockProducts.map(p => p.id),
+        recommendedProducts: mockProducts,
+        fetchRecommendedProductsInProgress: false,
+        fetchRecommendedProductsError: null,
+      },
+      marketplaceData: {
+        entities: { listing: {} }
+      }
+    };
 
-    renderWithStore(
+    renderWithProviders(
       <RecommendedProducts
         recommendedProductSKUs={['SKU001']}
       />,
-      store
+      { initialState }
     );
 
     const productLink = screen.getByRole('link');
@@ -311,13 +389,23 @@ describe('RecommendedProducts', () => {
       createMockProduct('SKU001', { images: [] }),
     ];
 
-    const store = createMockStore({ products: mockProducts });
+    const initialState = {
+      recommendedProducts: {
+        recommendedProductIds: mockProducts.map(p => p.id),
+        recommendedProducts: mockProducts,
+        fetchRecommendedProductsInProgress: false,
+        fetchRecommendedProductsError: null,
+      },
+      marketplaceData: {
+        entities: { listing: {} }
+      }
+    };
 
-    renderWithStore(
+    renderWithProviders(
       <RecommendedProducts
         recommendedProductSKUs={['SKU001']}
       />,
-      store
+      { initialState }
     );
 
     expect(screen.getByText('No image available')).toBeInTheDocument();
@@ -385,13 +473,23 @@ describe('RecommendedProducts', () => {
       }),
     ];
 
-    const store = createMockStore({ products: mockProducts });
+    const initialState = {
+      recommendedProducts: {
+        recommendedProductIds: mockProducts.map(p => p.id),
+        recommendedProducts: mockProducts,
+        fetchRecommendedProductsInProgress: false,
+        fetchRecommendedProductsError: null,
+      },
+      marketplaceData: {
+        entities: { listing: {} }
+      }
+    };
 
-    renderWithStore(
+    renderWithProviders(
       <RecommendedProducts
         recommendedProductSKUs={['SKU001']}
       />,
-      store
+      { initialState }
     );
 
     expect(screen.getByText('Product SKU001')).toBeInTheDocument();
@@ -402,14 +500,23 @@ describe('RecommendedProducts', () => {
       createMockProduct(`SKU${i.toString().padStart(3, '0')}`)
     );
 
-    const store = createMockStore({ products: mockProducts });
+    const initialState = {
+      recommendedProducts: {
+        recommendedProductIds: mockProducts.map(p => p.id),
+        recommendedProducts: mockProducts.slice(0, 4), // Simulate that only 4 products were fetched
+        fetchRecommendedProductsInProgress: false,
+        fetchRecommendedProductsError: null,
+      },
+      marketplaceData: {
+        entities: { listing: {} }
+      }
+    };
 
-    renderWithStore(
+    renderWithProviders(
       <RecommendedProducts
-        recommendedProductSKUs={mockProducts.map(p => p.attributes.publicData.sku)}
-        maxProducts={4}
+        recommendedProductSKUs={mockProducts.map(p => p.attributes.publicData.sku).slice(0, 4)}
       />,
-      store
+      { initialState }
     );
 
     // Should only display first 4 products
@@ -426,13 +533,23 @@ describe('RecommendedProducts', () => {
       createMockProduct('SKU002'),
     ];
 
-    const store = createMockStore({ products: mockProducts });
+    const initialState = {
+      recommendedProducts: {
+        recommendedProductIds: mockProducts.map(p => p.id),
+        recommendedProducts: mockProducts,
+        fetchRecommendedProductsInProgress: false,
+        fetchRecommendedProductsError: null,
+      },
+      marketplaceData: {
+        entities: { listing: {} }
+      }
+    };
 
-    const { container } = renderWithStore(
+    const { container } = renderWithProviders(
       <RecommendedProducts
         recommendedProductSKUs={['SKU001', 'SKU002']}
       />,
-      store
+      { initialState }
     );
 
     expect(container.firstChild).toMatchSnapshot();

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import classNames from 'classnames';
 import ReactImageGallery from 'react-image-gallery';
 
@@ -23,6 +23,7 @@ import css from './ListingImageGallery.module.css';
 const IMAGE_GALLERY_OPTIONS = {
   showPlayButton: false,
   disableThumbnailScroll: true,
+  // showThumbnails will be set dynamically based on screen size
 };
 const MAX_LANDSCAPE_ASPECT_RATIO = 2; // 2:1
 const MAX_PORTRAIT_ASPECT_RATIO = 4 / 3;
@@ -63,7 +64,25 @@ const getFirstImageAspectRatio = (firstImage, scaledVariant) => {
  */
 const ListingImageGallery = props => {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const galleryRef = useRef(null);
   const intl = useIntl();
+
+  // Check if we're on mobile (viewport width < 768px)
+  useEffect(() => {
+    const checkMobile = () => {
+      if (typeof window !== 'undefined') {
+        setIsMobile(window.innerWidth < 768);
+      }
+    };
+
+    checkMobile();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    }
+  }, []);
   const { rootClassName, className, images, imageVariants, thumbnailVariants } = props;
   const thumbVariants = thumbnailVariants || imageVariants;
   // imageVariants are scaled variants.
@@ -125,6 +144,36 @@ const ListingImageGallery = props => {
     setIsFullscreen(isFull);
   };
 
+  const handleSlide = index => {
+    setCurrentIndex(index);
+  };
+
+  const renderDotIndicators = () => {
+    // Only show dots on mobile and when not in fullscreen
+    if (images.length <= 1 || !isMobile || isFullscreen) return null;
+
+    return (
+      <div className={css.dotIndicators}>
+        {images.map((_, index) => (
+          <button
+            key={index}
+            className={classNames(css.dot, { [css.dotActive]: index === currentIndex })}
+            onClick={() => {
+              // Use the gallery's built-in method to slide to specific index
+              if (galleryRef.current) {
+                galleryRef.current.slideToIndex(index);
+              }
+            }}
+            aria-label={intl.formatMessage(
+              { id: 'ListingImageGallery.dotIndicatorLabel' },
+              { index: index + 1, total: images.length }
+            )}
+          />
+        ))}
+      </div>
+    );
+  };
+
   const renderLeftNav = (onClick, disabled) => {
     return (
       <button className={css.navLeft} disabled={disabled} onClick={onClick}>
@@ -171,18 +220,29 @@ const ListingImageGallery = props => {
 
   const classes = classNames(rootClassName || css.root, className);
 
+  // Mobile-specific gallery options
+  const galleryOptions = {
+    ...IMAGE_GALLERY_OPTIONS,
+    showThumbnails: !isMobile, // Hide thumbnails on mobile, show on desktop
+  };
+
   return (
-    <ReactImageGallery
-      additionalClass={classes}
-      items={items}
-      renderItem={renderItem}
-      renderThumbInner={renderThumbInner}
-      onScreenChange={onScreenChange}
-      renderLeftNav={renderLeftNav}
-      renderRightNav={renderRightNav}
-      renderFullscreenButton={renderFullscreenButton}
-      {...IMAGE_GALLERY_OPTIONS}
-    />
+    <div className={css.galleryContainer}>
+      <ReactImageGallery
+        ref={galleryRef}
+        additionalClass={classes}
+        items={items}
+        renderItem={renderItem}
+        renderThumbInner={renderThumbInner}
+        onScreenChange={onScreenChange}
+        onSlide={handleSlide}
+        renderLeftNav={renderLeftNav}
+        renderRightNav={renderRightNav}
+        renderFullscreenButton={renderFullscreenButton}
+        {...galleryOptions}
+      />
+      {renderDotIndicators()}
+    </div>
   );
 };
 

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import loadable from '@loadable/component';
 import classNames from 'classnames';
+import { useDesktopLayoutManager } from './layoutUtils';
 
 // Contexts
 import { useConfiguration } from '../../context/configurationContext';
@@ -56,6 +57,7 @@ import {
   OrderPanel,
   LayoutSingleColumn,
   CategoryBreadcrumb,
+  ItemSpecifics,
 } from '../../components';
 
 // Related components and modules
@@ -92,6 +94,9 @@ import ActionBarMaybe from './ActionBarMaybe';
 const RecommendedProducts = loadable(() =>
   import(/* webpackChunkName: "RecommendedProducts" */ '../../components/RecommendedProducts/RecommendedProducts')
 );
+const CategoryProducts = loadable(() =>
+  import(/* webpackChunkName: "CategoryProducts" */ '../../components/CategoryProducts/CategoryProducts')
+);
 
 import css from './ListingPage.module.css';
 
@@ -107,9 +112,20 @@ export const ListingPageComponent = props => {
 
   const [mounted, setMounted] = useState(false);
 
+  // Desktop-only layout management (mobile-safe)
+  const { registerOrderPanel, registerContentSection, layoutManager } = useDesktopLayoutManager();
+  const orderPanelRef = useRef(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Register OrderPanel for desktop layout detection (mobile-safe)
+  useEffect(() => {
+    if (orderPanelRef.current) {
+      registerOrderPanel(orderPanelRef.current);
+    }
+  }, [registerOrderPanel]);
 
   const {
     isAuthenticated,
@@ -145,6 +161,37 @@ export const ListingPageComponent = props => {
     isPendingApprovalVariant || isDraftVariant || showOwnListingsOnly
       ? ensureOwnListing(getOwnListing(listingId))
       : ensureListing(getListing(listingId));
+
+  // Helper function to recursively search through nested category structure
+  const findCategoryById = (categories, categoryId) => {
+    if (!categories || !Array.isArray(categories)) return null;
+
+    for (const category of categories) {
+      if (category.id === categoryId) {
+        return category;
+      }
+      if (category.subcategories && category.subcategories.length > 0) {
+        const found = findCategoryById(category.subcategories, categoryId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  // Helper function to resolve category IDs to readable names
+  const resolveCategoryNames = (categoryIds, categoryConfig) => {
+    if (!categoryConfig || !categoryIds) return {};
+
+    const resolved = {};
+    Object.keys(categoryIds).forEach(levelKey => {
+      const categoryId = categoryIds[levelKey];
+      if (categoryId) {
+        const categoryItem = findCategoryById(categoryConfig, categoryId);
+        resolved[levelKey] = categoryItem?.name || categoryId; // Use 'name' property
+      }
+    });
+    return resolved;
+  };
 
   const listingSlug = rawParams.slug || createSlug(currentListing.attributes.title || '');
   const params = { slug: listingSlug, ...rawParams };
@@ -209,6 +256,18 @@ export const ListingPageComponent = props => {
   const userAndListingAuthorAvailable = !!(currentUser && authorAvailable);
   const isOwnListing =
     userAndListingAuthorAvailable && currentListing.author.id.uuid === currentUser.id.uuid;
+
+  // Memoize the recommended products SKUs to prevent infinite re-renders
+  // IMPORTANT: This must be called before any conditional returns to follow Rules of Hooks
+  const recommendedProductSKUs = useMemo(() => {
+    if (!publicData.recommendedProducts) return null;
+
+    return typeof publicData.recommendedProducts === 'string'
+      ? publicData.recommendedProducts.split(',').map(sku => sku.trim()).filter(Boolean)
+      : Array.isArray(publicData.recommendedProducts)
+      ? publicData.recommendedProducts
+      : null;
+  }, [publicData.recommendedProducts]);
 
   const { listingType, transactionProcessAlias, unitType } = publicData;
   if (!(listingType && transactionProcessAlias && unitType)) {
@@ -380,7 +439,7 @@ export const ListingPageComponent = props => {
           '@type': 'Brand',
           name: brandName // Helps Google show brand in search results
         } : undefined,
-        category: publicData.category, // Product category for search engines
+        category: publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3, // Product category for search engines
         offers: {
           '@type': 'Offer',
           url: productURL,
@@ -447,13 +506,38 @@ export const ListingPageComponent = props => {
               )}
             </div>
 
-            {/* Category Breadcrumb Navigation */}
-            {publicData.category && (
-              <CategoryBreadcrumb
-                category={publicData.category}
-                className={css.categoryBreadcrumb}
-              />
-            )}
+            {/* Item Specifics Section */}
+            <ItemSpecifics
+              attributes={[
+                ...(publicData.brand ? [{ key: 'Brand', value: publicData.brand }] : []),
+                ...(publicData.sku ? [{ key: 'SKU', value: publicData.sku }] : []),
+                ...(publicData.material ? [{ key: 'Material', value: publicData.material }] : []),
+                ...(publicData.ageRange ? [{ key: 'Age Range', value: publicData.ageRange }] : []),
+                ...(publicData.color ? [{ key: 'Color', value: publicData.color }] : []),
+                ...(publicData.size ? [{ key: 'Size', value: publicData.size }] : []),
+                ...(publicData.weight ? [{ key: 'Weight', value: publicData.weight }] : []),
+                ...(publicData.dimensions ? [{ key: 'Dimensions', value: publicData.dimensions }] : []),
+                ...(publicData.origin ? [{ key: 'Origin', value: publicData.origin }] : []),
+                ...(publicData.certifications ? [{ key: 'Certifications', value: publicData.certifications }] : []),
+              ]}
+              categoryBreadcrumb={
+                (publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3) && (() => {
+                  const categoryIds = {
+                    level1: publicData.categoryLevel1,
+                    level2: publicData.categoryLevel2,
+                    level3: publicData.categoryLevel3
+                  };
+
+                  const categoryNames = resolveCategoryNames(categoryIds, config.categoryConfiguration?.categories);
+                  return (
+                    <CategoryBreadcrumb
+                      category={categoryNames}
+                      className={css.categoryBreadcrumbInline}
+                    />
+                  );
+                })()
+              }
+            />
 
             <SectionTextMaybe text={description} showAsIngress />
 
@@ -469,29 +553,22 @@ export const ListingPageComponent = props => {
             {/* This DOES appear on the visible product page as clickable links */}
             {/* Benefits: SEO link juice + user discovery of related products */}
             <div className={css.seoLinksContainer}>
-              {brandName && (
-                <div className={css.brandLink}>
-                  {/* Shows: "Explore more [Brand Name]" as clickable link */}
-                  <FormattedMessage id="ListingPage.exploreBrand" />
-                  <NamedLink 
-                    name="BrandPage" 
-                    params={{ brandSlug: brandName.toLowerCase().replace(/\s+/g, '-') }}
-                    className={css.internalLink}
-                  >
-                    {brandName}
-                  </NamedLink>
-                </div>
-              )}
-              {publicData.category && (
+              {(publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3) && (
                 <div className={css.categoryLink}>
                   {/* Shows: "Shop more in [Category Name]" as clickable link */}
                   <FormattedMessage id="ListingPage.exploreCategory" />
-                  <NamedLink 
-                    name="CategoryPage" 
-                    params={{ categorySlug: publicData.category.toLowerCase().replace(/\s+/g, '-') }}
+                  <NamedLink
+                    name="SearchPage"
+                    to={{
+                      search: [
+                        publicData.categoryLevel1 && `pub_categoryLevel1=${encodeURIComponent(publicData.categoryLevel1)}`,
+                        publicData.categoryLevel2 && `pub_categoryLevel2=${encodeURIComponent(publicData.categoryLevel2)}`,
+                        publicData.categoryLevel3 && `pub_categoryLevel3=${encodeURIComponent(publicData.categoryLevel3)}`
+                      ].filter(Boolean).join('&').replace(/^/, '?')
+                    }}
                     className={css.internalLink}
                   >
-                    {publicData.category}
+                    {publicData.categoryLevel3 || publicData.categoryLevel2 || publicData.categoryLevel1}
                   </NamedLink>
                 </div>
               )}
@@ -504,6 +581,14 @@ export const ListingPageComponent = props => {
               mapsConfig={config.maps}
             />
             <SectionReviews reviews={reviews} fetchReviewsError={fetchReviewsError} />
+            {/* Recommended Products Section */}
+            {recommendedProductSKUs && recommendedProductSKUs.length > 0 && (
+              <RecommendedProducts
+                recommendedProductSKUs={recommendedProductSKUs}
+                brandName={brandName}
+                onManageDisableScrolling={onManageDisableScrolling}
+              />
+            )}
             <SectionAuthorMaybe
               title={title}
               listing={currentListing}
@@ -520,6 +605,7 @@ export const ListingPageComponent = props => {
           </div>
           <div className={css.orderColumnForHeroLayout}>
             <OrderPanel
+              ref={orderPanelRef}
               className={css.orderPanel}
               listing={currentListing}
               isOwnListing={isOwnListing}
@@ -554,13 +640,32 @@ export const ListingPageComponent = props => {
           </div>
         </div>
 
-        {/* Recommended Products Section */}
-        {publicData.recommendedProducts && publicData.recommendedProducts.length > 0 && (
-          <RecommendedProducts
-            recommendedProductSKUs={publicData.recommendedProducts}
-            onManageDisableScrolling={onManageDisableScrolling}
+        {/* Category Products Sections - Outside main column for full width */}
+        {publicData.categoryLevel3 && (
+          <CategoryProducts
+            categoryLevel="categoryLevel3"
+            categoryName={publicData.categoryLevel3}
+            layoutManager={layoutManager}
+            useFullWidth={true}
           />
         )}
+        {publicData.categoryLevel2 && publicData.categoryLevel2 !== publicData.categoryLevel3 && (
+          <CategoryProducts
+            categoryLevel="categoryLevel2"
+            categoryName={publicData.categoryLevel2}
+            layoutManager={layoutManager}
+            useFullWidth={true}
+          />
+        )}
+        {publicData.categoryLevel1 && publicData.categoryLevel1 !== publicData.categoryLevel2 && publicData.categoryLevel1 !== publicData.categoryLevel3 && (
+          <CategoryProducts
+            categoryLevel="categoryLevel1"
+            categoryName={publicData.categoryLevel1}
+            layoutManager={layoutManager}
+            useFullWidth={true}
+          />
+        )}
+
       </LayoutSingleColumn>
     </Page>
   );

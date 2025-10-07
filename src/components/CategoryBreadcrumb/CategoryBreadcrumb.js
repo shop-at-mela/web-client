@@ -4,7 +4,7 @@ import classNames from 'classnames';
 
 import { FormattedMessage } from '../../util/reactIntl';
 import { createSlug } from '../../util/urlHelpers';
-import { NamedLink } from '../../components';
+import { NamedLink, IconArrowHead } from '../../components';
 
 import css from './CategoryBreadcrumb.module.css';
 
@@ -89,14 +89,13 @@ const buildCategoryPaths = (hierarchy) => {
  * CategoryBreadcrumb component displays hierarchical category navigation
  * with links to filter by each category level
  */
-const CategoryBreadcrumb = props => {
-  const {
-    rootClassName,
-    className,
-    category,
-    showHomeLink = true,
-    separator = '>',
-  } = props;
+const CategoryBreadcrumb = ({
+  rootClassName = null,
+  className = null,
+  category,
+  showHomeLink = false,
+  separator = '>',
+}) => {
 
   const hierarchy = parseCategoryHierarchy(category);
 
@@ -109,19 +108,21 @@ const CategoryBreadcrumb = props => {
 
   return (
     <nav className={classes} aria-label="Category breadcrumb">
-      <ol className={css.breadcrumbList}>
+      <ul className={css.breadcrumbList}>
         {showHomeLink && (
           <li className={css.breadcrumbItem}>
             <NamedLink
               name="SearchPage"
-              className={css.homeLink}
+              className={css.breadcrumbLink}
               title="View all products"
             >
-              <FormattedMessage id="CategoryBreadcrumb.home" />
+              <span><FormattedMessage id="CategoryBreadcrumb.home" /></span>
             </NamedLink>
-            <span className={css.separator} aria-hidden="true">
-              {separator}
-            </span>
+            <IconArrowHead
+              direction="right"
+              size="small"
+              className={css.chevronIcon}
+            />
           </li>
         )}
 
@@ -130,41 +131,32 @@ const CategoryBreadcrumb = props => {
 
           return (
             <li key={categoryPath.fullPath} className={css.breadcrumbItem}>
-              {isLast ? (
-                <span className={css.currentCategory} aria-current="page">
-                  {categoryPath.name}
-                </span>
-              ) : (
-                <>
-                  <NamedLink
-                    name="SearchPage"
-                    to={{
-                      search: `?pub_category=${encodeURIComponent(categoryPath.fullPath)}`
-                    }}
-                    className={css.categoryLink}
-                    title={`View all products in ${categoryPath.name}`}
-                  >
-                    {categoryPath.name}
-                  </NamedLink>
-                  <span className={css.separator} aria-hidden="true">
-                    {separator}
-                  </span>
-                </>
+              <NamedLink
+                name="SearchPage"
+                to={{
+                  search: `?pub_category=${encodeURIComponent(categoryPath.fullPath)}`
+                }}
+                className={isLast ? css.currentCategory : css.breadcrumbLink}
+                title={`View all products in ${categoryPath.name}`}
+                {...(isLast ? { 'aria-current': 'page' } : {})}
+              >
+                <span>{categoryPath.name}</span>
+              </NamedLink>
+              {!isLast && (
+                <IconArrowHead
+                  direction="right"
+                  size="small"
+                  className={css.chevronIcon}
+                />
               )}
             </li>
           );
         })}
-      </ol>
+      </ul>
     </nav>
   );
 };
 
-CategoryBreadcrumb.defaultProps = {
-  rootClassName: null,
-  className: null,
-  showHomeLink: true,
-  separator: '>',
-};
 
 CategoryBreadcrumb.propTypes = {
   rootClassName: string,

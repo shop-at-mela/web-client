@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useMemo } from 'react';
 import { any, array, arrayOf, bool, number, object, oneOfType, shape, string } from 'prop-types';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
@@ -51,6 +51,19 @@ const getAppleTouchIconURL = config => {
     return variant.width === 180 && variant.height === 180;
   });
   return appleTouchIconVariant?.url;
+};
+
+// Get CSP nonce for inline scripts from preloaded state
+const getCSPNonce = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const preloadedState = window.__PRELOADED_STATE__;
+    if (!preloadedState) return null;
+    const parsed = JSON.parse(preloadedState);
+    return parsed.cspNonce || null;
+  } catch (e) {
+    return null;
+  }
 };
 
 class PageComponent extends Component {
@@ -236,6 +249,7 @@ class PageComponent extends Component {
 
     const faviconVariants = getFaviconVariants(config);
     const appleTouchIcon = getAppleTouchIconURL(config);
+    const cspNonce = getCSPNonce();
 
     // Marketplace color and the color for <PrimaryButton> come from configs
     // If set, we need to create those custom CSS Properties and set them for the app
@@ -276,7 +290,11 @@ class PageComponent extends Component {
           {metaToHead.map((metaProps, i) => (
             <meta key={i} {...metaProps} />
           ))}
-          <script id="page-schema" type="application/ld+json">
+          <script
+            id="page-schema"
+            type="application/ld+json"
+            {...(cspNonce ? { nonce: cspNonce } : {})}
+          >
             {schemaArrayJSONString.replace(/</g, '\\u003c')}
           </script>
         </Helmet>

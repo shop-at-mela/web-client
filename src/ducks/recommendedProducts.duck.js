@@ -1,5 +1,4 @@
 import { storableError } from '../util/errors';
-import { addMarketplaceEntities } from './marketplaceData.duck';
 
 // ================ Action types ================ //
 
@@ -11,6 +10,7 @@ export const FETCH_RECOMMENDED_PRODUCTS_ERROR = 'app/RecommendedProducts/FETCH_R
 
 const initialState = {
   recommendedProductIds: null,
+  recommendedProducts: [],
   fetchRecommendedProductsInProgress: false,
   fetchRecommendedProductsError: null,
 };
@@ -29,6 +29,7 @@ export default function RecommendedProductsReducer(state = initialState, action 
       return {
         ...state,
         recommendedProductIds: payload.productIds,
+        recommendedProducts: payload.products || [],
         fetchRecommendedProductsInProgress: false,
         fetchRecommendedProductsError: null,
       };
@@ -51,9 +52,9 @@ export const fetchRecommendedProductsRequest = () => ({
   type: FETCH_RECOMMENDED_PRODUCTS_REQUEST,
 });
 
-export const fetchRecommendedProductsSuccess = productIds => ({
+export const fetchRecommendedProductsSuccess = (productIds, products) => ({
   type: FETCH_RECOMMENDED_PRODUCTS_SUCCESS,
-  payload: { productIds },
+  payload: { productIds, products },
 });
 
 export const fetchRecommendedProductsError = error => ({
@@ -66,34 +67,64 @@ export const fetchRecommendedProductsError = error => ({
 /**
  * Fetch recommended products by their SKUs
  * @param {Array<string>} skus - Array of product SKUs to fetch
+ * @param {Object} config - Marketplace configuration containing listing fields
  */
-export const fetchRecommendedProducts = skus => (dispatch, getState, sdk) => {
+export const fetchRecommendedProducts = (skus, config) => (dispatch, getState, sdk) => {
   if (!skus || skus.length === 0) {
     return Promise.resolve();
   }
 
   dispatch(fetchRecommendedProductsRequest());
 
-  // Create a filter for SKU matching
-  // We search for listings where publicData.sku matches any of the provided SKUs
-  const skuQueries = skus.map(sku => `pub_sku:${sku}`).join(' OR ');
-
+  // Create a filter for SKU matching using proper Sharetribe public data filtering
   const queryParams = {
-    keywords: skuQueries,
-    pub_listingType: 'product', // Assuming we only want product listings
+    pub_sku: skus, // Search for listings where publicData.sku matches any of the provided SKUs
     states: ['published'], // Only published listings
     include: ['images'], // Include images for the product cards
     'fields.listing': ['title', 'price', 'publicData', 'images'],
-    perPage: skus.length, // Limit to the number of SKUs we're looking for
+    'fields.image': ['variants.listing-card', 'variants.listing-card-2x'], // Request specific image variants
+    'imageVariant.listing-card': 'w:400;h:300;fit:crop', // Define listing-card variant
+    'imageVariant.listing-card-2x': 'w:800;h:600;fit:crop', // Define listing-card-2x variant
+    perPage: 20, // Increase limit to ensure we get all matches
   };
 
   return sdk.listings
     .query(queryParams)
     .then(response => {
-      const { data } = response.data;
+      const { data, included } = response.data;
+
+      // Helper function to attach images to listings from included data
+      const attachImagesToListings = (listings, includedData) => {
+        const imageMap = {};
+
+        // Create a map of image IDs to image objects
+        (includedData || []).forEach(item => {
+          if (item.type === 'image') {
+            imageMap[item.id.uuid] = item;
+          }
+        });
+
+        // Attach images to each listing
+        return listings.map(listing => {
+          const imageRelationships = listing.relationships?.images?.data || [];
+          const images = imageRelationships.map(rel => imageMap[rel.id.uuid]).filter(Boolean);
+
+          return {
+            ...listing,
+            images: images, // Add images directly to listing object
+            attributes: {
+              ...listing.attributes,
+              images: images // Also add to attributes for compatibility
+            }
+          };
+        });
+      };
+
+      // Process listings to include image data
+      const listingsWithImages = attachImagesToListings(data, included);
 
       // Filter to only include products that match our SKUs exactly
-      const matchingProducts = data.filter(listing => {
+      const matchingProducts = listingsWithImages.filter(listing => {
         const listingSku = listing.attributes.publicData?.sku;
         return listingSku && skus.includes(listingSku);
       });
@@ -105,10 +136,8 @@ export const fetchRecommendedProducts = skus => (dispatch, getState, sdk) => {
 
       const productIds = sortedProducts.map(product => product.id);
 
-      // Add products to marketplace entities store
-      const sanitizeConfig = { listingFields: [] }; // Add appropriate listing fields if needed
-      dispatch(addMarketplaceEntities(response, sanitizeConfig));
-      dispatch(fetchRecommendedProductsSuccess(productIds));
+      // Store products with images attached
+      dispatch(fetchRecommendedProductsSuccess(productIds, sortedProducts));
 
       return response;
     })

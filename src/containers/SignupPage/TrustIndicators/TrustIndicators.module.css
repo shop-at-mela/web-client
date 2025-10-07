@@ -1,0 +1,45 @@
+@import '../../../styles/customMediaQueries.css';
+
+.container {
+  margin-top: 1.5rem;
+
+  @media (--viewportMedium) {
+    margin-top: 2rem;
+  }
+}
+
+.indicators {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+
+  @media (--viewportMedium) {
+    gap: 2rem;
+  }
+}
+
+.indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+
+  @media (--viewportMedium) {
+    font-size: 0.875rem;
+  }
+}
+
+.icon {
+  font-size: 1rem;
+
+  @media (--viewportMedium) {
+    font-size: 1.125rem;
+  }
+}
+
+.text {
+  font-weight: 500;
+  white-space: nowrap;
+}

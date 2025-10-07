@@ -127,3 +127,40 @@
 .loading {
   color: var(--colorGrey600);
 }
+
+.viewMoreContainer {
+  text-align: center;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--colorGrey100);
+
+  @media (--viewportMedium) {
+    margin-top: 40px;
+    padding-top: 32px;
+  }
+}
+
+.viewMoreLink {
+  composes: buttonSmall from global;
+  composes: marketplaceButtonStyles from global;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: var(--fontWeightMedium);
+  transition: all 0.2s ease;
+
+  &:hover {
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &:focus {
+    outline: 2px solid var(--marketplaceColor);
+    outline-offset: 2px;
+  }
+}

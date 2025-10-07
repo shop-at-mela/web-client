@@ -1,0 +1,174 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  width: 100%;
+}
+
+.formFields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+
+  @media (--viewportMedium) {
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+}
+
+.emailField {
+  /* Full width email field */
+}
+
+.nameFields {
+  display: flex;
+  gap: 1rem;
+
+  @media (--viewportMedium) {
+    gap: 1.25rem;
+  }
+}
+
+.firstNameField,
+.lastNameField {
+  flex: 1;
+}
+
+.passwordField {
+  /* Full width password field */
+}
+
+.customFields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+
+  @media (--viewportMedium) {
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+}
+
+.helpText {
+  background: rgba(93, 43, 192, 0.05);
+  border: 1px solid rgba(93, 43, 192, 0.2);
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--marketplaceColor);
+  line-height: 1.4;
+  text-align: center;
+
+  @media (--viewportMedium) {
+    font-size: 0.9375rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+  }
+}
+
+.submitSection {
+  text-align: center;
+}
+
+.submitButton {
+  width: 100%;
+  font-size: 1.125rem;
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--marketplaceColor) 0%, var(--marketplaceColorDark) 100%);
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(93, 43, 192, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  @media (--viewportMedium) {
+    font-size: 1.25rem;
+    padding: 1.125rem 2rem;
+    border-radius: 10px;
+  }
+}
+
+.terms {
+  font-size: 0.75rem;
+  color: #6b7280;
+  line-height: 1.4;
+  max-width: 400px;
+  margin: 0 auto;
+
+  @media (--viewportMedium) {
+    font-size: 0.875rem;
+  }
+}
+
+.termsLink {
+  color: var(--marketplaceColor);
+  text-decoration: underline;
+  font-weight: 500;
+
+  &:hover {
+    color: var(--marketplaceColorDark);
+  }
+}
+
+/* Loading state */
+.submitButton[aria-busy="true"] {
+  position: relative;
+  color: transparent;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Focus states for accessibility */
+.root input:focus {
+  outline: 2px solid var(--marketplaceColor);
+  outline-offset: 2px;
+}
+
+/* Mobile optimization */
+@media (max-width: 767px) {
+  .nameFields {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .submitButton {
+    min-height: 48px; /* Touch target size */
+  }
+}

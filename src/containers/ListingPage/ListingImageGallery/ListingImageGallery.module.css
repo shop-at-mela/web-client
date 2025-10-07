@@ -213,3 +213,56 @@
 .closeIcon {
   composes: marketplaceModalCloseIcon from global;
 }
+
+/* Gallery container to hold both the gallery and dot indicators */
+.galleryContainer {
+  position: relative;
+}
+
+/* Dot indicators container - positioned below the image, mobile only */
+.dotIndicators {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background-color: var(--colorWhite);
+
+  /* Only show on mobile (thumbnails are shown on desktop) */
+  @media (--viewportMedium) {
+    display: none;
+  }
+}
+
+/* Individual dot styles */
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--colorGrey300);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  padding: 0;
+
+  &:hover {
+    background-color: var(--colorGrey500);
+    transform: scale(1.1);
+  }
+
+  &:focus {
+    outline: 2px solid var(--marketplaceColor);
+    outline-offset: 2px;
+  }
+}
+
+/* Active dot state */
+.dotActive {
+  background-color: var(--marketplaceColor);
+  width: 10px;
+  height: 10px;
+
+  &:hover {
+    background-color: var(--marketplaceColor);
+  }
+}

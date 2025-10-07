@@ -13,6 +13,8 @@ import { NamedRedirect } from '../components';
 const pageDataLoadingAPI = getPageDataLoadingAPI();
 
 const AuthenticationPage = loadable(() => import(/* webpackChunkName: "AuthenticationPage" */ '../containers/AuthenticationPage/AuthenticationPage'));
+const SignupPage = loadable(() => import(/* webpackChunkName: "SignupPage" */ '../containers/SignupPage/SignupPage'));
+const BrandPartnershipPage = loadable(() => import(/* webpackChunkName: "BrandPartnershipPage" */ '../containers/BrandPartnershipPage/BrandPartnershipPage'));
 const CheckoutPage = loadable(() => import(/* webpackChunkName: "CheckoutPage" */ '../containers/CheckoutPage/CheckoutPage'));
 const CMSPage = loadable(() => import(/* webpackChunkName: "CMSPage" */ '../containers/CMSPage/CMSPage'));
 const ContactDetailsPage = loadable(() => import(/* webpackChunkName: "ContactDetailsPage" */ '../containers/ContactDetailsPage/ContactDetailsPage'));
@@ -20,6 +22,7 @@ const EditListingPage = loadable(() => import(/* webpackChunkName: "EditListingP
 const EmailVerificationPage = loadable(() => import(/* webpackChunkName: "EmailVerificationPage" */ '../containers/EmailVerificationPage/EmailVerificationPage'));
 const InboxPage = loadable(() => import(/* webpackChunkName: "InboxPage" */ '../containers/InboxPage/InboxPage'));
 const LandingPage = loadable(() => import(/* webpackChunkName: "LandingPage" */ '../containers/LandingPage/LandingPage'));
+const MelaHomePage = loadable(() => import(/* webpackChunkName: "MelaHomePage" */ '../containers/MelaHomePage/MelaHomePage'));
 const ListingPageCoverPhoto = loadable(() => import(/* webpackChunkName: "ListingPageCoverPhoto" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCoverPhoto'));
 const ListingPageCarousel = loadable(() => import(/* webpackChunkName: "ListingPageCarousel" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCarousel'));
 const ManageListingsPage = loadable(() => import(/* webpackChunkName: "ManageListingsPage" */ '../containers/ManageListingsPage/ManageListingsPage'));
@@ -78,6 +81,11 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       name: 'LandingPage',
       component: LandingPage,
       loadData: pageDataLoadingAPI.LandingPage.loadData,
+    },
+    {
+      path: '/mela-home',
+      name: 'MelaHomePage',
+      component: MelaHomePage,
     },
     {
       path: '/p/:pageId',
@@ -145,13 +153,25 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
     {
       path: '/l/new',
       name: 'NewListingPage',
-      auth: true,
-      component: () => (
-        <NamedRedirect
-          name="EditListingPage"
-          params={{ slug: draftSlug, id: draftId, type: 'new', tab: 'details' }}
-        />
-      ),
+      auth: false,
+      component: (props) => {
+        // Check if user is logged in and is a provider
+        const { currentUser } = props;
+        const isLoggedInProvider = currentUser?.id && currentUser?.attributes?.profile?.metadata?.userType === 'provider';
+
+        if (isLoggedInProvider) {
+          // For logged-in providers, redirect to EditListingPage as before
+          return (
+            <NamedRedirect
+              name="EditListingPage"
+              params={{ slug: draftSlug, id: draftId, type: 'new', tab: 'details' }}
+            />
+          );
+        }
+
+        // For all other scenarios, show BrandPartnershipPage
+        return <BrandPartnershipPage {...props} />;
+      },
     },
     {
       path: '/l/:slug/:id/:type/:tab',
@@ -216,15 +236,13 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
     {
       path: '/signup',
       name: 'SignupPage',
-      component: AuthenticationPage,
-      extraProps: { tab: 'signup' },
+      component: SignupPage,
       loadData: pageDataLoadingAPI.AuthenticationPage.loadData,
     },
     {
       path: '/signup/:userType',
       name: 'SignupForUserTypePage',
-      component: AuthenticationPage,
-      extraProps: { tab: 'signup' },
+      component: SignupPage,
       loadData: pageDataLoadingAPI.AuthenticationPage.loadData,
     },
     {

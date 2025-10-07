@@ -333,6 +333,21 @@ Laem.com
 
 - **Implementation Priority**: Phase 2 (Months 3-4) - After initial content scale
 
+### Schema.org Enhancement for Item Aspects
+- **Product Schema Enhancement**: Integrate `publicData.item_aspects` into existing schema.org Product markup
+  - Add dynamic product attributes (material, color, size, age_range, weight, certifications)
+  - Map common e-commerce attributes to schema.org properties
+  - Include custom attributes as additionalProperty arrays
+  - Maintain existing cultural targeting and brand information
+
+- **Files to Update**:
+  - Create `src/util/schemaHelpers.js` for item_aspects processing
+  - Update `ListingPageCarousel.js` and `ListingPageCoverPhoto.js` schema generation
+  - Add validation and error handling for dynamic attributes
+
+- **Benefits**: Enhanced SEO with richer product data, better rich snippets, improved product discovery
+- **Implementation Priority**: Phase 1 (Months 1-2) - Technical foundation enhancement
+
 ---
 
 ## Conclusion
