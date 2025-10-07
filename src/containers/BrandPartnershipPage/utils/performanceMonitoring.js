@@ -2,24 +2,41 @@
  * Performance monitoring utilities for the Brand Partnership page
  */
 
-// Web Vitals tracking
+// Web Vitals tracking - gracefully handles missing dependency
 export const trackWebVitals = () => {
   if (typeof window === 'undefined') return;
 
-  // Track Core Web Vitals
-  try {
-    import('web-vitals').then(({ onCLS, onFID, onFCP, onLCP, onTTFB }) => {
-      onCLS(sendToAnalytics);
-      onFID(sendToAnalytics);
-      onFCP(sendToAnalytics);
-      onLCP(sendToAnalytics);
-      onTTFB(sendToAnalytics);
-    }).catch(error => {
-      console.warn('web-vitals library not available:', error);
-    });
-  } catch (error) {
-    console.warn('Failed to import web-vitals:', error);
-  }
+  // Check if module exists before trying to import
+  const loadWebVitals = async () => {
+    try {
+      // Use dynamic import with error handling
+      const webVitalsModule = await import('web-vitals');
+
+      if (webVitalsModule && typeof webVitalsModule.onCLS === 'function') {
+        const { onCLS, onFID, onFCP, onLCP, onTTFB } = webVitalsModule;
+
+        // Initialize web vitals tracking
+        onCLS(sendToAnalytics);
+        onFID(sendToAnalytics);
+        onFCP(sendToAnalytics);
+        onLCP(sendToAnalytics);
+        onTTFB(sendToAnalytics);
+
+        console.log('Web Vitals tracking initialized');
+      } else {
+        console.warn('web-vitals module loaded but functions not available');
+      }
+    } catch (error) {
+      // Silently fail if web-vitals is not available
+      // This prevents build failures while maintaining functionality when possible
+      if (process.env.NODE_ENV === 'development') {
+        console.info('web-vitals not available - performance tracking disabled:', error.message);
+      }
+    }
+  };
+
+  // Load web vitals asynchronously
+  loadWebVitals();
 };
 
 // Performance thresholds (can be configured via environment variables)
