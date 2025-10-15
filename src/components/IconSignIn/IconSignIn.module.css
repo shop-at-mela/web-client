@@ -1,0 +1,7 @@
+.root {
+  stroke: currentColor;
+  fill: currentColor;
+  display: block;
+  width: 20px;
+  height: 20px;
+}

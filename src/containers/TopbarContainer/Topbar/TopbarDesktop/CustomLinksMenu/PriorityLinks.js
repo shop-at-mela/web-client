@@ -11,15 +11,26 @@ import css from './PriorityLinks.module.css';
 /**
  * Create component that shows only a single "Post a new listing" link.
  *
- * @param {*} props contains customLinksMenuClass
+ * @param {*} props contains customLinksMenuClass, currentUser, and intl
  * @returns div with only one link inside.
  */
 export const CreateListingMenuLink = props => {
+  const { customLinksMenuClass, currentUser, intl } = props;
+
+  // Show different text for unauthenticated vs authenticated users
+  const messageId = currentUser?.id
+    ? 'TopbarDesktop.createListing'
+    : 'TopbarDesktop.sellOnMela';
+
   return (
-    <div className={props.customLinksMenuClass}>
-      <NamedLink name="NewListingPage" className={classNames(css.priorityLink, css.highlight)}>
+    <div className={customLinksMenuClass}>
+      <NamedLink
+        name="NewListingPage"
+        params={{}}
+        className={classNames(css.priorityLink, css.highlight)}
+      >
         <span className={css.priorityLinkLabel}>
-          <FormattedMessage id="TopbarDesktop.createListing" />
+          <FormattedMessage id={messageId} />
         </span>
       </NamedLink>
     </div>

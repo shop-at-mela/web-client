@@ -5,22 +5,29 @@ import LinksMenu from './LinksMenu';
 
 import css from './CustomLinksMenu.module.css';
 
-const draftId = '00000000-0000-0000-0000-000000000000';
-const createListingLinkConfigMaybe = (intl, showLink) =>
-  showLink
-    ? [
-        {
-          group: 'primary',
-          text: intl.formatMessage({ id: 'TopbarDesktop.createListing' }),
-          type: 'internal',
-          route: {
-            name: 'EditListingPage',
-            params: { slug: 'draft', id: draftId, type: 'new', tab: 'details' },
-          },
-          highlight: true,
-        },
-      ]
-    : [];
+const createListingLinkConfigMaybe = (intl, showLink, currentUser) => {
+  if (showLink) {
+    // Show different text for unauthenticated vs authenticated users
+    const messageId = currentUser?.id
+      ? 'TopbarDesktop.createListing'
+      : 'TopbarDesktop.sellOnMela';
+
+    const linkConfig = {
+      group: 'primary',
+      text: intl.formatMessage({ id: messageId }),
+      type: 'internal',
+      route: {
+        name: 'NewListingPage',
+        params: {},
+      },
+      highlight: true,
+    };
+
+    return [linkConfig];
+  }
+
+  return [];
+};
 
 /**
  * Group links to 2 groups:
@@ -111,15 +118,13 @@ const CustomLinksMenu = ({
   hasClientSideContentReady,
   intl,
   showCreateListingsLink,
+  currentUser,
 }) => {
   const containerRef = useRef(null);
   const observer = useRef(null);
   const [mounted, setMounted] = useState(false);
   const [moreLabelWidth, setMoreLabelWidth] = useState(0);
-  const [links, setLinks] = useState([
-    ...createListingLinkConfigMaybe(intl, showCreateListingsLink),
-    ...customLinks,
-  ]);
+  const [links, setLinks] = useState([]);
 
   const [layoutData, setLayoutData] = useState({
     priorityLinks: links,
@@ -130,6 +135,14 @@ const CustomLinksMenu = ({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    const createListingLinks = createListingLinkConfigMaybe(intl, showCreateListingsLink, currentUser);
+    setLinks([
+      ...createListingLinks,
+      ...customLinks,
+    ]);
+  }, [intl, showCreateListingsLink, currentUser, customLinks]);
 
   useEffect(() => {
     let animationFrameId = null;
@@ -194,7 +207,7 @@ const CustomLinksMenu = ({
 
   // If there are no custom links, just render createListing link.
   if (customLinks?.length === 0 && showCreateListingsLink) {
-    return <CreateListingMenuLink customLinksMenuClass={css.createListingLinkOnly} />;
+    return <CreateListingMenuLink customLinksMenuClass={css.createListingLinkOnly} currentUser={currentUser} intl={intl} />;
   }
 
   const styleMaybe = mounted ? { style: { width: `${containerWidth}px` } } : {};

@@ -110,8 +110,22 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       loadData: pageDataLoadingAPI.SearchPage.loadData,
     },
     {
+      path: '/categories',
+      name: 'CategoriesPage',
+      ...authForPrivateMarketplace,
+      component: SearchPage,
+      loadData: pageDataLoadingAPI.SearchPage.loadData,
+    },
+    {
       path: '/categories/:level1/:level2?/:level3?',
       name: 'CategoryPage',
+      ...authForPrivateMarketplace,
+      component: SearchPage,
+      loadData: pageDataLoadingAPI.SearchPage.loadData,
+    },
+    {
+      path: '/brands',
+      name: 'BrandsPage',
       ...authForPrivateMarketplace,
       component: SearchPage,
       loadData: pageDataLoadingAPI.SearchPage.loadData,
@@ -154,24 +168,7 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/l/new',
       name: 'NewListingPage',
       auth: false,
-      component: (props) => {
-        // Check if user is logged in and is a provider
-        const { currentUser } = props;
-        const isLoggedInProvider = currentUser?.id && currentUser?.attributes?.profile?.metadata?.userType === 'provider';
-
-        if (isLoggedInProvider) {
-          // For logged-in providers, redirect to EditListingPage as before
-          return (
-            <NamedRedirect
-              name="EditListingPage"
-              params={{ slug: draftSlug, id: draftId, type: 'new', tab: 'details' }}
-            />
-          );
-        }
-
-        // For all other scenarios, show BrandPartnershipPage
-        return <BrandPartnershipPage {...props} />;
-      },
+      component: loadable(() => import(/* webpackChunkName: "NewListingPageRoute" */ './NewListingPageRoute')),
     },
     {
       path: '/l/:slug/:id/:type/:tab',

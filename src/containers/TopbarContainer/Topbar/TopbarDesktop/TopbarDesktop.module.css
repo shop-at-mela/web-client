@@ -307,3 +307,39 @@
     }
   }
 }
+
+/* Categories and Brands Navigation */
+.navigationSection {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 100%;
+  flex-shrink: 0;
+  margin-right: 24px;
+}
+
+/* Sign-in icon */
+.signInLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  height: 100%;
+
+  &:hover {
+    color: var(--colorBlack);
+    border-bottom: 4px solid var(--marketplaceColor);
+    border-radius: 0;
+    text-decoration: none;
+  }
+}
+
+.signInIcon {
+  width: 20px;
+  height: 20px;
+  color: var(--colorGrey700);
+
+  .signInLink:hover & {
+    color: var(--colorBlack);
+  }
+}

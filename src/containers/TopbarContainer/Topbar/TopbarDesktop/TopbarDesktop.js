@@ -5,6 +5,7 @@ import { FormattedMessage } from '../../../../util/reactIntl';
 import { ACCOUNT_SETTINGS_PAGES } from '../../../../routing/routeConfiguration';
 import {
   Avatar,
+  IconSignIn,
   InlineTextButton,
   LinkedLogo,
   Menu,
@@ -19,22 +20,34 @@ import CustomLinksMenu from './CustomLinksMenu/CustomLinksMenu';
 
 import css from './TopbarDesktop.module.css';
 
-const SignupLink = () => {
+const CategoriesLink = () => {
   return (
-    <NamedLink name="SignupPage" className={css.topbarLink}>
+    <NamedLink name="CategoriesPage" className={css.topbarLink}>
       <span className={css.topbarLinkLabel}>
-        <FormattedMessage id="TopbarDesktop.signup" />
+        <FormattedMessage id="TopbarDesktop.categories" />
       </span>
     </NamedLink>
   );
 };
 
-const LoginLink = () => {
+const BrandsLink = () => {
   return (
-    <NamedLink name="LoginPage" className={css.topbarLink}>
+    <NamedLink name="BrandsPage" className={css.topbarLink}>
       <span className={css.topbarLinkLabel}>
-        <FormattedMessage id="TopbarDesktop.login" />
+        <FormattedMessage id="TopbarDesktop.brands" />
       </span>
+    </NamedLink>
+  );
+};
+
+const SignInLink = () => {
+  return (
+    <NamedLink
+      name="SignupPage"
+      className={classNames(css.topbarLink, css.signInLink)}
+      title="Sign in"
+    >
+      <IconSignIn className={css.signInIcon} />
     </NamedLink>
   );
 };
@@ -169,8 +182,7 @@ const TopbarDesktop = props => {
     />
   ) : null;
 
-  const signupLinkMaybe = isAuthenticatedOrJustHydrated ? null : <SignupLink />;
-  const loginLinkMaybe = isAuthenticatedOrJustHydrated ? null : <LoginLink />;
+  const signInLinkMaybe = isAuthenticatedOrJustHydrated ? null : <SignInLink />;
 
   const searchFormMaybe = showSearchForm ? (
     <TopbarSearchForm
@@ -198,18 +210,24 @@ const TopbarDesktop = props => {
       />
       {searchFormMaybe}
 
+      {/* Categories and Brands Navigation */}
+      <div className={css.navigationSection}>
+        <CategoriesLink />
+        <BrandsLink />
+      </div>
+
       <CustomLinksMenu
         currentPage={currentPage}
         customLinks={customLinks}
         intl={intl}
         hasClientSideContentReady={authenticatedOnClientSide || !isAuthenticatedOrJustHydrated}
         showCreateListingsLink={showCreateListingsLink}
+        currentUser={currentUser}
       />
 
       {inboxLinkMaybe}
       {profileMenuMaybe}
-      {signupLinkMaybe}
-      {loginLinkMaybe}
+      {signInLinkMaybe}
     </nav>
   );
 };

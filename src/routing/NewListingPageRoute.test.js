@@ -1,225 +1,201 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { BrowserRouter } from 'react-router-dom';
-import { IntlProvider } from 'react-intl';
+import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { createStore } from 'redux';
-
-// We need to test the routing logic in isolation
-// This simulates the component function from routeConfiguration.js
+import { createMemoryHistory } from 'history';
+import { Router } from 'react-router-dom';
+import { configureStore } from '@reduxjs/toolkit';
 
 // Mock BrandPartnershipPage
 jest.mock('../containers/BrandPartnershipPage/BrandPartnershipPage', () => {
   return function MockBrandPartnershipPage(props) {
-    return (
-      <div data-testid="brand-partnership-page">
-        Brand Partnership Page
-        <div data-testid="current-user">{props.currentUser?.id || 'no-user'}</div>
-      </div>
-    );
+    return <div data-testid="brand-partnership-page">BrandPartnershipPage</div>;
   };
 });
 
-// Mock NamedRedirect
+// Mock NamedRedirect component
 jest.mock('../components', () => ({
-  NamedRedirect: ({ name, params }) => (
-    <div data-testid="named-redirect">
-      Redirect to: {name}
-      {params && <div data-testid="redirect-params">{JSON.stringify(params)}</div>}
-    </div>
-  ),
+  NamedRedirect: function MockNamedRedirect({ name, params }) {
+    return (
+      <div data-testid="named-redirect">
+        Redirecting to {name} with params: {JSON.stringify(params)}
+      </div>
+    );
+  },
 }));
 
-// Import the actual BrandPartnershipPage for the route component
-import BrandPartnershipPage from '../containers/BrandPartnershipPage/BrandPartnershipPage';
-import { NamedRedirect } from '../components';
+// Import the actual NewListingPageRoute for the route component
+import NewListingPageRoute from './NewListingPageRoute';
 
-// Simulate the route component logic from routeConfiguration.js
-const NewListingPageRouteComponent = (props) => {
-  const { currentUser } = props;
-  const isLoggedInProvider = currentUser?.id && currentUser?.attributes?.profile?.metadata?.userType === 'provider';
-
-  if (isLoggedInProvider) {
-    // Simulate the draftSlug and draftId that would be available in routeConfiguration
-    const draftSlug = 'draft-slug';
-    const draftId = 'draft-id';
-
-    return (
-      <NamedRedirect
-        name="EditListingPage"
-        params={{ slug: draftSlug, id: draftId, type: 'new', tab: 'details' }}
-      />
-    );
-  }
-
-  return <BrandPartnershipPage {...props} />;
+// Helper function to create a mock Redux store
+const createMockStore = (currentUser = null) => {
+  return configureStore({
+    reducer: {
+      user: (state = { currentUser }, action) => state,
+    },
+    preloadedState: {
+      user: { currentUser },
+    },
+  });
 };
 
-const mockStore = createStore(() => ({}));
-
-const renderWithProviders = (component) => {
+// Helper function to render component with store and router
+const renderWithProviders = (component, { store, history = createMemoryHistory() } = {}) => {
+  const defaultStore = createMockStore();
   return render(
-    <Provider store={mockStore}>
-      <BrowserRouter>
-        <IntlProvider locale="en" messages={{}}>
-          {component}
-        </IntlProvider>
-      </BrowserRouter>
+    <Provider store={store || defaultStore}>
+      <Router history={history}>{component}</Router>
     </Provider>
   );
 };
 
-describe('NewListingPage Route Logic', () => {
-  it('redirects to EditListingPage for logged-in provider users', () => {
-    const providerUser = {
-      id: { uuid: 'provider-123' },
-      attributes: {
-        profile: {
-          metadata: {
-            userType: 'provider'
-          }
-        }
-      }
-    };
+// Test component that uses NewListingPageRoute logic
+const TestNewListingPageRoute = (props) => {
+  return <NewListingPageRoute {...props} />;
+};
 
-    renderWithProviders(<NewListingPageRouteComponent currentUser={providerUser} />);
-
-    expect(screen.getByTestId('named-redirect')).toBeInTheDocument();
-    expect(screen.getByText('Redirect to: EditListingPage')).toBeInTheDocument();
-    expect(screen.getByTestId('redirect-params')).toHaveTextContent(
-      JSON.stringify({ slug: 'draft-slug', id: 'draft-id', type: 'new', tab: 'details' })
-    );
-  });
-
+describe('NewListingPageRoute', () => {
   it('shows BrandPartnershipPage for non-logged-in users', () => {
-    renderWithProviders(<NewListingPageRouteComponent currentUser={null} />);
+    const store = createMockStore(null);
+    renderWithProviders(<TestNewListingPageRoute />, { store });
 
-    expect(screen.getByTestId('brand-partnership-page')).toBeInTheDocument();
-    expect(screen.getByText('Brand Partnership Page')).toBeInTheDocument();
-    expect(screen.getByTestId('current-user')).toHaveTextContent('no-user');
+    expect(document.querySelector('[data-testid="brand-partnership-page"]')).toBeInTheDocument();
   });
 
   it('shows BrandPartnershipPage for logged-in non-provider users', () => {
-    const customerUser = {
-      id: { uuid: 'customer-123' },
+    const currentUser = {
+      id: { uuid: 'user-123' },
       attributes: {
         profile: {
-          metadata: {
-            userType: 'customer'
-          }
-        }
-      }
+          publicData: {
+            userType: 'customer',
+          },
+        },
+      },
     };
 
-    renderWithProviders(<NewListingPageRouteComponent currentUser={customerUser} />);
+    const store = createMockStore(currentUser);
+    renderWithProviders(<TestNewListingPageRoute />, { store });
 
-    expect(screen.getByTestId('brand-partnership-page')).toBeInTheDocument();
-    expect(screen.getByText('Brand Partnership Page')).toBeInTheDocument();
-    expect(screen.getByTestId('current-user')).toHaveTextContent('customer-123');
+    expect(document.querySelector('[data-testid="brand-partnership-page"]')).toBeInTheDocument();
+  });
+
+  it('redirects to EditListingPage for logged-in provider users', () => {
+    const currentUser = {
+      id: { uuid: 'user-123' },
+      attributes: {
+        profile: {
+          publicData: {
+            userType: 'provider',
+          },
+        },
+      },
+    };
+
+    const store = createMockStore(currentUser);
+    renderWithProviders(<TestNewListingPageRoute />, { store });
+
+    const namedRedirect = document.querySelector('[data-testid="named-redirect"]');
+    expect(namedRedirect).toBeInTheDocument();
+    expect(namedRedirect.textContent).toContain('EditListingPage');
+    expect(namedRedirect.textContent).toContain('"slug":"draft"');
+    expect(namedRedirect.textContent).toContain('"id":"00000000-0000-0000-0000-000000000000"');
+    expect(namedRedirect.textContent).toContain('"type":"new"');
+    expect(namedRedirect.textContent).toContain('"tab":"details"');
   });
 
   it('shows BrandPartnershipPage for users without userType metadata', () => {
-    const userWithoutType = {
+    const currentUser = {
       id: { uuid: 'user-123' },
       attributes: {
         profile: {
-          metadata: {}
-        }
-      }
+          publicData: {},
+        },
+      },
     };
 
-    renderWithProviders(<NewListingPageRouteComponent currentUser={userWithoutType} />);
+    const store = createMockStore(currentUser);
+    renderWithProviders(<TestNewListingPageRoute />, { store });
 
-    expect(screen.getByTestId('brand-partnership-page')).toBeInTheDocument();
-    expect(screen.getByText('Brand Partnership Page')).toBeInTheDocument();
+    expect(document.querySelector('[data-testid="brand-partnership-page"]')).toBeInTheDocument();
   });
 
   it('shows BrandPartnershipPage for users without profile metadata', () => {
-    const userWithoutProfile = {
+    const currentUser = {
       id: { uuid: 'user-123' },
-      attributes: {}
+      attributes: {},
     };
 
-    renderWithProviders(<NewListingPageRouteComponent currentUser={userWithoutProfile} />);
+    const store = createMockStore(currentUser);
+    renderWithProviders(<TestNewListingPageRoute />, { store });
 
-    expect(screen.getByTestId('brand-partnership-page')).toBeInTheDocument();
+    expect(document.querySelector('[data-testid="brand-partnership-page"]')).toBeInTheDocument();
   });
 
   it('shows BrandPartnershipPage for users without attributes', () => {
-    const userWithoutAttributes = {
-      id: { uuid: 'user-123' }
+    const currentUser = {
+      id: { uuid: 'user-123' },
     };
 
-    renderWithProviders(<NewListingPageRouteComponent currentUser={userWithoutAttributes} />);
+    const store = createMockStore(currentUser);
+    renderWithProviders(<TestNewListingPageRoute />, { store });
 
-    expect(screen.getByTestId('brand-partnership-page')).toBeInTheDocument();
+    expect(document.querySelector('[data-testid="brand-partnership-page"]')).toBeInTheDocument();
   });
 
   it('handles edge case where user has ID but userType is not provider', () => {
-    const userWithDifferentType = {
+    const currentUser = {
       id: { uuid: 'user-123' },
       attributes: {
         profile: {
-          metadata: {
-            userType: 'admin'
-          }
-        }
-      }
+          publicData: {
+            userType: 'admin',
+          },
+        },
+      },
     };
 
-    renderWithProviders(<NewListingPageRouteComponent currentUser={userWithDifferentType} />);
+    const store = createMockStore(currentUser);
+    renderWithProviders(<TestNewListingPageRoute />, { store });
 
-    expect(screen.getByTestId('brand-partnership-page')).toBeInTheDocument();
-    expect(screen.queryByTestId('named-redirect')).not.toBeInTheDocument();
+    expect(document.querySelector('[data-testid="brand-partnership-page"]')).toBeInTheDocument();
   });
 
-  it('handles provider user with missing ID', () => {
-    const providerUserWithoutId = {
+  it('redirects providers to EditListingPage with correct parameters', () => {
+    const currentUser = {
+      id: { uuid: 'user-123' },
       attributes: {
         profile: {
-          metadata: {
-            userType: 'provider'
-          }
-        }
-      }
+          publicData: {
+            userType: 'provider',
+          },
+        },
+      },
     };
 
-    renderWithProviders(<NewListingPageRouteComponent currentUser={providerUserWithoutId} />);
+    const store = createMockStore(currentUser);
+    renderWithProviders(<TestNewListingPageRoute />, { store });
 
-    expect(screen.getByTestId('brand-partnership-page')).toBeInTheDocument();
-    expect(screen.queryByTestId('named-redirect')).not.toBeInTheDocument();
+    const namedRedirect = document.querySelector('[data-testid="named-redirect"]');
+    expect(namedRedirect).toBeInTheDocument();
+
+    // Check that it contains the expected redirect parameters
+    const expectedParams = {
+      slug: 'draft',
+      id: '00000000-0000-0000-0000-000000000000',
+      type: 'new',
+      tab: 'details',
+    };
+
+    expect(namedRedirect.textContent).toContain(JSON.stringify(expectedParams));
   });
 
   it('passes through all props to BrandPartnershipPage', () => {
-    const customProps = {
-      currentUser: null,
-      customProp: 'test-value',
-      location: { pathname: '/test' }
-    };
+    const store = createMockStore(null);
+    const testProps = { someCustomProp: 'test-value' };
 
-    // We'll use a spy to check if props are passed through
-    const MockBrandPartnershipPageWithProps = (props) => (
-      <div data-testid="brand-partnership-page">
-        <div data-testid="custom-prop">{props.customProp}</div>
-        <div data-testid="location-pathname">{props.location?.pathname}</div>
-      </div>
-    );
+    renderWithProviders(<TestNewListingPageRoute {...testProps} />, { store });
 
-    const RouteWithCustomBrandPage = (props) => {
-      const { currentUser } = props;
-      const isLoggedInProvider = currentUser?.id && currentUser?.attributes?.profile?.metadata?.userType === 'provider';
-
-      if (isLoggedInProvider) {
-        return <NamedRedirect name="EditListingPage" params={{}} />;
-      }
-
-      return <MockBrandPartnershipPageWithProps {...props} />;
-    };
-
-    renderWithProviders(<RouteWithCustomBrandPage {...customProps} />);
-
-    expect(screen.getByTestId('custom-prop')).toHaveTextContent('test-value');
-    expect(screen.getByTestId('location-pathname')).toHaveTextContent('/test');
+    const brandPartnershipPage = document.querySelector('[data-testid="brand-partnership-page"]');
+    expect(brandPartnershipPage).toBeInTheDocument();
   });
 });

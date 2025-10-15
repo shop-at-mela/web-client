@@ -100,17 +100,47 @@ export const fetchCategoryProducts = (categoryLevel, categoryName, config) => (d
     ],
     'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
     'fields.image': ['variants.listing-card', 'variants.listing-card-2x'],
-    'limit': 8, // Limit to 8 products for carousel
+    'imageVariant.listing-card': 'w:400;h:300;fit:crop', // Define listing-card variant
+    'imageVariant.listing-card-2x': 'w:800;h:600;fit:crop', // Define listing-card-2x variant
+    perPage: 6, // Limit to 6 products for optimal UX and performance
     [`pub_${categoryLevel}`]: categoryName,
   };
 
   return sdk.listings
     .query(queryParams)
     .then(response => {
-      const entities = response.data;
-      const listingEntities = entities.data;
+      const { data, included } = response.data;
 
-      dispatch(fetchCategoryProductsSuccess(categoryKey, listingEntities));
+      // Helper function to attach images to listings from included data
+      const attachImagesToListings = (listings, includedData) => {
+        const imageMap = {};
+
+        // Create a map of image IDs to image objects
+        (includedData || []).forEach(item => {
+          if (item.type === 'image') {
+            imageMap[item.id.uuid] = item;
+          }
+        });
+
+        // Attach images to each listing
+        return listings.map(listing => {
+          const imageRelationships = listing.relationships?.images?.data || [];
+          const images = imageRelationships.map(rel => imageMap[rel.id.uuid]).filter(Boolean);
+
+          return {
+            ...listing,
+            attributes: {
+              ...listing.attributes,
+              images: images // Images with their original attributes structure
+            }
+          };
+        });
+      };
+
+      // Process listings to include image data
+      const listingsWithImages = attachImagesToListings(data, included);
+
+      dispatch(fetchCategoryProductsSuccess(categoryKey, listingsWithImages));
       return response;
     })
     .catch(e => {

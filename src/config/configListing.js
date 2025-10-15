@@ -54,6 +54,7 @@
  */
 export const listingFields = [
   // Brand field - uses text schema for dynamic brands instead of enum
+  /* commenting this out to use Console based asset configurations
   {
     key: 'brand',
     scope: 'public',
@@ -75,6 +76,7 @@ export const listingFields = [
       requiredMessage: 'You need to enter a brand name.',
     },
   },
+  */
   // {
   //   "scope": "public",
   //   "label": "Gears",
@@ -291,7 +293,9 @@ export const listingFields = [
  *                        providers who have not set payout details and contact them to ensure that they add the details.
  */
 
+
 export const listingTypes = [
+/* commenting this out to use Console based asset configurations. Also this type is incorrect
   {
     listingType: 'daily-booking',
     label: 'Daily booking',
@@ -306,6 +310,7 @@ export const listingTypes = [
       payoutDetails: true,
     },
   },
+  */
   // // Here are some examples for other listingTypes
   // // TODO: SearchPage does not work well if both booking and product selling are used at the same time
   // {

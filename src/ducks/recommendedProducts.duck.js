@@ -85,7 +85,7 @@ export const fetchRecommendedProducts = (skus, config) => (dispatch, getState, s
     'fields.image': ['variants.listing-card', 'variants.listing-card-2x'], // Request specific image variants
     'imageVariant.listing-card': 'w:400;h:300;fit:crop', // Define listing-card variant
     'imageVariant.listing-card-2x': 'w:800;h:600;fit:crop', // Define listing-card-2x variant
-    perPage: 20, // Increase limit to ensure we get all matches
+    perPage: 20, // Increase to get more results to filter from
   };
 
   return sdk.listings
