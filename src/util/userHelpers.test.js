@@ -2,6 +2,9 @@ import {
   pickUserFieldsData,
   initialValuesForUserFields,
   getPropsForCustomUserFieldInputs,
+  showCreateListingLinkForUser,
+  hasPermissionToPostListings,
+  isUserAuthorized,
 } from './userHelpers';
 
 import { fakeIntl } from './testData';
@@ -354,6 +357,144 @@ describe('userHelpers', () => {
       expect(inputConfig1).toEqual(filteredConfig1);
       const filteredConfig2 = expectedUserFieldInput(2, ['c', 'd']).filter(filterFn);
       expect(inputConfig2).toEqual(filteredConfig2);
+    });
+  });
+
+  describe('showCreateListingLinkForUser', () => {
+    const mockConfig = {
+      user: {
+        userTypes: [
+          {
+            userType: 'provider',
+            accountLinksVisibility: {
+              postListings: true,
+            },
+          },
+          {
+            userType: 'customer',
+            accountLinksVisibility: {
+              postListings: true,
+            },
+          },
+        ],
+      },
+      topbar: {
+        postListingsLink: {
+          showToUnauthenticatedUsers: true,
+        },
+      },
+    };
+
+    it('returns false for customer users (hidden for customers)', () => {
+      const customerUser = {
+        id: { uuid: 'user-123' },
+        attributes: {
+          profile: {
+            publicData: {
+              userType: 'customer',
+            },
+          },
+        },
+      };
+
+      const result = showCreateListingLinkForUser(mockConfig, customerUser);
+      expect(result).toBe(false);
+    });
+
+    it('returns true for provider users', () => {
+      const providerUser = {
+        id: { uuid: 'user-123' },
+        attributes: {
+          profile: {
+            publicData: {
+              userType: 'provider',
+            },
+          },
+        },
+      };
+
+      const result = showCreateListingLinkForUser(mockConfig, providerUser);
+      expect(result).toBe(true);
+    });
+
+    it('returns true for unauthenticated users when config allows', () => {
+      const result = showCreateListingLinkForUser(mockConfig, null);
+      expect(result).toBe(true);
+    });
+
+    it('returns false for unauthenticated users when config disallows', () => {
+      const configDisallowUnauthenticated = {
+        ...mockConfig,
+        topbar: {
+          postListingsLink: {
+            showToUnauthenticatedUsers: false,
+          },
+        },
+      };
+
+      const result = showCreateListingLinkForUser(configDisallowUnauthenticated, null);
+      expect(result).toBe(false);
+    });
+
+    it('returns true for authenticated users with undefined userType', () => {
+      const userWithoutType = {
+        id: { uuid: 'user-123' },
+        attributes: {
+          profile: {
+            publicData: {},
+          },
+        },
+      };
+
+      const result = showCreateListingLinkForUser(mockConfig, userWithoutType);
+      expect(result).toBe(true);
+    });
+
+    it('returns true for users with other userTypes (not customer)', () => {
+      const adminUser = {
+        id: { uuid: 'user-123' },
+        attributes: {
+          profile: {
+            publicData: {
+              userType: 'admin',
+            },
+          },
+        },
+      };
+
+      const result = showCreateListingLinkForUser(mockConfig, adminUser);
+      expect(result).toBe(true);
+    });
+
+    it('handles missing config gracefully', () => {
+      const minimalConfig = {
+        user: {
+          userTypes: [],
+        },
+      };
+      const providerUser = {
+        id: { uuid: 'user-123' },
+        attributes: {
+          profile: {
+            publicData: {
+              userType: 'provider',
+            },
+          },
+        },
+      };
+
+      const result = showCreateListingLinkForUser(minimalConfig, providerUser);
+      expect(result).toBe(true);
+    });
+
+    it('handles user without profile gracefully', () => {
+      const userWithoutProfile = {
+        id: { uuid: 'user-123' },
+        attributes: {},
+      };
+
+      const result = showCreateListingLinkForUser(mockConfig, userWithoutProfile);
+      expect(result).toBe(true);
     });
   });
 });

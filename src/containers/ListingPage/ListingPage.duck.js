@@ -304,13 +304,19 @@ export const showListing = (listingId, config, isOwn = false) => (dispatch, getS
     id: listingId,
     include: ['author', 'author.profileImage', 'images', 'currentStock'],
     'fields.image': [
-      // Scaled variants for large images
-      'variants.scaled-small',
-      'variants.scaled-medium',
-      'variants.scaled-large',
-      'variants.scaled-xlarge',
+      // High-quality predefined landscape variants (2400px max)
+      'variants.landscape-crop6x',
+      'variants.landscape-crop4x',
+      'variants.landscape-crop2x',
+      'variants.landscape-crop',
 
-      // Cropped variants for listing thumbnail images
+      // Scaled variants for large images
+      'variants.scaled-xlarge',
+      'variants.scaled-large',
+      'variants.scaled-medium',
+      'variants.scaled-small',
+
+      // Custom cropped variants as fallback
       `variants.${variantPrefix}`,
       `variants.${variantPrefix}-2x`,
       `variants.${variantPrefix}-4x`,

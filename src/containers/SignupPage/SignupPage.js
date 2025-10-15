@@ -20,6 +20,7 @@ import {
   Page,
   LayoutSingleColumn,
   NamedRedirect,
+  NamedLink,
   IconSpinner,
 } from '../../components';
 
@@ -199,6 +200,19 @@ export const SignupPageComponent = props => {
             {/* Value Proposition */}
             <ValueProposition userType={userType} />
 
+            {/* Login Link - Top */}
+            <div className={css.loginSectionTop}>
+              <span className={css.loginText}>
+                <FormattedMessage id="SignupPage.alreadyHaveAccount" />
+              </span>
+              <NamedLink
+                name="LoginPage"
+                className={css.loginLink}
+              >
+                <FormattedMessage id="SignupPage.loginLinkText" />
+              </NamedLink>
+            </div>
+
             {/* Signup Form */}
             <div className={css.formSection}>
               {signupErrorMessage}
@@ -221,15 +235,12 @@ export const SignupPageComponent = props => {
               <span className={css.loginText}>
                 <FormattedMessage id="SignupPage.alreadyHaveAccount" />
               </span>
-              <button
+              <NamedLink
+                name="LoginPage"
                 className={css.loginLink}
-                onClick={() => {
-                  // Navigate to login page
-                  window.location.href = '/login';
-                }}
               >
                 <FormattedMessage id="SignupPage.loginLinkText" />
-              </button>
+              </NamedLink>
             </div>
 
             {/* Provider CTA - only show for customer mode */}

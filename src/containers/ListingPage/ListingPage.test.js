@@ -359,9 +359,19 @@ describe('Duck', () => {
         [
           expect.objectContaining({
             id,
-            'imageVariant.listing-card': 'w:400;h:400;fit:crop',
-            'imageVariant.listing-card-2x': 'w:800;h:800;fit:crop',
+            'imageVariant.listing-card': 'w:400;h:400;fit:crop;q:85;f:auto',
+            'imageVariant.listing-card-2x': 'w:800;h:800;fit:crop;q:85;f:auto',
+            'imageVariant.listing-card-4x': 'w:1600;h:1600;fit:crop;q:85;f:auto',
+            'imageVariant.listing-card-6x': 'w:2400;h:2400;fit:crop;q:85;f:auto',
             include: ['author', 'author.profileImage', 'images', 'currentStock'],
+            'fields.image': expect.arrayContaining([
+              'variants.landscape-crop6x',
+              'variants.landscape-crop4x',
+              'variants.landscape-crop2x',
+              'variants.landscape-crop',
+              'variants.scaled-xlarge',
+              'variants.scaled-large',
+            ]),
           }),
         ],
       ]);
@@ -387,9 +397,19 @@ describe('Duck', () => {
         [
           expect.objectContaining({
             id,
-            'imageVariant.listing-card': 'w:400;h:400;fit:crop',
-            'imageVariant.listing-card-2x': 'w:800;h:800;fit:crop',
+            'imageVariant.listing-card': 'w:400;h:400;fit:crop;q:85;f:auto',
+            'imageVariant.listing-card-2x': 'w:800;h:800;fit:crop;q:85;f:auto',
+            'imageVariant.listing-card-4x': 'w:1600;h:1600;fit:crop;q:85;f:auto',
+            'imageVariant.listing-card-6x': 'w:2400;h:2400;fit:crop;q:85;f:auto',
             include: ['author', 'author.profileImage', 'images', 'currentStock'],
+            'fields.image': expect.arrayContaining([
+              'variants.landscape-crop6x',
+              'variants.landscape-crop4x',
+              'variants.landscape-crop2x',
+              'variants.landscape-crop',
+              'variants.scaled-xlarge',
+              'variants.scaled-large',
+            ]),
           }),
         ],
       ]);

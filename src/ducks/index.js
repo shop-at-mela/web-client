@@ -13,6 +13,7 @@ import marketplaceData from './marketplaceData.duck';
 import paymentMethods from './paymentMethods.duck';
 import recommendedProducts from './recommendedProducts.duck';
 import categoryProducts from './categoryProducts.duck';
+import heroProducts from './heroProducts.duck';
 import stripe from './stripe.duck';
 import stripeConnectAccount from './stripeConnectAccount.duck';
 import user from './user.duck';
@@ -27,6 +28,7 @@ export {
   paymentMethods,
   recommendedProducts,
   categoryProducts,
+  heroProducts,
   stripe,
   stripeConnectAccount,
   user,

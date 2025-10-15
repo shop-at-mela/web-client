@@ -6,8 +6,9 @@ import css from './ListingPage.module.css';
 const SectionGallery = props => {
   const { listing, variantPrefix } = props;
   const images = listing.images;
-  const imageVariants = [variantPrefix, `${variantPrefix}-2x`];
-  const thumbnailVariants = [variantPrefix, `${variantPrefix}-2x`, `${variantPrefix}-4x`];
+  // Use predefined high-quality variants first, then fallback to custom variants
+  const imageVariants = ['landscape-crop6x', 'landscape-crop4x', 'landscape-crop2x', 'landscape-crop', 'scaled-xlarge', 'scaled-large'];
+  const thumbnailVariants = ['landscape-crop4x', 'landscape-crop2x', 'landscape-crop', 'scaled-large'];
   return (
     <section className={css.productGallery} data-testid="carousel">
       <ListingImageGallery

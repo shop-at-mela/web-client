@@ -102,8 +102,13 @@ const ResponsiveImage = props => {
     .filter(v => v != null)
     .join(', ');
 
+  // Get the first available variant as fallback src
+  const fallbackVariant = variants.find(variantName => imageVariants[variantName]);
+  const src = fallbackVariant ? imageVariants[fallbackVariant].url : '';
+
   const imgProps = {
     className: classes,
+    src,
     srcSet,
     ...rest,
   };

@@ -224,11 +224,23 @@ export const showCreateListingLinkForUser = (config, currentUser) => {
 
   const { accountLinksVisibility } = currentUserTypeConfig || {};
 
-  return currentUser && accountLinksVisibility
-    ? accountLinksVisibility.postListings
-    : currentUser
-    ? true
-    : topbar?.postListingsLink
+  // If user is authenticated, check their user type
+  if (currentUser && currentUser.id) {
+    const userType = currentUser.attributes?.profile?.publicData?.userType;
+
+    // Hide link for customers
+    if (userType === 'customer') {
+      return false;
+    }
+
+    // For other authenticated users, use config or default to true
+    return accountLinksVisibility
+      ? accountLinksVisibility.postListings
+      : true;
+  }
+
+  // For unauthenticated users, use config or default to true
+  return topbar?.postListingsLink
     ? topbar.postListingsLink.showToUnauthenticatedUsers
     : true;
 };

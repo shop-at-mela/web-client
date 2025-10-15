@@ -647,6 +647,7 @@ export const ListingPageComponent = props => {
             categoryName={publicData.categoryLevel3}
             layoutManager={layoutManager}
             useFullWidth={true}
+            currentListingId={currentListing?.id?.uuid}
           />
         )}
         {publicData.categoryLevel2 && publicData.categoryLevel2 !== publicData.categoryLevel3 && (
@@ -655,6 +656,7 @@ export const ListingPageComponent = props => {
             categoryName={publicData.categoryLevel2}
             layoutManager={layoutManager}
             useFullWidth={true}
+            currentListingId={currentListing?.id?.uuid}
           />
         )}
         {publicData.categoryLevel1 && publicData.categoryLevel1 !== publicData.categoryLevel2 && publicData.categoryLevel1 !== publicData.categoryLevel3 && (
@@ -663,6 +665,7 @@ export const ListingPageComponent = props => {
             categoryName={publicData.categoryLevel1}
             layoutManager={layoutManager}
             useFullWidth={true}
+            currentListingId={currentListing?.id?.uuid}
           />
         )}
 

@@ -105,8 +105,8 @@ const ListingImageGallery = props => {
     };
   });
   const imageSizesMaybe = isFullscreen
-    ? {}
-    : { sizes: `(max-width: 1024px) 100vw, (max-width: 1200px) calc(100vw - 192px), 708px` };
+    ? { sizes: '100vw' }
+    : { sizes: `(max-width: 767px) 100vw, (max-width: 1024px) 80vw, (max-width: 1200px) calc(100vw - 192px), 708px` };
   const renderItem = item => {
     return (
       <AspectRatioWrapper

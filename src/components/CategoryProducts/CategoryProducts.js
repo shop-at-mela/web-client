@@ -70,6 +70,7 @@ const CategoryProductsComponent = ({
   onFetchCategoryProducts,
   layoutManager = null, // Desktop-only layout manager
   useFullWidth = false, // Whether to use full-width layout on desktop
+  currentListingId = null, // ID of current listing to exclude from recommendations
 }) => {
 
 
@@ -77,6 +78,30 @@ const CategoryProductsComponent = ({
   const config = useConfiguration();
   const prevCategoryRef = useRef();
   const containerRef = useRef(null);
+
+  // Helper function to recursively search through nested category structure
+  const findCategoryById = (categories, categoryId) => {
+    if (!categories || !Array.isArray(categories)) return null;
+
+    for (const category of categories) {
+      if (category.id === categoryId) {
+        return category;
+      }
+      if (category.subcategories && category.subcategories.length > 0) {
+        const found = findCategoryById(category.subcategories, categoryId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  // Helper function to resolve category ID to readable name
+  const resolveCategoryName = (categoryId, categoryConfig) => {
+    if (!categoryConfig || !categoryId) return categoryId;
+
+    const categoryItem = findCategoryById(categoryConfig, categoryId);
+    return categoryItem?.name || categoryId; // Use 'name' property or fallback to ID
+  };
 
   // Create a stable string representation for comparison
   const categoryString = useMemo(() => {
@@ -87,9 +112,9 @@ const CategoryProductsComponent = ({
     // Only fetch if category has actually changed
     if (categoryString && categoryString !== prevCategoryRef.current && categoryLevel && categoryName) {
       prevCategoryRef.current = categoryString;
-      onFetchCategoryProducts(categoryLevel, categoryName, config);
+      onFetchCategoryProducts(categoryLevel, categoryName, config, currentListingId);
     }
-  }, [categoryString, config, categoryLevel, categoryName, onFetchCategoryProducts]);
+  }, [categoryString, config, categoryLevel, categoryName, onFetchCategoryProducts, currentListingId]);
 
   // Desktop-only layout management
   useEffect(() => {
@@ -125,10 +150,12 @@ const CategoryProductsComponent = ({
     }
   };
 
+  const resolvedCategoryName = resolveCategoryName(categoryName, config.categoryConfiguration?.categories);
+
   return (
     <div ref={containerRef} className={classes}>
       <H3 as="h2" className={css.title}>
-        <FormattedMessage id={getTitleId()} values={{ categoryName }} />
+        <FormattedMessage id={getTitleId()} values={{ categoryName: resolvedCategoryName }} />
       </H3>
 
       {hasError ? (
@@ -158,7 +185,7 @@ const CategoryProductsComponent = ({
               }}
               className={css.viewMoreLink}
             >
-              <FormattedMessage id="CategoryProducts.viewMoreInCategory" values={{ categoryName }} />
+              <FormattedMessage id="CategoryProducts.viewMoreInCategory" values={{ categoryName: resolvedCategoryName }} />
             </NamedLink>
           </div>
         </>
@@ -183,6 +210,7 @@ CategoryProductsComponent.propTypes = {
   onFetchCategoryProducts: func.isRequired,
   layoutManager: object, // Desktop layout manager instance
   useFullWidth: bool, // Whether to use full-width layout on desktop
+  currentListingId: string, // ID of current listing to exclude from recommendations
 };
 
 const mapStateToProps = (state, ownProps) => {

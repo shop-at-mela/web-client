@@ -84,7 +84,7 @@ export const fetchCategoryProductsError = (categoryKey, error) => ({
 
 // ================ Thunks ================ //
 
-export const fetchCategoryProducts = (categoryLevel, categoryName, config) => (dispatch, getState, sdk) => {
+export const fetchCategoryProducts = (categoryLevel, categoryName, config, excludeListingId = null) => (dispatch, getState, sdk) => {
   const categoryKey = `${categoryLevel}:${categoryName}`;
 
   dispatch(fetchCategoryProductsRequest(categoryKey));
@@ -102,7 +102,7 @@ export const fetchCategoryProducts = (categoryLevel, categoryName, config) => (d
     'fields.image': ['variants.listing-card', 'variants.listing-card-2x'],
     'imageVariant.listing-card': 'w:400;h:300;fit:crop', // Define listing-card variant
     'imageVariant.listing-card-2x': 'w:800;h:600;fit:crop', // Define listing-card-2x variant
-    perPage: 6, // Limit to 6 products for optimal UX and performance
+    perPage: 9, // Limit to 9 products for optimal UX and performance
     [`pub_${categoryLevel}`]: categoryName,
   };
 
@@ -138,7 +138,12 @@ export const fetchCategoryProducts = (categoryLevel, categoryName, config) => (d
       };
 
       // Process listings to include image data
-      const listingsWithImages = attachImagesToListings(data, included);
+      let listingsWithImages = attachImagesToListings(data, included);
+
+      // Filter out the current listing if excludeListingId is provided
+      if (excludeListingId) {
+        listingsWithImages = listingsWithImages.filter(listing => listing.id.uuid !== excludeListingId);
+      }
 
       dispatch(fetchCategoryProductsSuccess(categoryKey, listingsWithImages));
       return response;

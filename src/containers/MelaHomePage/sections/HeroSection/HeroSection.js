@@ -1,60 +1,96 @@
 import React, { useState, useEffect } from 'react';
-import { FormattedMessage } from '../../../../util/reactIntl';
-import { NamedLink, Button } from '../../../../components';
+import { connect } from 'react-redux';
+import { compose } from 'redux';
+import { FormattedMessage, useIntl } from '../../../../util/reactIntl';
+import { NamedLink, Button, ResponsiveImage } from '../../../../components';
+import { formatMoney } from '../../../../util/currency';
+import { createSlug } from '../../../../util/urlHelpers';
+import { useConfiguration } from '../../../../context/configurationContext';
+import { fetchHeroProducts } from '../../../../ducks/heroProducts.duck';
 
 import css from './HeroSection.module.css';
-
-// Mock product data - replace with actual product API calls
-const HERO_PRODUCTS = [
-  {
-    id: 1,
-    title: 'Organic Cotton Romper',
-    price: '$24.99',
-    image: '/static/images/hero-product-1.jpg',
-    category: 'baby-clothing',
-    badge: 'GOTS Certified'
-  },
-  {
-    id: 2,
-    title: 'Traditional Festive Outfit',
-    price: '$39.99',
-    image: '/static/images/hero-product-2.jpg',
-    category: 'toddler-fashion',
-    badge: 'Organic Cotton'
-  },
-  {
-    id: 3,
-    title: 'Baby Essentials Set',
-    price: '$19.99',
-    image: '/static/images/hero-product-3.jpg',
-    category: 'accessories',
-    badge: 'Baby Safe'
-  }
-];
 
 const TRUST_BADGES = [
   { icon: '🌱', text: 'GOTS Certified' },
   { icon: '👶', text: 'Baby Safe' },
-  { icon: '⭐', text: '4.8/5 Rating' },
-  { icon: '🚚', text: 'Free Shipping' }
+  { icon: '🇮🇳', text: 'Made in India' }
 ];
 
-const HeroSection = () => {
+const HeroSectionComponent = ({
+  heroProducts = [],
+  fetchHeroProductsInProgress = false,
+  fetchHeroProductsError = null,
+  onFetchHeroProducts,
+}) => {
+  const intl = useIntl();
+  const config = useConfiguration();
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
+  // Fetch hero products on component mount
+  useEffect(() => {
+    onFetchHeroProducts(config);
+  }, [config, onFetchHeroProducts]);
+
   // Auto-rotate products every 4 seconds
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    if (!isAutoPlaying || heroProducts.length === 0) return;
 
     const interval = setInterval(() => {
-      setCurrentProductIndex(prev => (prev + 1) % HERO_PRODUCTS.length);
+      setCurrentProductIndex(prev => (prev + 1) % heroProducts.length);
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying]);
+  }, [isAutoPlaying, heroProducts.length]);
 
-  const currentProduct = HERO_PRODUCTS[currentProductIndex];
+  // Handle case where no products loaded yet
+  if (heroProducts.length === 0) {
+    if (fetchHeroProductsInProgress) {
+      return (
+        <div className={css.hero}>
+          <div className={css.container}>
+            <div className={css.loading}>Loading featured products...</div>
+          </div>
+        </div>
+      );
+    }
+    if (fetchHeroProductsError) {
+      return (
+        <div className={css.hero}>
+          <div className={css.container}>
+            <div className={css.error}>Unable to load featured products</div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  }
+
+  const currentProduct = heroProducts[currentProductIndex];
+
+  // Helper function to format product data for display
+  const formatProductForDisplay = (product) => {
+    const { title, price, images } = product.attributes;
+    const { brand } = product.attributes.publicData || {};
+    const primaryImage = images && images.length > 0 ? images[0] : null;
+    const formattedPrice = price ? formatMoney(intl, price) : null;
+    const slug = createSlug(title);
+
+    return {
+      id: product.id.uuid,
+      title,
+      price: formattedPrice,
+      image: primaryImage,
+      category: product.attributes.publicData?.categoryLevel1 || 'products',
+      badge: brand || 'Handcrafted',
+      linkProps: {
+        name: 'ListingPage',
+        params: { id: product.id.uuid, slug },
+      }
+    };
+  };
+
+  const displayProduct = formatProductForDisplay(currentProduct);
 
   const handleProductClick = (index) => {
     setCurrentProductIndex(index);
@@ -72,15 +108,15 @@ const HeroSection = () => {
           <div className={css.textContent}>
             <h1 className={css.headline}>
               <FormattedMessage
-                id="MelaHomePage.heroHeadline"
-                defaultMessage="Sustainable Baby Fashion with Global Design Diversity"
+                id="SectionMelaHero.heroHeadline"
+                defaultMessage="Sustainable Baby Fashion with Indian Design Heritage"
               />
             </h1>
 
             <p className={css.subheadline}>
               <FormattedMessage
-                id="MelaHomePage.heroSubheadline"
-                defaultMessage="Discover organic, ethically-made baby clothes from innovative designers worldwide. GOTS certified, premium quality, and sustainably crafted for your little one."
+                id="SectionMelaHero.heroSubheadline"
+                defaultMessage="Discover premium organic baby clothes from innovative designers in India. GOTS certified quality, traditional craftsmanship, delivered worldwide."
               />
             </p>
 
@@ -101,18 +137,17 @@ const HeroSection = () => {
                 className={css.primaryCta}
               >
                 <FormattedMessage
-                  id="MelaHomePage.shopNow"
+                  id="SectionMelaHero.shopNow"
                   defaultMessage="Shop Now"
                 />
               </NamedLink>
 
               <NamedLink
-                name="SearchPage"
-                params={{ pub_category: 'baby-clothing' }}
+                name="CategoriesPage"
                 className={css.secondaryCta}
               >
                 <FormattedMessage
-                  id="MelaHomePage.viewCategories"
+                  id="SectionMelaHero.viewCategories"
                   defaultMessage="View Categories"
                 />
               </NamedLink>
@@ -123,26 +158,33 @@ const HeroSection = () => {
           <div className={css.productShowcase}>
             <div className={css.featuredProduct}>
               <div className={css.productImage}>
-                <img
-                  src={currentProduct.image}
-                  alt={currentProduct.title}
-                  className={css.productImg}
-                />
+                {displayProduct.image ? (
+                  <ResponsiveImage
+                    rootClassName={css.productImg}
+                    alt={displayProduct.title}
+                    image={displayProduct.image}
+                    variants={['listing-card', 'listing-card-2x']}
+                    sizes="(max-width: 767px) 100vw, 50vw"
+                  />
+                ) : (
+                  <div className={css.noImage}>
+                    <FormattedMessage id="HeroSection.noImage" defaultMessage="No image available" />
+                  </div>
+                )}
                 <div className={css.productBadge}>
-                  {currentProduct.badge}
+                  {displayProduct.badge}
                 </div>
               </div>
 
               <div className={css.productInfo}>
-                <h3 className={css.productTitle}>{currentProduct.title}</h3>
-                <p className={css.productPrice}>{currentProduct.price}</p>
+                <h3 className={css.productTitle}>{displayProduct.title}</h3>
+                <p className={css.productPrice}>{displayProduct.price}</p>
                 <NamedLink
-                  name="SearchPage"
-                  params={{ pub_category: currentProduct.category }}
+                  {...displayProduct.linkProps}
                   className={css.productCta}
                 >
                   <FormattedMessage
-                    id="MelaHomePage.viewProduct"
+                    id="SectionMelaHero.viewProduct"
                     defaultMessage="View Product"
                   />
                 </NamedLink>
@@ -151,7 +193,7 @@ const HeroSection = () => {
 
             {/* Product Navigation Dots */}
             <div className={css.productDots}>
-              {HERO_PRODUCTS.map((_, index) => (
+              {heroProducts.map((_, index) => (
                 <button
                   key={index}
                   className={`${css.dot} ${index === currentProductIndex ? css.activeDot : ''}`}
@@ -205,5 +247,27 @@ const HeroSection = () => {
     </div>
   );
 };
+
+const mapStateToProps = state => {
+  const {
+    heroProducts,
+    fetchHeroProductsInProgress,
+    fetchHeroProductsError,
+  } = state.heroProducts || {};
+
+  return {
+    heroProducts: heroProducts || [],
+    fetchHeroProductsInProgress,
+    fetchHeroProductsError,
+  };
+};
+
+const mapDispatchToProps = {
+  onFetchHeroProducts: fetchHeroProducts,
+};
+
+const HeroSection = compose(
+  connect(mapStateToProps, mapDispatchToProps)
+)(HeroSectionComponent);
 
 export default HeroSection;

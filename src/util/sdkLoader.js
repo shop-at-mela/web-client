@@ -39,6 +39,8 @@ const createImageVariantConfig = (name, width, aspectRatio) => {
       w: variantWidth,
       h: variantHeight,
       fit: 'crop',
+      q: 85, // Higher quality (default is 75)
+      f: 'auto', // Auto format selection (WebP when supported)
     }),
   };
 };

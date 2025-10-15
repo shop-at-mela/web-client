@@ -18,10 +18,17 @@ const MelaHomePage = props => {
 
   const pageTitle = 'Sustainable Baby Fashion with Global Design Diversity - Mela';
 
+  // Social media sharing images
+  const socialImage = 'https://sharetribe-assets.imgix.net/68ab648b-6d39-4b2b-bd2c-f99295eeb366/raw/06/5ce7d29d9cfbdfb391af7bc0a744511b9fc1c4?auto=format&fit=clip&h=800&w=800&s=f0fae1b6a833c943e3af463df9cbb484';
+  const facebookImages = [{ url: socialImage, width: 800, height: 800 }];
+  const twitterImages = [{ url: socialImage, width: 800, height: 800 }];
+
   return (
     <Page
       title={pageTitle}
       description="Discover organic, ethically-made baby clothes from innovative designers worldwide. GOTS certified, premium quality, and sustainably crafted for your little one."
+      facebookImages={facebookImages}
+      twitterImages={twitterImages}
       schema={{
         '@context': 'http://schema.org',
         '@type': 'WebPage',
