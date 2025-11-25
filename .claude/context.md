@@ -34,6 +34,8 @@
 - PropTypes for type checking
 - Loadable components for code splitting
 - Helper functions for category resolution (findCategoryById, resolveCategoryNames)
+- Listing Fields: Name|Value format for Sharetribe Console configuration ("Age Group|age_group")
+- Item Aspects: Classified metadata feeding into listing fields via mapping
 
 ## Development Workflows
 

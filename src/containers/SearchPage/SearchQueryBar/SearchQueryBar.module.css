@@ -1,0 +1,90 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  /* Only visible on mobile */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: white;
+  border-bottom: 1px solid var(--colorGrey100);
+
+  /* Static positioning - scrolls with content */
+
+  @media (min-width: 768px) {
+    /* Hide on desktop - query visible in topbar search */
+    display: none;
+  }
+}
+
+.queryButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--colorGrey50);
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 0; /* Allow flex shrinking */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  &:hover {
+    background: var(--colorGrey100);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  }
+
+  &:focus {
+    outline: 2px solid var(--marketplaceColor);
+    outline-offset: 2px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: var(--colorGrey500);
+  width: 16px;
+  height: 16px;
+}
+
+.queryText {
+  composes: marketplaceBodyFontStyles from global;
+  font-weight: var(--fontWeightMedium);
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--colorGrey700);
+}
+
+.clearButton {
+  flex-shrink: 0;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--colorGrey400);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: var(--colorGrey700);
+    background: var(--colorGrey100);
+  }
+
+  &:focus {
+    outline: 2px solid var(--marketplaceColor);
+    outline-offset: 2px;
+  }
+}

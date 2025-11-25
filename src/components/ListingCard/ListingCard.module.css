@@ -11,6 +11,12 @@
   }
 }
 
+.imageContainer {
+  position: relative;
+  /* Isolate stacking context to prevent badges from appearing above modals */
+  isolation: isolate;
+}
+
 .aspectRatioWrapper {
   transition: var(--transitionStyleButton);
   background: var(--colorGrey100); /* Loading BG color */
@@ -127,4 +133,64 @@
   /* use break-word if available */
   word-break: break-word;
   hyphens: auto;
+}
+
+/* Trust Badges - overlaid on top-left of image */
+.trustBadges {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* z-index removed - not needed, prevents modal overlap issues */
+}
+
+.badge {
+  composes: marketplaceTinyFontStyles from global;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: var(--marketplaceColor);
+  font-weight: var(--fontWeightSemiBold);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  width: fit-content;
+
+  @media (--viewportMedium) {
+    font-size: 11px;
+    padding: 5px 9px;
+  }
+}
+
+/* Conversion Badge - overlaid on top-right of image */
+.conversionBadge {
+  composes: marketplaceTinyFontStyles from global;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: var(--marketplaceColor);
+  color: white;
+  font-weight: var(--fontWeightSemiBold);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  /* z-index removed - not needed, prevents modal overlap issues */
+
+  @media (--viewportMedium) {
+    font-size: 11px;
+    padding: 5px 11px;
+  }
+}
+
+/* Urgency variant for low stock badge */
+.urgencyBadge {
+  background-color: #e74c3c;
 }

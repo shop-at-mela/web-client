@@ -1,0 +1,88 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  /* Compact inline positioning - no sticky, minimal space */
+  margin-bottom: 8px;
+}
+
+.filtersContainer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px 5px 12px;
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  border: none;
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--marketplaceColorDark);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+  }
+}
+
+.filterValue {
+  font-weight: var(--fontWeightMedium);
+  line-height: 1.2;
+}
+
+.closeIcon {
+  /* Let SVG use its native size (9px for small variant) */
+  /* Icon uses filled paths, not strokes */
+  flex-shrink: 0;
+  fill: currentColor;
+  /* Circle background for clear visual distinction */
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  padding: 4px;
+  transition: background-color 0.2s ease;
+  /* Ensure proper sizing and prevent cropping */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  /* Prevent overflow cropping */
+  overflow: visible;
+}
+
+.filterChip:hover .closeIcon {
+  background-color: rgba(255, 255, 255, 0.35);
+}
+
+.clearAllButton {
+  composes: h5 from global;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey300);
+  padding: 4px 10px;
+  border: 1px solid var(--colorGrey300);
+  border-radius: 16px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--colorGrey700);
+    border-color: var(--colorGrey700);
+  }
+}

@@ -102,25 +102,27 @@ class SearchFiltersMobileComponent extends Component {
 
     return (
       <div className={classes}>
-        <div className={css.searchResultSummary}>
-          {listingsAreLoaded && resultsCount > 0 ? resultsFound : null}
-          {listingsAreLoaded && resultsCount === 0 ? noResults : null}
-          {searchInProgress ? loadingResults : null}
-        </div>
-        <div className={css.buttons}>
-          <PopupOpenerButton isSelected={selectedFiltersCount > 0} toggleOpen={this.openFilters}>
-            <FormattedMessage
-              id="SearchFiltersMobile.filtersButtonLabel"
-              className={css.mapIconText}
-            />
-          </PopupOpenerButton>
+        <div className={css.controlsBar}>
+          <div className={css.searchResultSummary}>
+            {listingsAreLoaded && resultsCount > 0 ? resultsFound : null}
+            {listingsAreLoaded && resultsCount === 0 ? noResults : null}
+            {searchInProgress ? loadingResults : null}
+          </div>
+          <div className={css.buttons}>
+            <PopupOpenerButton isSelected={selectedFiltersCount > 0} toggleOpen={this.openFilters}>
+              <FormattedMessage
+                id="SearchFiltersMobile.filtersButtonLabel"
+                className={css.mapIconText}
+              />
+            </PopupOpenerButton>
 
-          {sortByComponent}
-          {isMapVariant ? (
-            <div className={css.mapIcon} onClick={onMapIconClick}>
-              <FormattedMessage id="SearchFiltersMobile.openMapView" className={css.mapIconText} />
-            </div>
-          ) : null}
+            {sortByComponent}
+            {isMapVariant ? (
+              <div className={css.mapIcon} onClick={onMapIconClick}>
+                <FormattedMessage id="SearchFiltersMobile.openMapView" className={css.mapIconText} />
+              </div>
+            ) : null}
+          </div>
         </div>
 
         {noResultsInfo ? noResultsInfo : null}

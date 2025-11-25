@@ -47,4 +47,91 @@ describe('ListingCard', () => {
     const tree = render(<ListingCard listing={listing} intl={fakeIntl} />, { config });
     expect(tree.asFragment().firstChild).toMatchSnapshot();
   });
+
+  it('matches snapshot with trust badges', () => {
+    const listing = createListing(
+      'listing1',
+      {
+        publicData: {
+          brand: 'Organic Brand',
+          certification: ['gots_certified', 'bpa_free'],
+        },
+      },
+      { author: createUser('user1') }
+    );
+    const tree = render(
+      <ListingCard listing={listing} showTrustBadges={true} intl={fakeIntl} />
+    );
+    expect(tree.asFragment().firstChild).toMatchSnapshot();
+  });
+
+  it('matches snapshot with conversion badge (bestseller)', () => {
+    const listing = createListing(
+      'listing1',
+      {
+        publicData: {
+          brand: 'Popular Brand',
+        },
+      },
+      { author: createUser('user1') }
+    );
+    const tree = render(
+      <ListingCard listing={listing} showConversionBadges={true} isBestseller={true} intl={fakeIntl} />
+    );
+    expect(tree.asFragment().firstChild).toMatchSnapshot();
+  });
+
+  it('matches snapshot with conversion badge (low stock)', () => {
+    const listing = createListing(
+      'listing1',
+      {
+        publicData: {
+          brand: 'Limited Stock Brand',
+        },
+      },
+      { author: createUser('user1') }
+    );
+    const tree = render(
+      <ListingCard listing={listing} showConversionBadges={true} stockCount={3} intl={fakeIntl} />
+    );
+    expect(tree.asFragment().firstChild).toMatchSnapshot();
+  });
+
+  it('matches snapshot without author info', () => {
+    const listing = createListing(
+      'listing1',
+      {
+        publicData: {
+          brand: 'Test Brand',
+        },
+      },
+      { author: createUser('user1') }
+    );
+    const tree = render(<ListingCard listing={listing} showAuthorInfo={false} intl={fakeIntl} />);
+    expect(tree.asFragment().firstChild).toMatchSnapshot();
+  });
+
+  it('matches snapshot with all badges and no author', () => {
+    const listing = createListing(
+      'listing1',
+      {
+        publicData: {
+          brand: 'Premium Brand',
+          certification: ['gots_certified', 'non_toxic_dyes'],
+        },
+      },
+      { author: createUser('user1') }
+    );
+    const tree = render(
+      <ListingCard
+        listing={listing}
+        showAuthorInfo={false}
+        showTrustBadges={true}
+        showConversionBadges={true}
+        isBestseller={true}
+        intl={fakeIntl}
+      />
+    );
+    expect(tree.asFragment().firstChild).toMatchSnapshot();
+  });
 });

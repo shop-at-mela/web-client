@@ -81,6 +81,12 @@ const mockRouteConfiguration = [
 - **Variant ordering**: List highest quality first: `['landscape-crop6x', 'landscape-crop4x', 'landscape-crop2x', 'scaled-xlarge']`
 - **Test updates**: Update duck tests to expect enhanced quality params: `'w:400;h:400;fit:crop;q:85;f:auto'`
 
+### Sharetribe Listing Fields & Item Aspects Integration
+- **Listing Fields**: User-facing filters configured in Sharetribe Console with Name|Value pairs (e.g., "Organic Cotton|organic_cotton")
+- **Item Aspects**: Raw classified metadata from ML prompt_engine.py stored as semicolon-separated key-value pairs
+- **Integration**: Item Aspects feed into Listing Fields via name-to-value mapping for consistent filtering
+- **Configuration**: Use `/scrapper and classifiers/documentation/listing-fields-mapping.json` for field definitions
+
 ### Common Test Issues & Solutions
 - **SDK import errors**: Use `../util/sdkLoader` not `sharetribe-sdk`
 - **Multiple elements**: Use `getAllByTestId` when elements share test IDs
@@ -89,7 +95,39 @@ const mockRouteConfiguration = [
 - **State shape**: Match exact Redux state structure in test mocks
 - **IntersectionObserver errors**: JSDOM limitation - mock needed for components using viewport detection
 
+### SDK Initialization (Follow index.js Pattern)
+```javascript
+const baseUrl = appSettings.sdk.baseUrl ? { baseUrl: appSettings.sdk.baseUrl } : {};
+const sdk = createInstance({
+  transitVerbose: appSettings.sdk.transitVerbose,
+  clientId: appSettings.sdk.clientId,
+  secure: appSettings.usingSSL,
+  typeHandlers: apiUtils.typeHandlers,
+  ...baseUrl,
+  ...assetCdnBaseUrl,
+});
+```
+
+### Parallel SDK Fetches + Entity Accumulation
+- **Issue**: Updating shared object in parallel async = race condition
+- **Fix**: Fetch parallel, accumulate sequential
+```javascript
+const results = await Promise.all(fetchPromises);
+let allEntities = {};
+results.forEach(r => allEntities = updatedEntities(allEntities, r.responseData, config));
+```
+
+### Image Variant Fallback
+- **Issue**: Filtering for `listing-card` variants returns empty array if only `default` exists
+- **Fix**: `const variants = prefixedVariants.length > 0 ? prefixedVariants : availableVariants;`
+
+### ListingCard Badges (Phase 2)
+- **TrustBadges**: Top-left, max 2 certs, white bg
+- **ConversionBadges**: Top-right, priority: bestseller > low stock (≤5, red) > new
+- **Pattern**: Absolute position within `position: relative` parent
+
 ## Session Log
 2024-10-10: Fixed CategoryProducts to display proper category names + product filtering improvements
 2025-10-10: Implemented HeroProducts with real API integration, randomization, and comprehensive testing
 2025-10-13: Resolved image quality issues - switched to predefined high-res variants + enhanced quality settings
+2025-11-18: Phase 2 - CategoryShowcase product-first, ListingCard badges, image variant fallback

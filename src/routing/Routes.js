@@ -36,12 +36,6 @@ const callLoadData = props => {
 
   if (shouldLoadData) {
     dispatch(loadData(match.params, location.search, config))
-      .then(() => {
-        if (props.logLoadDataCalls) {
-          // This gives good input for debugging issues on live environments, but with test it's not needed.
-          console.log(`loadData success for ${name} route`);
-        }
-      })
       .catch(e => {
         log.error(e, 'load-data-failed', { routeName: name });
       });

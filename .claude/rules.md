@@ -8,6 +8,7 @@
 5. **Update learnings.md after each session** - Document patterns, issues, and solutions discovered
    - Keep learnings.md focused on reusable patterns and solutions rather than feature-specific documentation
    - Use context.md for project workflows and conventions
+6. **Create reusable components first** - When building new UI elements that will be used in multiple places (e.g., ProductTile, CategoryCard), create them as standalone reusable components before integrating into specific pages
 
 ## Testing
 - Run tests: `yarn test`
@@ -18,3 +19,11 @@
 - Use `config.categoryConfiguration?.categories` for category data
 - Follow CategoryBreadcrumb pattern for ID-to-name resolution
 - Never hardcode category transformations
+
+## Component Development
+- Build reusable components in `/src/components/` for UI elements used across multiple pages
+- Page-specific components go in `/src/containers/[PageName]/`
+- Follow existing component structure: Component.js, Component.module.css, Component.test.js
+- **Extend existing components** instead of duplicating (e.g., extend ListingCard rather than create ProductTile)
+- **Name components by outcome** not implementation (e.g., TrustBadges/ConversionBadges vs CertificationBadges)
+- **Use flexible props** for context-aware rendering (e.g., showAuthorInfo, showTrustBadges)

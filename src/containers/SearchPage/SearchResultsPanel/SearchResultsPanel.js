@@ -3,6 +3,7 @@ import classNames from 'classnames';
 
 import { propTypes } from '../../../util/types';
 import { ListingCard, PaginationLinks } from '../../../components';
+import { daysBetween, getStartOf } from '../../../util/dates';
 
 import css from './SearchResultsPanel.module.css';
 
@@ -73,15 +74,34 @@ const SearchResultsPanel = props => {
   return (
     <div className={classes}>
       <div className={isMapVariant ? css.listingCardsMapVariant : css.listingCards}>
-        {listings.map(l => (
-          <ListingCard
-            className={css.listingCard}
-            key={l.id.uuid}
-            listing={l}
-            renderSizes={cardRenderSizes(isMapVariant)}
-            setActiveListing={setActiveListing}
-          />
-        ))}
+        {listings.map(l => {
+          // Calculate badge data
+          const { createdAt, currentStock, publicData } = l.attributes;
+          const isBestseller = publicData?.isBestseller || false;
+          const stockCount = currentStock?.quantity || null;
+
+          // Check if listing is new (created within last 30 days)
+          const now = new Date();
+          const listingCreatedDate = createdAt ? new Date(createdAt) : null;
+          const isNew = listingCreatedDate
+            ? daysBetween(listingCreatedDate, now) <= 30
+            : false;
+
+          return (
+            <ListingCard
+              className={css.listingCard}
+              key={l.id.uuid}
+              listing={l}
+              renderSizes={cardRenderSizes(isMapVariant)}
+              setActiveListing={setActiveListing}
+              showTrustBadges={true}
+              showConversionBadges={true}
+              isBestseller={isBestseller}
+              stockCount={stockCount}
+              isNew={isNew}
+            />
+          );
+        })}
         {props.children}
       </div>
       {paginationLinks}

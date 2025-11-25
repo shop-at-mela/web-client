@@ -16,7 +16,11 @@ import css from './MelaHomePage.module.css';
 const MelaHomePage = props => {
   const { currentPage } = props;
 
-  const pageTitle = 'Sustainable Baby Fashion with Global Design Diversity - Mela';
+  // SEO-optimized meta title targeting primary keywords
+  const pageTitle = 'Organic Baby Clothes & Sustainable Baby Fashion | GOTS Certified | Mela';
+
+  // SEO-optimized meta description with target keywords
+  const pageDescription = 'Shop organic baby clothes for newborns, 0-6 months, 6-12 months & toddlers. GOTS certified sustainable baby clothing. Free shipping on orders $50+. Ethically made in India.';
 
   // Social media sharing images
   const socialImage = 'https://sharetribe-assets.imgix.net/68ab648b-6d39-4b2b-bd2c-f99295eeb366/raw/06/5ce7d29d9cfbdfb391af7bc0a744511b9fc1c4?auto=format&fit=clip&h=800&w=800&s=f0fae1b6a833c943e3af463df9cbb484';
@@ -26,7 +30,7 @@ const MelaHomePage = props => {
   return (
     <Page
       title={pageTitle}
-      description="Discover organic, ethically-made baby clothes from innovative designers worldwide. GOTS certified, premium quality, and sustainably crafted for your little one."
+      description={pageDescription}
       facebookImages={facebookImages}
       twitterImages={twitterImages}
       schema={{

@@ -480,14 +480,37 @@ describe('SearchPage.helpers', () => {
 
   describe('pickSearchParamsOnly', () => {
     const isOriginInUse = false;
-    it('returns search parameters', () => {
+    it('returns search parameters including address and bounds', () => {
       const params = {
         address: 'address value',
         origin: 'origin value',
         bounds: 'bounds value',
       };
       const validParams = pickSearchParamsOnly(params, filterConfigs, sortConfig, isOriginInUse);
-      expect(validParams).toEqual({ bounds: 'bounds value' });
+      expect(validParams).toEqual({ address: 'address value', bounds: 'bounds value' });
+    });
+
+    it('returns keywords parameter when present', () => {
+      const params = {
+        keywords: 'baby clothes',
+        pub_generalParam: 'one',
+      };
+      const validParams = pickSearchParamsOnly(params, filterConfigs, sortConfig, isOriginInUse);
+      expect(validParams).toEqual({ keywords: 'baby clothes', pub_generalParam: 'one' });
+    });
+
+    it('returns both address and keywords when both present', () => {
+      const params = {
+        address: 'New York',
+        keywords: 'organic',
+        bounds: 'bounds value',
+      };
+      const validParams = pickSearchParamsOnly(params, filterConfigs, sortConfig, isOriginInUse);
+      expect(validParams).toEqual({
+        address: 'New York',
+        keywords: 'organic',
+        bounds: 'bounds value'
+      });
     });
 
     it('returns filter parameters', () => {

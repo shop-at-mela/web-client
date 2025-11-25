@@ -27,6 +27,79 @@ import css from './ListingCard.module.css';
 
 const MIN_LENGTH_FOR_LONG_WORDS = 10;
 
+/**
+ * TrustBadges
+ * Component to render trust-building certification badges overlaid on the product image.
+ * Purpose: Build credibility and reassure customers about safety and quality.
+ * @param {Object} props
+ * @param {Array<string>} props.certifications array of certification keys from publicData
+ */
+const TrustBadges = props => {
+  const { certifications = [] } = props;
+
+  if (!certifications || certifications.length === 0) {
+    return null;
+  }
+
+  // Map certification values to display labels
+  const certificationLabels = {
+    gots_certified: 'GOTS',
+    non_toxic_dyes: 'Non-toxic',
+    bpa_free: 'BPA Free',
+    ce_certified: 'CE',
+    bis_approved: 'BIS',
+  };
+
+  // Show up to 2 most important certifications
+  const topCertifications = certifications.slice(0, 2);
+
+  return (
+    <div className={css.trustBadges}>
+      {topCertifications.map(cert => {
+        const label = certificationLabels[cert] || cert;
+        return (
+          <span key={cert} className={css.badge}>
+            {label}
+          </span>
+        );
+      })}
+    </div>
+  );
+};
+
+/**
+ * ConversionBadges
+ * Component to render conversion-focused badges that drive purchase decisions.
+ * Purpose: Create urgency and social proof to increase conversions.
+ * Displays one badge based on priority: bestseller > low stock > new arrival
+ * @param {Object} props
+ * @param {boolean} props.isBestseller whether product is a bestseller
+ * @param {number} props.stockCount remaining stock count for urgency
+ * @param {boolean} props.isNew whether product is newly listed
+ */
+const ConversionBadges = props => {
+  const { isBestseller = false, stockCount = null, isNew = false } = props;
+
+  // Priority order: bestseller > low stock > new arrival
+  let badgeContent = null;
+  let badgeClass = css.conversionBadge;
+
+  if (isBestseller) {
+    badgeContent = <FormattedMessage id="ListingCard.bestseller" />;
+  } else if (stockCount !== null && stockCount <= 5 && stockCount > 0) {
+    badgeContent = <FormattedMessage id="ListingCard.lowStock" values={{ count: stockCount }} />;
+    badgeClass = classNames(css.conversionBadge, css.urgencyBadge);
+  } else if (isNew) {
+    badgeContent = <FormattedMessage id="ListingCard.newArrival" />;
+  }
+
+  if (!badgeContent) {
+    return null;
+  }
+
+  return <div className={badgeClass}>{badgeContent}</div>;
+};
+
 const priceData = (price, currency, intl) => {
   if (price && price.currency === currency) {
     const formattedPrice = formatMoney(intl, price);
@@ -118,9 +191,28 @@ const ListingCardImage = props => {
 
   const firstImage =
     currentListing.images && currentListing.images.length > 0 ? currentListing.images[0] : null;
-  const variants = firstImage
-    ? Object.keys(firstImage?.attributes?.variants).filter(k => k.startsWith(variantPrefix))
-    : [];
+
+  // Get variants - prefer listing-card variants, fall back to all variants if none match
+  const availableVariants = firstImage ? Object.keys(firstImage?.attributes?.variants) : [];
+  const prefixedVariants = availableVariants.filter(k => k.startsWith(variantPrefix));
+  const variants = prefixedVariants.length > 0 ? prefixedVariants : availableVariants;
+
+  // Generate SEO-optimized alt text
+  const publicData = currentListing.attributes?.publicData || {};
+  const ageGroup = publicData.age_group || '';
+  const certifications = publicData.certification || [];
+  const hasGOTS = certifications.includes('gots_certified');
+
+  const altTextParts = [title];
+  if (ageGroup) {
+    const ageLabel = ageGroup.replace(/_/g, '-');
+    altTextParts.push(`for ${ageLabel}`);
+  }
+  if (hasGOTS) {
+    altTextParts.push('GOTS certified');
+  }
+  altTextParts.push('organic baby clothing');
+  const altText = altTextParts.join(' - ');
 
   // Render the listing image only if listing images are enabled in the listing type
   return showListingImage ? (
@@ -132,7 +224,7 @@ const ListingCardImage = props => {
     >
       <LazyImage
         rootClassName={css.rootForImage}
-        alt={title}
+        alt={altText}
         image={firstImage}
         variants={variants}
         sizes={renderSizes}
@@ -160,7 +252,12 @@ const ListingCardImage = props => {
  * @param {Object} props.listing API entity: listing or ownListing
  * @param {string?} props.renderSizes for img/srcset
  * @param {Function?} props.setActiveListing
- * @param {boolean?} props.showAuthorInfo
+ * @param {boolean?} props.showAuthorInfo whether to display author name (default: true)
+ * @param {boolean?} props.showTrustBadges whether to display certification badges (default: false)
+ * @param {boolean?} props.showConversionBadges whether to display conversion badges (default: false)
+ * @param {boolean?} props.isBestseller whether product is a bestseller (default: false)
+ * @param {number?} props.stockCount remaining stock for urgency display (default: null)
+ * @param {boolean?} props.isNew whether product is newly listed (default: false)
  * @returns {JSX.Element} listing card to be used in search result panel etc.
  */
 export const ListingCard = props => {
@@ -174,6 +271,11 @@ export const ListingCard = props => {
     renderSizes,
     setActiveListing,
     showAuthorInfo = true,
+    showTrustBadges = false,
+    showConversionBadges = false,
+    isBestseller = false,
+    stockCount = null,
+    isNew = false,
   } = props;
 
   const classes = classNames(rootClassName || css.root, className);
@@ -185,9 +287,10 @@ export const ListingCard = props => {
 
   const author = ensureUser(listing.author);
   const authorName = author.attributes.profile.displayName;
-  
-  // Extract brand from publicData
+
+  // Extract brand and certifications from publicData
   const brand = publicData?.brand || null;
+  const certifications = publicData?.certification || [];
 
   const { listingType, cardStyle } = publicData || {};
   const validListingTypes = config.listing.listingTypes;
@@ -210,18 +313,24 @@ export const ListingCard = props => {
 
   return (
     <NamedLink className={classes} name="ListingPage" params={{ id, slug }}>
-      <ListingCardImage
-        renderSizes={renderSizes}
-        title={title}
-        currentListing={currentListing}
-        config={config}
-        setActivePropsMaybe={setActivePropsMaybe}
-        aspectWidth={aspectWidth}
-        aspectHeight={aspectHeight}
-        variantPrefix={variantPrefix}
-        style={cardStyle}
-        showListingImage={showListingImage}
-      />
+      <div className={css.imageContainer}>
+        <ListingCardImage
+          renderSizes={renderSizes}
+          title={title}
+          currentListing={currentListing}
+          config={config}
+          setActivePropsMaybe={setActivePropsMaybe}
+          aspectWidth={aspectWidth}
+          aspectHeight={aspectHeight}
+          variantPrefix={variantPrefix}
+          style={cardStyle}
+          showListingImage={showListingImage}
+        />
+        {showTrustBadges && <TrustBadges certifications={certifications} />}
+        {showConversionBadges && (
+          <ConversionBadges isBestseller={isBestseller} stockCount={stockCount} isNew={isNew} />
+        )}
+      </div>
       <div className={css.info}>
         <PriceMaybe
           price={price}

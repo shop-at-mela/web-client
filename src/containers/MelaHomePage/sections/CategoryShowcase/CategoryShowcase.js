@@ -1,27 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FormattedMessage } from '../../../../util/reactIntl';
-import { NamedLink } from '../../../../components';
+import { NamedLink, ListingCard } from '../../../../components';
 import { useConfiguration } from '../../../../context/configurationContext';
+import { createInstance } from '../../../../util/sdkLoader';
+import { denormalisedEntities, updatedEntities } from '../../../../util/data';
+import appSettings from '../../../../config/settings';
+import * as apiUtils from '../../../../util/api';
 
 import css from './CategoryShowcase.module.css';
 
-// Helper function to recursively search through nested category structure
-const findCategoryById = (categories, categoryId) => {
-  if (!categories || !Array.isArray(categories)) return null;
+// Create SDK instance for fetching listings (matches pattern from index.js)
+const baseUrl = appSettings.sdk.baseUrl ? { baseUrl: appSettings.sdk.baseUrl } : {};
+const assetCdnBaseUrl = appSettings.sdk.assetCdnBaseUrl
+  ? { assetCdnBaseUrl: appSettings.sdk.assetCdnBaseUrl }
+  : {};
 
-  for (const category of categories) {
-    if (category.id === categoryId) {
-      return category;
-    }
-    if (category.subcategories && category.subcategories.length > 0) {
-      const found = findCategoryById(category.subcategories, categoryId);
-      if (found) return found;
-    }
-  }
-  return null;
-};
+const sdk = createInstance({
+  transitVerbose: appSettings.sdk.transitVerbose,
+  clientId: appSettings.sdk.clientId,
+  secure: appSettings.usingSSL,
+  typeHandlers: apiUtils.typeHandlers,
+  ...baseUrl,
+  ...assetCdnBaseUrl,
+});
 
-// Get categories for showcase (level 2 subcategories)
+/**
+ * Get categories for showcase (level 2 subcategories)
+ * Returns up to 3 categories to showcase on the homepage
+ */
 const getShowcaseCategories = (categoryConfig) => {
   if (!categoryConfig || !Array.isArray(categoryConfig)) return [];
 
@@ -36,77 +42,141 @@ const getShowcaseCategories = (categoryConfig) => {
     }
   });
 
-  // Return up to 4 subcategories for the showcase
-  return showcaseCategories.slice(0, 4);
+  // Return up to 3 subcategories for the showcase (Baby Clothing, Shoes, Accessories)
+  return showcaseCategories.slice(0, 3);
 };
 
-// Map Sharetribe category to showcase format
-const formatCategoryForDisplay = (category, index) => {
-  if (!category) return null;
+/**
+ * Generate Schema.org structured data for category showcase
+ * Helps search engines understand the page structure and display rich results
+ */
+const generateStructuredData = (categories, categoryProducts) => {
+  const itemListElements = categories.flatMap((category, categoryIndex) => {
+    const products = categoryProducts[category.id] || [];
+    return products.map((product, productIndex) => ({
+      '@type': 'ListItem',
+      position: categoryIndex * 4 + productIndex + 1,
+      item: {
+        '@type': 'Product',
+        name: product.attributes.title,
+        image: product.images?.[0]?.attributes?.variants?.default?.url || '',
+        description: product.attributes.description || `Sustainable ${category.name.toLowerCase()} for babies`,
+        offers: {
+          '@type': 'Offer',
+          price: product.attributes.price?.amount / 100 || 0,
+          priceCurrency: product.attributes.price?.currency || 'USD',
+          availability: 'https://schema.org/InStock',
+        },
+      },
+    }));
+  });
 
-  // Default showcase properties
-  const showcaseData = {
-    id: category.id,
-    title: category.name,
-    description: `Explore our ${category.name.toLowerCase()} collection`,
-    image: `/static/images/category-${category.id.toLowerCase().replace(/[^a-z0-9]/g, '-')}.jpg`,
-    productCount: 'View Collection',
-    featured: [], // Will be populated from subcategories
-    badge: index === 0 ? 'Most Popular' : index === 1 ? 'New Arrivals' : 'Trending'
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: itemListElements,
   };
-
-  // Get featured items from subcategories (categoryLevel3)
-  if (category.subcategories && category.subcategories.length > 0) {
-    showcaseData.featured = category.subcategories
-      .slice(0, 3)
-      .map(sub => sub.name);
-  }
-
-  // If no subcategories, provide fallback featured items based on category type
-  if (showcaseData.featured.length === 0) {
-    if (category.id.includes('Baby-Clothing') || category.name.toLowerCase().includes('clothing')) {
-      showcaseData.featured = ['Organic Rompers', 'Sleep Sets', 'Onesies'];
-    } else if (category.id.includes('Shoes') || category.name.toLowerCase().includes('shoes')) {
-      showcaseData.featured = ['First Walkers', 'Booties', 'Sneakers'];
-    } else if (category.id.includes('Accessories') || category.name.toLowerCase().includes('accessories')) {
-      showcaseData.featured = ['Gift Sets', 'Bibs', 'Caps'];
-    } else {
-      // Generic fallback
-      showcaseData.featured = ['Premium Quality', 'Organic Materials', 'Safe for Baby'];
-    }
-  }
-
-  // Set badges based on category type
-  if (category.id.includes('Baby-Clothing') || category.name.toLowerCase().includes('clothing')) {
-    showcaseData.badge = 'Most Popular';
-  } else if (category.id.includes('Shoes') || category.name.toLowerCase().includes('shoes')) {
-    showcaseData.badge = 'New Arrivals';
-  } else if (category.id.includes('Accessories') || category.name.toLowerCase().includes('accessories')) {
-    showcaseData.badge = 'Complete Sets';
-  }
-
-  return showcaseData;
 };
 
 const CategoryShowcase = () => {
   const config = useConfiguration();
+  const [categoryProducts, setCategoryProducts] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
 
   // Get categories from Sharetribe configuration
   const categoryConfig = config?.categoryConfiguration?.categories || [];
   const showcaseCategories = getShowcaseCategories(categoryConfig);
 
-  // Format categories for display
-  const displayCategories = showcaseCategories
-    .map((category, index) => formatCategoryForDisplay(category, index))
-    .filter(Boolean); // Remove any null results
+  // Fetch products for each category
+  useEffect(() => {
+    if (showcaseCategories.length === 0) {
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchCategoryProducts = async () => {
+      try {
+        // Fetch products for each category
+        const productPromises = showcaseCategories.map(async (category) => {
+          try {
+            const response = await sdk.listings.query({
+              pub_categoryLevel2: category.id,
+              perPage: 4,
+              include: ['images', 'author'],
+            });
+
+            // Get listing IDs from response
+            const listingIds = response.data.data.map(listing => listing.id);
+
+            return {
+              categoryId: category.id,
+              listingIds,
+              responseData: response.data,
+            };
+          } catch (error) {
+            console.error(`Failed to fetch products for category ${category.id}:`, error);
+            return {
+              categoryId: category.id,
+              listingIds: [],
+              responseData: null,
+            };
+          }
+        });
+
+        const results = await Promise.all(productPromises);
+
+        // Now build up entities from all responses
+        const listingFields = config?.listing?.listingFields;
+        const sanitizeConfig = { listingFields };
+        let allEntities = {};
+
+        results.forEach(result => {
+          if (result.responseData) {
+            allEntities = updatedEntities(allEntities, result.responseData, sanitizeConfig);
+          }
+        });
+
+        // Denormalize listings for each category
+        const productsMap = results.reduce((acc, result) => {
+          const { categoryId, listingIds } = result;
+
+          // Convert IDs to entity references
+          const entityRefs = listingIds.map(id => ({ id, type: 'listing' }));
+
+          // Denormalize the entities
+          const denormalizedListings = denormalisedEntities(allEntities, entityRefs, false);
+
+          acc[categoryId] = denormalizedListings;
+          return acc;
+        }, {});
+        setCategoryProducts(productsMap);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Failed to fetch category products:', error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchCategoryProducts();
+  }, [showcaseCategories.length]);
 
   // Don't render if no categories available
-  if (displayCategories.length === 0) {
+  if (showcaseCategories.length === 0) {
     return null;
   }
 
+  // Generate structured data for SEO
+  const structuredData = !isLoading ? generateStructuredData(showcaseCategories, categoryProducts) : null;
+
   return (
     <div className={css.showcase}>
+      {/* Schema.org structured data for rich search results */}
+      {structuredData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      )}
       <div className={css.container}>
         {/* Section Header */}
         <div className={css.header}>
@@ -124,11 +194,23 @@ const CategoryShowcase = () => {
           </p>
         </div>
 
-        {/* Category Grid */}
-        <div className={css.categoryGrid}>
-          {displayCategories.map((category, index) => (
-            <CategoryCard key={category.id} category={category} index={index} />
-          ))}
+        {/* Age-Based Navigation - SEO Critical */}
+        <AgeNavigation />
+
+        {/* Category Sections with Products */}
+        <div className={css.categorySections}>
+          {showcaseCategories.map((category, index) => {
+            const products = categoryProducts[category.id] || [];
+            return (
+              <CategorySection
+                key={category.id}
+                category={category}
+                products={products}
+                isLoading={isLoading}
+                index={index}
+              />
+            );
+          })}
         </div>
 
         {/* View All Categories CTA */}
@@ -145,56 +227,113 @@ const CategoryShowcase = () => {
   );
 };
 
-const CategoryCard = ({ category, index }) => {
+/**
+ * AgeNavigation - Age-based primary navigation (SEO Critical)
+ * Parents search by age first (85% of searches), then browse categories
+ * Provides direct links to age-filtered search pages with SEO-friendly URLs
+ */
+const AgeNavigation = () => {
+  const ageGroups = [
+    { option: 'newborn', label: 'Newborn', icon: '👶' },
+    { option: '0_6_months', label: '0-6 Months', icon: '🍼' },
+    { option: '6_12_months', label: '6-12 Months', icon: '🧸' },
+    { option: '12_18_months', label: '12-18 Months', icon: '👣' },
+    { option: '18_24_months', label: '18-24 Months', icon: '🎈' },
+  ];
+
   return (
-    <NamedLink
-      name="SearchPage"
-      params={{ pub_category: category.id }}
-      className={css.categoryCard}
-    >
-      <div className={css.cardImage}>
-        <img
-          src={category.image}
-          alt={category.title}
-          className={css.image}
-          loading={index < 2 ? 'eager' : 'lazy'}
+    <div className={css.ageNavigation}>
+      <h3 className={css.ageNavigationTitle}>
+        <FormattedMessage
+          id="MelaHomePage.shopByAge"
+          defaultMessage="Shop by Baby's Age"
         />
-
-        {/* Category Badge */}
-        <div className={css.badge}>
-          {category.badge}
-        </div>
-
-        {/* Product Count Overlay */}
-        <div className={css.productCount}>
-          {category.productCount}
-        </div>
+      </h3>
+      <div className={css.ageFilters}>
+        {ageGroups.map(age => (
+          <NamedLink
+            key={age.option}
+            name="SearchPage"
+            to={{
+              search: `?pub_categoryLevel1=Baby-Clothes-Accessories&pub_age_group=${age.option}`,
+            }}
+            className={css.ageFilterButton}
+          >
+            <span className={css.ageIcon}>{age.icon}</span>
+            <span className={css.ageLabel}>{age.label}</span>
+          </NamedLink>
+        ))}
       </div>
+    </div>
+  );
+};
 
-      <div className={css.cardContent}>
-        <h3 className={css.categoryTitle}>{category.title}</h3>
-        <p className={css.categoryDescription}>{category.description}</p>
+/**
+ * CategorySection - Product-first category display
+ * Shows category header followed by a grid of real product listings
+ */
+const CategorySection = ({ category, products, isLoading, index }) => {
+  const hasProducts = products && products.length > 0;
 
-        {/* Featured Items */}
-        <div className={css.featuredItems}>
-          {category.featured.map((item, itemIndex) => (
-            <span key={itemIndex} className={css.featuredItem}>
-              {item}
-            </span>
-          ))}
+  return (
+    <div className={css.categorySection}>
+      {/* Category Header */}
+      <div className={css.categorySectionHeader}>
+        <div className={css.categoryHeaderContent}>
+          <h3 className={css.sectionCategoryTitle}>{category.name}</h3>
+          <p className={css.sectionCategoryDescription}>
+            {category.subcategories && category.subcategories.length > 0
+              ? category.subcategories.slice(0, 3).map(sub => sub.name).join(' • ')
+              : `Explore our ${category.name.toLowerCase()} collection`}
+          </p>
         </div>
-
-        {/* Shop CTA */}
-        <div className={css.shopButton}>
+        <NamedLink
+          name="SearchPage"
+          to={{
+            search: `?pub_categoryLevel1=Baby-Clothes-Accessories&pub_categoryLevel2=${category.id}`,
+          }}
+          className={css.viewCategoryLink}
+        >
           <FormattedMessage
-            id="MelaHomePage.shopCategory"
-            defaultMessage="Shop {category}"
-            values={{ category: category.title.split(' ')[0] }}
+            id="MelaHomePage.viewAll"
+            defaultMessage="View All"
           />
           <span className={css.arrow}>→</span>
-        </div>
+        </NamedLink>
       </div>
-    </NamedLink>
+
+      {/* Product Grid */}
+      {isLoading ? (
+        <div className={css.productGrid}>
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className={css.productSkeleton} />
+          ))}
+        </div>
+      ) : hasProducts ? (
+        <div className={css.productGrid}>
+          {products.map((listing, productIndex) => (
+            <ListingCard
+              key={listing.id.uuid}
+              listing={listing}
+              showAuthorInfo={false}
+              showTrustBadges={true}
+              showConversionBadges={true}
+              isBestseller={productIndex === 0} // First product is bestseller
+              renderSizes="(max-width: 639px) 50vw, (max-width: 1023px) 50vw, 25vw"
+            />
+          ))}
+        </div>
+      ) : (
+        <div className={css.noProducts}>
+          <p>
+            <FormattedMessage
+              id="MelaHomePage.noProducts"
+              defaultMessage="No products available in this category yet."
+            />
+          </p>
+        </div>
+      )}
+    </div>
   );
 };
 

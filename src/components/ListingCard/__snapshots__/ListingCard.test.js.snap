@@ -6,18 +6,22 @@ exports[`ListingCard matches snapshot 1`] = `
   href="/l/listing1-title/listing1"
 >
   <div
-    class="root aspectRatioWrapper"
+    class="imageContainer"
   >
     <div
-      class="aspectPadding"
-      style="padding-bottom: 100%;"
+      class="root aspectRatioWrapper"
     >
       <div
-        class="aspectBox"
+        class="aspectPadding"
+        style="padding-bottom: 100%;"
       >
         <div
-          style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
-        />
+          class="aspectBox"
+        >
+          <div
+            style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -43,9 +47,361 @@ exports[`ListingCard matches snapshot 1`] = `
       <div
         class="authorInfo"
       >
-        <span>
-          ListingCard.author
-        </span>
+        <div
+          class="author"
+        >
+          <span>
+            ListingCard.author
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</a>
+`;
+
+exports[`ListingCard matches snapshot with all badges and no author 1`] = `
+<a
+  class="root"
+  href="/l/listing1-title/listing1"
+>
+  <div
+    class="imageContainer"
+  >
+    <div
+      class="root aspectRatioWrapper"
+    >
+      <div
+        class="aspectPadding"
+        style="padding-bottom: 100%;"
+      >
+        <div
+          class="aspectBox"
+        >
+          <div
+            style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="trustBadges"
+    >
+      <span
+        class="badge"
+      >
+        GOTS
+      </span>
+      <span
+        class="badge"
+      >
+        Non-toxic
+      </span>
+    </div>
+    <div
+      class="conversionBadge"
+    >
+      <span>
+        ListingCard.bestseller
+      </span>
+    </div>
+  </div>
+  <div
+    class="info"
+  >
+    <div
+      class="price"
+      title="55"
+    >
+      <span>
+        ListingCard.price
+      </span>
+    </div>
+    <div
+      class="mainInfo"
+    >
+      <div
+        class="title"
+      >
+        listing1 title
+      </div>
+    </div>
+  </div>
+</a>
+`;
+
+exports[`ListingCard matches snapshot with conversion badge (bestseller) 1`] = `
+<a
+  class="root"
+  href="/l/listing1-title/listing1"
+>
+  <div
+    class="imageContainer"
+  >
+    <div
+      class="root aspectRatioWrapper"
+    >
+      <div
+        class="aspectPadding"
+        style="padding-bottom: 100%;"
+      >
+        <div
+          class="aspectBox"
+        >
+          <div
+            style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="conversionBadge"
+    >
+      <span>
+        ListingCard.bestseller
+      </span>
+    </div>
+  </div>
+  <div
+    class="info"
+  >
+    <div
+      class="price"
+      title="55"
+    >
+      <span>
+        ListingCard.price
+      </span>
+    </div>
+    <div
+      class="mainInfo"
+    >
+      <div
+        class="title"
+      >
+        listing1 title
+      </div>
+      <div
+        class="authorInfo"
+      >
+        <div
+          class="brandName"
+        >
+          <span>
+            ListingCard.brand
+          </span>
+        </div>
+        <div
+          class="author"
+        >
+          <span>
+            ListingCard.author
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</a>
+`;
+
+exports[`ListingCard matches snapshot with conversion badge (low stock) 1`] = `
+<a
+  class="root"
+  href="/l/listing1-title/listing1"
+>
+  <div
+    class="imageContainer"
+  >
+    <div
+      class="root aspectRatioWrapper"
+    >
+      <div
+        class="aspectPadding"
+        style="padding-bottom: 100%;"
+      >
+        <div
+          class="aspectBox"
+        >
+          <div
+            style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="conversionBadge urgencyBadge"
+    >
+      <span>
+        ListingCard.lowStock
+      </span>
+    </div>
+  </div>
+  <div
+    class="info"
+  >
+    <div
+      class="price"
+      title="55"
+    >
+      <span>
+        ListingCard.price
+      </span>
+    </div>
+    <div
+      class="mainInfo"
+    >
+      <div
+        class="title"
+      >
+        listing1 title
+      </div>
+      <div
+        class="authorInfo"
+      >
+        <div
+          class="brandName"
+        >
+          <span>
+            ListingCard.brand
+          </span>
+        </div>
+        <div
+          class="author"
+        >
+          <span>
+            ListingCard.author
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</a>
+`;
+
+exports[`ListingCard matches snapshot with trust badges 1`] = `
+<a
+  class="root"
+  href="/l/listing1-title/listing1"
+>
+  <div
+    class="imageContainer"
+  >
+    <div
+      class="root aspectRatioWrapper"
+    >
+      <div
+        class="aspectPadding"
+        style="padding-bottom: 100%;"
+      >
+        <div
+          class="aspectBox"
+        >
+          <div
+            style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="trustBadges"
+    >
+      <span
+        class="badge"
+      >
+        GOTS
+      </span>
+      <span
+        class="badge"
+      >
+        BPA Free
+      </span>
+    </div>
+  </div>
+  <div
+    class="info"
+  >
+    <div
+      class="price"
+      title="55"
+    >
+      <span>
+        ListingCard.price
+      </span>
+    </div>
+    <div
+      class="mainInfo"
+    >
+      <div
+        class="title"
+      >
+        listing1 title
+      </div>
+      <div
+        class="authorInfo"
+      >
+        <div
+          class="brandName"
+        >
+          <span>
+            ListingCard.brand
+          </span>
+        </div>
+        <div
+          class="author"
+        >
+          <span>
+            ListingCard.author
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</a>
+`;
+
+exports[`ListingCard matches snapshot without author info 1`] = `
+<a
+  class="root"
+  href="/l/listing1-title/listing1"
+>
+  <div
+    class="imageContainer"
+  >
+    <div
+      class="root aspectRatioWrapper"
+    >
+      <div
+        class="aspectPadding"
+        style="padding-bottom: 100%;"
+      >
+        <div
+          class="aspectBox"
+        >
+          <div
+            style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+  <div
+    class="info"
+  >
+    <div
+      class="price"
+      title="55"
+    >
+      <span>
+        ListingCard.price
+      </span>
+    </div>
+    <div
+      class="mainInfo"
+    >
+      <div
+        class="title"
+      >
+        listing1 title
       </div>
     </div>
   </div>
@@ -58,18 +414,22 @@ exports[`ListingCard matches snapshot without price 1`] = `
   href="/l/listing1-title/listing1"
 >
   <div
-    class="root aspectRatioWrapper"
+    class="imageContainer"
   >
     <div
-      class="aspectPadding"
-      style="padding-bottom: 100%;"
+      class="root aspectRatioWrapper"
     >
       <div
-        class="aspectBox"
+        class="aspectPadding"
+        style="padding-bottom: 100%;"
       >
         <div
-          style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
-        />
+          class="aspectBox"
+        >
+          <div
+            style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -87,9 +447,13 @@ exports[`ListingCard matches snapshot without price 1`] = `
       <div
         class="authorInfo"
       >
-        <span>
-          ListingCard.author
-        </span>
+        <div
+          class="author"
+        >
+          <span>
+            ListingCard.author
+          </span>
+        </div>
       </div>
     </div>
   </div>

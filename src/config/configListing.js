@@ -53,6 +53,162 @@
  *   - requiredMessage (optional):    Message for those fields, which are mandatory.
  */
 export const listingFields = [
+  // Age Group field - select one option for baby's age range
+  {
+    key: 'age_group',
+    scope: 'public',
+    schemaType: 'enum',
+    enumOptions: [
+      { option: 'premie', label: 'Premie' },
+      { option: '0_3_months', label: '0-3 months' },
+      { option: '3_6_months', label: '3-6 months' },
+      { option: '6_12_months', label: '6-12 months' },
+      { option: '12_18_months', label: '12-18 months' },
+      { option: '18_plus_months', label: '18+ months' },
+    ],
+    filterConfig: {
+      indexForSearch: true,
+      filterType: 'SelectSingleFilter',
+      label: 'Age Group',
+      group: 'primary',
+    },
+    showConfig: {
+      label: 'Age Group',
+      isDetail: true,
+    },
+    saveConfig: {
+      label: 'Age Group',
+      placeholderMessage: 'Select an age group…',
+      isRequired: true,
+      requiredMessage: 'You need to select an age group.',
+    },
+  },
+  // Material field - select multiple materials (for clothing & accessories)
+  {
+    key: 'material',
+    scope: 'public',
+    schemaType: 'multi-enum',
+    enumOptions: [
+      { option: 'organic_cotton', label: 'Organic Cotton' },
+      { option: '100_organic', label: '100% Organic' },
+      { option: 'bamboo', label: 'Bamboo' },
+      { option: 'cotton_jersey', label: 'Cotton Jersey' },
+      { option: 'kala_cotton', label: 'Kala Cotton' },
+      { option: 'natural_cotton', label: 'Natural Cotton' },
+      { option: 'muslin', label: 'Muslin' },
+      { option: 'other_natural', label: 'Other Natural' },
+    ],
+    filterConfig: {
+      indexForSearch: true,
+      filterType: 'SelectMultipleFilter',
+      label: 'Material',
+      searchMode: 'has_any',
+      group: 'primary',
+    },
+    showConfig: {
+      label: 'Material',
+      isDetail: true,
+    },
+    saveConfig: {
+      label: 'Material',
+      placeholderMessage: 'Select material(s)…',
+      isRequired: false,
+    },
+  },
+  // Certification field - select multiple certifications
+  {
+    key: 'certification',
+    scope: 'public',
+    schemaType: 'multi-enum',
+    enumOptions: [
+      { option: 'gots_certified', label: 'GOTS Certified' },
+      { option: 'non_toxic_dyes', label: 'Non-toxic Dyes' },
+      { option: 'bpa_free', label: 'BPA Free' },
+      { option: 'ce_certified', label: 'CE Certified' },
+      { option: 'bis_approved', label: 'BIS Approved' },
+    ],
+    filterConfig: {
+      indexForSearch: true,
+      filterType: 'SelectMultipleFilter',
+      label: 'Certification',
+      searchMode: 'has_any',
+      group: 'primary',
+    },
+    showConfig: {
+      label: 'Certification',
+      isDetail: true,
+    },
+    saveConfig: {
+      label: 'Certification',
+      placeholderMessage: 'Select certification(s)…',
+      isRequired: false,
+    },
+  },
+  // Color field - select multiple colors
+  {
+    key: 'color',
+    scope: 'public',
+    schemaType: 'multi-enum',
+    enumOptions: [
+      { option: 'white', label: 'White' },
+      { option: 'pink', label: 'Pink' },
+      { option: 'blue', label: 'Blue' },
+      { option: 'green', label: 'Green' },
+      { option: 'yellow', label: 'Yellow' },
+      { option: 'gray', label: 'Gray' },
+      { option: 'cream', label: 'Cream' },
+      { option: 'multi_color', label: 'Multi-color' },
+      { option: 'pastel', label: 'Pastel Colors' },
+    ],
+    filterConfig: {
+      indexForSearch: true,
+      filterType: 'SelectMultipleFilter',
+      label: 'Color',
+      searchMode: 'has_any',
+      group: 'secondary',
+    },
+    showConfig: {
+      label: 'Color',
+      isDetail: true,
+    },
+    saveConfig: {
+      label: 'Color',
+      placeholderMessage: 'Select color(s)…',
+      isRequired: false,
+    },
+  },
+  // Key Features field - select multiple features
+  {
+    key: 'key_features',
+    scope: 'public',
+    schemaType: 'multi-enum',
+    enumOptions: [
+      { option: 'snap_closures', label: 'Snap Closures' },
+      { option: 'two_way_zip', label: 'Two-way Zip' },
+      { option: 'easy_dress', label: 'Easy-dress' },
+      { option: 'breathable', label: 'Breathable' },
+      { option: 'hypoallergenic', label: 'Hypoallergenic' },
+      { option: 'handcrafted', label: 'Handcrafted' },
+      { option: 'adjustable', label: 'Adjustable' },
+      { option: 'room_to_grow', label: 'Room to Grow' },
+    ],
+    filterConfig: {
+      indexForSearch: true,
+      filterType: 'SelectMultipleFilter',
+      label: 'Key Features',
+      searchMode: 'has_any',
+      group: 'secondary',
+    },
+    showConfig: {
+      label: 'Key Features',
+      isDetail: true,
+    },
+    saveConfig: {
+      label: 'Key Features',
+      placeholderMessage: 'Select feature(s)…',
+      isRequired: false,
+    },
+  },
   // Brand field - uses text schema for dynamic brands instead of enum
   /* commenting this out to use Console based asset configurations
   {

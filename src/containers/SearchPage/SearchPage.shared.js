@@ -369,9 +369,11 @@ export const cleanSearchFromConflictingParams = (searchParams, filterConfigs, so
  * @param {boolean} isOriginInUse if origin is in use, return it too.
  */
 export const pickSearchParamsOnly = (params, filterConfigs, sortConfig, isOriginInUse) => {
-  const { address, origin, bounds, ...rest } = params || {};
+  const { address, origin, bounds, keywords, ...rest } = params || {};
   const boundsMaybe = bounds ? { bounds } : {};
   const originMaybe = isOriginInUse && origin ? { origin } : {};
+  const addressMaybe = address ? { address } : {};
+  const keywordsMaybe = keywords ? { keywords } : {};
   const filterParams = validFilterParams(rest, filterConfigs);
   const sort = rest[sortConfig.queryParamName];
   const sortMaybe = sort ? { sort } : {};
@@ -379,6 +381,8 @@ export const pickSearchParamsOnly = (params, filterConfigs, sortConfig, isOrigin
   return {
     ...boundsMaybe,
     ...originMaybe,
+    ...addressMaybe,
+    ...keywordsMaybe,
     ...filterParams,
     ...sortMaybe,
   };

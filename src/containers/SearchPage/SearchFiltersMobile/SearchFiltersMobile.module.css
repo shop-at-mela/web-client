@@ -4,30 +4,49 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+/* NEW: Container for results count + filter/sort buttons on same line */
+.controlsBar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
   background-color: var(--colorGrey50);
 
-  /* sticky result summary in mobile */
+  /* Sticky on mobile - stays below SearchQueryBar */
   position: sticky;
   top: 0;
   z-index: 1;
+
+  @media (--viewportMedium) {
+    /* Not sticky on desktop */
+    position: static;
+    padding: 16px 0;
+  }
 }
 
 .searchResultSummary {
-  composes: h3 from global;
-  margin-top: 6px;
+  composes: textSmall from global;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey700);
+  flex-shrink: 0;
+  white-space: nowrap;
 
-  display: flex;
-  justify-content: space-between;
-
-  background-color: var(--colorGrey50);
-
-  @media (--viewportMedium) {
-    margin-top: 8px;
+  @media (max-width: 360px) {
+    /* Stack on very small screens */
+    width: 100%;
+    margin-bottom: 8px;
   }
 }
 
 .buttons {
   display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .mapIcon {
