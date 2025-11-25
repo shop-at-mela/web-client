@@ -79,13 +79,13 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
     {
       path: '/',
       name: 'LandingPage',
-      component: LandingPage,
-      loadData: pageDataLoadingAPI.LandingPage.loadData,
+      component: MelaHomePage,
     },
     {
-      path: '/mela-home',
-      name: 'MelaHomePage',
-      component: MelaHomePage,
+      path: '/cms-backup',
+      name: 'CMSLandingPage',
+      component: LandingPage,
+      loadData: pageDataLoadingAPI.LandingPage.loadData,
     },
     {
       path: '/p/:pageId',
