@@ -1,7 +1,7 @@
 import React from 'react';
 import { string } from 'prop-types';
 
-import { Page, LayoutSingleColumn } from '../../components';
+import { Page } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
@@ -59,10 +59,7 @@ const MelaHomePage = props => {
         }
       }}
     >
-      <LayoutSingleColumn
-        topbar={<TopbarContainer />}
-        footer={<FooterContainer />}
-      >
+      <TopbarContainer currentSearchParams={{}} />
       <div className={css.root}>
         {/* Hero Section - Product Showcase + Trust Signals */}
         <section className={css.heroSection}>
@@ -89,7 +86,7 @@ const MelaHomePage = props => {
           <TrustAssurance />
         </section>
       </div>
-      </LayoutSingleColumn>
+      <FooterContainer />
     </Page>
   );
 };
