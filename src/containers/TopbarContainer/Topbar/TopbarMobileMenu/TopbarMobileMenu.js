@@ -93,43 +93,105 @@ const TopbarMobileMenu = props => {
 
   const createListingsLinkMaybe = showCreateListingsLink ? (
     <NamedLink className={css.createNewListingLink} name="NewListingPage">
-      <FormattedMessage id="TopbarMobileMenu.newListingLink" />
+      <FormattedMessage
+        id={isAuthenticated ? "TopbarMobileMenu.newListingLink" : "TopbarMobileMenu.startSelling"}
+      />
     </NamedLink>
   ) : null;
 
   if (!isAuthenticated) {
-    const signup = (
-      <NamedLink name="SignupPage" className={css.signupLink}>
-        <FormattedMessage id="TopbarMobileMenu.signupLink" />
-      </NamedLink>
-    );
-
-    const login = (
-      <NamedLink name="LoginPage" className={css.loginLink}>
-        <FormattedMessage id="TopbarMobileMenu.loginLink" />
-      </NamedLink>
-    );
-
-    const signupOrLogin = (
-      <span className={css.authenticationLinks}>
-        <FormattedMessage id="TopbarMobileMenu.signupOrLogin" values={{ signup, login }} />
-      </span>
-    );
     return (
       <nav className={css.root}>
         <div className={css.content}>
-          <div className={css.authenticationGreeting}>
-            <FormattedMessage
-              id="TopbarMobileMenu.unauthorizedGreeting"
-              values={{ lineBreak: <br />, signupOrLogin }}
-            />
+          {/* Hero Section */}
+          <div className={css.heroSection}>
+            <h1 className={css.heroTitle}>
+              <FormattedMessage id="TopbarMobileMenu.heroTitle" />
+            </h1>
+            <p className={css.heroSubtitle}>
+              <FormattedMessage id="TopbarMobileMenu.heroSubtitle" />
+            </p>
           </div>
 
-          <div className={css.customLinksWrapper}>{extraLinks}</div>
+          {/* Authentication Section - Simple */}
+          <div className={css.authenticationSection}>
+            <NamedLink name="SignupPage" className={css.signupButton}>
+              <FormattedMessage id="TopbarMobileMenu.createAccount" />
+            </NamedLink>
+            <div className={css.loginWrapper}>
+              <span className={css.alreadyMember}>
+                <FormattedMessage id="TopbarMobileMenu.alreadyMember" />
+              </span>{' '}
+              <NamedLink name="LoginPage" className={css.loginLink}>
+                <FormattedMessage id="TopbarMobileMenu.loginLink" />
+              </NamedLink>
+            </div>
+          </div>
+
+          {/* Navigation Section - Baby Focused */}
+          <div className={css.sectionHeader}>
+            <FormattedMessage id="TopbarMobileMenu.browseHeader" />
+          </div>
+          <div className={css.navigationSection}>
+            <NamedLink
+              name="SearchPage"
+              to={{ search: '?pub_categoryLevel1=Baby-Clothes-Accessories' }}
+              className={css.navigationLink}
+            >
+              <span className={css.navigationLinkContent}>
+                <FormattedMessage id="TopbarMobileMenu.forLittleOnes" />
+                <span className={css.navigationArrow}>→</span>
+              </span>
+            </NamedLink>
+            <NamedLink name="BrandsPage" className={css.navigationLink}>
+              <span className={css.navigationLinkContent}>
+                <FormattedMessage id="TopbarMobileMenu.organicBrands" />
+                <span className={css.navigationArrow}>→</span>
+              </span>
+            </NamedLink>
+          </div>
+
+          {/* Featured Brands Section */}
+          <div className={css.featuredBrandsSection}>
+            <div className={css.sectionHeader}>
+              <FormattedMessage id="TopbarMobileMenu.featuredBrands" />
+            </div>
+            <div className={css.brandLogos}>
+              <div className={css.brandLogo}></div>
+              <div className={css.brandLogo}></div>
+              <div className={css.brandLogo}></div>
+              <div className={css.brandLogo}></div>
+              <div className={css.brandLogo}></div>
+              <div className={css.brandLogo}></div>
+            </div>
+            <p className={css.featuredBrandsTagline}>
+              <FormattedMessage id="TopbarMobileMenu.featuredBrandsTagline" />
+            </p>
+          </div>
+
+          {/* Custom Links */}
+          {extraLinks && extraLinks.length > 0 ? (
+            <>
+              <div className={css.sectionHeader}>
+                <FormattedMessage id="TopbarMobileMenu.moreHeader" />
+              </div>
+              <div className={css.customLinksWrapper}>{extraLinks}</div>
+            </>
+          ) : null}
 
           <div className={css.spacer} />
         </div>
-        <div className={css.footer}>{createListingsLinkMaybe}</div>
+        <div className={css.footer}>
+          <div className={css.footerContent}>
+            <div className={css.footerHeader}>SELL ON MELA</div>
+            <p className={css.footerTagline}>
+              <FormattedMessage id="TopbarMobileMenu.sellerCTA" />
+            </p>
+            <NamedLink className={css.createNewListingLink} name="NewListingPage">
+              <FormattedMessage id="TopbarMobileMenu.startSelling" />
+            </NamedLink>
+          </div>
+        </div>
       </nav>
     );
   }

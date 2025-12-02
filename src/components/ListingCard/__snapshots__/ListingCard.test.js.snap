@@ -7,24 +7,7 @@ exports[`ListingCard matches snapshot 1`] = `
 >
   <div
     class="imageContainer"
-  >
-    <div
-      class="root aspectRatioWrapper"
-    >
-      <div
-        class="aspectPadding"
-        style="padding-bottom: 100%;"
-      >
-        <div
-          class="aspectBox"
-        >
-          <div
-            style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
+  />
   <div
     class="info"
   >
@@ -68,22 +51,6 @@ exports[`ListingCard matches snapshot with all badges and no author 1`] = `
   <div
     class="imageContainer"
   >
-    <div
-      class="root aspectRatioWrapper"
-    >
-      <div
-        class="aspectPadding"
-        style="padding-bottom: 100%;"
-      >
-        <div
-          class="aspectBox"
-        >
-          <div
-            style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
-          />
-        </div>
-      </div>
-    </div>
     <div
       class="trustBadges"
     >
@@ -138,22 +105,6 @@ exports[`ListingCard matches snapshot with conversion badge (bestseller) 1`] = `
   <div
     class="imageContainer"
   >
-    <div
-      class="root aspectRatioWrapper"
-    >
-      <div
-        class="aspectPadding"
-        style="padding-bottom: 100%;"
-      >
-        <div
-          class="aspectBox"
-        >
-          <div
-            style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
-          />
-        </div>
-      </div>
-    </div>
     <div
       class="conversionBadge"
     >
@@ -213,22 +164,6 @@ exports[`ListingCard matches snapshot with conversion badge (low stock) 1`] = `
     class="imageContainer"
   >
     <div
-      class="root aspectRatioWrapper"
-    >
-      <div
-        class="aspectPadding"
-        style="padding-bottom: 100%;"
-      >
-        <div
-          class="aspectBox"
-        >
-          <div
-            style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
-          />
-        </div>
-      </div>
-    </div>
-    <div
       class="conversionBadge urgencyBadge"
     >
       <span>
@@ -286,22 +221,6 @@ exports[`ListingCard matches snapshot with trust badges 1`] = `
   <div
     class="imageContainer"
   >
-    <div
-      class="root aspectRatioWrapper"
-    >
-      <div
-        class="aspectPadding"
-        style="padding-bottom: 100%;"
-      >
-        <div
-          class="aspectBox"
-        >
-          <div
-            style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
-          />
-        </div>
-      </div>
-    </div>
     <div
       class="trustBadges"
     >
@@ -366,24 +285,7 @@ exports[`ListingCard matches snapshot without author info 1`] = `
 >
   <div
     class="imageContainer"
-  >
-    <div
-      class="root aspectRatioWrapper"
-    >
-      <div
-        class="aspectPadding"
-        style="padding-bottom: 100%;"
-      >
-        <div
-          class="aspectBox"
-        >
-          <div
-            style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
+  />
   <div
     class="info"
   >
@@ -415,24 +317,7 @@ exports[`ListingCard matches snapshot without price 1`] = `
 >
   <div
     class="imageContainer"
-  >
-    <div
-      class="root aspectRatioWrapper"
-    >
-      <div
-        class="aspectPadding"
-        style="padding-bottom: 100%;"
-      >
-        <div
-          class="aspectBox"
-        >
-          <div
-            style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
+  />
   <div
     class="info"
   >

@@ -61,6 +61,28 @@ const mockRouteConfiguration = [
 
 ## Issues & Solutions
 
+### SearchPage.duck.js Testing (Duck with Nested Thunks)
+- **Issue**: Tests for `searchListings` showed SDK not being called with expected fields
+- **Root cause**: `loadData` is the public API that adds `fields.listing`/`include`, then calls `searchListings`
+- **Solution**: Test `loadData` not `searchListings`, and make mockDispatch execute thunks
+```javascript
+// CRITICAL: mockDispatch must execute thunks
+const mockDispatch = jest.fn(action => {
+  if (typeof action === 'function') {
+    return action(mockDispatch, mockGetState, mockSdk);
+  }
+  return action;
+});
+
+// Test loadData (adds fields), not searchListings (makes SDK call)
+const thunk = loadData(params, '?page=1', config);
+await thunk(mockDispatch, mockGetState, mockSdk);
+
+// Now mockQuery.mock.calls[0][0] has fields.listing, include, etc.
+```
+- **Required config**: `currency`, `listing.enforceValidListingType`, `layout.listingImage`, `accessControl.marketplace.private`
+- **Mock dependencies**: Mock `../../ducks/marketplaceData.duck` addMarketplaceEntities
+
 ### CategoryProducts Display Fix (Product Pages)
 - **Issue**: UI showed category IDs ("baby-clothing") instead of readable names ("Baby Clothing")
 - **Solution**: Applied CategoryBreadcrumb resolution pattern to convert IDs to display names
@@ -126,8 +148,32 @@ results.forEach(r => allEntities = updatedEntities(allEntities, r.responseData, 
 - **ConversionBadges**: Top-right, priority: bestseller > low stock (≤5, red) > new
 - **Pattern**: Absolute position within `position: relative` parent
 
+### Sharetribe addMarketplaceEntities Payload Format
+- **Issue**: `TypeError: curr is undefined` in `util/data.js` when dispatching entities
+- **Root cause**: `addMarketplaceEntities` expects `{ data: { data: [...], included: [...] } }` (nested data structure)
+- **Wrong**: `dispatch(addMarketplaceEntities({ data: [...users], included: [...] }))`
+- **Correct**: `dispatch(addMarketplaceEntities({ data: { data: [...users], included: [...] } }))`
+- **Function signature**: `addMarketplaceEntities(sdkResponse, sanitizeConfig)` where `sdkResponse.data` contains the entities
+- **Why nested**: Matches Sharetribe SDK response format where `response.data.data` contains entities
+
+### Entity Denormalization for Relationships
+- **Issue**: Profile images not appearing even though included in API response
+- **Root cause**: Selectors returning raw entities without joining relationships
+- **Solution**: Use `denormalisedEntities(entities, entityRefs, throwIfNotFound)` to join relationships
+- **When needed**: Accessing `user.profileImage`, `listing.images`, `listing.author`, or any relationship
+- **Entity refs format**: `[{ id: { uuid: 'xxx' }, type: 'user' }]`
+- **Example**: See ProfilePage or BrandsPage selectors for pattern
+
+### Handling Null Relationships in Entities
+- **Issue**: Reducer errors when entity has `relationships.profileImage.data: null`
+- **Root cause**: Users without profile images have null relationship data which breaks marketplace reducer
+- **Solution**: Filter out relationships with `data === null` before dispatching to `addMarketplaceEntities`
+- **Pattern**: Create clean entity objects with only valid (non-null) relationships
+- **Don't mutate**: Build fresh objects instead of using `delete` on SDK response objects
+
 ## Session Log
 2024-10-10: Fixed CategoryProducts to display proper category names + product filtering improvements
 2025-10-10: Implemented HeroProducts with real API integration, randomization, and comprehensive testing
 2025-10-13: Resolved image quality issues - switched to predefined high-res variants + enhanced quality settings
 2025-11-18: Phase 2 - CategoryShowcase product-first, ListingCard badges, image variant fallback
+2025-11-29: Fixed addMarketplaceEntities payload format issue in Brands page implementation

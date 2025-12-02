@@ -36,158 +36,170 @@
  *   (optional)                       data is relevant and should be added.
  */
 export const userFields = [
+  // Featured Brand Flag - Set by admin for premium brand placement
   {
-    key: 'cuisine',
-    scope: 'public',
-    schemaType: 'enum',
-    enumOptions: [
-      { option: 'italian', label: 'Italian' },
-      { option: 'chinese', label: 'Chinese' },
-      { option: 'thai', label: 'Thai' },
-    ],
-    showConfig: {
-      label: 'Favorite cuisine',
-    },
-    saveConfig: {
-      label: 'Favorite cuisine',
-      displayInSignUp: true,
-      isRequired: true,
-    },
-    userTypeConfig: {
-      limitToUserTypeIds: true,
-      userTypeIds: ['a', 'b', 'c'],
-    },
-  },
-  {
-    key: 'canCook',
+    key: 'isFeaturedBrand',
     scope: 'public',
     schemaType: 'boolean',
     showConfig: {
-      label: 'Can you cook?',
+      label: 'Featured Brand',
+      displayInProfile: false,
     },
     saveConfig: {
-      label: 'Can you cook?',
-      displayInSignUp: true,
-      isRequired: true,
-      placeholderMessage: 'Select...',
+      label: 'Apply for Featured Brand status',
+      displayInSignUp: false,
+      isRequired: false,
     },
     userTypeConfig: {
       limitToUserTypeIds: true,
-      userTypeIds: ['a', 'b', 'c'],
+      userTypeIds: ['provider'],
     },
   },
+
+  // Brand Certifications - GOTS, BIS, Organic, etc.
   {
-    key: 'numberOfCookbooks',
-    scope: 'public',
-    schemaType: 'long',
-    showConfig: {
-      label: 'How many cookbooks do you have',
-    },
-    saveConfig: {
-      label: 'How many cookbooks do you have',
-      displayInSignUp: true,
-      isRequired: true,
-    },
-    userTypeConfig: {
-      limitToUserTypeIds: true,
-      userTypeIds: ['a', 'b', 'c'],
-    },
-  },
-  {
-    key: 'kitchenDescription',
-    scope: 'public',
-    schemaType: 'text',
-    showConfig: {
-      label: 'Description of your kitchen',
-    },
-    saveConfig: {
-      label: 'Description of your kitchen',
-      displayInSignUp: true,
-      isRequired: true,
-      placeholderMessage: 'Describe your kitchen...',
-    },
-    userTypeConfig: {
-      label: 'Description of your kitchen',
-      limitToUserTypeIds: true,
-      userTypeIds: ['a', 'b', 'c'],
-    },
-  },
-  {
-    key: 'arrivalInstructions',
-    scope: 'protected',
-    schemaType: 'text',
-    showConfig: {
-      label: 'How do people arrive at your kitchen?',
-    },
-    saveConfig: {
-      label: 'How do people arrive at your kitchen?',
-      displayInSignUp: true,
-      isRequired: true,
-    },
-    userTypeConfig: {
-      limitToUserTypeIds: false,
-      userTypeIds: ['a', 'b', 'c'],
-    },
-  },
-  {
-    key: 'dietaryPreferences',
+    key: 'certifications',
     scope: 'public',
     schemaType: 'multi-enum',
     enumOptions: [
-      { option: 'vegan', label: 'Vegan' },
-      { option: 'vegetarian', label: 'Vegetarian' },
-      { option: 'gluten-free', label: 'Gluten free' },
-      { option: 'dairy-free', label: 'Dairy free' },
-      { option: 'nut-free', label: 'Nut free' },
-      { option: 'egg-free', label: 'Egg free' },
-      { option: 'low-carb', label: 'Low carb' },
-      { option: 'low-fat', label: 'Low fat' },
+      { option: 'gots_certified', label: 'GOTS Certified' },
+      { option: 'organic_cotton', label: '100% Organic Cotton' },
+      { option: 'bis_approved', label: 'BIS Approved' },
+      { option: 'non_toxic_dyes', label: 'Non-toxic Dyes' },
+      { option: 'handcrafted', label: 'Handcrafted' },
+      { option: 'fair_trade', label: 'Fair Trade' },
+      { option: 'women_owned', label: 'Women-Owned Business' },
     ],
     showConfig: {
-      label: 'Dietary preferences',
+      label: 'Certifications',
+      displayInProfile: true,
     },
     saveConfig: {
-      displayInSignUp: true,
-      label: 'Dietary preferences',
-      isRequired: true,
+      label: 'Brand Certifications',
+      placeholderMessage: 'Select all that apply',
+      displayInSignUp: false,
+      isRequired: false,
     },
     userTypeConfig: {
       limitToUserTypeIds: true,
-      userTypeIds: ['a', 'b', 'c'],
+      userTypeIds: ['provider'],
+    },
+  },
+
+  // Brand Logo URL - Temporary field until file upload is implemented
+  {
+    key: 'brandLogoUrl',
+    scope: 'public',
+    schemaType: 'text',
+    showConfig: {
+      label: 'Brand Logo URL',
+      displayInProfile: false,
+    },
+    saveConfig: {
+      label: 'Brand Logo URL',
+      placeholderMessage: 'https://example.com/logo.png',
+      displayInSignUp: false,
+      isRequired: false,
+    },
+    userTypeConfig: {
+      limitToUserTypeIds: true,
+      userTypeIds: ['provider'],
+    },
+  },
+
+  // Founded Year
+  {
+    key: 'foundedYear',
+    scope: 'public',
+    schemaType: 'long',
+    showConfig: {
+      label: 'Founded Year',
+      displayInProfile: true,
+    },
+    saveConfig: {
+      label: 'Year Founded',
+      placeholderMessage: '2015',
+      displayInSignUp: false,
+      isRequired: false,
+    },
+    userTypeConfig: {
+      limitToUserTypeIds: true,
+      userTypeIds: ['provider'],
+    },
+  },
+
+  // Origin - City/State where brand is based
+  {
+    key: 'origin',
+    scope: 'public',
+    schemaType: 'text',
+    showConfig: {
+      label: 'Origin',
+      displayInProfile: true,
+    },
+    saveConfig: {
+      label: 'Brand Origin (City, State)',
+      placeholderMessage: 'Mumbai, India',
+      displayInSignUp: false,
+      isRequired: false,
+    },
+    userTypeConfig: {
+      limitToUserTypeIds: true,
+      userTypeIds: ['provider'],
+    },
+  },
+
+  // Specialty - What the brand specializes in
+  {
+    key: 'specialty',
+    scope: 'public',
+    schemaType: 'text',
+    showConfig: {
+      label: 'Specialty',
+      displayInProfile: true,
+    },
+    saveConfig: {
+      label: 'Brand Specialty',
+      placeholderMessage: 'Organic baby clothing',
+      displayInSignUp: false,
+      isRequired: false,
+    },
+    userTypeConfig: {
+      limitToUserTypeIds: true,
+      userTypeIds: ['provider'],
+    },
+  },
+
+  // Website URL
+  {
+    key: 'websiteUrl',
+    scope: 'public',
+    schemaType: 'text',
+    showConfig: {
+      label: 'Website',
+      displayInProfile: true,
+    },
+    saveConfig: {
+      label: 'Brand Website',
+      placeholderMessage: 'https://example.com',
+      displayInSignUp: false,
+      isRequired: false,
+    },
+    userTypeConfig: {
+      limitToUserTypeIds: true,
+      userTypeIds: ['provider'],
     },
   },
 ];
 
 /////////////////////////////////////
-// Example user type configuration //
+// User Type Configuration          //
 /////////////////////////////////////
 /**
- * User types are not supported in hosted configuration yet.
+ * Mela uses Sharetribe's built-in Customer and Provider user types.
+ * All Providers are brands/sellers on the Mela marketplace.
  *
- * To take user types into use in your
- * custom code, you can do the following things:
- * - Add a new user field with key 'userType', scope 'publicData', and schemaType enum
- *  - Consider whether or not you want to allow your users to change their user type after first creating it
- * - Set your user types as the available options for the userType field
- * - Add your user types in the array below
- * - Update configHelpers.js mergeUserConfig to pass user types to the validUserFields function
+ * User types are configured in Sharetribe Console:
+ * - Provider: Brand/Seller accounts
+ * - Customer: Buyer accounts
  */
-
-export const userTypes = [
-  {
-    userType: 'a',
-    label: 'Seller',
-  },
-  {
-    userType: 'b',
-    label: 'Buyer',
-  },
-  {
-    userType: 'c',
-    label: 'Guest',
-  },
-  {
-    userType: 'd',
-    label: 'Host',
-  },
-];

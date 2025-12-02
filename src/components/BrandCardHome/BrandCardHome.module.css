@@ -1,0 +1,291 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background: var(--colorWhite);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+  }
+}
+
+/* Header with logo + name + tagline */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px;
+  border-bottom: 1px solid var(--colorGrey100);
+  background: var(--colorWhite);
+}
+
+.brandInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.smallLogo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.logoPlaceholder {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(
+    135deg,
+    var(--marketplaceColor),
+    var(--marketplaceColorDark)
+  );
+  color: var(--colorWhite);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--fontWeightBold);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.logoMissingIcon {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  font-size: 12px;
+  background: var(--colorWhite);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brandText {
+  flex: 1;
+  min-width: 0;
+}
+
+.brandName {
+  font-size: 17px;
+  font-weight: var(--fontWeightSemiBold);
+  margin: 0 0 4px 0;
+  color: var(--colorGrey700);
+  line-height: 1.2;
+
+  /* Truncate if too long */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tagline {
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--colorGrey300);
+  margin: 0 0 4px 0;
+
+  /* Truncate to 1 line */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taglinePlaceholder {
+  font-size: 11px;
+  color: var(--colorAlert);
+  background: #FFF3E0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px dashed var(--colorAlert);
+  margin: 0 0 4px 0;
+  font-style: italic;
+  display: inline-block;
+}
+
+.brandOrigin {
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--colorGrey300);
+  margin: 0;
+  font-weight: var(--fontWeightMedium);
+}
+
+.brandOriginPlaceholder {
+  font-size: 11px;
+  color: var(--colorAlert);
+  background: #FFF3E0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px dashed var(--colorAlert);
+  margin: 0;
+  font-style: italic;
+  display: inline-block;
+}
+
+/* Certification Badges Section */
+.certBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 16px;
+  background: var(--colorGrey50);
+  border-bottom: 1px solid var(--colorGrey100);
+}
+
+.certPlaceholder {
+  padding: 12px 16px;
+  background: #FFF3E0;
+  border-bottom: 1px dashed var(--colorAlert);
+  font-size: 11px;
+  color: var(--colorAlert);
+  font-style: italic;
+  text-align: center;
+}
+
+/* Product Grid (2x2) */
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 12px;
+  background: var(--colorGrey50);
+}
+
+.productPlaceholder {
+  aspect-ratio: 1;
+  background: var(--colorWhite);
+  border: 2px dashed var(--colorGrey100);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--colorGrey300);
+  text-align: center;
+  padding: 8px;
+}
+
+/* Shop All CTA */
+.cta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--marketplaceColor);
+  color: var(--colorWhite);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: var(--marketplaceColorDark);
+  }
+}
+
+.ctaText {
+  font-size: 15px;
+  font-weight: var(--fontWeightSemiBold);
+}
+
+.ctaArrow {
+  font-size: 18px;
+  transition: transform 0.2s ease;
+}
+
+.cta:hover .ctaArrow {
+  transform: translateX(4px);
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .header {
+    padding: 14px;
+  }
+
+  .smallLogo,
+  .logoPlaceholder {
+    width: 36px;
+    height: 36px;
+  }
+
+  .logoMissingIcon {
+    width: 14px;
+    height: 14px;
+    font-size: 11px;
+  }
+
+  .brandName {
+    font-size: 15px;
+  }
+
+  .tagline {
+    font-size: 12px;
+  }
+
+  .taglinePlaceholder,
+  .brandOriginPlaceholder {
+    font-size: 10px;
+    padding: 2px 4px;
+  }
+
+  .brandOrigin {
+    font-size: 11px;
+  }
+
+  .certBadges {
+    padding: 10px 14px;
+    gap: 4px;
+  }
+
+  .certPlaceholder {
+    padding: 10px 14px;
+    font-size: 10px;
+  }
+
+  .productGrid {
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .cta {
+    padding: 12px 14px;
+  }
+
+  .ctaText {
+    font-size: 14px;
+  }
+}
+
+/* Tablet and up */
+@media (--viewportMedium) {
+  .header {
+    padding: 18px;
+  }
+
+  .brandName {
+    font-size: 18px;
+  }
+
+  .tagline {
+    font-size: 14px;
+  }
+
+  .productGrid {
+    gap: 10px;
+    padding: 14px;
+  }
+}

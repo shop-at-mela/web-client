@@ -7,8 +7,7 @@ import FooterContainer from '../FooterContainer/FooterContainer';
 
 import HeroSection from './sections/HeroSection/HeroSection';
 import CategoryShowcase from './sections/CategoryShowcase/CategoryShowcase';
-import CustomerFavorites from './sections/CustomerFavorites/CustomerFavorites';
-import FeaturedBrands from './sections/FeaturedBrands/FeaturedBrands';
+import FeaturedBrandPartnersContainer from './sections/FeaturedBrandPartners/FeaturedBrandPartnersContainer';
 import TrustAssurance from './sections/TrustAssurance/TrustAssurance';
 
 import css from './MelaHomePage.module.css';
@@ -71,14 +70,9 @@ const MelaHomePage = props => {
           <CategoryShowcase />
         </section>
 
-        {/* Customer Favorites - Social Proof + Bestsellers */}
-        <section className={css.favoritesSection}>
-          <CustomerFavorites />
-        </section>
-
-        {/* Featured Brands - Simple Partner Highlight */}
+        {/* Featured Brand Partners - Trusted Brands with Social Proof */}
         <section className={css.brandsSection}>
-          <FeaturedBrands />
+          <FeaturedBrandPartnersContainer />
         </section>
 
         {/* Trust & Quality Assurance - Certifications */}

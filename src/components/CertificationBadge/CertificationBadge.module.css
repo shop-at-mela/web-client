@@ -1,0 +1,115 @@
+/* Base badge styles */
+.root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--colorWhite);
+  border: 1px solid var(--colorGrey100);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey700);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.label {
+  line-height: 1;
+}
+
+/* Variants */
+.compact {
+  padding: 4px 8px;
+  gap: 4px;
+  font-size: 10px;
+}
+
+.icon-only {
+  padding: 4px;
+  border-radius: 4px;
+}
+
+/* Hover effect for tooltips */
+.hasTooltip {
+  cursor: help;
+}
+
+.hasTooltip:hover {
+  border-color: var(--marketplaceColor);
+  background: var(--colorGrey50);
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.hasTooltip:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tooltipContent {
+  background: var(--colorGrey700);
+  color: var(--colorWhite);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: var(--fontWeightRegular);
+  text-align: center;
+  white-space: normal;
+  min-width: 150px;
+  max-width: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.tooltipContent strong {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: var(--fontWeightSemiBold);
+}
+
+.tooltipContent p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--colorGrey100);
+}
+
+/* Tooltip arrow */
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--colorGrey700);
+}
+
+/* Mobile adjustments */
+@media (max-width: 767px) {
+  .tooltip {
+    /* Disable tooltips on mobile (tap doesn't work well) */
+    display: none;
+  }
+}

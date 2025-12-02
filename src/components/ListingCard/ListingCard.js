@@ -9,7 +9,6 @@ import {
   isPriceVariationsEnabled,
   requireListingImage,
 } from '../../util/configHelpers';
-import { lazyLoadWithDimensions } from '../../util/uiHelpers';
 import { formatMoney } from '../../util/currency';
 import { ensureListing, ensureUser } from '../../util/data';
 import { richText } from '../../util/richText';
@@ -17,10 +16,9 @@ import { createSlug } from '../../util/urlHelpers';
 import { isBookingProcessAlias } from '../../transactions/transaction';
 
 import {
-  AspectRatioWrapper,
   NamedLink,
-  ResponsiveImage,
   ListingCardThumbnail,
+  ListingImage,
 } from '../../components';
 
 import css from './ListingCard.module.css';
@@ -119,8 +117,6 @@ const priceData = (price, currency, intl) => {
   return {};
 };
 
-const LazyImage = lazyLoadWithDimensions(ResponsiveImage, { loadAfterInitialRendering: 3000 });
-
 const PriceMaybe = props => {
   const { price, publicData, config, intl, listingTypeConfig } = props;
   const showPrice = displayPrice(listingTypeConfig);
@@ -158,11 +154,44 @@ const PriceMaybe = props => {
 };
 
 /**
+ * Generate SEO-optimized alt text for listing images
+ * Includes product title, age group, certifications for better search indexing
+ * @param {string} title - Listing title
+ * @param {Object} publicData - Listing publicData
+ * @param {string} listingId - Listing UUID for debugging
+ * @returns {string} SEO-optimized alt text
+ */
+const generateListingAltText = (title, publicData, listingId) => {
+  const ageGroup = publicData.age_group || '';
+  const certifications = publicData.certification || [];
+  const hasGOTS = certifications.includes('gots_certified');
+
+  const altTextParts = [title];
+  if (ageGroup) {
+    if (typeof ageGroup === 'string') {
+      const ageLabel = ageGroup.replace(/_/g, '-');
+      altTextParts.push(`for ${ageLabel}`);
+    } else {
+      console.warn('ListingCard: ageGroup is not a string', {
+        listingId,
+        ageGroup,
+        ageGroupType: typeof ageGroup,
+        publicData,
+      });
+    }
+  }
+  if (hasGOTS) {
+    altTextParts.push('GOTS certified');
+  }
+  altTextParts.push('organic baby clothing');
+  return altTextParts.join(' - ');
+};
+
+/**
  * ListingCardImage
  * Component responsible for rendering the image part of the listing card.
- * It either renders the first image from the listing's images array with lazy loading,
- * or a stylized placeholder if images are disabled for the listing type.
- * Also wraps the image in a fixed aspect ratio container for consistent layout.
+ * Uses shared ListingImage component with SEO-optimized alt text.
+ * Falls back to ListingCardThumbnail if images are disabled for the listing type.
  * @component
  * @param {Object} props
  * @param {Object} props.currentListing listing entity with image data
@@ -189,47 +218,24 @@ const ListingCardImage = props => {
     style,
   } = props;
 
-  const firstImage =
-    currentListing.images && currentListing.images.length > 0 ? currentListing.images[0] : null;
-
-  // Get variants - prefer listing-card variants, fall back to all variants if none match
-  const availableVariants = firstImage ? Object.keys(firstImage?.attributes?.variants) : [];
-  const prefixedVariants = availableVariants.filter(k => k.startsWith(variantPrefix));
-  const variants = prefixedVariants.length > 0 ? prefixedVariants : availableVariants;
-
   // Generate SEO-optimized alt text
   const publicData = currentListing.attributes?.publicData || {};
-  const ageGroup = publicData.age_group || '';
-  const certifications = publicData.certification || [];
-  const hasGOTS = certifications.includes('gots_certified');
-
-  const altTextParts = [title];
-  if (ageGroup) {
-    const ageLabel = ageGroup.replace(/_/g, '-');
-    altTextParts.push(`for ${ageLabel}`);
-  }
-  if (hasGOTS) {
-    altTextParts.push('GOTS certified');
-  }
-  altTextParts.push('organic baby clothing');
-  const altText = altTextParts.join(' - ');
+  const altText = generateListingAltText(title, publicData, currentListing.id?.uuid);
 
   // Render the listing image only if listing images are enabled in the listing type
   return showListingImage ? (
-    <AspectRatioWrapper
+    <ListingImage
+      listing={currentListing}
+      variant={variantPrefix}
+      sizes={renderSizes}
+      aspectWidth={aspectWidth}
+      aspectHeight={aspectHeight}
       className={css.aspectRatioWrapper}
-      width={aspectWidth}
-      height={aspectHeight}
-      {...setActivePropsMaybe}
-    >
-      <LazyImage
-        rootClassName={css.rootForImage}
-        alt={altText}
-        image={firstImage}
-        variants={variants}
-        sizes={renderSizes}
-      />
-    </AspectRatioWrapper>
+      rootClassName={css.rootForImage}
+      alt={altText}
+      onMouseEnter={setActivePropsMaybe?.onMouseEnter}
+      onMouseLeave={setActivePropsMaybe?.onMouseLeave}
+    />
   ) : (
     <ListingCardThumbnail
       style={style}

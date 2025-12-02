@@ -1,0 +1,152 @@
+@import '../../../../styles/customMediaQueries.css';
+
+.root {
+  width: 100%;
+  padding: 48px 0;
+  background: var(--colorGrey50);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Section Header */
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey700);
+  margin: 0 0 12px 0;
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--colorGrey300);
+  margin: 0;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Brand Grid - Mobile first (1 column on very small screens) */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+/* Small mobile and up - 2 columns */
+@media (min-width: 480px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Loading & Error States */
+.loading,
+.error {
+  text-align: center;
+  padding: 48px 24px;
+  font-size: 16px;
+  color: var(--colorGrey300);
+}
+
+.error {
+  color: var(--colorFail);
+}
+
+/* View All Brands CTA */
+.viewAllBrands {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.viewAllButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: transparent;
+  border: 2px solid var(--marketplaceColor);
+  border-radius: 8px;
+  color: var(--marketplaceColor);
+  font-size: 16px;
+  font-weight: var(--fontWeightSemiBold);
+  text-decoration: none;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: var(--marketplaceColor);
+    color: var(--colorWhite);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.ctaArrow {
+  font-size: 18px;
+  transition: transform 0.2s ease;
+}
+
+.viewAllButton:hover .ctaArrow {
+  transform: translateX(4px);
+}
+
+/* Tablet - 3 columns */
+@media (--viewportMedium) {
+  .root {
+    padding: 64px 0;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+
+  .subtitle {
+    font-size: 17px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+
+/* Desktop - 4 columns */
+@media (min-width: 1024px) {
+  .root {
+    padding: 72px 0;
+  }
+
+  .header {
+    margin-bottom: 40px;
+  }
+
+  .title {
+    font-size: 36px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+}
+
+/* Large Desktop - Keep 4 columns but increase gap */
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+
+  .grid {
+    gap: 28px;
+  }
+}

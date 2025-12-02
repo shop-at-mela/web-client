@@ -15,6 +15,7 @@ const pageDataLoadingAPI = getPageDataLoadingAPI();
 const AuthenticationPage = loadable(() => import(/* webpackChunkName: "AuthenticationPage" */ '../containers/AuthenticationPage/AuthenticationPage'));
 const SignupPage = loadable(() => import(/* webpackChunkName: "SignupPage" */ '../containers/SignupPage/SignupPage'));
 const BrandPartnershipPage = loadable(() => import(/* webpackChunkName: "BrandPartnershipPage" */ '../containers/BrandPartnershipPage/BrandPartnershipPage'));
+const BrandsPage = loadable(() => import(/* webpackChunkName: "BrandsPage" */ '../containers/BrandsPage/BrandsPage'));
 const CheckoutPage = loadable(() => import(/* webpackChunkName: "CheckoutPage" */ '../containers/CheckoutPage/CheckoutPage'));
 const CMSPage = loadable(() => import(/* webpackChunkName: "CMSPage" */ '../containers/CMSPage/CMSPage'));
 const ContactDetailsPage = loadable(() => import(/* webpackChunkName: "ContactDetailsPage" */ '../containers/ContactDetailsPage/ContactDetailsPage'));
@@ -127,8 +128,8 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/brands',
       name: 'BrandsPage',
       ...authForPrivateMarketplace,
-      component: SearchPage,
-      loadData: pageDataLoadingAPI.SearchPage.loadData,
+      component: BrandsPage,
+      loadData: pageDataLoadingAPI.BrandsPage.loadData,
     },
     {
       path: '/brands/:brandSlug',
