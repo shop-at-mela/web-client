@@ -324,3 +324,15 @@
   width: 100%;
   height: 100%;
 }
+
+/* Brand Storefront Full-Width Layout */
+.brandStorefrontContainer {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.brandStorefrontContainer > * {
+  width: 100%;
+}

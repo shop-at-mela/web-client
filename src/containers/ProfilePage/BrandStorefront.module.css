@@ -1,0 +1,719 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  width: 100%;
+  position: relative;
+}
+
+/* Edit Profile Bar (Owner Only) */
+.editProfileBar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  background: var(--colorGrey50);
+  border-bottom: 1px solid var(--colorGrey100);
+}
+
+.editProfileLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--colorWhite);
+  border: 1px solid var(--colorGrey200);
+  border-radius: 6px;
+  color: var(--colorGrey700);
+  font-size: 14px;
+  font-weight: var(--fontWeightSemiBold);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.editProfileLink:hover {
+  background: var(--colorGrey50);
+  border-color: var(--marketplaceColor);
+  color: var(--marketplaceColor);
+}
+
+.editIcon {
+  font-size: 16px;
+}
+
+/* ===============================================
+   Brand Header
+   =============================================== */
+.brandHeader {
+  width: 100%;
+  padding: 32px 16px 24px 16px;
+  border-bottom: 1px solid var(--colorGrey100);
+  margin-bottom: 32px;
+}
+
+.brandHeaderContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+}
+
+.logoContainer {
+  flex-shrink: 0;
+}
+
+.brandLogo {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 2px solid var(--colorGrey100);
+}
+
+.logoPlaceholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorGrey100) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--colorGrey100);
+}
+
+.logoInitial {
+  font-size: 48px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey300);
+}
+
+.brandInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.brandName {
+  font-size: 28px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey700);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.tagline {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--colorGrey500);
+  margin: 0;
+  max-width: 600px;
+}
+
+.brandMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--colorGrey300);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.origin,
+.established {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.separator {
+  color: var(--colorGrey200);
+}
+
+.certifications {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+/* ===============================================
+   Tab Navigation
+   =============================================== */
+.tabNavigation {
+  width: 100%;
+  border-bottom: 1px solid var(--colorGrey100);
+  margin-bottom: 32px;
+  background: var(--colorWhite);
+}
+
+.tabs {
+  /* ButtonTabNavHorizontal handles its own styling */
+}
+
+.tabLabel {
+  font-size: 15px;
+  font-weight: var(--fontWeightSemiBold);
+}
+
+/* ===============================================
+   Featured Products Section (Horizontal Scroll)
+   =============================================== */
+.featuredSection {
+  width: 100%;
+  margin-bottom: 32px;
+  padding-top: 16px;
+}
+
+.featuredHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 0 16px;
+}
+
+.featuredTitle {
+  font-size: 18px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey700);
+  margin: 0;
+}
+
+.featuredScroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 0 16px 16px 16px;
+  -webkit-overflow-scrolling: touch;
+
+  /* Hide scrollbar but keep functionality */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.featuredScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.featuredItem {
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  width: 280px;
+}
+
+/* ===============================================
+   Tab Content
+   =============================================== */
+.tabContent {
+  width: 100%;
+}
+
+/* Mobile Section Titles */
+.mobileSectionTitle {
+  font-size: 20px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey700);
+  margin: 0 0 20px 0;
+  padding: 16px 16px 0 16px;
+  border-top: 1px solid var(--colorGrey100);
+}
+
+.mobileSectionTitle:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+/* ===============================================
+   Products Section
+   =============================================== */
+.productsSection {
+  width: 100%;
+  padding: 0 16px;
+}
+
+.productGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.productItem {
+  /* ListingCard handles its own styling */
+}
+
+.emptyState {
+  text-align: center;
+  padding: 48px 24px;
+  font-size: 16px;
+  color: var(--colorGrey300);
+  margin: 0;
+}
+
+/* ===============================================
+   About Section
+   =============================================== */
+.aboutSection {
+  width: 100%;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.sectionSubtitle {
+  font-size: 18px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey700);
+  margin: 0 0 12px 0;
+}
+
+.brandStory {
+  /* Container */
+}
+
+.storyContent {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--colorGrey500);
+}
+
+.longWord {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.brandMission {
+  padding: 24px;
+  background: var(--colorGrey50);
+  border-radius: 8px;
+  border-left: 4px solid var(--marketplaceColor);
+}
+
+.missionContent {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--colorGrey500);
+  margin: 0;
+}
+
+.certificationsDetail {
+  /* Container */
+}
+
+.certificationsList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Individual Certification Detail Card */
+.certificationDetail {
+  background: var(--colorWhite);
+  border: 1px solid var(--colorGrey100);
+  border-radius: 8px;
+  padding: 20px;
+  transition: box-shadow 0.2s ease;
+}
+
+.certificationDetail:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.certificationHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.certificationHeaderText {
+  flex: 1;
+}
+
+.certificationName {
+  font-size: 16px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey700);
+  margin: 0 0 4px 0;
+}
+
+.certificationTagline {
+  font-size: 14px;
+  color: var(--colorGrey500);
+  margin: 0;
+  font-style: italic;
+}
+
+.certificationBody {
+  margin-top: 12px;
+}
+
+.certificationBenefit {
+  font-size: 14px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey700);
+  margin: 0 0 8px 0;
+}
+
+.certificationFeatures {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+}
+
+.certificationFeature {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--colorGrey500);
+  padding: 6px 0 6px 20px;
+  position: relative;
+}
+
+.certificationFeature::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--marketplaceColor);
+  font-weight: var(--fontWeightBold);
+}
+
+.certificationProof {
+  padding: 12px;
+  background: var(--colorGrey50);
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.certificationIssuer,
+.certificationValidity {
+  font-size: 13px;
+  color: var(--colorGrey500);
+  margin: 0 0 6px 0;
+}
+
+.certificationIssuer:last-child,
+.certificationValidity:last-child {
+  margin-bottom: 0;
+}
+
+.certificateLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--marketplaceColor);
+  text-decoration: none;
+  margin-top: 8px;
+}
+
+.certificateLink::after {
+  content: '↗';
+}
+
+.certificateLink:hover {
+  text-decoration: underline;
+}
+
+.learnMoreLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--colorGrey400);
+  text-decoration: none;
+}
+
+.learnMoreLink:hover {
+  color: var(--marketplaceColor);
+  text-decoration: underline;
+}
+
+/* ===============================================
+   Reviews Section
+   =============================================== */
+.reviewsSection {
+  width: 100%;
+  padding: 0 16px;
+}
+
+.error {
+  text-align: center;
+  padding: 24px;
+  font-size: 15px;
+  color: var(--colorFail);
+  margin: 0;
+}
+
+/* ===============================================
+   Placeholder Components (Owner View Only)
+   =============================================== */
+.placeholder {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px;
+  background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorWhite) 100%);
+  border: 2px dashed var(--colorGrey200);
+  border-radius: 12px;
+  margin: 16px 0;
+  transition: all 0.3s ease;
+}
+
+.placeholder:hover {
+  border-color: var(--marketplaceColor);
+  background: linear-gradient(135deg, #f8fffe 0%, var(--colorWhite) 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.placeholderIcon {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.placeholderContent {
+  flex: 1;
+}
+
+.placeholderTitle {
+  font-size: 16px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey700);
+  margin: 0 0 8px 0;
+}
+
+.placeholderDescription {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--colorGrey500);
+  margin: 0 0 12px 0;
+}
+
+.placeholderCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--marketplaceColor);
+  color: var(--colorWhite);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: var(--fontWeightSemiBold);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.placeholderCta:hover {
+  background: var(--marketplaceColorDark);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Inline placeholders for header items */
+.inlinePlaceholder {
+  margin: 8px 0;
+}
+
+.inlinePlaceholder .placeholder {
+  padding: 16px;
+  margin: 0;
+}
+
+.inlinePlaceholder .placeholderIcon {
+  font-size: 24px;
+}
+
+.inlinePlaceholder .placeholderTitle {
+  font-size: 14px;
+}
+
+.inlinePlaceholder .placeholderDescription {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+/* Empty logo placeholder for owner */
+.logoPlaceholderEmpty {
+  background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorWhite) 100%);
+  border: 2px dashed var(--colorGrey200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logoPlaceholderEmpty:hover {
+  border-color: var(--marketplaceColor);
+  background: linear-gradient(135deg, #f8fffe 0%, var(--colorWhite) 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.logoPlaceholderEmpty .placeholder {
+  border: none;
+  background: transparent;
+  padding: 16px;
+  margin: 0;
+  flex-direction: column;
+  text-align: center;
+}
+
+.logoPlaceholderEmpty .placeholderIcon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.logoPlaceholderEmpty .placeholderTitle {
+  font-size: 13px;
+}
+
+.logoPlaceholderEmpty .placeholderDescription {
+  display: none;
+}
+
+.logoPlaceholderEmpty .placeholderCta {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+/* ===============================================
+   Responsive - Tablet
+   =============================================== */
+@media (--viewportMedium) {
+  .brandHeader {
+    padding: 40px 24px 32px 24px;
+  }
+
+  .brandHeaderContent {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    gap: 24px;
+  }
+
+  /* Increase padding on tablet */
+  .productsSection,
+  .aboutSection,
+  .reviewsSection {
+    padding: 0 24px;
+  }
+
+  .mobileSectionTitle {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .brandLogo {
+    width: 160px;
+    height: 160px;
+  }
+
+  .logoPlaceholder {
+    width: 160px;
+    height: 160px;
+  }
+
+  .logoInitial {
+    font-size: 64px;
+  }
+
+  .brandInfo {
+    align-items: flex-start;
+    flex: 1;
+  }
+
+  .brandName {
+    font-size: 32px;
+  }
+
+  .tagline {
+    font-size: 17px;
+  }
+
+  .brandMeta {
+    justify-content: flex-start;
+  }
+
+  .certifications {
+    justify-content: flex-start;
+  }
+
+  /* Featured products - 4 items visible */
+  .featuredItem {
+    width: 320px;
+  }
+
+  .productGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+/* ===============================================
+   Responsive - Desktop
+   =============================================== */
+@media (min-width: 1024px) {
+  .brandHeader {
+    padding: 48px 32px 40px 32px;
+  }
+
+  /* Desktop padding */
+  .productsSection,
+  .aboutSection,
+  .reviewsSection {
+    padding: 0 32px;
+  }
+
+  .brandLogo {
+    width: 200px;
+    height: 200px;
+    border-radius: 16px;
+  }
+
+  .logoPlaceholder {
+    width: 200px;
+    height: 200px;
+    border-radius: 16px;
+  }
+
+  .logoInitial {
+    font-size: 80px;
+  }
+
+  .brandName {
+    font-size: 36px;
+  }
+
+  .tagline {
+    font-size: 18px;
+  }
+
+  .productGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .aboutSection {
+    max-width: 800px;
+  }
+}
+
+/* ===============================================
+   Responsive - Large Desktop
+   =============================================== */
+@media (min-width: 1280px) {
+  .productGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+  }
+}

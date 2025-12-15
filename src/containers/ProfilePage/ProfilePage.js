@@ -57,6 +57,7 @@ import SectionDetailsMaybe from './SectionDetailsMaybe';
 import SectionTextMaybe from './SectionTextMaybe';
 import SectionMultiEnumMaybe from './SectionMultiEnumMaybe';
 import SectionYoutubeVideoMaybe from './SectionYoutubeVideoMaybe';
+import BrandStorefront from './BrandStorefront';
 
 const MAX_MOBILE_SCREEN_WIDTH = 768;
 const MIN_LENGTH_FOR_LONG_WORDS = 20;
@@ -366,6 +367,9 @@ export const ProfilePageComponent = props => {
 
   const userTypeRoles = getCurrentUserTypeRoles(config, profileUser);
 
+  // In Mela, all providers are brands, so we use the provider role directly
+  const isProvider = userTypeRoles?.provider === true;
+
   const isDataLoaded = isPreview
     ? currentUser != null || userShowError != null
     : hasNoViewingRightsOnPrivateMarketplace
@@ -374,6 +378,47 @@ export const ProfilePageComponent = props => {
 
   const schemaTitleVars = { name: displayName, marketplaceName: config.marketplaceName };
   const schemaTitle = intl.formatMessage({ id: 'ProfilePage.schemaTitle' }, schemaTitleVars);
+
+  // Construct Schema.org markup based on profile type
+  const schemaMarkup = isProvider
+    ? {
+        '@context': 'http://schema.org',
+        '@type': 'Organization',
+        '@id': `${config.marketplaceRootURL}/u/${pathParams.id}`,
+        name: displayName,
+        url: `${config.marketplaceRootURL}/u/${pathParams.id}`,
+        ...(publicData?.brandLogoUrl && {
+          logo: {
+            '@type': 'ImageObject',
+            url: publicData.brandLogoUrl,
+          },
+        }),
+        ...(bio && { description: bio }),
+        ...(publicData?.establishedYear && {
+          foundingDate: publicData.establishedYear.toString(),
+        }),
+        ...(publicData?.foundedYear && { foundingDate: publicData.foundedYear.toString() }),
+        ...(rest.reviews?.length > 0 && {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: (
+              rest.reviews.reduce((sum, r) => sum + r.attributes.rating, 0) / rest.reviews.length
+            ).toFixed(1),
+            reviewCount: rest.reviews.length,
+            bestRating: '5',
+            worstRating: '1',
+          },
+        }),
+      }
+    : {
+        '@context': 'http://schema.org',
+        '@type': 'ProfilePage',
+        mainEntity: {
+          '@type': 'Person',
+          name: displayName,
+        },
+        name: schemaTitle,
+      };
 
   if (!isDataLoaded) {
     return null;
@@ -418,45 +463,59 @@ export const ProfilePageComponent = props => {
   }
 
   // This is rendering normal profile page (not preview for pending-approval)
+  // Brands get full-width layout (no sidebar), customers get sidebar layout
   return (
     <Page
       scrollingDisabled={scrollingDisabled}
       title={schemaTitle}
-      schema={{
-        '@context': 'http://schema.org',
-        '@type': 'ProfilePage',
-        mainEntity: {
-          '@type': 'Person',
-          name: profileUser?.attributes?.profile?.displayName,
-        },
-        name: schemaTitle,
-      }}
+      schema={schemaMarkup}
     >
-      <LayoutSideNavigation
-        sideNavClassName={css.aside}
-        topbar={<TopbarContainer />}
-        sideNav={
-          <AsideContent
-            user={profileUser}
-            showLinkToProfileSettingsPage={mounted && isCurrentUser}
+      {isProvider ? (
+        // Brand Storefront: Full-width layout without sidebar
+        <>
+          <TopbarContainer />
+          <div className={css.brandStorefrontContainer}>
+            <BrandStorefront
+              user={profileUser}
+              listings={rest.listings || []}
+              reviews={rest.reviews || []}
+              queryReviewsError={rest.queryReviewsError}
+              userTypeRoles={userTypeRoles}
+              currentUser={currentUser}
+              isCurrentUser={isCurrentUser}
+              variant={pathParams?.variant}
+            />
+          </div>
+          <FooterContainer />
+        </>
+      ) : (
+        // Customer Profile: Sidebar layout (existing)
+        <LayoutSideNavigation
+          sideNavClassName={css.aside}
+          topbar={<TopbarContainer />}
+          sideNav={
+            <AsideContent
+              user={profileUser}
+              showLinkToProfileSettingsPage={mounted && isCurrentUser}
+              displayName={displayName}
+            />
+          }
+          footer={<FooterContainer />}
+        >
+          <MainContent
+            bio={bio}
             displayName={displayName}
+            userShowError={userShowError}
+            publicData={publicData}
+            metadata={metadata}
+            userFieldConfig={userFields}
+            hideReviews={hasNoViewingRightsOnPrivateMarketplace}
+            intl={intl}
+            userTypeRoles={userTypeRoles}
+            {...rest}
           />
-        }
-        footer={<FooterContainer />}
-      >
-        <MainContent
-          bio={bio}
-          displayName={displayName}
-          userShowError={userShowError}
-          publicData={publicData}
-          metadata={metadata}
-          userFieldConfig={userFields}
-          hideReviews={hasNoViewingRightsOnPrivateMarketplace}
-          intl={intl}
-          userTypeRoles={userTypeRoles}
-          {...rest}
-        />
-      </LayoutSideNavigation>
+        </LayoutSideNavigation>
+      )}
     </Page>
   );
 };

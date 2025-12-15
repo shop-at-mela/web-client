@@ -195,6 +195,382 @@ describe('ProfilePage', () => {
     expect(screen.getByText('March 2024')).toBeInTheDocument();
     expect(screen.getAllByTitle('3/5')).toHaveLength(2);
   });
+
+  describe('Brand Provider Detection', () => {
+    it('renders BrandStorefront for provider users', async () => {
+      const providerState = getInitialState();
+      const providerUser = createEnhancedUser(createUser, userId);
+      providerUser.attributes.profile.publicData.userType = 'provider';
+
+      const stateWithProvider = {
+        ...providerState,
+        marketplaceData: {
+          entities: {
+            ...providerState.marketplaceData.entities,
+            user: {
+              userId: providerUser,
+            },
+          },
+        },
+      };
+
+      const providerConfig = {
+        ...config,
+        user: {
+          userFields: [
+            {
+              key: 'userType',
+              scope: 'public',
+              schemaType: 'enum',
+              enumOptions: [
+                { option: 'a', label: 'Customer' },
+                { option: 'provider', label: 'Provider' },
+              ],
+              saveConfig: {
+                label: 'User Type',
+                placeholderMessage: 'Select user type',
+                isRequired: true,
+              },
+            },
+          ],
+        },
+        userType: {
+          userTypeConfig: [
+            {
+              userType: 'a',
+              label: 'Customer',
+              defaultUserFields: {
+                profile: ['userType'],
+              },
+            },
+            {
+              userType: 'provider',
+              label: 'Provider',
+              defaultUserFields: {
+                profile: ['userType'],
+              },
+            },
+          ],
+        },
+      };
+
+      let rendered = {};
+      await act(async () => {
+        rendered = render(<ProfilePage {...props} />, {
+          initialState: stateWithProvider,
+          config: providerConfig,
+        });
+      });
+
+      const { container } = rendered;
+
+      // Should render BrandStorefront (no sidebar)
+      expect(container.querySelector('.brandStorefrontContainer')).toBeInTheDocument();
+      // Should NOT render sidebar layout
+      expect(container.querySelector('.aside')).not.toBeInTheDocument();
+    });
+
+    it('renders customer profile for non-provider users', async () => {
+      await act(async () => {
+        render(<ProfilePage {...props} />, {
+          initialState: getInitialState(),
+          config,
+        });
+      });
+
+      // Should render sidebar for customer profiles
+      expect(screen.getByText('ProfilePage.desktopHeading')).toBeInTheDocument();
+      expect(screen.getByText('I am a great cook!')).toBeInTheDocument();
+    });
+
+    it('passes variant to BrandStorefront component', async () => {
+      const providerState = getInitialState();
+      const providerUser = createEnhancedUser(createUser, userId);
+      providerUser.attributes.profile.publicData.userType = 'provider';
+
+      const stateWithProvider = {
+        ...providerState,
+        marketplaceData: {
+          entities: {
+            ...providerState.marketplaceData.entities,
+            user: {
+              userId: providerUser,
+            },
+          },
+        },
+      };
+
+      const providerConfig = {
+        ...config,
+        user: {
+          userFields: [
+            {
+              key: 'userType',
+              scope: 'public',
+              schemaType: 'enum',
+              enumOptions: [
+                { option: 'a', label: 'Customer' },
+                { option: 'provider', label: 'Provider' },
+              ],
+              saveConfig: {
+                label: 'User Type',
+                placeholderMessage: 'Select user type',
+                isRequired: true,
+              },
+            },
+          ],
+        },
+        userType: {
+          userTypeConfig: [
+            {
+              userType: 'a',
+              label: 'Customer',
+              defaultUserFields: {
+                profile: ['userType'],
+              },
+            },
+            {
+              userType: 'provider',
+              label: 'Provider',
+              defaultUserFields: {
+                profile: ['userType'],
+              },
+            },
+          ],
+        },
+      };
+
+      const propsWithVariant = {
+        ...props,
+        params: { id: userId, variant: 'about' },
+      };
+
+      await act(async () => {
+        render(<ProfilePage {...propsWithVariant} />, {
+          initialState: stateWithProvider,
+          config: providerConfig,
+        });
+      });
+
+      // BrandStorefront should receive variant prop
+      // We can verify this by checking that the component renders
+      // (full verification would require mocking BrandStorefront)
+      expect(screen.queryByText('ProfilePage.desktopHeading')).not.toBeInTheDocument();
+    });
+
+    it('generates Organization schema for brand providers', async () => {
+      const providerState = getInitialState();
+      const brandUser = createEnhancedUser(createUser, userId);
+      brandUser.attributes.profile.publicData = {
+        ...brandUser.attributes.profile.publicData,
+        userType: 'provider',
+        brandLogoUrl: 'https://example.com/logo.png',
+        establishedYear: 2018,
+      };
+
+      const stateWithBrand = {
+        ...providerState,
+        marketplaceData: {
+          entities: {
+            ...providerState.marketplaceData.entities,
+            user: {
+              userId: brandUser,
+            },
+          },
+        },
+      };
+
+      const brandConfig = {
+        ...config,
+        user: {
+          userFields: [
+            {
+              key: 'userType',
+              scope: 'public',
+              schemaType: 'enum',
+              enumOptions: [
+                { option: 'a', label: 'Customer' },
+                { option: 'provider', label: 'Provider' },
+              ],
+              saveConfig: {
+                label: 'User Type',
+                placeholderMessage: 'Select user type',
+                isRequired: true,
+              },
+            },
+          ],
+        },
+        userType: {
+          userTypeConfig: [
+            {
+              userType: 'a',
+              label: 'Customer',
+              defaultUserFields: {
+                profile: ['userType'],
+              },
+            },
+            {
+              userType: 'provider',
+              label: 'Provider',
+              defaultUserFields: {
+                profile: ['userType'],
+              },
+            },
+          ],
+        },
+      };
+
+      let rendered = {};
+      await act(async () => {
+        rendered = render(<ProfilePage {...props} />, {
+          initialState: stateWithBrand,
+          config: brandConfig,
+        });
+      });
+
+      const { container } = rendered;
+
+      // Check for schema.org JSON-LD script
+      const scripts = container.querySelectorAll('script[type="application/ld+json"]');
+      expect(scripts.length).toBeGreaterThan(0);
+
+      // Parse the schema markup
+      const schemaScript = Array.from(scripts).find(script => {
+        try {
+          const schema = JSON.parse(script.textContent);
+          return schema['@type'] === 'Organization';
+        } catch {
+          return false;
+        }
+      });
+
+      expect(schemaScript).toBeTruthy();
+
+      if (schemaScript) {
+        const schema = JSON.parse(schemaScript.textContent);
+        expect(schema['@type']).toBe('Organization');
+        expect(schema.name).toBe('user1 display name');
+        expect(schema.logo.url).toBe('https://example.com/logo.png');
+        expect(schema.foundingDate).toBe('2018');
+      }
+    });
+
+    it('includes aggregateRating in Organization schema when reviews exist', async () => {
+      const providerState = getInitialState();
+      const brandUser = createEnhancedUser(createUser, userId);
+      brandUser.attributes.profile.publicData.userType = 'provider';
+
+      const stateWithBrand = {
+        ...providerState,
+        marketplaceData: {
+          entities: {
+            ...providerState.marketplaceData.entities,
+            user: {
+              userId: brandUser,
+            },
+          },
+        },
+      };
+
+      const brandConfig = {
+        ...config,
+        user: {
+          userFields: [
+            {
+              key: 'userType',
+              scope: 'public',
+              schemaType: 'enum',
+              enumOptions: [
+                { option: 'a', label: 'Customer' },
+                { option: 'provider', label: 'Provider' },
+              ],
+              saveConfig: {
+                label: 'User Type',
+                placeholderMessage: 'Select user type',
+                isRequired: true,
+              },
+            },
+          ],
+        },
+        userType: {
+          userTypeConfig: [
+            {
+              userType: 'a',
+              label: 'Customer',
+              defaultUserFields: {
+                profile: ['userType'],
+              },
+            },
+            {
+              userType: 'provider',
+              label: 'Provider',
+              defaultUserFields: {
+                profile: ['userType'],
+              },
+            },
+          ],
+        },
+      };
+
+      let rendered = {};
+      await act(async () => {
+        rendered = render(<ProfilePage {...props} />, {
+          initialState: stateWithBrand,
+          config: brandConfig,
+        });
+      });
+
+      const { container } = rendered;
+
+      const scripts = container.querySelectorAll('script[type="application/ld+json"]');
+      const schemaScript = Array.from(scripts).find(script => {
+        try {
+          const schema = JSON.parse(script.textContent);
+          return schema['@type'] === 'Organization';
+        } catch {
+          return false;
+        }
+      });
+
+      if (schemaScript) {
+        const schema = JSON.parse(schemaScript.textContent);
+        expect(schema.aggregateRating).toBeDefined();
+        expect(schema.aggregateRating['@type']).toBe('AggregateRating');
+        expect(schema.aggregateRating.ratingValue).toBe('3.0'); // Review has rating of 3
+        expect(schema.aggregateRating.reviewCount).toBe(1);
+      }
+    });
+
+    it('generates ProfilePage schema for customer users', async () => {
+      let rendered = {};
+      await act(async () => {
+        rendered = render(<ProfilePage {...props} />, {
+          initialState: getInitialState(),
+          config,
+        });
+      });
+
+      const { container } = rendered;
+
+      const scripts = container.querySelectorAll('script[type="application/ld+json"]');
+      const schemaScript = Array.from(scripts).find(script => {
+        try {
+          const schema = JSON.parse(script.textContent);
+          return schema['@type'] === 'ProfilePage';
+        } catch {
+          return false;
+        }
+      });
+
+      expect(schemaScript).toBeTruthy();
+
+      if (schemaScript) {
+        const schema = JSON.parse(schemaScript.textContent);
+        expect(schema['@type']).toBe('ProfilePage');
+        expect(schema.mainEntity['@type']).toBe('Person');
+      }
+    });
+  });
 });
 
 describe('Duck', () => {

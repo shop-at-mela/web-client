@@ -1,5 +1,5 @@
 import React from 'react';
-import { string, number, oneOf } from 'prop-types';
+import { string, number, oneOf, bool } from 'prop-types';
 import classNames from 'classnames';
 
 import { getCertificationInfo } from './certificationIcons';
@@ -59,7 +59,7 @@ CertificationBadge.propTypes = {
   certification: string.isRequired,
   variant: oneOf(['default', 'compact', 'icon-only']),
   size: number,
-  showTooltip: string,
+  showTooltip: bool,
   className: string,
 };
 
