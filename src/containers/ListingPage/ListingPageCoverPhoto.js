@@ -11,6 +11,8 @@ import { useConfiguration } from '../../context/configurationContext';
 import { useRouteConfiguration } from '../../context/routeConfigurationContext';
 // Utils
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
+import { getAspectsForSchema } from '../../util/itemAspectsParser';
+import { getItemSpecificsAttributes, getItemAspectsForSEO } from '../../util/itemAspectsHelpers';
 import { LISTING_STATE_PENDING_APPROVAL, LISTING_STATE_CLOSED, propTypes } from '../../util/types';
 import { types as sdkTypes } from '../../util/sdkLoader';
 import {
@@ -372,13 +374,12 @@ export const ListingPageComponent = props => {
   // https://developers.google.com/search/docs/advanced/structured-data/product
   const productURL = `${config.marketplaceRootURL}${location.pathname}${location.search}${location.hash}`;
   const currentStock = currentListing.currentStock?.attributes?.quantity || 0;
+  // Always provide availability - default to InStock if no stock tracking
   const schemaAvailability = !currentListing.currentStock
-    ? null
+    ? 'https://schema.org/InStock'
     : currentStock > 0
     ? 'https://schema.org/InStock'
     : 'https://schema.org/OutOfStock';
-
-  const availabilityMaybe = schemaAvailability ? { availability: schemaAvailability } : {};
 
   const handleViewPhotosClick = e => {
     // Stop event from bubbling up to prevent image click handler
@@ -430,41 +431,67 @@ export const ListingPageComponent = props => {
         // SEO ONLY: JSON-LD structured data for search engines (Google, Bing, etc.)
         // This is invisible to users but helps search engines understand the product
         // Appears as <script type="application/ld+json"> in page head
-        '@context': 'http://schema.org',
+        '@context': 'https://schema.org',
         '@type': 'Product',
         name: title, // Product name for structured data
         description: seoDescription, // SEO description for structured data
         image: schemaImages, // Product images for rich snippets
+        sku: publicData.sku, // Product SKU for identification
+        material: publicData.material, // Material from itemAspects (consumer-friendly)
+        countryOfOrigin: 'India', // Country of origin for cultural context
         brand: brandName ? {
           '@type': 'Brand',
           name: brandName // Helps Google show brand in search results
         } : undefined,
         category: publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3, // Product category for search engines
+
+        // FIX #1 & #2: Enhanced offers section with shipping details and corrected seller
         offers: {
           '@type': 'Offer',
           url: productURL,
+          ...priceForSchemaMaybe(price), // Price for Google Shopping/rich snippets
+          availability: schemaAvailability, // Stock status for search engines (always required)
+
+          // FIX #1: Add shipping details (calculated based on buyer's location)
+          shippingDetails: {
+            '@type': 'OfferShippingDetails',
+            shippingDestination: {
+              '@type': 'DefinedRegion',
+              addressCountry: 'US'
+            }
+          },
+
+          // FIX #2: Seller is the brand, not the marketplace (Mela is the platform/facilitator)
           seller: {
             '@type': 'Organization',
-            name: marketplaceName,
-            description: 'Authentic Indian Baby Products Marketplace for US Indian Diaspora'
-          },
-          ...priceForSchemaMaybe(price), // Price for Google Shopping/rich snippets
-          ...availabilityMaybe, // Stock status for search engines
+            name: brandName || marketplaceName,
+            description: `Authentic Indian baby products brand${brandName ? ' available on Mela marketplace' : ''}`
+          }
         },
+
+        // FIX #3: Fixed audience structure with audienceType and proper geographicArea
         audience: {
-          // SEO: Helps search engines understand target audience for better ranking
           '@type': 'Audience',
-          name: 'Indian Diaspora Parents in USA'
+          audienceType: 'Parents',
+          name: 'Indian Diaspora Parents in United States',
+          geographicArea: {
+            '@type': 'AdministrativeArea',
+            name: 'United States'
+          }
         },
+
+        // ENHANCEMENT: Parsed item aspects with benefits from itemAspectsParser
         additionalProperty: [
+          // Parse benefit-enriched Item_Aspects from publicData
+          ...(publicData.itemAspects ? getAspectsForSchema(publicData.itemAspects, true) : []),
+          // Add cultural heritage properties
           {
-            // SEO: Custom properties to highlight cultural relevance
             '@type': 'PropertyValue',
             name: 'Cultural Heritage',
             value: 'Authentic Indian Products'
           },
           {
-            '@type': 'PropertyValue', 
+            '@type': 'PropertyValue',
             name: 'Target Market',
             value: 'US Indian Diaspora Families'
           }
@@ -508,18 +535,7 @@ export const ListingPageComponent = props => {
 
             {/* Item Specifics Section */}
             <ItemSpecifics
-              attributes={[
-                ...(publicData.brand ? [{ key: 'Brand', value: publicData.brand }] : []),
-                ...(publicData.sku ? [{ key: 'SKU', value: publicData.sku }] : []),
-                ...(publicData.material ? [{ key: 'Material', value: publicData.material }] : []),
-                ...(publicData.ageRange ? [{ key: 'Age Range', value: publicData.ageRange }] : []),
-                ...(publicData.color ? [{ key: 'Color', value: publicData.color }] : []),
-                ...(publicData.size ? [{ key: 'Size', value: publicData.size }] : []),
-                ...(publicData.weight ? [{ key: 'Weight', value: publicData.weight }] : []),
-                ...(publicData.dimensions ? [{ key: 'Dimensions', value: publicData.dimensions }] : []),
-                ...(publicData.origin ? [{ key: 'Origin', value: publicData.origin }] : []),
-                ...(publicData.certifications ? [{ key: 'Certifications', value: publicData.certifications }] : []),
-              ]}
+              attributes={getItemSpecificsAttributes(publicData)}
               categoryBreadcrumb={
                 (publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3) && (() => {
                   const categoryIds = {

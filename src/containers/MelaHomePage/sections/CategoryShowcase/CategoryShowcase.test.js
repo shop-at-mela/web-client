@@ -23,69 +23,84 @@ jest.mock('../../../../components/NamedLink/NamedLink', () => {
 
 const mockCategoryConfig = [
   {
-    "name": "Baby Clothes & Accessories",
-    "id": "Baby-Clothes-Accessories",
+    "name": "Baby & Kids",
+    "id": "Baby-Kids",
     "subcategories": [
       {
         "name": "Clothing",
-        "id": "Baby-Clothing",
+        "id": "Clothing",
         "subcategories": [
           {
-            "name": "Tops & One-Pieces",
-            "id": "Baby-Clothing-Tops-One-Pieces",
+            "name": "Tops & Bodysuits",
+            "id": "Tops-Bodysuits",
             "subcategories": []
           },
           {
             "name": "Bottoms",
-            "id": "Baby-Clothing-Bottoms",
+            "id": "Bottoms",
             "subcategories": []
           },
           {
-            "name": "Outerwear & Jackets",
-            "id": "Baby-Clothing-Outerwear-Jackets",
+            "name": "Dresses, Rompers & Sets",
+            "id": "Dresses-Rompers-Sets",
             "subcategories": []
           }
         ]
       },
       {
-        "name": "Shoes",
-        "id": "Baby-Shoes",
+        "name": "Footwear",
+        "id": "Footwear",
         "subcategories": [
           {
-            "name": "Booties & First Walkers",
-            "id": "Baby-Shoes-Booties-First-Walkers",
+            "name": "First Walkers & Soft Soles",
+            "id": "First-Walkers-Soft-Soles",
             "subcategories": []
           },
           {
-            "name": "Sneakers",
-            "id": "Baby-Shoes-Sneakers",
+            "name": "Kids Shoes",
+            "id": "Kids-Shoes",
             "subcategories": []
           }
         ]
       },
       {
         "name": "Accessories",
-        "id": "Baby-Accessories",
+        "id": "Accessories",
         "subcategories": [
           {
-            "name": "Bibs",
-            "id": "Baby-Accessories-Bibs",
+            "name": "Hats & Hair Accessories",
+            "id": "Hats-Hair-Accessories",
             "subcategories": []
           },
           {
-            "name": "Caps & Hats",
-            "id": "Baby-Accessories-Caps-Hats",
+            "name": "Bags & Backpacks",
+            "id": "Bags-Backpacks",
+            "subcategories": []
+          },
+          {
+            "name": "Socks & Tights",
+            "id": "Socks-Tights",
+            "subcategories": []
+          },
+          {
+            "name": "Bibs & Burp Cloths",
+            "id": "Bibs-Burp-Cloths",
             "subcategories": []
           }
         ]
       },
       {
         "name": "Toys",
-        "id": "Baby-Toys",
+        "id": "Toys",
         "subcategories": [
           {
-            "name": "Plush Toys",
-            "id": "Baby-Toys-Plush",
+            "name": "Baby Toys (0-2 yrs)",
+            "id": "Baby-Toys-0-2-yrs",
+            "subcategories": []
+          },
+          {
+            "name": "Plush & Pretend Play",
+            "id": "Plush-Pretend-Play",
             "subcategories": []
           }
         ]
@@ -129,7 +144,7 @@ describe('CategoryShowcase', () => {
 
     // Should show level 2 categories
     expect(screen.getByText('Clothing')).toBeInTheDocument();
-    expect(screen.getByText('Shoes')).toBeInTheDocument();
+    expect(screen.getByText('Footwear')).toBeInTheDocument();
     expect(screen.getByText('Accessories')).toBeInTheDocument();
     expect(screen.getByText('Toys')).toBeInTheDocument();
   });
@@ -138,13 +153,13 @@ describe('CategoryShowcase', () => {
     renderCategoryShowcase();
 
     // Clothing category should show its subcategories as featured items
-    expect(screen.getByText('Tops & One-Pieces')).toBeInTheDocument();
+    expect(screen.getByText('Tops & Bodysuits')).toBeInTheDocument();
     expect(screen.getByText('Bottoms')).toBeInTheDocument();
-    expect(screen.getByText('Outerwear & Jackets')).toBeInTheDocument();
+    expect(screen.getByText('Dresses, Rompers & Sets')).toBeInTheDocument();
 
-    // Shoes category should show its subcategories
-    expect(screen.getByText('Booties & First Walkers')).toBeInTheDocument();
-    expect(screen.getByText('Sneakers')).toBeInTheDocument();
+    // Footwear category should show its subcategories
+    expect(screen.getByText('First Walkers & Soft Soles')).toBeInTheDocument();
+    expect(screen.getByText('Kids Shoes')).toBeInTheDocument();
   });
 
   it('sets appropriate badges for different category types', () => {
@@ -153,7 +168,7 @@ describe('CategoryShowcase', () => {
     // Clothing should have "Most Popular" badge
     expect(screen.getByText('Most Popular')).toBeInTheDocument();
 
-    // Shoes should have "New Arrivals" badge
+    // Footwear should have "New Arrivals" badge
     expect(screen.getByText('New Arrivals')).toBeInTheDocument();
 
     // Accessories should have "Complete Sets" badge
@@ -169,7 +184,7 @@ describe('CategoryShowcase', () => {
     // Check that category links have correct params
     const categoryLink = clothingLinks.find(link => {
       const params = JSON.parse(link.getAttribute('data-params') || '{}');
-      return params.pub_category === 'Baby-Clothing';
+      return params.pub_category === 'Clothing';
     });
     expect(categoryLink).toBeInTheDocument();
   });
@@ -192,8 +207,8 @@ describe('CategoryShowcase', () => {
       categoryConfiguration: {
         categories: [
           {
-            "name": "Baby Clothes & Accessories",
-            "id": "Baby-Clothes-Accessories",
+            "name": "Baby & Kids",
+            "id": "Baby-Kids",
             "subcategories": [
               {
                 "name": "Simple Category",
@@ -238,8 +253,8 @@ describe('CategoryShowcase', () => {
       categoryConfiguration: {
         categories: [
           {
-            "name": "Baby Clothes & Accessories",
-            "id": "Baby-Clothes-Accessories",
+            "name": "Baby & Kids",
+            "id": "Baby-Kids",
             "subcategories": [
               { "name": "Category 1", "id": "cat1", "subcategories": [] },
               { "name": "Category 2", "id": "cat2", "subcategories": [] },
@@ -269,7 +284,7 @@ describe('CategoryShowcase', () => {
 
     // Should generate descriptions from category names
     expect(screen.getByText('Explore our clothing collection')).toBeInTheDocument();
-    expect(screen.getByText('Explore our shoes collection')).toBeInTheDocument();
+    expect(screen.getByText('Explore our footwear collection')).toBeInTheDocument();
     expect(screen.getByText('Explore our accessories collection')).toBeInTheDocument();
   });
 
@@ -281,7 +296,7 @@ describe('CategoryShowcase', () => {
 
     // Check that image src follows expected pattern
     const clothingImage = images.find(img =>
-      img.src.includes('category-baby-clothing.jpg')
+      img.src.includes('category-clothing.jpg')
     );
     expect(clothingImage).toBeInTheDocument();
   });

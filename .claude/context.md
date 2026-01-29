@@ -47,7 +47,6 @@
 5. Test with `npm test -- path/to/test.js`
 
 ### Error Resolution Priorities
-1. **SDK errors**: Check import path (use `../util/sdkLoader` not `sharetribe-sdk`)
-2. **Redux errors**: Verify Provider wrapping in tests
-3. **State errors**: Ensure test state matches component expectations
-4. **Component errors**: Check variable names in actual component code
+1. **Redux errors**: Verify Provider wrapping in tests
+2. **State errors**: Ensure test state matches component expectations
+3. **Component errors**: Check variable names in actual component code

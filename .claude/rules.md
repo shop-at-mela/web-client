@@ -27,3 +27,14 @@
 - **Extend existing components** instead of duplicating (e.g., extend ListingCard rather than create ProductTile)
 - **Name components by outcome** not implementation (e.g., TrustBadges/ConversionBadges vs CertificationBadges)
 - **Use flexible props** for context-aware rendering (e.g., showAuthorInfo, showTrustBadges)
+
+### Mobile-First CSS
+- Apply visual treatments progressively: minimal on mobile, enhanced on desktop
+- Mobile (< 768px): Padding only, no backgrounds/borders/gradients
+- Tablet+: Add backgrounds, borders, rounded corners
+- Why: Mobile screen real estate is precious, desktop benefits from breathing room
+
+### Variable Name Verification
+- Always check actual variable names before referencing in components
+- Example: ListingPage uses `currentListing` not `listing`
+- Pattern: Read component code to verify, don't assume based on other components

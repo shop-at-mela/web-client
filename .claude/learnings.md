@@ -171,9 +171,38 @@ results.forEach(r => allEntities = updatedEntities(allEntities, r.responseData, 
 - **Pattern**: Create clean entity objects with only valid (non-null) relationships
 - **Don't mutate**: Build fresh objects instead of using `delete` on SDK response objects
 
+### Mobile-First CSS for Feature Sections
+- **Apply visual treatments progressively**: Minimal on mobile (maximize content), enhanced on desktop (breathing room)
+- **Mobile (< 768px)**: Padding only, no backgrounds/borders/gradients
+- **Tablet+**: Add backgrounds, borders, rounded corners
+- **Why**: Mobile screen real estate is precious, desktop benefits from visual polish
+
+### Horizontal Scroll Affordance
+- **Show 15-20% of next card** to indicate scrollability (Netflix/Amazon/Airbnb pattern)
+- **Progressive card counts**: 1+peek (mobile) → 2+peek (tablet) → 3+peek (desktop) → 4+peek (XL)
+- **Use calc() for responsive widths**: `calc(31vw - 32px)` shows 3 full + 20% peek
+- **Gradient indicator positioning**: Use `::before` on parent container (not scrolling child) so it stays fixed at edge
+- **Padding structure**: Parent = vertical only, Header = horizontal, Scroll container = left only (right extends to edge)
+
+### Tab Navigation Component Selection
+- **LinkTabNavHorizontal**: For route-based navigation (`linkProps.name`, `linkProps.params`)
+- **ButtonTabNavHorizontal**: For state-based navigation (`onClick` handlers)
+- **Common mistake**: Using ButtonTabNavHorizontal with linkProps → empty/non-rendering tabs
+
+### Lazy Loading Pattern
+- **Intersection Observer** with 200px `rootMargin` for smooth loading before user reaches end
+- **Batch size**: 12 items (3-4 rows on desktop grid)
+- **Trigger element**: Invisible div with `ref` at end of visible items
+
+### Test Prop Name Consistency
+- **Issue**: Using parent component's variable name instead of child's actual prop name
+- **Example**: BrandStorySection expects `brandStory` prop, not `bio` (even though parent has `bio`)
+- **Pattern**: Read component implementation to verify exact prop names, don't assume
+
 ## Session Log
 2024-10-10: Fixed CategoryProducts to display proper category names + product filtering improvements
 2025-10-10: Implemented HeroProducts with real API integration, randomization, and comprehensive testing
 2025-10-13: Resolved image quality issues - switched to predefined high-res variants + enhanced quality settings
 2025-11-18: Phase 2 - CategoryShowcase product-first, ListingCard badges, image variant fallback
 2025-11-29: Fixed addMarketplaceEntities payload format issue in Brands page implementation
+2025-12-15: Brand storefront UX - scroll affordance, mobile-first CSS, lazy loading, tab navigation component fix

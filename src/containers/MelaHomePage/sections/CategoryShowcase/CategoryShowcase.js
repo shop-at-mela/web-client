@@ -31,7 +31,7 @@ const sdk = createInstance({
 const getShowcaseCategories = (categoryConfig) => {
   if (!categoryConfig || !Array.isArray(categoryConfig)) return [];
 
-  // Since there's only 1 top-level category ('Baby Clothes & Accessories'),
+  // Since there's only 1 top-level category ('Baby & Kids'),
   // we need to go one level deeper to get the subcategories (level 2)
   const showcaseCategories = [];
 
@@ -42,7 +42,7 @@ const getShowcaseCategories = (categoryConfig) => {
     }
   });
 
-  // Return up to 3 subcategories for the showcase (Baby Clothing, Shoes, Accessories)
+  // Return up to 3 subcategories for the showcase (Baby Clothing, Footwear, Accessories)
   return showcaseCategories.slice(0, 3);
 };
 
@@ -290,7 +290,7 @@ const CategorySection = ({ category, products, isLoading, index }) => {
         <NamedLink
           name="SearchPage"
           to={{
-            search: `?pub_categoryLevel1=Baby-Clothes-Accessories&pub_categoryLevel2=${category.id}`,
+            search: `?pub_categoryLevel1=Baby-Kids&pub_categoryLevel2=${category.id}`,
           }}
           className={css.viewCategoryLink}
         >

@@ -44,7 +44,7 @@
    =============================================== */
 .brandHeader {
   width: 100%;
-  padding: 32px 16px 24px 16px;
+  padding: 20px 16px 20px 16px;
   border-bottom: 1px solid var(--colorGrey100);
   margin-bottom: 32px;
 }
@@ -62,17 +62,17 @@
 }
 
 .brandLogo {
-  width: 120px;
-  height: 120px;
-  border-radius: 12px;
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
   object-fit: cover;
   border: 2px solid var(--colorGrey100);
 }
 
 .logoPlaceholder {
-  width: 120px;
-  height: 120px;
-  border-radius: 12px;
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
   background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorGrey100) 100%);
   display: flex;
   align-items: center;
@@ -81,7 +81,7 @@
 }
 
 .logoInitial {
-  font-size: 48px;
+  font-size: 32px;
   font-weight: var(--fontWeightBold);
   color: var(--colorGrey300);
 }
@@ -163,8 +163,35 @@
    =============================================== */
 .featuredSection {
   width: 100%;
-  margin-bottom: 32px;
-  padding-top: 16px;
+  margin-bottom: 40px;
+  padding: 16px 0;
+  position: relative;
+  overflow: hidden; /* Prevent scroll overflow */
+}
+
+/* Fade-out gradient - stays fixed at right edge */
+.featuredSection::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 16px;
+  bottom: 20px;
+  width: 80px;
+  background: linear-gradient(to left, white, transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Bottom separator line */
+.featuredSection::after {
+  content: '';
+  display: block;
+  position: absolute;
+  bottom: -20px;
+  left: 5%;
+  right: 5%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--colorGrey200) 20%, var(--colorGrey200) 80%, transparent);
 }
 
 .featuredHeader {
@@ -172,7 +199,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  padding: 0 16px;
+  padding: 0 16px; /* Add horizontal padding to header only */
 }
 
 .featuredTitle {
@@ -187,7 +214,7 @@
   gap: 16px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding: 0 16px 16px 16px;
+  padding: 0 0 8px 16px; /* Left padding only - right side extends to edge */
   -webkit-overflow-scrolling: touch;
 
   /* Hide scrollbar but keep functionality */
@@ -202,7 +229,21 @@
 .featuredItem {
   flex-shrink: 0;
   scroll-snap-align: start;
-  width: 280px;
+  /* Mobile: Show 1 full card + 15% of next */
+  width: calc(85vw - 24px);
+  max-width: 280px;
+}
+
+/* All Products Section */
+.allProductsSection {
+  margin-top: 32px;
+}
+
+.allProductsTitle {
+  font-size: 20px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey700);
+  margin: 0 0 24px 0;
 }
 
 /* ===============================================
@@ -246,6 +287,12 @@
 
 .productItem {
   /* ListingCard handles its own styling */
+}
+
+.loadMoreTrigger {
+  /* Invisible element used to trigger lazy loading */
+  height: 1px;
+  visibility: hidden;
 }
 
 .emptyState {
@@ -591,7 +638,7 @@
    =============================================== */
 @media (--viewportMedium) {
   .brandHeader {
-    padding: 40px 24px 32px 24px;
+    padding: 32px 24px 24px 24px;
   }
 
   .brandHeaderContent {
@@ -614,17 +661,17 @@
   }
 
   .brandLogo {
-    width: 160px;
-    height: 160px;
+    width: 120px;
+    height: 120px;
   }
 
   .logoPlaceholder {
-    width: 160px;
-    height: 160px;
+    width: 120px;
+    height: 120px;
   }
 
   .logoInitial {
-    font-size: 64px;
+    font-size: 48px;
   }
 
   .brandInfo {
@@ -648,9 +695,33 @@
     justify-content: flex-start;
   }
 
-  /* Featured products - 4 items visible */
+  /* Featured products - Show 2 full cards + 20% of 3rd */
   .featuredItem {
-    width: 320px;
+    width: calc(48vw - 32px);
+    max-width: 400px;
+  }
+
+  /* Increase padding on tablet */
+  .featuredSection {
+    padding: 24px 0; /* Vertical padding only */
+    margin-bottom: 48px;
+  }
+
+  .featuredSection::before {
+    top: 24px; /* Adjust gradient position for tablet padding */
+    bottom: 24px;
+  }
+
+  .featuredSection::after {
+    bottom: -24px;
+  }
+
+  .featuredHeader {
+    padding: 0 24px; /* Header gets horizontal padding */
+  }
+
+  .featuredScroll {
+    padding-left: 24px; /* Left padding only - right extends to edge */
   }
 
   .productGrid {
@@ -664,7 +735,7 @@
    =============================================== */
 @media (min-width: 1024px) {
   .brandHeader {
-    padding: 48px 32px 40px 32px;
+    padding: 40px 32px 32px 32px;
   }
 
   /* Desktop padding */
@@ -675,19 +746,19 @@
   }
 
   .brandLogo {
-    width: 200px;
-    height: 200px;
-    border-radius: 16px;
+    width: 140px;
+    height: 140px;
+    border-radius: 12px;
   }
 
   .logoPlaceholder {
-    width: 200px;
-    height: 200px;
-    border-radius: 16px;
+    width: 140px;
+    height: 140px;
+    border-radius: 12px;
   }
 
   .logoInitial {
-    font-size: 80px;
+    font-size: 56px;
   }
 
   .brandName {
@@ -696,6 +767,30 @@
 
   .tagline {
     font-size: 18px;
+  }
+
+  /* Featured products - Show 3 full cards + 20% of 4th */
+  .featuredItem {
+    width: calc(31vw - 32px);
+    max-width: 380px;
+  }
+
+  /* Increase padding on desktop */
+  .featuredSection {
+    padding: 28px 0; /* Vertical padding only */
+  }
+
+  .featuredSection::before {
+    top: 28px; /* Adjust gradient position for desktop padding */
+    bottom: 28px;
+  }
+
+  .featuredHeader {
+    padding: 0 32px; /* Header gets horizontal padding */
+  }
+
+  .featuredScroll {
+    padding-left: 32px; /* Left padding only - right extends to edge */
   }
 
   .productGrid {
@@ -712,6 +807,12 @@
    Responsive - Large Desktop
    =============================================== */
 @media (min-width: 1280px) {
+  /* Featured products - Show 4 full cards + 20% of 5th */
+  .featuredItem {
+    width: calc(23vw - 32px);
+    max-width: 360px;
+  }
+
   .productGrid {
     grid-template-columns: repeat(4, 1fr);
     gap: 28px;

@@ -60,11 +60,11 @@ export const listingFields = [
     schemaType: 'enum',
     enumOptions: [
       { option: 'premie', label: 'Premie' },
-      { option: '0_3_months', label: '0-3 months' },
-      { option: '3_6_months', label: '3-6 months' },
+      { option: 'newborn', label: 'Newborn' },
+      { option: '0_6_months', label: '0-6 months' },
       { option: '6_12_months', label: '6-12 months' },
       { option: '12_18_months', label: '12-18 months' },
-      { option: '18_plus_months', label: '18+ months' },
+      { option: '18_24_months', label: '18-24 months' },
     ],
     filterConfig: {
       indexForSearch: true,
@@ -94,9 +94,9 @@ export const listingFields = [
       { option: 'bamboo', label: 'Bamboo' },
       { option: 'cotton_jersey', label: 'Cotton Jersey' },
       { option: 'kala_cotton', label: 'Kala Cotton' },
-      { option: 'natural_cotton', label: 'Natural Cotton' },
       { option: 'muslin', label: 'Muslin' },
       { option: 'other_natural', label: 'Other Natural' },
+      { option: 'denim', label: 'Denim' }
     ],
     filterConfig: {
       indexForSearch: true,
@@ -185,7 +185,6 @@ export const listingFields = [
     enumOptions: [
       { option: 'snap_closures', label: 'Snap Closures' },
       { option: 'two_way_zip', label: 'Two-way Zip' },
-      { option: 'easy_dress', label: 'Easy-dress' },
       { option: 'breathable', label: 'Breathable' },
       { option: 'hypoallergenic', label: 'Hypoallergenic' },
       { option: 'handcrafted', label: 'Handcrafted' },

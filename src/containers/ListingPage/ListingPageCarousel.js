@@ -36,6 +36,7 @@ import {
   userDisplayNameAsString,
 } from '../../util/data';
 import { richText } from '../../util/richText';
+import { getItemSpecificsAttributes, getItemAspectsForSEO } from '../../util/itemAspectsHelpers';
 import {
   isBookingProcess,
   isPurchaseProcess,
@@ -368,13 +369,12 @@ export const ListingPageComponent = props => {
   // https://developers.google.com/search/docs/advanced/structured-data/product
   const productURL = `${config.marketplaceRootURL}${location.pathname}${location.search}${location.hash}`;
   const currentStock = currentListing.currentStock?.attributes?.quantity || 0;
+  // Always provide availability - default to InStock if no stock tracking
   const schemaAvailability = !currentListing.currentStock
-    ? null
+    ? 'https://schema.org/InStock'
     : currentStock > 0
     ? 'https://schema.org/InStock'
     : 'https://schema.org/OutOfStock';
-
-  const availabilityMaybe = schemaAvailability ? { availability: schemaAvailability } : {};
 
   return (
     <Page
@@ -404,7 +404,7 @@ export const ListingPageComponent = props => {
             description: 'Authentic Indian Baby Products Marketplace for US Indian Diaspora'
           },
           ...priceForSchemaMaybe(price),
-          ...availabilityMaybe,
+          availability: schemaAvailability,
         },
         audience: {
           '@type': 'Audience',
@@ -473,18 +473,7 @@ export const ListingPageComponent = props => {
 
             {/* Item Specifics Section */}
             <ItemSpecifics
-              attributes={[
-                ...(publicData.brand ? [{ key: 'Brand', value: publicData.brand }] : []),
-                ...(publicData.sku ? [{ key: 'SKU', value: publicData.sku }] : []),
-                ...(publicData.material ? [{ key: 'Material', value: publicData.material }] : []),
-                ...(publicData.ageRange ? [{ key: 'Age Range', value: publicData.ageRange }] : []),
-                ...(publicData.color ? [{ key: 'Color', value: publicData.color }] : []),
-                ...(publicData.size ? [{ key: 'Size', value: publicData.size }] : []),
-                ...(publicData.weight ? [{ key: 'Weight', value: publicData.weight }] : []),
-                ...(publicData.dimensions ? [{ key: 'Dimensions', value: publicData.dimensions }] : []),
-                ...(publicData.origin ? [{ key: 'Origin', value: publicData.origin }] : []),
-                ...(publicData.certifications ? [{ key: 'Certifications', value: publicData.certifications }] : []),
-              ]}
+              attributes={getItemSpecificsAttributes(publicData)}
               categoryBreadcrumb={
                 (publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3) && (() => {
                   const categoryIds = {

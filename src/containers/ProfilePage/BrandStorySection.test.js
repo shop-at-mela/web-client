@@ -191,7 +191,7 @@ describe('BrandStorySection', () => {
 
       const { container } = render(
         <TestWrapper>
-          <BrandStorySection brandStory={bio} previewLength={50} isOwnProfile={false} />
+          <BrandStorySection brandStory={brandStory} previewLength={50} isOwnProfile={false} />
         </TestWrapper>
       );
 
@@ -211,7 +211,7 @@ describe('BrandStorySection', () => {
 
       const { container } = render(
         <TestWrapper>
-          <BrandStorySection brandStory={bio} previewLength={50} isOwnProfile={false} />
+          <BrandStorySection brandStory={brandStory} previewLength={50} isOwnProfile={false} />
         </TestWrapper>
       );
 
@@ -228,7 +228,7 @@ describe('BrandStorySection', () => {
 
       const { container } = render(
         <TestWrapper>
-          <BrandStorySection brandStory={bio} previewLength={50} isOwnProfile={false} />
+          <BrandStorySection brandStory={brandStory} previewLength={50} isOwnProfile={false} />
         </TestWrapper>
       );
 
@@ -244,7 +244,7 @@ describe('BrandStorySection', () => {
 
       render(
         <TestWrapper>
-          <BrandStorySection brandStory={bio} previewLength={30} isOwnProfile={false} />
+          <BrandStorySection brandStory={brandStory} previewLength={30} isOwnProfile={false} />
         </TestWrapper>
       );
 
@@ -260,7 +260,7 @@ describe('BrandStorySection', () => {
 
       render(
         <TestWrapper>
-          <BrandStorySection brandStory={bio} previewLength={100} isOwnProfile={false} />
+          <BrandStorySection brandStory={brandStory} previewLength={100} isOwnProfile={false} />
         </TestWrapper>
       );
 
@@ -275,7 +275,7 @@ describe('BrandStorySection', () => {
 
       const { rerender } = render(
         <TestWrapper>
-          <BrandStorySection brandStory={bio} previewLength={20} isOwnProfile={false} />
+          <BrandStorySection brandStory={brandStory} previewLength={20} isOwnProfile={false} />
         </TestWrapper>
       );
 
@@ -286,7 +286,7 @@ describe('BrandStorySection', () => {
       // Increase previewLength
       rerender(
         <TestWrapper>
-          <BrandStorySection brandStory={bio} previewLength={60} isOwnProfile={false} />
+          <BrandStorySection brandStory={brandStory} previewLength={60} isOwnProfile={false} />
         </TestWrapper>
       );
 
@@ -478,7 +478,7 @@ describe('BrandStorySection', () => {
 
       render(
         <TestWrapper>
-          <BrandStorySection brandStory={bio} previewLength={20} isOwnProfile={false} />
+          <BrandStorySection brandStory={brandStory} previewLength={20} isOwnProfile={false} />
         </TestWrapper>
       );
 
@@ -486,10 +486,10 @@ describe('BrandStorySection', () => {
       expect(screen.getByText(/Question/)).toBeInTheDocument();
     });
 
-    it('handles empty string bio (edge case)', () => {
+    it('handles empty string brandStory (edge case)', () => {
       const { container } = render(
         <TestWrapper>
-          <BrandStorySection bio="" previewLength={300} isOwnProfile={false} />
+          <BrandStorySection brandStory="" previewLength={300} isOwnProfile={false} />
         </TestWrapper>
       );
 

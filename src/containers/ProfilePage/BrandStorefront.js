@@ -9,7 +9,7 @@ import {
   H4,
   ListingCard,
   Reviews,
-  ButtonTabNavHorizontal,
+  LinkTabNavHorizontal,
   NamedLink,
 } from '../../components';
 import CertificationBadge from '../../components/CertificationBadge/CertificationBadge';
@@ -207,12 +207,32 @@ const BrandStorefront = props => {
   } = props;
 
   const [mounted, setMounted] = useState(false);
+  const [visibleProducts, setVisibleProducts] = useState(12); // Show first 12 products initially
+  const loadMoreRef = React.useRef(null);
 
   // Determine active tab from route variant (default to 'products')
   const activeTab = variant === 'about' ? 'about' : variant === 'reviews' ? 'reviews' : 'products';
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Lazy loading: Load more products when user scrolls to bottom
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) {
+          setVisibleProducts(prev => prev + 12);
+        }
+      },
+      { rootMargin: '200px' } // Start loading 200px before reaching the element
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => observer.disconnect();
   }, []);
 
   // Early return if user data is not available
@@ -266,6 +286,16 @@ const BrandStorefront = props => {
   // Featured products (first 3-4 products for horizontal scroll)
   const featuredProducts = listings.slice(0, isMobileLayout ? 3 : 4);
   const hasFeaturedProducts = featuredProducts.length > 0;
+
+  // Remove featured products from main grid to avoid duplication
+  const nonFeaturedProducts = listings.filter(
+    listing => !featuredProducts.some(fp => fp.id.uuid === listing.id.uuid)
+  );
+  const hasNonFeaturedProducts = nonFeaturedProducts.length > 0;
+
+  // Lazy loading: Only show visible products
+  const displayedProducts = nonFeaturedProducts.slice(0, visibleProducts);
+  const hasMoreProducts = visibleProducts < nonFeaturedProducts.length;
 
   // User ID for routing
   const userId = user?.id?.uuid;
@@ -398,7 +428,7 @@ const BrandStorefront = props => {
 
       {/* Tab Navigation */}
       <div className={css.tabNavigation}>
-        <ButtonTabNavHorizontal className={css.tabs} tabs={tabs} />
+        <LinkTabNavHorizontal className={css.tabs} tabs={tabs} />
       </div>
 
       {/* Tab Content */}
@@ -424,17 +454,29 @@ const BrandStorefront = props => {
               </div>
             )}
 
-            {hasListings ? (
-              <ul className={css.productGrid}>
-                {listings.map(listing => (
-                  <li className={css.productItem} key={listing.id.uuid}>
-                    <ListingCard listing={listing} showAuthorInfo={false} />
-                  </li>
-                ))}
-              </ul>
-            ) : isOwnProfile ? (
+            {/* All Products Grid */}
+            {hasNonFeaturedProducts && (
+              <div className={css.allProductsSection}>
+                <H3 className={css.allProductsTitle}>
+                  <FormattedMessage id="BrandStorefront.allProducts" />
+                </H3>
+                <ul className={css.productGrid}>
+                  {displayedProducts.map(listing => (
+                    <li className={css.productItem} key={listing.id.uuid}>
+                      <ListingCard listing={listing} showAuthorInfo={false} />
+                    </li>
+                  ))}
+                </ul>
+                {/* Lazy loading trigger element */}
+                {hasMoreProducts && <div ref={loadMoreRef} className={css.loadMoreTrigger} />}
+              </div>
+            )}
+
+            {!hasListings && isOwnProfile && (
               <BrandDataPlaceholder type="products" isOwner={isOwnProfile} />
-            ) : (
+            )}
+
+            {!hasListings && !isOwnProfile && (
               <p className={css.emptyState}>
                 <FormattedMessage id="BrandStorefront.noProducts" />
               </p>

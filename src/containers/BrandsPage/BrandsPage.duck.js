@@ -354,9 +354,35 @@ export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
       })
   );
 
-  return Promise.all(brandPromises)
-    .then(responses => {
-      const validResponses = responses.filter(r => r !== null);
+  // Batch fetch ALL featured products for these brands in ONE query (performance optimization)
+  const allProductIds = getFeaturedProductIds(featuredIds);
+  const productsPromise =
+    allProductIds.length > 0
+      ? sdk.listings
+          .query({
+            ids: allProductIds,
+            include: ['images'],
+            'fields.listing': ['title', 'price', 'publicData'],
+            'fields.image': ['variants.square-small', 'variants.square-small2x'],
+            perPage: 100,
+          })
+          .then(response => {
+            if (response && response.data) {
+              return response.data;
+            }
+            console.warn('Invalid response for featured products');
+            return { data: [], included: [] };
+          })
+          .catch(error => {
+            console.error('Failed to fetch featured products:', error);
+            return { data: [], included: [] };
+          })
+      : Promise.resolve({ data: [], included: [] });
+
+  // Wait for both brands and products to fetch in parallel
+  return Promise.all([Promise.all(brandPromises), productsPromise])
+    .then(([brandResponses, productsResponse]) => {
+      const validResponses = brandResponses.filter(r => r !== null);
 
       // Filter out any invalid user objects
       const users = validResponses
@@ -417,12 +443,39 @@ export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
 
       const validIncluded = included.filter(e => e !== undefined && e !== null);
 
+      // Process products response
+      const products = productsResponse.data || [];
+      const productImages = productsResponse.included || [];
+
+      // Filter valid products
+      const validProducts = products.filter(
+        listing =>
+          listing &&
+          typeof listing === 'object' &&
+          listing.id &&
+          listing.id.uuid &&
+          listing.type === 'listing'
+      );
+
+      const validProductImages = productImages.filter(
+        entity =>
+          entity &&
+          typeof entity === 'object' &&
+          entity.id &&
+          entity.id.uuid &&
+          entity.type === 'image'
+      );
+
+      // Combine all entities (users + products + images)
+      const allEntities = [...validUsers, ...validProducts];
+      const allIncluded = [...validIncluded, ...validProductImages];
+
       // Only dispatch if we have valid data
-      if (validUsers.length > 0 || validIncluded.length > 0) {
+      if (allEntities.length > 0 || allIncluded.length > 0) {
         // Build entity payload
-        const entityPayload = { data: validUsers };
-        if (validIncluded.length > 0) {
-          entityPayload.included = validIncluded;
+        const entityPayload = { data: allEntities };
+        if (allIncluded.length > 0) {
+          entityPayload.included = allIncluded;
         }
 
         // Wrap in sdkResponse format that addMarketplaceEntities expects
