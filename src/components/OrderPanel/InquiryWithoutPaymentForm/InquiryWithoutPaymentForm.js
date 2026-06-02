@@ -10,7 +10,16 @@ import css from './InquiryWithoutPaymentForm.module.css';
 
 const renderForm = formRenderProps => {
   // FormRenderProps from final-form
-  const { formId, className, rootClassName, handleSubmit, brand, productUrl } = formRenderProps;
+  const {
+    formId,
+    className,
+    rootClassName,
+    handleSubmit,
+    brand,
+    productUrl,
+    isOwnListing,
+    finePrintComponent: FinePrint,
+  } = formRenderProps;
   const classes = classNames(rootClassName || css.root, className);
 
   return (
@@ -18,6 +27,7 @@ const renderForm = formRenderProps => {
       <div className={css.submitButton}>
         {brand && productUrl ? (
           <PrimaryButton
+            type="button"
             onClick={() => window.open(productUrl, '_blank', 'noopener,noreferrer')}
           >
             <FormattedMessage id="ProductOrderForm.ctaButtonShopFromBrand" values={{ brand }} />
@@ -27,6 +37,7 @@ const renderForm = formRenderProps => {
             <FormattedMessage id="InquiryWithoutPaymentForm.ctaButton" />
           </PrimaryButton>
         )}
+        {FinePrint && <FinePrint isOwnListing={isOwnListing} omitYouWontBeChargedMessage={true} />}
       </div>
     </Form>
   );

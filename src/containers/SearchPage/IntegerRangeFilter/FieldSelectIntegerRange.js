@@ -176,9 +176,24 @@ const RangeInput = props => {
           { value, handle: handleName }
         );
 
+  const getHandleLabels = handles => {
+    const multipleHandles = handles.length > 1;
+    return handles.map((h, idx) => {
+      const handleName =
+        multipleHandles && idx === 0
+          ? 'min'
+          : multipleHandles && idx === handles.length - 1
+          ? 'max'
+          : 'handle';
+      return labelForRangeInput(h, handleName);
+    });
+  };
+
   const isMinInvalid = !isValidMin(fieldValues.minValue, defaultMinValue, fieldValues.maxValue);
   const isMaxInvalid = !isValidMax(fieldValues.maxValue, defaultMaxValue, fieldValues.minValue);
   const classes = isInSideBar ? css.formWrapper : null;
+
+  const validHandles = getValidHandles(values, fieldValues, defaultMinValue, defaultMaxValue);
 
   return (
     <div className={classes}>
@@ -194,20 +209,16 @@ const RangeInput = props => {
               [css.valueInSidebar]: isInSideBar,
               [css.invalidInput]: isMinInvalid,
             })}
-            type="number"
+            inputMode="numeric"
+            pattern="\d*"
             name={`${name}_min`}
             min={defaultMinValue}
             max={defaultMaxValue}
-            step={step}
             placeholder={defaultMinValue}
             value={fieldValues.minValue}
             onChange={handleMinValueChange}
             onBlur={handleMinValueBlur}
-            role="slider"
-            aria-valuenow={fieldValues.minValue}
-            aria-valuetext={labelForRangeInput(fieldValues.minValue, 'min')}
-            aria-valuemin={defaultMinValue}
-            aria-valuemax={defaultMaxValue}
+            aria-invalid={isMinInvalid}
             aria-label={labelForRangeInput(fieldValues.minValue, 'min')}
           ></input>
           <span className={css.valueSeparator}>-</span>
@@ -216,20 +227,16 @@ const RangeInput = props => {
               [css.valueInSidebar]: isInSideBar,
               [css.invalidInput]: isMaxInvalid,
             })}
-            type="number"
+            inputMode="numeric"
+            pattern="\d*"
             name={`${name}_max`}
             min={defaultMinValue}
             max={defaultMaxValue}
             placeholder={defaultMaxValue}
-            step={step}
             value={fieldValues.maxValue}
             onChange={handleMaxValueChange}
             onBlur={handleMaxValueBlur}
-            role="slider"
-            aria-valuenow={fieldValues.maxValue}
-            aria-valuetext={labelForRangeInput(fieldValues.maxValue, 'max')}
-            aria-valuemin={defaultMinValue}
-            aria-valuemax={defaultMaxValue}
+            aria-invalid={isMaxInvalid}
             aria-label={labelForRangeInput(fieldValues.maxValue, 'max')}
           ></input>
         </div>
@@ -238,8 +245,9 @@ const RangeInput = props => {
         <RangeSlider
           min={defaultMinValue}
           max={defaultMaxValue}
+          ariaLabels={getHandleLabels(validHandles)}
           step={step}
-          handles={getValidHandles(values, fieldValues, defaultMinValue, defaultMaxValue)}
+          handles={validHandles}
           onChange={handles => {
             handleSliderChange({ minValue: handles[0], maxValue: handles[1] });
           }}

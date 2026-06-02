@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import { FormattedMessage } from '../../util/reactIntl';
 import { NamedLink } from '../../components';
 import { ListingCardMini } from '../ListingCardMini/ListingCardMini';
+import { getBrandSlugById } from '../../config/configBrands';
 
 import css from './BrandCard.module.css';
 
@@ -41,6 +42,11 @@ const BrandCard = props => {
     publicData?.brandLogoUrl || profileImage?.attributes?.variants?.['square-small']?.url;
 
   const logoInitial = displayName?.charAt(0) || 'B';
+
+  const brandSlug = getBrandSlugById(brand.id.uuid);
+  const brandLinkProps = brandSlug
+    ? { name: 'BrandPage', params: { brandSlug } }
+    : { name: 'ProfilePage', params: { id: brand.id.uuid } };
 
   // Show up to 4 products in 2x2 grid
   const featuredProducts = products.slice(0, 4);
@@ -94,7 +100,7 @@ const BrandCard = props => {
       </div>
 
       {/* Shop All CTA */}
-      <NamedLink name="ProfilePage" params={{ id: brand.id.uuid }} className={css.cta}>
+      <NamedLink {...brandLinkProps} className={css.cta}>
         <span className={css.ctaText}>
           <FormattedMessage id="BrandCard.shopAll" />
         </span>

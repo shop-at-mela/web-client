@@ -7,358 +7,250 @@ import { Provider } from 'react-redux';
 import { createStore } from 'redux';
 import '@testing-library/jest-dom';
 
-import { types as sdkTypes } from '../../../../util/sdkLoader';
-import { fakeIntl } from '../../../../util/testData';
 import { ConfigurationProvider } from '../../../../context/configurationContext';
-import HeroSection from './HeroSection';
 
-const { UUID } = sdkTypes;
+// Break the import chain: components/index.js → UserNav → routeConfiguration → pageDataLoadingAPI → ducks
+jest.mock('../../../../routing/routeConfiguration', () => []);
 
-// Mock specific components
-jest.mock('../../../../components/NamedLink/NamedLink', () => {
-  return ({ children, className, params, name, ...props }) => (
-    <a className={className} data-testid={`link-${name}`} data-params={JSON.stringify(params || {})} {...props}>
+// ── Mock the BrandsPage duck selectors and actions ────────────────────────────
+jest.mock('../../../BrandsPage/BrandsPage.duck', () => ({
+  fetchFeaturedBrands: () => ({ type: 'FETCH_FEATURED_BRANDS' }),
+  getFeaturedBrandsWithProducts: state => state.BrandsPage?.brandsWithProducts ?? [],
+  getFeaturedBrandsInProgress: state => state.BrandsPage?.fetchInProgress ?? false,
+  getFeaturedBrandsError: state => state.BrandsPage?.fetchError ?? null,
+}));
+
+// Mock BrandCardHome — we test HeroSection's wiring, not BrandCardHome internals
+jest.mock('../../../../components/BrandCardHome/BrandCardHome', () => {
+  const BrandCardHome = ({ brand, maxProducts, showCta, showCertifications }) => (
+    <div
+      data-testid="brand-card-home"
+      data-brand-name={brand?.attributes?.profile?.displayName}
+      data-max-products={maxProducts}
+      data-show-cta={String(showCta)}
+      data-show-certifications={String(showCertifications)}
+    />
+  );
+  BrandCardHome.displayName = 'BrandCardHome';
+  return { __esModule: true, default: BrandCardHome };
+});
+
+jest.mock('../../../../components', () => ({
+  NamedLink: ({ children, name, className }) => (
+    <a data-testid={`link-${name}`} className={className} href={`/${name}`}>
       {children}
     </a>
-  );
-});
-
-jest.mock('../../../../components/ResponsiveImage/ResponsiveImage', () => {
-  return ({ alt, rootClassName }) => (
-    <img alt={alt} className={rootClassName} src="test-image.jpg" data-testid="responsive-image" />
-  );
-});
-
-jest.mock('../../../../components/Button/Button', () => {
-  return ({ children, className, ...props }) => (
-    <button className={className} {...props}>
-      {children}
-    </button>
-  );
-});
-
-// Mock formatMoney
-jest.mock('../../../../util/currency', () => ({
-  formatMoney: (intl, price) => `$${(price.amount / 100).toFixed(2)}`,
+  ),
+  BrandCardHome: require('../../../../components/BrandCardHome/BrandCardHome').default,
 }));
 
-// Mock createSlug
-jest.mock('../../../../util/urlHelpers', () => ({
-  createSlug: (title) => title.toLowerCase().replace(/\s+/g, '-'),
-}));
+import HeroSection from './HeroSection';
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const makeBrandWithProducts = (name, id = `brand-${name}`) => ({
+  brand: {
+    id: { uuid: id },
+    type: 'user',
+    attributes: {
+      profile: {
+        displayName: name,
+        bio: `${name} bio.`,
+        publicData: { certifications: [] },
+      },
+    },
+  },
+  products: [],
+});
 
 const mockConfig = {
-  stripe: {
-    publishableKey: 'pk_test_key',
-  },
-  categoryConfiguration: {
-    categories: [],
-  },
+  marketplaceName: 'Mela',
+  categoryConfiguration: { categories: [] },
 };
 
-const createMockProduct = (id, title, price, brand = 'Test Brand') => ({
-  id: new UUID(id),
-  type: 'listing',
-  attributes: {
-    title,
-    price: { amount: price, currency: 'USD' },
-    images: [
-      {
-        id: new UUID(`image-${id}`),
-        type: 'image',
-        attributes: {
-          variants: {
-            'listing-card': { url: 'http://example.com/image.jpg' },
-          },
-        },
-      },
-    ],
-    publicData: {
-      brand,
-      categoryLevel1: 'baby-clothing',
-    },
-  },
-});
-
-// Create a mock reducer for testing
-const mockReducer = (state = {}, action) => state;
-
-const renderHeroSection = (initialState = {}) => {
-  const defaultState = {
-    heroProducts: {
-      heroProducts: [],
-      fetchHeroProductsInProgress: false,
-      fetchHeroProductsError: null,
-    },
-    ...initialState,
+const renderHeroSection = (brandsState = {}) => {
+  const defaultBrandsPage = {
+    brandsWithProducts: [],
+    fetchInProgress: false,
+    fetchError: null,
+    ...brandsState,
   };
 
-  const store = createStore(() => defaultState);
+  const store = createStore(() => ({ BrandsPage: defaultBrandsPage }));
 
-  // Mock the onFetchHeroProducts function
-  const mockFetch = jest.fn();
-  store.dispatch = jest.fn();
-
-  return {
-    ...render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <IntlProvider locale="en" messages={{}}>
-            <ConfigurationProvider value={mockConfig}>
-              <HeroSection />
-            </ConfigurationProvider>
-          </IntlProvider>
-        </MemoryRouter>
-      </Provider>
-    ),
-    mockFetch,
-    store,
-  };
+  return render(
+    <Provider store={store}>
+      <MemoryRouter>
+        <IntlProvider locale="en" messages={{}}>
+          <ConfigurationProvider value={mockConfig}>
+            <HeroSection />
+          </ConfigurationProvider>
+        </IntlProvider>
+      </MemoryRouter>
+    </Provider>
+  );
 };
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('HeroSection', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('renders loading state correctly', () => {
-    renderHeroSection({
-      heroProducts: {
-        heroProducts: [],
-        fetchHeroProductsInProgress: true,
-        fetchHeroProductsError: null,
-      },
+  describe('Static content', () => {
+    it('renders the headline', () => {
+      renderHeroSection();
+      expect(
+        screen.getByText('Independent Indian Brands, Curated for Your Family')
+      ).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Loading featured products...')).toBeInTheDocument();
-  });
-
-  it('renders error state correctly', () => {
-    renderHeroSection({
-      heroProducts: {
-        heroProducts: [],
-        fetchHeroProductsInProgress: false,
-        fetchHeroProductsError: new Error('API Error'),
-      },
+    it('renders the subheadline', () => {
+      renderHeroSection();
+      expect(screen.getByText(/Baby essentials, fashion, home/)).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Unable to load featured products')).toBeInTheDocument();
-  });
-
-  it('renders nothing when no products and no loading/error', () => {
-    const { container } = renderHeroSection({
-      heroProducts: {
-        heroProducts: [],
-        fetchHeroProductsInProgress: false,
-        fetchHeroProductsError: null,
-      },
+    it('renders the Explore Brands CTA linking to BrandsPage', () => {
+      renderHeroSection();
+      const cta = screen.getByTestId('link-BrandsPage');
+      expect(cta).toBeInTheDocument();
+      expect(cta).toHaveTextContent('Explore Brands');
     });
 
-    expect(container.firstChild).toBeNull();
-  });
-
-  it('fetches hero products on mount', () => {
-    const { store } = renderHeroSection();
-
-    // The component should dispatch the fetchHeroProducts action on mount
-    expect(store.dispatch).toHaveBeenCalled();
-  });
-
-  it('renders hero section with products correctly', () => {
-    const mockProducts = [
-      createMockProduct('product1', 'Cotton Romper', 2899, 'EcoBaby'),
-      createMockProduct('product2', 'Kurta Set', 4299, 'IndiaKids'),
-      createMockProduct('product3', 'Baby Essentials', 2299, 'Artisan Co'),
-    ];
-
-    renderHeroSection({
-      heroProducts: {
-        heroProducts: mockProducts,
-        fetchHeroProductsInProgress: false,
-        fetchHeroProductsError: null,
-      },
+    it('renders trust badges', () => {
+      renderHeroSection();
+      expect(screen.getByText('Hand-Curated Brands')).toBeInTheDocument();
+      expect(screen.getByText('Independent Indian Brands')).toBeInTheDocument();
+      expect(screen.getByText('Ships to All 50 States')).toBeInTheDocument();
+      expect(screen.getByText('US Cards Accepted')).toBeInTheDocument();
     });
 
-    // Check main content is present
-    expect(screen.getByText('Sustainable Baby Fashion with Indian Design Heritage')).toBeInTheDocument();
-    expect(screen.getByText('Discover premium organic baby clothes from innovative designers in India. GOTS certified quality, traditional craftsmanship, delivered worldwide.')).toBeInTheDocument();
-
-    // Check trust badges
-    expect(screen.getByText('GOTS Certified')).toBeInTheDocument();
-    expect(screen.getByText('Baby Safe')).toBeInTheDocument();
-    expect(screen.getByText('Made in India')).toBeInTheDocument();
-
-    // Check first product is displayed
-    expect(screen.getByText('Cotton Romper')).toBeInTheDocument();
-    expect(screen.getByText('$28.99')).toBeInTheDocument();
-    expect(screen.getByText('EcoBaby')).toBeInTheDocument();
-
-    // Check navigation dots (should be 3 for 3 products)
-    const dots = screen.getAllByRole('button', { name: /View product \d+/ });
-    expect(dots).toHaveLength(3);
-
-    // Check product image
-    expect(screen.getByTestId('responsive-image')).toBeInTheDocument();
-    expect(screen.getByAltText('Cotton Romper')).toBeInTheDocument();
-
-    // Check CTA links
-    const searchPageLinks = screen.getAllByTestId('link-SearchPage');
-    expect(searchPageLinks.length).toBeGreaterThan(0);
-    expect(screen.getByTestId('link-CategoriesPage')).toBeInTheDocument();
-  });
-
-  it('handles product navigation correctly', async () => {
-    const mockProducts = [
-      createMockProduct('product1', 'Cotton Romper', 2899, 'EcoBaby'),
-      createMockProduct('product2', 'Kurta Set', 4299, 'IndiaKids'),
-      createMockProduct('product3', 'Baby Essentials', 2299, 'Artisan Co'),
-    ];
-
-    renderHeroSection({
-      heroProducts: {
-        heroProducts: mockProducts,
-        fetchHeroProductsInProgress: false,
-        fetchHeroProductsError: null,
-      },
-    });
-
-    // Initially should show first product
-    expect(screen.getByText('Cotton Romper')).toBeInTheDocument();
-    expect(screen.getByText('$28.99')).toBeInTheDocument();
-
-    // Click second navigation dot
-    const secondDot = screen.getByRole('button', { name: 'View product 2' });
-    await userEvent.click(secondDot);
-
-    // Should now show second product
-    await waitFor(() => {
-      expect(screen.getByText('Kurta Set')).toBeInTheDocument();
-      expect(screen.getByText('$42.99')).toBeInTheDocument();
-      expect(screen.getByText('IndiaKids')).toBeInTheDocument();
+    it('renders category pills', () => {
+      renderHeroSection();
+      expect(screen.getByText('Baby & Kids')).toBeInTheDocument();
+      expect(screen.getByText('Fashion')).toBeInTheDocument();
+      expect(screen.getByText('Home & Kitchen')).toBeInTheDocument();
     });
   });
 
-  it('renders product link correctly', () => {
-    const mockProducts = [
-      createMockProduct('product1', 'Cotton Romper', 2899, 'EcoBaby'),
-    ];
-
-    renderHeroSection({
-      heroProducts: {
-        heroProducts: mockProducts,
-        fetchHeroProductsInProgress: false,
-        fetchHeroProductsError: null,
-      },
+  describe('Loading state', () => {
+    it('renders skeleton card while brands are loading', () => {
+      const { container } = renderHeroSection({ fetchInProgress: true });
+      // Skeleton div is present (no brand card)
+      expect(container.querySelector('.brandSkeleton')).toBeInTheDocument();
+      expect(screen.queryByTestId('brand-card-home')).not.toBeInTheDocument();
     });
 
-    const productLink = screen.getByTestId('link-ListingPage');
-    expect(productLink).toBeInTheDocument();
-
-    const linkParams = JSON.parse(productLink.getAttribute('data-params'));
-    expect(linkParams.id).toBe('product1');
-    expect(linkParams.slug).toBe('cotton-romper');
+    it('still shows headline during loading', () => {
+      renderHeroSection({ fetchInProgress: true });
+      expect(
+        screen.getByText('Independent Indian Brands, Curated for Your Family')
+      ).toBeInTheDocument();
+    });
   });
 
-  it('handles product without image gracefully', () => {
-    const productWithoutImage = {
-      id: new UUID('product1'),
-      type: 'listing',
-      attributes: {
-        title: 'No Image Product',
-        price: { amount: 1999, currency: 'USD' },
-        images: [],
-        publicData: {
-          brand: 'Test Brand',
-          categoryLevel1: 'baby-clothing',
-        },
-      },
-    };
-
-    renderHeroSection({
-      heroProducts: {
-        heroProducts: [productWithoutImage],
-        fetchHeroProductsInProgress: false,
-        fetchHeroProductsError: null,
-      },
+  describe('Empty state (no brands configured)', () => {
+    it('shows headline and CTA with no brand card', () => {
+      renderHeroSection({ brandsWithProducts: [] });
+      expect(
+        screen.getByText('Independent Indian Brands, Curated for Your Family')
+      ).toBeInTheDocument();
+      expect(screen.getByTestId('link-BrandsPage')).toBeInTheDocument();
+      expect(screen.queryByTestId('brand-card-home')).not.toBeInTheDocument();
     });
-
-    expect(screen.getByText('No Image Product')).toBeInTheDocument();
-    expect(screen.getByText('No image available')).toBeInTheDocument();
   });
 
-  it('handles product without brand gracefully', () => {
-    const productWithoutBrand = {
-      id: new UUID('product1'),
-      type: 'listing',
-      attributes: {
-        title: 'No Brand Product',
-        price: { amount: 1999, currency: 'USD' },
-        images: [],
-        publicData: {
-          categoryLevel1: 'baby-clothing',
-        },
-      },
-    };
+  describe('Brand carousel', () => {
+    it('renders BrandCardHome with the current brand', () => {
+      renderHeroSection({
+        brandsWithProducts: [makeBrandWithProducts('Masilo')],
+      });
 
-    renderHeroSection({
-      heroProducts: {
-        heroProducts: [productWithoutBrand],
-        fetchHeroProductsInProgress: false,
-        fetchHeroProductsError: null,
-      },
+      const card = screen.getByTestId('brand-card-home');
+      expect(card).toBeInTheDocument();
+      expect(card).toHaveAttribute('data-brand-name', 'Masilo');
     });
 
-    expect(screen.getByText('No Brand Product')).toBeInTheDocument();
-    expect(screen.getByText('Handcrafted')).toBeInTheDocument(); // Fallback badge
-  });
+    it('passes showCta={false} so the card CTA does not compete with Explore Brands', () => {
+      renderHeroSection({
+        brandsWithProducts: [makeBrandWithProducts('Masilo')],
+      });
 
-  it('handles product without price gracefully', () => {
-    const productWithoutPrice = {
-      id: new UUID('product1'),
-      type: 'listing',
-      attributes: {
-        title: 'No Price Product',
-        images: [],
-        publicData: {
-          brand: 'Test Brand',
-          categoryLevel1: 'baby-clothing',
-        },
-      },
-    };
-
-    renderHeroSection({
-      heroProducts: {
-        heroProducts: [productWithoutPrice],
-        fetchHeroProductsInProgress: false,
-        fetchHeroProductsError: null,
-      },
+      expect(screen.getByTestId('brand-card-home')).toHaveAttribute('data-show-cta', 'false');
     });
 
-    expect(screen.getByText('No Price Product')).toBeInTheDocument();
-    expect(screen.getByText('Test Brand')).toBeInTheDocument();
-    // Price element should not be rendered
-    expect(screen.queryByText(/\$/)).not.toBeInTheDocument();
-  });
+    it('passes maxProducts={2} to limit hero card to one product row', () => {
+      renderHeroSection({
+        brandsWithProducts: [makeBrandWithProducts('Masilo')],
+      });
 
-  it('renders quick navigation correctly', () => {
-    const mockProducts = [createMockProduct('product1', 'Test Product', 1999)];
-
-    renderHeroSection({
-      heroProducts: {
-        heroProducts: mockProducts,
-        fetchHeroProductsInProgress: false,
-        fetchHeroProductsError: null,
-      },
+      expect(screen.getByTestId('brand-card-home')).toHaveAttribute('data-max-products', '2');
     });
 
-    // Check quick nav items
-    expect(screen.getByText('Baby (0-24m)')).toBeInTheDocument();
-    expect(screen.getByText('Toddler (2-5y)')).toBeInTheDocument();
-    expect(screen.getByText('Organic')).toBeInTheDocument();
-    expect(screen.getByText('Accessories')).toBeInTheDocument();
+    it('passes showCertifications={false} to keep hero card clean', () => {
+      renderHeroSection({
+        brandsWithProducts: [makeBrandWithProducts('Masilo')],
+      });
 
-    // Check quick nav links
-    const quickNavLinks = screen.getAllByTestId('link-SearchPage');
-    expect(quickNavLinks.length).toBeGreaterThan(1); // Main CTA + quick nav links
+      expect(screen.getByTestId('brand-card-home')).toHaveAttribute(
+        'data-show-certifications',
+        'false'
+      );
+    });
+
+    it('hides prev/next arrows when only one brand is configured', () => {
+      const { container } = renderHeroSection({
+        brandsWithProducts: [makeBrandWithProducts('Masilo')],
+      });
+
+      // navArrow buttons are display:none on mobile and not rendered when hasMultiple=false
+      expect(container.querySelectorAll('button[aria-label]').length).toBe(0);
+    });
+
+    it('renders navigation dots when multiple brands are configured', () => {
+      renderHeroSection({
+        brandsWithProducts: [
+          makeBrandWithProducts('Masilo', 'brand-1'),
+          makeBrandWithProducts('Ekibeki', 'brand-2'),
+          makeBrandWithProducts('Tiber Taber', 'brand-3'),
+        ],
+      });
+
+      const dots = screen.getAllByRole('button');
+      // 3 brand dots + 2 nav arrows
+      expect(dots.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('navigation dots carry brand name aria-labels', () => {
+      renderHeroSection({
+        brandsWithProducts: [
+          makeBrandWithProducts('Masilo', 'brand-1'),
+          makeBrandWithProducts('Ekibeki', 'brand-2'),
+        ],
+      });
+
+      expect(screen.getByRole('button', { name: /Masilo/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Ekibeki/i })).toBeInTheDocument();
+    });
+
+    it('clicking a dot switches the displayed brand', async () => {
+      renderHeroSection({
+        brandsWithProducts: [
+          makeBrandWithProducts('Masilo', 'brand-1'),
+          makeBrandWithProducts('Ekibeki', 'brand-2'),
+        ],
+      });
+
+      // Initially shows first brand
+      expect(screen.getByTestId('brand-card-home')).toHaveAttribute('data-brand-name', 'Masilo');
+
+      // Click dot for second brand
+      const ekibekiDot = screen.getByRole('button', { name: /Ekibeki/i });
+      await userEvent.click(ekibekiDot);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('brand-card-home')).toHaveAttribute(
+          'data-brand-name',
+          'Ekibeki'
+        );
+      });
+    });
   });
 });

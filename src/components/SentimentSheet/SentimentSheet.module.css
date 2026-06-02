@@ -1,0 +1,251 @@
+/* ── SentimentSheet ──────────────────────────────────────────────────────────
+ *
+ * Two-state bottom sheet:
+ *   collapsed  — 56px strip, thumbs up/down + dismiss
+ *   expanded   — slides up to reveal free-text prompt + actions
+ *
+ * Mobile: fixed to viewport bottom, full width, slides up.
+ * Desktop (≥768px): same fixed behaviour, max-width centered, rounded top corners.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.10);
+  border-radius: 16px 16px 0 0;
+  z-index: 900;
+  overflow: hidden;
+
+  /* Collapsed height — just the strip */
+  max-height: 64px;
+  transition: max-height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sheet.expanded {
+  max-height: 480px;
+}
+
+.sheet.submitted {
+  max-height: 64px;
+  transition: max-height 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .sheet {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: 480px;
+    border-left: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+  }
+}
+
+/* ── Collapsed strip ── */
+
+.collapsedRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  height: 56px;
+  gap: 0.75rem;
+}
+
+.collapsedPrompt {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #2d3748;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thumbsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.thumbBtn {
+  background: none;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  width: 40px;
+  height: 36px;
+  font-size: 1.125rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, background 0.15s;
+  padding: 0;
+}
+
+.thumbBtn:hover {
+  border-color: var(--marketplaceColor, #262261);
+  background: rgba(38, 34, 97, 0.04);
+}
+
+.thumbBtn.thumbSelected {
+  border-color: var(--marketplaceColor, #262261);
+  background: rgba(38, 34, 97, 0.08);
+}
+
+.dismissBtn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #a0aec0;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+  margin-left: 0.25rem;
+
+  &:hover {
+    color: #4a5568;
+  }
+}
+
+/* ── Expanded content ── */
+
+.expandedContent {
+  padding: 0.75rem 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.textPrompt {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.textarea {
+  width: 100%;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  color: #2d3748;
+  resize: none;
+  font-family: inherit;
+  line-height: 1.5;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: var(--marketplaceColor, #262261);
+  }
+
+  &::placeholder {
+    color: #a0aec0;
+  }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.submitBtn {
+  background: var(--marketplaceColor, #262261);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 40px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--marketplaceColorDark, #1a1744);
+  }
+}
+
+.skipBtn {
+  background: none;
+  border: none;
+  font-size: 0.875rem;
+  color: #718096;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+
+  &:hover {
+    color: #2d3748;
+  }
+}
+
+/* ── Email field ── */
+
+.emailField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.emailLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.emailInput {
+  width: 100%;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #2d3748;
+  font-family: inherit;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: var(--marketplaceColor, #262261);
+  }
+
+  &::placeholder {
+    color: #a0aec0;
+  }
+}
+
+.emailInputError {
+  border-color: #e53e3e;
+
+  &:focus {
+    border-color: #e53e3e;
+  }
+}
+
+.emailErrorMsg {
+  font-size: 0.75rem;
+  color: #e53e3e;
+}
+
+/* ── Thank-you state ── */
+
+.thankYou {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #2d3748;
+  padding: 0 1rem;
+}

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
@@ -9,41 +9,28 @@ import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { createResourceLocatorString } from '../../util/routes';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 
-import { Page, LayoutSingleColumn, BrandCard, BrandFilterBar } from '../../components';
+import { BRAND_CATEGORIES } from '../../config/configBrands';
+import { Page, LayoutSingleColumn, BrandCard } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
 import {
   loadData,
-  getBrands,
-  getFeaturedBrands,
-  getBrandsWithProducts,
-  getFeaturedBrandsWithProducts,
+  getBrandsGroupedByCategory,
   getBrandsInProgress,
-  getBrandsPagination,
 } from './BrandsPage.duck';
 import css from './BrandsPage.module.css';
 
 const BrandsPageComponent = props => {
   const {
-    brandsWithProducts = [],
-    featuredBrandsWithProducts = [],
+    brandsGroupedByCategory = {},
     brandsInProgress,
-    pagination = null,
     scrollingDisabled,
-    history,
-    location,
   } = props;
 
   const config = useConfiguration();
   const routeConfiguration = useRouteConfiguration();
   const intl = useIntl();
-
-  // Parse URL parameters
-  const urlParams = new URLSearchParams(location.search);
-  const currentPage = parseInt(urlParams.get('page') || '1', 10);
-  const perPage = parseInt(urlParams.get('perPage') || '24', 10);
-  const sortBy = urlParams.get('sort') || 'alphabetical';
 
   // Build canonical URL
   const canonicalUrl = createResourceLocatorString(
@@ -53,33 +40,20 @@ const BrandsPageComponent = props => {
     {}
   );
 
+  // Total brand count across all categories
+  const brandCount = Object.values(brandsGroupedByCategory).reduce(
+    (sum, brands) => sum + brands.length,
+    0
+  );
+
   // SEO metadata
-  const brandCount = pagination?.totalItems || 50;
   const siteTitle = config.marketplaceName;
   const schemaTitle = intl.formatMessage({ id: 'BrandsPage.title' }, { brandCount });
   const schemaDescription = intl.formatMessage({ id: 'BrandsPage.description' }, { brandCount });
 
-  // Handle sort change
-  const handleSortChange = newSort => {
-    const params = new URLSearchParams(location.search);
-    params.set('sort', newSort);
-    params.set('page', '1'); // Reset to page 1 on sort change
-    history.push({ search: params.toString() });
-  };
-
-  // Handle per page change
-  const handlePerPageChange = newPerPage => {
-    const params = new URLSearchParams(location.search);
-    params.set('perPage', newPerPage);
-    params.set('page', '1'); // Reset to page 1 on per page change
-    history.push({ search: params.toString() });
-  };
-
-  // Handle page change
-  const handlePageChange = newPage => {
-    const params = new URLSearchParams(location.search);
-    params.set('page', newPage);
-    history.push({ search: params.toString() });
+  // Favorite handler
+  const handleFavorite = listingId => {
+    console.log('Favorite clicked:', listingId);
   };
 
   // Hero section
@@ -94,63 +68,6 @@ const BrandsPageComponent = props => {
           values={{ brandCount }}
         />
       </p>
-    </div>
-  );
-
-  // Filter bar
-  const filterBar = (
-    <BrandFilterBar
-      sortBy={sortBy}
-      onSortChange={handleSortChange}
-      perPage={perPage}
-      onPerPageChange={handlePerPageChange}
-    />
-  );
-
-  // Favorite handler
-  const handleFavorite = listingId => {
-    // TODO: Implement favorite functionality
-    console.log('Favorite clicked:', listingId);
-  };
-
-  // Featured brands section
-  const hasFeaturedBrands = featuredBrandsWithProducts && featuredBrandsWithProducts.length > 0;
-  const featuredBrandsSection = hasFeaturedBrands && (
-    <div className={css.featuredSection}>
-      <h2 className={css.sectionTitle}>
-        <FormattedMessage id="BrandsPage.featuredBrandsTitle" />
-      </h2>
-      <div className={css.featuredBrandGrid}>
-        {featuredBrandsWithProducts.map(({ brand, products }) => (
-          <BrandCard
-            key={brand.id.uuid}
-            brand={brand}
-            products={products}
-            onFavorite={handleFavorite}
-          />
-        ))}
-      </div>
-    </div>
-  );
-
-  // All brands section title
-  const allBrandsTitle = (
-    <h2 className={css.sectionTitle}>
-      <FormattedMessage id="BrandsPage.allBrandsTitle" />
-    </h2>
-  );
-
-  // Brand grid
-  const brandGrid = (
-    <div className={css.brandGrid}>
-      {brandsWithProducts.map(({ brand, products }) => (
-        <BrandCard
-          key={brand.id.uuid}
-          brand={brand}
-          products={products}
-          onFavorite={handleFavorite}
-        />
-      ))}
     </div>
   );
 
@@ -173,47 +90,33 @@ const BrandsPageComponent = props => {
     </div>
   );
 
-  // Load More button
-  const totalPages = pagination ? Math.ceil(pagination.totalItems / perPage) : 1;
-  const hasMoreBrands = currentPage < totalPages;
-  const loadMoreButton = hasMoreBrands && (
-    <div className={css.loadMoreSection}>
-      <button
-        onClick={() => handlePageChange(currentPage + 1)}
-        className={css.loadMoreButton}
-        disabled={brandsInProgress}
-      >
-        {brandsInProgress ? (
-          <FormattedMessage id="BrandsPage.loadingMore" />
-        ) : (
-          <FormattedMessage id="BrandsPage.loadMore" />
-        )}
-      </button>
-      <p className={css.loadMoreInfo}>
-        <FormattedMessage
-          id="BrandsPage.showingCount"
-          values={{
-            showing: brandsWithProducts.length,
-            total: pagination?.totalItems || 0,
-          }}
-        />
-      </p>
-    </div>
-  );
+  const hasNoBrands = !brandsInProgress && brandCount === 0;
 
-  // Main content
-  const hasNoBrands = !brandsInProgress && brandsWithProducts.length === 0;
-  const content = brandsInProgress && currentPage === 1
+  const content = brandsInProgress && brandCount === 0
     ? loadingContent
     : hasNoBrands
     ? emptyContent
     : (
       <>
-        {featuredBrandsSection}
-        {allBrandsTitle}
-        {filterBar}
-        {brandGrid}
-        {loadMoreButton}
+        {BRAND_CATEGORIES.map(({ id, label }) => {
+          const brandsInCategory = brandsGroupedByCategory[id] || [];
+          if (brandsInCategory.length === 0) return null;
+          return (
+            <div key={id} className={css.categorySection}>
+              <h2 className={css.categoryTitle}>{label}</h2>
+              <div className={css.brandGrid}>
+                {brandsInCategory.map(({ brand, products }) => (
+                  <BrandCard
+                    key={brand.id.uuid}
+                    brand={brand}
+                    products={products}
+                    onFavorite={handleFavorite}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </>
     );
 
@@ -243,15 +146,10 @@ const BrandsPageComponent = props => {
   );
 };
 
-// PropTypes removed to eliminate React warning about defaultProps deprecation
-// Using JavaScript default parameters in destructuring instead
-
 const mapStateToProps = state => {
   return {
-    brandsWithProducts: getBrandsWithProducts(state),
-    featuredBrandsWithProducts: getFeaturedBrandsWithProducts(state),
+    brandsGroupedByCategory: getBrandsGroupedByCategory(state),
     brandsInProgress: getBrandsInProgress(state),
-    pagination: getBrandsPagination(state),
     scrollingDisabled: isScrollingDisabled(state),
   };
 };

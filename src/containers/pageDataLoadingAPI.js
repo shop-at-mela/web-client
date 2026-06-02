@@ -3,6 +3,7 @@
  */
 import { loadData as AuthenticationPageLoader } from './AuthenticationPage/AuthenticationPage.duck';
 import { loadData as BrandsPageLoader } from './BrandsPage/BrandsPage.duck';
+import { loadData as CategoryPageLoader } from './CategoryPage/CategoryPage.duck';
 import { loadData as LandingPageLoader } from './LandingPage/LandingPage.duck';
 import { setInitialValues as CheckoutPageInitialValues } from './CheckoutPage/CheckoutPage.duck';
 import { loadData as CMSPageLoader } from './CMSPage/CMSPage.duck';
@@ -11,10 +12,12 @@ import { loadData as EditListingPageLoader } from './EditListingPage/EditListing
 import { loadData as EmailVerificationPageLoader } from './EmailVerificationPage/EmailVerificationPage.duck';
 import { loadData as InboxPageLoader } from './InboxPage/InboxPage.duck';
 import { loadData as ListingPageLoader } from './ListingPage/ListingPage.duck';
+import { loadData as MakeOfferPageLoader } from './MakeOfferPage/MakeOfferPage.duck';
 import { loadData as ManageListingsPageLoader } from './ManageListingsPage/ManageListingsPage.duck';
 import { loadData as PaymentMethodsPageLoader } from './PaymentMethodsPage/PaymentMethodsPage.duck';
 import { loadData as PrivacyPolicyPageLoader } from './PrivacyPolicyPage/PrivacyPolicyPage.duck';
 import { loadData as ProfilePageLoader } from './ProfilePage/ProfilePage.duck';
+import { loadData as RequestQuotePageLoader } from './RequestQuotePage/RequestQuotePage.duck';
 import { loadData as SearchPageLoader } from './SearchPage/SearchPage.duck';
 import { loadData as StripePayoutPageLoader } from './StripePayoutPage/StripePayoutPage.duck';
 import { loadData as TermsOfServicePageLoader } from './TermsOfServicePage/TermsOfServicePage.duck';
@@ -30,6 +33,9 @@ const getPageDataLoadingAPI = () => {
     },
     BrandsPage: {
       loadData: BrandsPageLoader,
+    },
+    CategoryPage: {
+      loadData: CategoryPageLoader,
     },
     LandingPage: {
       loadData: LandingPageLoader,
@@ -55,6 +61,9 @@ const getPageDataLoadingAPI = () => {
     ListingPage: {
       loadData: ListingPageLoader,
     },
+    MakeOfferPage: {
+      loadData: MakeOfferPageLoader,
+    },
     ManageListingsPage: {
       loadData: ManageListingsPageLoader,
     },
@@ -66,6 +75,9 @@ const getPageDataLoadingAPI = () => {
     },
     ProfilePage: {
       loadData: ProfilePageLoader,
+    },
+    RequestQuotePage: {
+      loadData: RequestQuotePageLoader,
     },
     SearchPage: {
       loadData: SearchPageLoader,

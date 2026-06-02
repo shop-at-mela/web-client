@@ -1,172 +1,19 @@
 @import '../../styles/customMediaQueries.css';
 
 .root {
+  min-width: 0;
+  overflow-x: hidden;
   margin-top: 48px;
   margin-bottom: 24px;
   padding: 0 24px;
-  /* Ensure this component doesn't interfere with page scrolling */
-  touch-action: pan-y pinch-zoom;
-  position: relative;
-  isolation: isolate;
-
-  /* Show on all screen sizes now that scroll issues are resolved */
 
   @media (--viewportMedium) {
     margin-top: 72px;
     margin-bottom: 48px;
     padding: 0;
-    display: block;
-  }
-
-  /* Desktop: Enhanced layout for dynamic width */
-  @media (--viewportLarge) {
-    /* When expanded to full width on desktop */
-    &.fullWidth {
-      margin-left: calc(-50vw + 50%);
-      margin-right: calc(-50vw + 50%);
-      padding: 0 36px;
-      max-width: min(calc(var(--contentMaxWidth) + 72px), 100vw);
-
-      /* Center the full-width section */
-      margin-left: calc(-1 * (min(calc(var(--contentMaxWidth) + 72px), 100vw) - 100%) / 2);
-      margin-right: calc(-1 * (min(calc(var(--contentMaxWidth) + 72px), 100vw) - 100%) / 2);
-    }
-
-    /* Smooth transitions for layout changes */
-    transition: margin 0.3s ease, padding 0.3s ease, max-width 0.3s ease;
   }
 }
 
-.title {
-  color: var(--colorGrey700);
-  margin-bottom: 32px;
-  text-align: center;
-
-  @media (--viewportMedium) {
-    margin-bottom: 48px;
-  }
-}
-
-.productsGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-
-  @media (--viewportMedium) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 32px;
-  }
-
-  @media (--viewportLarge) {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 40px;
-
-    /* When parent has full width, use more columns for better space utilization */
-    .root.fullWidth & {
-      grid-template-columns: repeat(4, 1fr);
-      gap: 40px;
-    }
-  }
-
-  @media (--viewportXLarge) {
-    grid-template-columns: repeat(4, 1fr);
-
-    /* When parent has full width on XLarge screens, use even more columns */
-    .root.fullWidth & {
-      grid-template-columns: repeat(5, 1fr);
-      gap: 40px;
-    }
-  }
-}
-
-.productCard {
-  text-decoration: none;
-  color: inherit;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border: 1px solid var(--colorGrey100);
-  /* Prevent interference with page scrolling */
-  touch-action: manipulation;
-  user-select: none;
-  -webkit-touch-callout: none;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    text-decoration: none;
-    color: inherit;
-  }
-
-  /* Mobile-specific fixes */
-  @media (max-width: 767px) {
-    &:hover {
-      transform: none;
-    }
-  }
-}
-
-.imageContainer {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4/3;
-  background-color: var(--colorGrey50);
-}
-
-.productImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.noImage {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  background-color: var(--colorGrey100);
-  color: var(--colorGrey500);
-  font-size: 14px;
-}
-
-.productInfo {
-  padding: 16px;
-
-  @media (--viewportMedium) {
-    padding: 20px;
-  }
-}
-
-.productBrand {
-  composes: h6 from global;
-  color: var(--colorGrey500);
-  margin: 0 0 4px 0;
-  font-weight: var(--fontWeightMedium);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: 12px;
-}
-
-.productTitle {
-  composes: h5 from global;
-  margin: 0 0 8px 0;
-  color: var(--colorGrey700);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.4;
-}
-
-.productPrice {
-  composes: h4 from global;
-  color: var(--colorGrey800);
-  font-weight: var(--fontWeightSemiBold);
-  margin: 0;
-}
-
-.loading,
 .error,
 .noProducts {
   text-align: center;
@@ -180,45 +27,4 @@
 
 .error {
   color: var(--colorFail);
-}
-
-.loading {
-  color: var(--colorGrey600);
-}
-
-.viewMoreContainer {
-  text-align: center;
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid var(--colorGrey100);
-
-  @media (--viewportMedium) {
-    margin-top: 40px;
-    padding-top: 32px;
-  }
-}
-
-.viewMoreLink {
-  composes: buttonSmall from global;
-  composes: marketplaceButtonStyles from global;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 24px;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: var(--fontWeightMedium);
-  transition: all 0.2s ease;
-
-  &:hover {
-    text-decoration: none;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  &:focus {
-    outline: 2px solid var(--marketplaceColor);
-    outline-offset: 2px;
-  }
 }

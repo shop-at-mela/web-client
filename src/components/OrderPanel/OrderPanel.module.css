@@ -8,11 +8,13 @@
 .modalContainer {
   composes: marketplaceModalInMobileBaseStyles from global;
 
-  height: 100vh;
+  height: unset;
+  min-height: 100vh;
 
   @media (--viewportMedium) {
     flex-basis: 576px;
     height: unset;
+    min-height: unset;
     padding: var(--modalPaddingMedium);
     background-color: var(--colorWhite);
     margin-top: 12.5vh;
@@ -71,6 +73,28 @@
 
 .perUnit {
   color: var(--marketplaceColor);
+}
+
+.inrPrice {
+  composes: marketplaceTinyFontStyles from global;
+  color: var(--colorGrey500);
+  font-weight: var(--fontWeightRegular);
+  margin: 2px 0 0 24px;
+
+  @media (--viewportMedium) {
+    margin: 2px 0 0 0;
+  }
+}
+
+.priceDisclaimer {
+  composes: marketplaceTinyFontStyles from global;
+  color: var(--colorGrey500);
+  font-weight: var(--fontWeightRegular);
+  margin: 2px 0 0 24px;
+
+  @media (--viewportMedium) {
+    margin: 2px 0 0 0;
+  }
 }
 
 .author {

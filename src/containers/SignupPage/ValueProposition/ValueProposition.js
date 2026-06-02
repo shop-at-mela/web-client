@@ -52,6 +52,7 @@ const ValueProposition = ({ userType }) => {
           </div>
         </div>
 
+        {/* COMMENTED OUT: "Join XXX+ customers..." — placeholder copy not ready for production
         <div className={css.socialProof}>
           <span className={css.proofText}>
             <FormattedMessage
@@ -62,6 +63,7 @@ const ValueProposition = ({ userType }) => {
             />
           </span>
         </div>
+        */}
       </div>
     );
   }
@@ -98,6 +100,7 @@ const ValueProposition = ({ userType }) => {
           </div>
         </div>
 
+        {/* COMMENTED OUT: "Join YYY+ Indian brands..." — placeholder copy not ready for production
         <div className={css.socialProof}>
           <span className={css.proofText}>
             <FormattedMessage
@@ -109,6 +112,7 @@ const ValueProposition = ({ userType }) => {
             />
           </span>
         </div>
+        */}
       </div>
     );
   }

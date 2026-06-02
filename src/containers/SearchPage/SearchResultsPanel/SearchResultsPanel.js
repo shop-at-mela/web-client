@@ -31,6 +31,7 @@ const SearchResultsPanel = props => {
     setActiveListing,
     isMapVariant = true,
     listingTypeParam,
+    intl,
   } = props;
   const classes = classNames(rootClassName || css.root, className);
   const pageName = listingTypeParam ? 'SearchPageWithListingType' : 'SearchPage';
@@ -43,6 +44,7 @@ const SearchResultsPanel = props => {
         pagePathParams={{ listingType: listingTypeParam }}
         pageSearchParams={search}
         pagination={pagination}
+        aria-label={intl.formatMessage({ id: 'SearchResultsPanel.screenreader.pagination' })}
       />
     ) : null;
 
@@ -73,37 +75,38 @@ const SearchResultsPanel = props => {
 
   return (
     <div className={classes}>
-      <div className={isMapVariant ? css.listingCardsMapVariant : css.listingCards}>
+      <ul className={isMapVariant ? css.listingCardsMapVariant : css.listingCards}>
         {listings.map(l => {
           // Calculate badge data
           const { createdAt, currentStock, publicData } = l.attributes;
           const isBestseller = publicData?.isBestseller || false;
           const stockCount = currentStock?.quantity || null;
 
-          // Check if listing is new (created within last 30 days)
+          // Check if listing is new (created within last 7 days)
           const now = new Date();
           const listingCreatedDate = createdAt ? new Date(createdAt) : null;
           const isNew = listingCreatedDate
-            ? daysBetween(listingCreatedDate, now) <= 30
+            ? daysBetween(listingCreatedDate, now) <= 7
             : false;
 
           return (
-            <ListingCard
-              className={css.listingCard}
-              key={l.id.uuid}
-              listing={l}
-              renderSizes={cardRenderSizes(isMapVariant)}
-              setActiveListing={setActiveListing}
-              showTrustBadges={true}
-              showConversionBadges={true}
-              isBestseller={isBestseller}
-              stockCount={stockCount}
-              isNew={isNew}
-            />
+            <li key={l.id.uuid} className={css.resultItem}>
+              <ListingCard
+                className={css.listingCard}
+                listing={l}
+                renderSizes={cardRenderSizes(isMapVariant)}
+                setActiveListing={setActiveListing}
+                showTrustBadges={true}
+                showConversionBadges={true}
+                isBestseller={isBestseller}
+                stockCount={stockCount}
+                isNew={isNew}
+              />
+            </li>
           );
         })}
         {props.children}
-      </div>
+      </ul>
       {paginationLinks}
     </div>
   );

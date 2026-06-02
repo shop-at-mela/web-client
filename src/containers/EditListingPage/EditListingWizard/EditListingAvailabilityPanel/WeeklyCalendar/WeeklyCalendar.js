@@ -413,13 +413,13 @@ const WeeklyCalendar = props => {
         const formattedStart = intl.formatDate(start, formattingOptions);
         const formattedEnd = intl.formatDate(end, formattingOptions);
         const availabilityEmoji = available ? '✅' : '🚫';
-        console.log('          ', availabilityEmoji, formattedStart, ' - ', formattedEnd);
+        console.log('          ', availabilityEmoji, formattedStart, ' - ', formattedEnd); // eslint-disable-line no-console
       };
 
-      console.log('\n\n%cDaily availability ranges:', 'font-weight: bold;');
+      console.log('\n\n%cDaily availability ranges:', 'font-weight: bold;'); // eslint-disable-line no-console
       Object.keys(availableDates).forEach(d => {
         const weekday = intl.formatDate(availableDates[d]?.ranges?.[0]?.start, { weekday: 'long' });
-        console.log(`\n${d} ${weekday}`);
+        console.log(`\n${d} ${weekday}`); // eslint-disable-line no-console
         availableDates[d].ranges.map(r => {
           formatRange(r.start, r.end, r.seats > 0, timeZone);
         });
@@ -496,6 +496,10 @@ const WeeklyCalendar = props => {
             showUntilDate={thisWeek}
             startOfPrevRange={getStartOfPrevWeek(currentWeek, timeZone, firstDayOfWeek)}
             size="big"
+            aria-label={intl.formatMessage(
+              { id: 'EditListingAvailabilityPanel.WeeklyCalendar.screenreader.weekNavigation' },
+              { direction: 'previous' }
+            )}
           />
           <Next
             className={css.next}
@@ -503,6 +507,10 @@ const WeeklyCalendar = props => {
             showUntilDate={endOfAvailabilityExceptionRange(timeZone, TODAY)}
             startOfNextRange={getStartOfNextWeek(currentWeek, timeZone, firstDayOfWeek)}
             size="big"
+            aria-label={intl.formatMessage(
+              { id: 'EditListingAvailabilityPanel.WeeklyCalendar.screenreader.weekNavigation' },
+              { direction: 'next' }
+            )}
           />
         </div>
       </header>

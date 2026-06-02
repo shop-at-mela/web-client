@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { FormattedMessage } from '../../../../util/reactIntl';
-import { NamedLink, ListingCard } from '../../../../components';
+import { NamedLink, ListingCard, ProductCarousel } from '../../../../components';
 import { useConfiguration } from '../../../../context/configurationContext';
 import { createInstance } from '../../../../util/sdkLoader';
-import { denormalisedEntities, updatedEntities } from '../../../../util/data';
+import { denormalisedEntities, updatedEntities, pickBrandDiverse } from '../../../../util/data';
 import appSettings from '../../../../config/settings';
 import * as apiUtils from '../../../../util/api';
 
@@ -24,51 +25,97 @@ const sdk = createInstance({
   ...assetCdnBaseUrl,
 });
 
-/**
- * Get categories for showcase (level 2 subcategories)
- * Returns up to 3 categories to showcase on the homepage
- */
+// ── Occasion config ────────────────────────────────────────────────────────
+// Only two validated occasions for Mela's US diaspora audience.
+// 'everyday' and 'new-baby' removed — covered by age-group filters.
+
+const OCCASIONS = [
+  {
+    option: 'diwali-festivals',
+    label: 'Diwali & Festivals',
+    description: 'Indian festive wear, artisan toys, and gifts for every celebration',
+    cta: 'Shop Festive Wear',
+    ctaSeasonal: 'Shop for Diwali',
+    colorTheme: 'festive',
+  },
+  {
+    option: 'gifting',
+    label: 'Gifting',
+    description: 'Curated gifts for baby showers, naming ceremonies, and first milestones',
+    cta: 'Shop Gifts',
+    ctaSeasonal: null,
+    colorTheme: 'gifting',
+  },
+];
+
+// Diwali season: Oct 1 – Nov 15
+const isDiwaliSeason = () => {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  return month === 10 || (month === 11 && day <= 15);
+};
+
+const TOP_AGE_GROUPS = [
+  { option: 'newborn',     label: 'Newborn' },
+  { option: '0_6_months',  label: '0-6 Months' },
+  { option: '6_12_months', label: '6-12 Months' },
+];
+
+const ALL_CATEGORIES = [
+  { id: 'Baby-Kids',           label: 'Baby & Kids',          viewAllSearch: '?pub_categoryLevel1=Baby-Kids' },
+  { id: 'Fashion',             label: 'Indian Fashion',        viewAllSearch: '?pub_categoryLevel1=Fashion' },
+  { id: 'Home-Kitchen',        label: 'Home & Kitchen',        viewAllSearch: '?pub_categoryLevel1=Home-Kitchen' },
+  { id: 'Jewelry-Accessories', label: 'Jewelry & Accessories', viewAllSearch: '?pub_categoryLevel1=Jewelry-Accessories' },
+  { id: 'Beauty-Wellness',     label: 'Beauty & Wellness',     viewAllSearch: '?pub_categoryLevel1=Beauty-Wellness' },
+  { id: 'Art-Craft',           label: 'Art & Craft',           viewAllSearch: '?pub_categoryLevel1=Art-Craft' },
+];
+
+// ── Get categories for showcase ────────────────────────────────────────────
+
 const getShowcaseCategories = (categoryConfig) => {
   if (!categoryConfig || !Array.isArray(categoryConfig)) return [];
 
-  // Since there's only 1 top-level category ('Baby & Kids'),
-  // we need to go one level deeper to get the subcategories (level 2)
   const showcaseCategories = [];
-
   categoryConfig.forEach(topCategory => {
     if (topCategory.subcategories && topCategory.subcategories.length > 0) {
-      // Add subcategories (level 2) to showcase
       showcaseCategories.push(...topCategory.subcategories);
     }
   });
 
-  // Return up to 3 subcategories for the showcase (Baby Clothing, Footwear, Accessories)
   return showcaseCategories.slice(0, 3);
 };
 
-/**
- * Generate Schema.org structured data for category showcase
- * Helps search engines understand the page structure and display rich results
- */
+// ── Structured data for SEO ────────────────────────────────────────────────
+
 const generateStructuredData = (categories, categoryProducts) => {
   const itemListElements = categories.flatMap((category, categoryIndex) => {
     const products = categoryProducts[category.id] || [];
-    return products.map((product, productIndex) => ({
-      '@type': 'ListItem',
-      position: categoryIndex * 4 + productIndex + 1,
-      item: {
-        '@type': 'Product',
-        name: product.attributes.title,
-        image: product.images?.[0]?.attributes?.variants?.default?.url || '',
-        description: product.attributes.description || `Sustainable ${category.name.toLowerCase()} for babies`,
-        offers: {
-          '@type': 'Offer',
-          price: product.attributes.price?.amount / 100 || 0,
-          priceCurrency: product.attributes.price?.currency || 'USD',
-          availability: 'https://schema.org/InStock',
+    return products.map((product, productIndex) => {
+      const currentStock = product.currentStock?.attributes?.quantity || 0;
+      const schemaAvailability = !product.currentStock
+        ? 'https://schema.org/InStock'
+        : currentStock > 0
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock';
+
+      return {
+        '@type': 'ListItem',
+        position: categoryIndex * 4 + productIndex + 1,
+        item: {
+          '@type': 'Product',
+          name: product.attributes.title,
+          image: product.images?.[0]?.attributes?.variants?.default?.url || '',
+          description: product.attributes.description || `Sustainable ${category.name.toLowerCase()} for babies`,
+          offers: {
+            '@type': 'Offer',
+            price: product.attributes.price?.amount / 100 || 0,
+            priceCurrency: product.attributes.price?.currency || 'USD',
+            availability: schemaAvailability,
+          },
         },
-      },
-    }));
+      };
+    });
   });
 
   return {
@@ -78,261 +125,377 @@ const generateStructuredData = (categories, categoryProducts) => {
   };
 };
 
-const CategoryShowcase = () => {
-  const config = useConfiguration();
-  const [categoryProducts, setCategoryProducts] = useState({});
+// ProductCarouselSection has been extracted to src/components/ProductCarousel/ProductCarousel.js
+// AgeNavigation (below) uses the shared ProductCarousel component directly.
+
+// ── OccasionStrip ──────────────────────────────────────────────────────────
+// Two-panel editorial section: one panel per occasion.
+// Accepts optional additionalQueryParams to scope results to a category
+// (used on CategoryPage to show occasion products within the current category).
+// Seasonal ordering: Diwali & Festivals first Oct 1–Nov 15, Gifting first otherwise.
+
+export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
+  const [occasionProducts, setOccasionProducts] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
-  // Get categories from Sharetribe configuration
-  const categoryConfig = config?.categoryConfiguration?.categories || [];
-  const showcaseCategories = getShowcaseCategories(categoryConfig);
+  const inSeason = isDiwaliSeason();
+  // Show Diwali first during season, Gifting first off-season
+  const orderedOccasions = inSeason ? OCCASIONS : [...OCCASIONS].reverse();
 
-  // Fetch products for each category
+  const additionalParamsKey = JSON.stringify(additionalQueryParams);
+
   useEffect(() => {
-    if (showcaseCategories.length === 0) {
-      setIsLoading(false);
-      return;
-    }
+    const listingFields = config?.listing?.listingFields;
+    const sanitizeConfig = { listingFields };
 
-    const fetchCategoryProducts = async () => {
+    const fetchOccasionProducts = async () => {
+      setIsLoading(true);
       try {
-        // Fetch products for each category
-        const productPromises = showcaseCategories.map(async (category) => {
-          try {
-            const response = await sdk.listings.query({
-              pub_categoryLevel2: category.id,
-              perPage: 4,
-              include: ['images', 'author'],
-            });
+        const results = await Promise.all(
+          OCCASIONS.map(async ({ option }) => {
+            try {
+              const response = await sdk.listings.query({
+                pub_occasion: option,
+                perPage: 50,
+                include: ['images', 'currentStock'],
+                ...additionalQueryParams,
+              });
+              const listingIds = pickBrandDiverse(response.data.data, 6);
+              return { option, listingIds, responseData: response.data };
+            } catch {
+              return { option, listingIds: [], responseData: null };
+            }
+          })
+        );
 
-            // Get listing IDs from response
-            const listingIds = response.data.data.map(listing => listing.id);
-
-            return {
-              categoryId: category.id,
-              listingIds,
-              responseData: response.data,
-            };
-          } catch (error) {
-            console.error(`Failed to fetch products for category ${category.id}:`, error);
-            return {
-              categoryId: category.id,
-              listingIds: [],
-              responseData: null,
-            };
-          }
-        });
-
-        const results = await Promise.all(productPromises);
-
-        // Now build up entities from all responses
-        const listingFields = config?.listing?.listingFields;
-        const sanitizeConfig = { listingFields };
         let allEntities = {};
-
-        results.forEach(result => {
-          if (result.responseData) {
-            allEntities = updatedEntities(allEntities, result.responseData, sanitizeConfig);
+        results.forEach(r => {
+          if (r.responseData) {
+            allEntities = updatedEntities(allEntities, r.responseData, sanitizeConfig);
           }
         });
 
-        // Denormalize listings for each category
-        const productsMap = results.reduce((acc, result) => {
-          const { categoryId, listingIds } = result;
-
-          // Convert IDs to entity references
-          const entityRefs = listingIds.map(id => ({ id, type: 'listing' }));
-
-          // Denormalize the entities
-          const denormalizedListings = denormalisedEntities(allEntities, entityRefs, false);
-
-          acc[categoryId] = denormalizedListings;
+        const productsMap = results.reduce((acc, { option, listingIds }) => {
+          const refs = listingIds.map(id => ({ id, type: 'listing' }));
+          const all = denormalisedEntities(allEntities, refs, false);
+          // Client-side guard: only keep listings that actually carry this occasion
+          // value in publicData. Protects against the pub_occasion search index not
+          // being set up in Sharetribe Console (filter silently ignored → all
+          // listings returned). Panel auto-hides when fewer than 2 pass this check.
+          const filtered = all.filter(listing => {
+            const occasions = listing.attributes?.publicData?.occasion;
+            // Handle both storage formats:
+            // - array ['gifting'] when ingested with schema-aware parsing
+            // - string 'gifting' when ingested before schema config was loaded
+            return Array.isArray(occasions)
+              ? occasions.includes(option)
+              : occasions === option;
+          });
+          if (process.env.NODE_ENV !== 'production') {
+            console.debug(
+              `[OccasionStrip] ${option}: ${all.length} from API → ${filtered.length} with occasion tag`
+            );
+          }
+          acc[option] = filtered;
           return acc;
         }, {});
-        setCategoryProducts(productsMap);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Failed to fetch category products:', error);
+
+        setOccasionProducts(productsMap);
+      } catch {
+        // Leave empty — panels with < 2 products won't render
+      } finally {
         setIsLoading(false);
       }
     };
 
-    fetchCategoryProducts();
-  }, [showcaseCategories.length]);
+    fetchOccasionProducts();
+  }, [additionalParamsKey]); // eslint-disable-line
 
-  // Don't render if no categories available
-  if (showcaseCategories.length === 0) {
-    return null;
-  }
+  // Determine which panels have enough products to show
+  const visibleOccasions = orderedOccasions.filter(
+    o => isLoading || (occasionProducts[o.option] || []).length >= 2
+  );
 
-  // Generate structured data for SEO
-  const structuredData = !isLoading ? generateStructuredData(showcaseCategories, categoryProducts) : null;
+  // Hide the entire strip if no occasion has enough products
+  if (!isLoading && visibleOccasions.length === 0) return null;
+
+  const occasionsToRender = isLoading ? orderedOccasions : visibleOccasions;
+
+  return (
+    <div className={css.occasionStrip}>
+      <h3 className={css.ageNavigationTitle}>
+        <FormattedMessage id="MelaHomePage.shopByOccasion" defaultMessage="Shop by Occasion" />
+      </h3>
+
+      <div className={css.occasionPanels}>
+        {occasionsToRender.map(occasion => {
+          const products = occasionProducts[occasion.option] || [];
+          const hasEnough = products.length >= 2;
+
+          if (!isLoading && !hasEnough) return null;
+
+          const ctaLabel = inSeason && occasion.ctaSeasonal ? occasion.ctaSeasonal : occasion.cta;
+
+          // SearchPage URL needs the has_any: prefix for multi-enum fields;
+          // the direct SDK query above uses the bare value instead
+          const queryParts = { pub_occasion: `has_any:${occasion.option}`, ...additionalQueryParams };
+          const viewAllSearch = '?' + new URLSearchParams(queryParts).toString();
+
+          const panelColorClass =
+            occasion.colorTheme === 'festive' ? css.occasionPanelFestive : css.occasionPanelGifting;
+          const ctaColorClass =
+            occasion.colorTheme === 'festive' ? css.occasionCtaFestive : css.occasionCtaGifting;
+
+          return (
+            <div key={occasion.option} className={`${css.occasionPanel} ${panelColorClass}`}>
+              {/* Panel header: title + description */}
+              <div className={css.occasionPanelHeader}>
+                <h4 className={css.occasionPanelTitle}>{occasion.label}</h4>
+                <p className={css.occasionPanelDescription}>{occasion.description}</p>
+              </div>
+
+              {/* Product carousel — same HTML/CSS pattern as AgeNavigation */}
+              {isLoading ? (
+                <div className={css.productCarousel}>
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className={`${css.productSkeleton} ${css.carouselCard}`} />
+                  ))}
+                </div>
+              ) : (
+                <div className={css.productCarousel}>
+                  {products.map((listing, i) => (
+                    <div key={listing.id.uuid} className={css.carouselCard}>
+                      <ListingCard
+                        listing={listing}
+                        showAuthorInfo={false}
+                        showTrustBadges={true}
+                        showConversionBadges={true}
+                        isBestseller={i === 0}
+                        renderSizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* CTA button */}
+              <div className={css.occasionCtaRow}>
+                <NamedLink
+                  name="SearchPage"
+                  to={{ search: viewAllSearch }}
+                  className={`${css.occasionCta} ${ctaColorClass}`}
+                >
+                  {ctaLabel} <span className={css.arrow}>→</span>
+                </NamedLink>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ── AgeNavigation ──────────────────────────────────────────────────────────
+// Age-based product carousels (top 3 groups).
+// Uses the shared ProductCarousel component (same pattern as listing page modules).
+
+const AgeNavigation = ({ config }) => {
+  const [ageProducts, setAgeProducts] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const listingFields = config?.listing?.listingFields;
+    const sanitizeConfig = { listingFields };
+
+    const fetchAgeProducts = async () => {
+      try {
+        const results = await Promise.all(
+          TOP_AGE_GROUPS.map(async ({ option }) => {
+            try {
+              const response = await sdk.listings.query({
+                pub_age_group: option,
+                perPage: 100,
+                include: ['images', 'currentStock'],
+              });
+              const listingIds = pickBrandDiverse(response.data.data, 8);
+              return { option, listingIds, responseData: response.data };
+            } catch {
+              return { option, listingIds: [], responseData: null };
+            }
+          })
+        );
+
+        let allEntities = {};
+        results.forEach(r => {
+          if (r.responseData) {
+            allEntities = updatedEntities(allEntities, r.responseData, sanitizeConfig);
+          }
+        });
+
+        const productsMap = results.reduce((acc, { option, listingIds }) => {
+          const refs = listingIds.map(id => ({ id, type: 'listing' }));
+          acc[option] = denormalisedEntities(allEntities, refs, false);
+          return acc;
+        }, {});
+
+        setAgeProducts(productsMap);
+      } catch {
+        // leave empty
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAgeProducts();
+  }, []);
+
+  return (
+    <div className={css.ageNavigation}>
+      <h3 className={css.ageNavigationTitle}>
+        <FormattedMessage id="MelaHomePage.shopByAge" defaultMessage="Shop Baby by Age" />
+      </h3>
+      <div className={css.categorySections}>
+        {TOP_AGE_GROUPS.map(({ option, label }) => (
+          <ProductCarousel
+            key={option}
+            title={label}
+            viewAllLinkName="SearchPage"
+            viewAllLinkSearch={`?pub_categoryLevel1=Baby-Clothes-Accessories&pub_age_group=${option}`}
+            listings={ageProducts[option] || []}
+            isLoading={isLoading}
+          />
+        ))}
+      </div>
+      <div className={css.viewAll}>
+        <Link to="/categories/Baby-Kids" className={css.viewAllButton}>
+          <FormattedMessage id="MelaHomePage.seeAllAges" defaultMessage="See all ages →" />
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+// ── makeCategoryCarousels ──────────────────────────────────────────────────
+// Factory that creates a carousel component for a given slice of ALL_CATEGORIES.
+// Each instance has its own loading state so fetches are independent.
+
+const makeCategoryCarousels = (categories) => {
+  const CategoryCarousels = ({ config }) => {
+    const [categoryProducts, setCategoryProducts] = useState({});
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+      const listingFields = config?.listing?.listingFields;
+      const sanitizeConfig = { listingFields };
+
+      const fetchProducts = async () => {
+        try {
+          const results = await Promise.all(
+            categories.map(async ({ id }) => {
+              try {
+                const response = await sdk.listings.query({
+                  pub_categoryLevel1: id,
+                  perPage: 100,
+                  include: ['images', 'currentStock'],
+                });
+                const listingIds = pickBrandDiverse(response.data.data, 8);
+                return { id, listingIds, responseData: response.data };
+              } catch {
+                return { id, listingIds: [], responseData: null };
+              }
+            })
+          );
+
+          let allEntities = {};
+          results.forEach(r => {
+            if (r.responseData) {
+              allEntities = updatedEntities(allEntities, r.responseData, sanitizeConfig);
+            }
+          });
+
+          const productsMap = results.reduce((acc, { id, listingIds }) => {
+            const refs = listingIds.map(lid => ({ id: lid, type: 'listing' }));
+            acc[id] = denormalisedEntities(allEntities, refs, false);
+            return acc;
+          }, {});
+
+          setCategoryProducts(productsMap);
+        } catch {
+          // leave empty
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchProducts();
+    }, []); // eslint-disable-line
+
+    return (
+      <div className={css.categorySections}>
+        {categories.map(({ id, label, viewAllSearch }) => (
+          <ProductCarousel
+            key={id}
+            title={label}
+            viewAllLinkName="SearchPage"
+            viewAllLinkSearch={viewAllSearch}
+            listings={categoryProducts[id] || []}
+            isLoading={isLoading}
+          />
+        ))}
+      </div>
+    );
+  };
+  return CategoryCarousels;
+};
+
+// All 6 categories in a single instance so their skeleton loading states render
+// simultaneously — prevents the "Baby & Kids only" perception during initial load.
+const AllCategoryCarousels = makeCategoryCarousels(ALL_CATEGORIES);
+
+// ── CategoryShowcase ───────────────────────────────────────────────────────
+
+const CategoryShowcase = () => {
+  const config = useConfiguration();
 
   return (
     <div className={css.showcase}>
-      {/* Schema.org structured data for rich search results */}
-      {structuredData && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
-      )}
       <div className={css.container}>
         {/* Section Header */}
         <div className={css.header}>
           <h2 className={css.title}>
             <FormattedMessage
               id="MelaHomePage.categoryTitle"
-              defaultMessage="Shop by Category"
+              defaultMessage="Discover Indian Design"
             />
           </h2>
           <p className={css.subtitle}>
             <FormattedMessage
               id="MelaHomePage.categorySubtitle"
-              defaultMessage="Discover our carefully curated collection of sustainable baby fashion"
+              defaultMessage="Baby, fashion, home, jewelry, wellness and art — curated from independent Indian brands"
             />
           </p>
         </div>
 
-        {/* Age-Based Navigation - SEO Critical */}
-        <AgeNavigation />
+        {/* All 6 category carousels — single instance so all skeletons render simultaneously */}
+        <AllCategoryCarousels config={config} />
 
-        {/* Category Sections with Products */}
-        <div className={css.categorySections}>
-          {showcaseCategories.map((category, index) => {
-            const products = categoryProducts[category.id] || [];
-            return (
-              <CategorySection
-                key={category.id}
-                category={category}
-                products={products}
-                isLoading={isLoading}
-                index={index}
-              />
-            );
-          })}
-        </div>
+        {/* Age-Based Navigation — directly after category carousels */}
+        <AgeNavigation config={config} />
+
+        {/* Occasion Strip */}
+        <OccasionStrip config={config} />
 
         {/* View All Categories CTA */}
         <div className={css.viewAll}>
-          <NamedLink name="SearchPage" className={css.viewAllButton}>
+          <Link to="/categories" className={css.viewAllButton}>
             <FormattedMessage
               id="MelaHomePage.viewAllCategories"
-              defaultMessage="View All Categories"
+              defaultMessage="Browse All Categories"
             />
-          </NamedLink>
+          </Link>
         </div>
       </div>
-    </div>
-  );
-};
-
-/**
- * AgeNavigation - Age-based primary navigation (SEO Critical)
- * Parents search by age first (85% of searches), then browse categories
- * Provides direct links to age-filtered search pages with SEO-friendly URLs
- */
-const AgeNavigation = () => {
-  const ageGroups = [
-    { option: 'newborn', label: 'Newborn', icon: '👶' },
-    { option: '0_6_months', label: '0-6 Months', icon: '🍼' },
-    { option: '6_12_months', label: '6-12 Months', icon: '🧸' },
-    { option: '12_18_months', label: '12-18 Months', icon: '👣' },
-    { option: '18_24_months', label: '18-24 Months', icon: '🎈' },
-  ];
-
-  return (
-    <div className={css.ageNavigation}>
-      <h3 className={css.ageNavigationTitle}>
-        <FormattedMessage
-          id="MelaHomePage.shopByAge"
-          defaultMessage="Shop by Baby's Age"
-        />
-      </h3>
-      <div className={css.ageFilters}>
-        {ageGroups.map(age => (
-          <NamedLink
-            key={age.option}
-            name="SearchPage"
-            to={{
-              search: `?pub_categoryLevel1=Baby-Clothes-Accessories&pub_age_group=${age.option}`,
-            }}
-            className={css.ageFilterButton}
-          >
-            <span className={css.ageIcon}>{age.icon}</span>
-            <span className={css.ageLabel}>{age.label}</span>
-          </NamedLink>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/**
- * CategorySection - Product-first category display
- * Shows category header followed by a grid of real product listings
- */
-const CategorySection = ({ category, products, isLoading, index }) => {
-  const hasProducts = products && products.length > 0;
-
-  return (
-    <div className={css.categorySection}>
-      {/* Category Header */}
-      <div className={css.categorySectionHeader}>
-        <div className={css.categoryHeaderContent}>
-          <h3 className={css.sectionCategoryTitle}>{category.name}</h3>
-          <p className={css.sectionCategoryDescription}>
-            {category.subcategories && category.subcategories.length > 0
-              ? category.subcategories.slice(0, 3).map(sub => sub.name).join(' • ')
-              : `Explore our ${category.name.toLowerCase()} collection`}
-          </p>
-        </div>
-        <NamedLink
-          name="SearchPage"
-          to={{
-            search: `?pub_categoryLevel1=Baby-Kids&pub_categoryLevel2=${category.id}`,
-          }}
-          className={css.viewCategoryLink}
-        >
-          <FormattedMessage
-            id="MelaHomePage.viewAll"
-            defaultMessage="View All"
-          />
-          <span className={css.arrow}>→</span>
-        </NamedLink>
-      </div>
-
-      {/* Product Grid */}
-      {isLoading ? (
-        <div className={css.productGrid}>
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className={css.productSkeleton} />
-          ))}
-        </div>
-      ) : hasProducts ? (
-        <div className={css.productGrid}>
-          {products.map((listing, productIndex) => (
-            <ListingCard
-              key={listing.id.uuid}
-              listing={listing}
-              showAuthorInfo={false}
-              showTrustBadges={true}
-              showConversionBadges={true}
-              isBestseller={productIndex === 0} // First product is bestseller
-              renderSizes="(max-width: 639px) 50vw, (max-width: 1023px) 50vw, 25vw"
-            />
-          ))}
-        </div>
-      ) : (
-        <div className={css.noProducts}>
-          <p>
-            <FormattedMessage
-              id="MelaHomePage.noProducts"
-              defaultMessage="No products available in this category yet."
-            />
-          </p>
-        </div>
-      )}
     </div>
   );
 };

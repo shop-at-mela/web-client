@@ -3,7 +3,10 @@ import React, { useState } from 'react';
 // Import contexts and util modules
 import { FormattedMessage, intlShape } from '../../util/reactIntl';
 import { pathByRouteName } from '../../util/routes';
-import { isValidCurrencyForTransactionProcess } from '../../util/fieldHelpers.js';
+import {
+  isValidCurrencyForTransactionProcess,
+  pickTransactionFieldsData,
+} from '../../util/fieldHelpers.js';
 import { propTypes } from '../../util/types';
 import { ensureTransaction } from '../../util/data';
 import { createSlug } from '../../util/urlHelpers';
@@ -11,12 +14,14 @@ import { isTransactionInitiateListingNotFoundError } from '../../util/errors';
 import {
   getProcess,
   isBookingProcessAlias,
-  PURCHASE_PROCESS_NAME,
+  resolveLatestProcessName,
   BOOKING_PROCESS_NAME,
+  NEGOTIATION_PROCESS_NAME,
+  PURCHASE_PROCESS_NAME,
 } from '../../transactions/transaction';
 
 // Import shared components
-import { H3, H4, NamedLink, OrderBreakdown, Page } from '../../components';
+import { H3, H4, NamedLink, OrderBreakdown, Page, TopbarSimplified } from '../../components';
 
 import {
   bookingDatesMaybe,
@@ -32,7 +37,6 @@ import {
 } from './CheckoutPageTransactionHelpers.js';
 import { getErrorMessages } from './ErrorMessages';
 
-import CustomTopbar from './CustomTopbar';
 import StripePaymentForm from './StripePaymentForm/StripePaymentForm';
 import DetailsSideCard from './DetailsSideCard';
 import MobileListingImage from './MobileListingImage';
@@ -100,7 +104,14 @@ const prefixPriceVariantProperties = priceVariant => {
  * @param {Object} config app-wide configs. This contains hosted configs too.
  * @returns orderParams.
  */
-const getOrderParams = (pageData, shippingDetails, optionalPaymentParams, config) => {
+const getOrderParams = (
+  pageData,
+  shippingDetails,
+  optionalPaymentParams,
+  config,
+  transactionFieldProtectedData,
+  customerDefaultMessage
+) => {
   const quantity = pageData.orderData?.quantity;
   const quantityMaybe = quantity ? { quantity } : {};
   const seats = pageData.orderData?.seats;
@@ -115,12 +126,16 @@ const getOrderParams = (pageData, shippingDetails, optionalPaymentParams, config
   const priceVariant = priceVariants?.find(pv => pv.name === priceVariantName);
   const priceVariantMaybe = priceVariant ? prefixPriceVariantProperties(priceVariant) : {};
 
+  const customerDefaultMessageMaybe = customerDefaultMessage ? { customerDefaultMessage } : {};
+
   const protectedDataMaybe = {
     protectedData: {
       ...getTransactionTypeData(listingType, unitType, config),
       ...deliveryMethodMaybe,
       ...shippingDetails,
       ...priceVariantMaybe,
+      ...transactionFieldProtectedData,
+      ...customerDefaultMessageMaybe,
     },
   };
 
@@ -166,9 +181,15 @@ const fetchSpeculatedTransactionIfNeeded = (orderParams, pageData, fetchSpeculat
     const transactionId = tx ? tx.id : null;
     const isInquiryInPaymentProcess =
       tx?.attributes?.lastTransition === process.transitions.INQUIRE;
+    const resolvedProcessName = resolveLatestProcessName(processName);
+    const isOfferPendingInNegotiationProcess =
+      resolvedProcessName === NEGOTIATION_PROCESS_NAME &&
+      tx.attributes.state === `state/${process.states.OFFER_PENDING}`;
 
     const requestTransition = isInquiryInPaymentProcess
       ? process.transitions.REQUEST_PAYMENT_AFTER_INQUIRY
+      : isOfferPendingInNegotiationProcess
+      ? process.transitions.REQUEST_PAYMENT_TO_ACCEPT_OFFER
       : process.transitions.REQUEST_PAYMENT;
     const isPrivileged = process.isPrivileged(requestTransition);
 
@@ -237,15 +258,19 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
     onInitiateOrder,
     onConfirmCardPayment,
     onConfirmPayment,
-    onSendMessage,
     onSavePaymentMethod,
     onSubmitCallback,
     pageData,
     setPageData,
     sessionStorageKey,
+    transactionFieldConfigs = [],
   } = props;
   const { card, message, paymentMethod: selectedPaymentMethod, formValues } = values;
   const { saveAfterOnetimePayment: saveAfterOnetimePaymentRaw } = formValues;
+
+  const transactionFieldsProtectedData = {
+    ...pickTransactionFieldsData(formValues, 'protected', true, transactionFieldConfigs),
+  };
 
   const saveAfterOnetimePayment =
     Array.isArray(saveAfterOnetimePaymentRaw) && saveAfterOnetimePaymentRaw.length > 0;
@@ -266,7 +291,6 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
     stripe,
     card,
     billingDetails: getBillingDetails(formValues, currentUser),
-    message,
     paymentIntent,
     hasPaymentIntentUserActionsDone,
     stripePaymentMethodId,
@@ -274,7 +298,6 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
     onInitiateOrder,
     onConfirmCardPayment,
     onConfirmPayment,
-    onSendMessage,
     onSavePaymentMethod,
     sessionStorageKey,
     stripeCustomer: currentUser?.stripeCustomer,
@@ -296,20 +319,25 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
 
   // These are the order parameters for the first payment-related transition
   // which is either initiate-transition or initiate-transition-after-enquiry
-  const orderParams = getOrderParams(pageData, shippingDetails, optionalPaymentParams, config);
+  const orderParams = getOrderParams(
+    pageData,
+    shippingDetails,
+    optionalPaymentParams,
+    config,
+    transactionFieldsProtectedData,
+    message
+  );
 
   // There are multiple XHR calls that needs to be made against Stripe API and Sharetribe Marketplace API on checkout with payments
   processCheckoutWithPayment(orderParams, requestPaymentParams)
     .then(response => {
-      const { orderId, messageSuccess, paymentMethodSaved } = response;
+      const { orderId, paymentMethodSaved } = response;
       setSubmitting(false);
 
-      const initialMessageFailedToTransaction = messageSuccess ? null : orderId;
       const orderDetailsPath = pathByRouteName('OrderDetailsPage', routeConfiguration, {
         id: orderId.uuid,
       });
       const initialValues = {
-        initialMessageFailedToTransaction,
         savePaymentMethodFailed: !paymentMethodSaved,
       };
 
@@ -371,7 +399,6 @@ const onStripeInitialized = (stripe, process, props) => {
  * @param {Function} props.onInitiateOrder - The function to initiate the order
  * @param {Function} props.onConfirmCardPayment - The function to confirm the card payment
  * @param {Function} props.onConfirmPayment - The function to confirm the payment after Stripe call is made
- * @param {Function} props.onSendMessage - The function to send a message
  * @param {Function} props.onSavePaymentMethod - The function to save the payment method for later use
  * @param {Function} props.onSubmitCallback - The function to submit the callback
  * @param {propTypes.error} props.initiateOrderError - The error message for the initiate order
@@ -408,6 +435,8 @@ export const CheckoutPageWithPayment = props => {
     processName,
     listingTitle,
     title,
+    transactionFieldConfigs = [],
+    showTransactionFields,
     config,
   } = props;
 
@@ -489,9 +518,13 @@ export const CheckoutPageWithPayment = props => {
     listingLink
   );
 
+  const isBooking = processName === BOOKING_PROCESS_NAME;
+  const isPurchase = processName === PURCHASE_PROCESS_NAME;
+  const isNegotiation = processName === NEGOTIATION_PROCESS_NAME;
+
   const txTransitions = existingTransaction?.attributes?.transitions || [];
   const hasInquireTransition = txTransitions.find(tr => tr.transition === transitions.INQUIRE);
-  const showInitialMessageInput = !hasInquireTransition;
+  const showInitialMessageInput = !hasInquireTransition && !isNegotiation;
 
   // Get first and last name of the current user and use it in the StripePaymentForm to autofill the name field
   const userName = currentUser?.attributes?.profile
@@ -512,18 +545,22 @@ export const CheckoutPageWithPayment = props => {
     !hasTransactionPassedPendingPayment(existingTransaction, process);
 
   const listingLocation = listing?.attributes?.publicData?.location;
-  const isBooking = processName === BOOKING_PROCESS_NAME;
-  const isPurchase = processName === PURCHASE_PROCESS_NAME;
   const showPickUpLocation = isPurchase && orderData?.deliveryMethod === 'pickup';
-  const showLocation = isBooking && listingLocation?.address;
+  const showLocation = (isBooking || isNegotiation) && listingLocation?.address;
+
+  const providerDisplayName = isNegotiation
+    ? existingTransaction?.provider?.attributes?.profile?.displayName
+    : listing?.author?.attributes?.profile?.displayName;
 
   // Check if the listing currency is compatible with Stripe for the specified transaction process.
   // This function validates the currency against the transaction process requirements and
   // ensures it is supported by Stripe, as indicated by the 'stripe' parameter.
   // If using a transaction process without any stripe actions, leave out the 'stripe' parameter.
+  const currency =
+    existingTransaction?.attributes?.payinTotal?.currency || listing.attributes.price?.currency;
   const isStripeCompatibleCurrency = isValidCurrencyForTransactionProcess(
     transactionProcessAlias,
-    listing.attributes.price.currency,
+    currency,
     'stripe'
   );
 
@@ -532,7 +569,7 @@ export const CheckoutPageWithPayment = props => {
   if (!isStripeCompatibleCurrency) {
     return (
       <Page title={title} scrollingDisabled={scrollingDisabled}>
-        <CustomTopbar intl={intl} linkToExternalSite={config?.topbar?.logoLink} />
+        <TopbarSimplified />
         <div className={css.contentContainer}>
           <section className={css.incompatibleCurrency}>
             <H4 as="h1" className={css.heading}>
@@ -546,7 +583,7 @@ export const CheckoutPageWithPayment = props => {
 
   return (
     <Page title={title} scrollingDisabled={scrollingDisabled}>
-      <CustomTopbar intl={intl} linkToExternalSite={config?.topbar?.logoLink} />
+      <TopbarSimplified />
       <div className={css.contentContainer}>
         <MobileListingImage
           listingTitle={listingTitle}
@@ -555,7 +592,7 @@ export const CheckoutPageWithPayment = props => {
           layoutListingImageConfig={config.layout.listingImage}
           showListingImage={showListingImage}
         />
-        <div className={css.orderFormContainer}>
+        <main className={css.orderFormContainer}>
           <div className={css.headingContainer}>
             <H3 as="h1" className={css.heading}>
               {title}
@@ -584,7 +621,7 @@ export const CheckoutPageWithPayment = props => {
                 }
                 inProgress={submitting}
                 formId="CheckoutPagePaymentForm"
-                authorDisplayName={listing?.author?.attributes?.profile?.displayName}
+                providerDisplayName={providerDisplayName}
                 showInitialMessageInput={showInitialMessageInput}
                 initialValues={initialValuesForStripePayment}
                 initiateOrderError={initiateOrderError}
@@ -612,10 +649,12 @@ export const CheckoutPageWithPayment = props => {
                 marketplaceName={config.marketplaceName}
                 isBooking={isBookingProcessAlias(transactionProcessAlias)}
                 isFuzzyLocation={config.maps.fuzzy.enabled}
+                transactionFieldConfigs={transactionFieldConfigs}
+                showTransactionFields={showTransactionFields}
               />
             ) : null}
           </section>
-        </div>
+        </main>
 
         <DetailsSideCard
           listing={listing}

@@ -1,185 +1,108 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { IntlProvider } from 'react-intl';
-import { MemoryRouter } from 'react-router-dom';
-import { ConfigurationProvider } from '../../context/configurationContext';
-import { RouteConfigurationProvider } from '../../context/routeConfigurationContext';
+
+import { renderWithProviders as render } from '../../util/testHelpers';
+import { createUser, createListing } from '../../util/testData';
+
 import { ListingCardMini } from './ListingCardMini';
 
-const mockListing = {
-  id: { uuid: 'listing-123' },
-  type: 'listing',
-  attributes: {
-    title: 'Organic Baby Romper',
-    price: {
-      amount: 1299,
-      currency: 'INR',
-    },
-  },
-  images: [
-    {
-      id: { uuid: 'image-1' },
-      type: 'image',
-      attributes: {
-        variants: {
-          'square-small': { url: 'https://example.com/image.jpg', width: 240, height: 240 },
-        },
-      },
-    },
-  ],
-};
+// Base listing — no INR data
+const listing = createListing('listing1', {}, { author: createUser('user1') });
 
-const mockConfig = {
-  marketplaceName: 'Mela',
-  currency: 'INR',
-  locale: 'en',
-};
+// Listing with INR equivalent price in publicData
+const listingWithINR = createListing(
+  'listing2',
+  { publicData: { priceInINR: 2499 } },
+  { author: createUser('user1') }
+);
 
-const mockRoutes = [
-  {
-    path: '/l/:slug/:id',
-    name: 'ListingPage',
-  },
-];
-
-const mockMessages = {
-  'ListingCardMini.price': '{priceValue}',
-};
-
-const TestWrapper = ({ children }) => (
-  <MemoryRouter>
-    <IntlProvider locale="en" messages={mockMessages}>
-      <ConfigurationProvider value={mockConfig}>
-        <RouteConfigurationProvider value={mockRoutes}>{children}</RouteConfigurationProvider>
-      </ConfigurationProvider>
-    </IntlProvider>
-  </MemoryRouter>
+// Listing with INR zero (falsy — should not show INR line)
+const listingWithZeroINR = createListing(
+  'listing3',
+  { publicData: { priceInINR: 0 } },
+  { author: createUser('user1') }
 );
 
 describe('ListingCardMini', () => {
-  it('renders listing title and price', () => {
-    render(
-      <TestWrapper>
-        <ListingCardMini listing={mockListing} />
-      </TestWrapper>
-    );
-
-    // Price should be displayed
-    expect(screen.getByText(/1,299/)).toBeInTheDocument();
-  });
-
-  it('renders favorite button by default', () => {
-    render(
-      <TestWrapper>
-        <ListingCardMini listing={mockListing} />
-      </TestWrapper>
-    );
-
-    const favoriteButton = screen.getByLabelText('Add to favorites');
-    expect(favoriteButton).toBeInTheDocument();
-  });
-
-  it('hides favorite button when showFavorite=false', () => {
-    render(
-      <TestWrapper>
-        <ListingCardMini listing={mockListing} showFavorite={false} />
-      </TestWrapper>
-    );
-
-    const favoriteButton = screen.queryByLabelText('Add to favorites');
-    expect(favoriteButton).not.toBeInTheDocument();
-  });
-
-  it('calls onFavorite when favorite button clicked', () => {
-    const onFavorite = jest.fn();
-    render(
-      <TestWrapper>
-        <ListingCardMini listing={mockListing} onFavorite={onFavorite} />
-      </TestWrapper>
-    );
-
-    const favoriteButton = screen.getByLabelText('Add to favorites');
-    fireEvent.click(favoriteButton);
-
-    expect(onFavorite).toHaveBeenCalledWith('listing-123');
-  });
-
-  it('prevents event propagation when favorite button clicked', () => {
-    const onFavorite = jest.fn();
-    const onCardClick = jest.fn();
-
-    const { container } = render(
-      <TestWrapper>
-        <ListingCardMini listing={mockListing} onFavorite={onFavorite} />
-      </TestWrapper>
-    );
-
-    const card = container.firstChild;
-    card.addEventListener('click', onCardClick);
-
-    const favoriteButton = screen.getByLabelText('Add to favorites');
-    fireEvent.click(favoriteButton);
-
-    expect(onFavorite).toHaveBeenCalled();
-    // Card click should not be triggered due to stopPropagation
-    expect(onCardClick).not.toHaveBeenCalled();
-  });
-
-  it('links to listing page with correct params', () => {
-    const { container } = render(
-      <TestWrapper>
-        <ListingCardMini listing={mockListing} />
-      </TestWrapper>
-    );
-
-    const link = container.querySelector('a');
-    expect(link).toHaveAttribute('href');
-    expect(link.getAttribute('href')).toContain('listing-123');
-  });
-
-  it('renders ListingImage with correct props', () => {
-    const { container } = render(
-      <TestWrapper>
-        <ListingCardMini listing={mockListing} />
-      </TestWrapper>
-    );
-
-    const img = container.querySelector('img');
-    expect(img).toBeInTheDocument();
-    expect(img).toHaveAttribute('alt');
-  });
-
-  it('applies custom className', () => {
-    const customClass = 'custom-mini-card';
-    const { container } = render(
-      <TestWrapper>
-        <ListingCardMini listing={mockListing} className={customClass} />
-      </TestWrapper>
-    );
-
-    expect(container.firstChild).toHaveClass(customClass);
-  });
-
-  it('handles listing without price gracefully', () => {
-    const listingNoPrice = {
-      ...mockListing,
-      attributes: {
-        ...mockListing.attributes,
-        price: null,
-      },
-    };
-
-    const { container } = render(
-      <TestWrapper>
-        <ListingCardMini listing={listingNoPrice} />
-      </TestWrapper>
-    );
-
-    // Should still render without errors
+  it('renders without crashing', () => {
+    const { container } = render(<ListingCardMini listing={listing} />);
     expect(container.firstChild).toBeInTheDocument();
-    // Price wrapper should not be present
-    const priceWrapper = container.querySelector('.priceWrapper');
-    expect(priceWrapper).not.toBeInTheDocument();
+  });
+
+  it('renders the USD price', () => {
+    const { container } = render(<ListingCardMini listing={listing} />);
+    // Price wrapper should be present (listing has default Money(5500, 'USD'))
+    const priceWrapper = container.querySelector('[class*="priceWrapper"]');
+    expect(priceWrapper).toBeInTheDocument();
+  });
+
+  it('links to the listing page', () => {
+    const { container } = render(<ListingCardMini listing={listing} />);
+    const link = container.querySelector('a');
+    expect(link).toBeInTheDocument();
+    expect(link.getAttribute('href')).toContain('listing1');
+  });
+
+  it('shows the save button by default', () => {
+    const { container } = render(<ListingCardMini listing={listing} />);
+    const saveBtn = container.querySelector('[class*="saveButton"]');
+    expect(saveBtn).toBeInTheDocument();
+  });
+
+  it('hides the save button when showSave=false', () => {
+    const { container } = render(<ListingCardMini listing={listing} showSave={false} />);
+    const saveBtn = container.querySelector('[class*="saveButton"]');
+    expect(saveBtn).not.toBeInTheDocument();
+  });
+
+  it('applies a custom className', () => {
+    const { container } = render(
+      <ListingCardMini listing={listing} className="custom-class" />
+    );
+    expect(container.firstChild).toHaveClass('custom-class');
+  });
+
+  it('renders without price gracefully', () => {
+    const noPrice = createListing(
+      'listing4',
+      { price: null },
+      { author: createUser('user1') }
+    );
+    const { container } = render(<ListingCardMini listing={noPrice} />);
+    expect(container.firstChild).toBeInTheDocument();
+  });
+
+  describe('INR equivalent price', () => {
+    it('shows INR price line when priceInINR is in publicData', () => {
+      const { getByText } = render(<ListingCardMini listing={listingWithINR} />);
+      // The INR span renders ~{formattedINRPrice} inline (no FormattedMessage)
+      expect(getByText(/~/)).toBeInTheDocument();
+    });
+
+    it('INR price line contains the formatted amount', () => {
+      const { getByText } = render(<ListingCardMini listing={listingWithINR} />);
+      // 2499 formatted — digits should appear regardless of currency symbol
+      expect(getByText(/~/).textContent).toMatch(/2[,.]?499/);
+    });
+
+    it('does not show INR price line when priceInINR is absent', () => {
+      const { queryByText } = render(<ListingCardMini listing={listing} />);
+      expect(queryByText(/~/)).not.toBeInTheDocument();
+    });
+
+    it('does not show INR price line when priceInINR is zero', () => {
+      const { queryByText } = render(<ListingCardMini listing={listingWithZeroINR} />);
+      expect(queryByText(/~/)).not.toBeInTheDocument();
+    });
+
+    it('does not show INR price line when publicData is empty', () => {
+      const noPublicData = createListing(
+        'listing5',
+        { publicData: {} },
+        { author: createUser('user1') }
+      );
+      const { queryByText } = render(<ListingCardMini listing={noPublicData} />);
+      expect(queryByText(/~/)).not.toBeInTheDocument();
+    });
   });
 });

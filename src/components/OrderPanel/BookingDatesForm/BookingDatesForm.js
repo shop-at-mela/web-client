@@ -578,6 +578,7 @@ export const BookingDatesForm = props => {
       const timeSlotsData = timeSlotsPerDate(currentMonth, nextMonth, allTimeSlots, tz);
       const [startMonth, endMonth] = getMonthlyFetchRange(monthlyTimeSlots, tz);
       const lastFetchedMonth = new Date(endMonth.getTime() - 1);
+      /* eslint-disable no-console */
       console.log(monthIdString(lastFetchedMonth, tz));
 
       console.log(
@@ -588,6 +589,7 @@ export const BookingDatesForm = props => {
         '\nTime slots for the current month:',
         timeSlotsData
       );
+      /* eslint-enable no-console */
     }
   }, [currentMonth, currentMonthInProgress, nextMonthInProgress, timeZone, monthlyTimeSlots]);
 
@@ -618,6 +620,7 @@ export const BookingDatesForm = props => {
           fetchLineItemsError,
           onFetchTimeSlots,
           form: formApi,
+          finePrintComponent: FinePrint,
         } = formRenderProps;
         const { startDate, endDate } = values?.bookingDates ? values.bookingDates : {};
         const priceVariantName = values?.priceVariantName || null;
@@ -850,19 +853,7 @@ export const BookingDatesForm = props => {
                 <FormattedMessage id="BookingDatesForm.requestToBook" />
               </PrimaryButton>
             </div>
-            <p className={css.finePrint}>
-              {payoutDetailsWarning ? (
-                payoutDetailsWarning
-              ) : (
-                <FormattedMessage
-                  id={
-                    isOwnListing
-                      ? 'BookingDatesForm.ownListing'
-                      : 'BookingDatesForm.youWontBeChargedInfo'
-                  }
-                />
-              )}
-            </p>
+            <FinePrint payoutDetailsWarning={payoutDetailsWarning} isOwnListing={isOwnListing} />
           </Form>
         );
       }}

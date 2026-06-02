@@ -199,6 +199,71 @@ results.forEach(r => allEntities = updatedEntities(allEntities, r.responseData, 
 - **Example**: BrandStorySection expects `brandStory` prop, not `bio` (even though parent has `bio`)
 - **Pattern**: Read component implementation to verify exact prop names, don't assume
 
+### path-to-regexp v8 Incompatibility with React Router v5 Optional Params
+- **Issue**: `createResourceLocatorString` and `NamedLink` call `compile()` from path-to-regexp v8, which doesn't support the `?` optional param syntax (e.g., `/:level2?`). React Router v5 uses its own bundled path-to-regexp v1 for matching which does support `?`.
+- **Impact**: Routes with optional params (like `/categories/:level1/:level2?/:level3?`) will throw at link-building time, not at match time.
+- **Solution**: Build paths manually for routes with optional params instead of using `createResourceLocatorString`:
+```javascript
+const categoryPath = (level1, level2, level3) => {
+  let path = `/categories/${level1}`;
+  if (level2) path += `/${level2}`;
+  if (level3) path += `/${level3}`;
+  return path;
+};
+// Use <Link to={categoryPath(l1, l2)}> instead of <NamedLink name="CategoryPage" params={...}>
+```
+- **Applies to**: Any container that generates links to routes with `?` optional params.
+
+### Canonical URL Override on Page Component
+- **Pattern**: `Page` accepts a `canonicalURL` prop that overrides the auto-generated canonical.
+- **Use case**: Brand pages at `/u/:uuid` should canonicalize to `/brands/:slug`. Category pages should canonicalize to the clean path (no query params).
+- **Implementation**: `<Page canonicalURL={brandCanonicalUrl}>` — if `null`/`undefined`, falls back to normal behavior.
+
+### Brand Slug ↔ UUID Resolution
+- **Pattern**: `getBrandSlugById(uuid)` and `getBrandIdBySlug(slug)` in `src/config/configBrands.js`.
+- **Used in**: `ProfilePage.js` (canonical URL), `ProfilePage.duck.js` (loadData for /brands/:brandSlug route), `BrandCard.js`, `BrandCardHome.js` (link routing).
+- **Duck**: `loadData` branches on `params.brandSlug` — resolves slug → UUID, then calls shared `loadProfileByUserId`. Returns 404 error if slug not found.
+
+### CategoryPage Reuses SearchPage Duck
+- **No new duck needed**: CategoryPage connects to `state.SearchPage` (currentPageResultIds, searchInProgress).
+- **loadData**: Points to `pageDataLoadingAPI.SearchPage.loadData` in routeConfiguration.
+- **Category filtering**: Handled by `convertCategoryPathParamsToQueryParams` in SearchPage.shared.js — the URL params are automatically converted to search filters.
+
+### Testing Connected Pages (with Page/Helmet)
+- **Requires HelmetProvider** from `react-helmet-async` wrapping the render tree.
+- **Mock TopbarContainer and FooterContainer** to avoid deep dependency chain in unit tests.
+- **Required mock state shape**: `{ SearchPage: { currentPageResultIds: [], searchInProgress: false }, marketplaceData: { entities: {} }, ui: { disableScrollRequests: [] } }`.
+- `ui.scrollingDisabled: false` is WRONG — the actual key is `ui.disableScrollRequests: []` (array).
+
+### Sharetribe Upstream Merge Strategy
+- **Remote chain**: `sharetribe/web-template` (remote: `sharetribe`) → `shop-at-mela/web-client` (remote: `upstream`) → `ppjogani/web-client` (remote: `origin`)
+- **Push branch**: Local `main` → `upstream/test` (not `upstream/main`): `git push upstream main:test`
+- **Merge incrementally by version tag** — never merge all 900+ commits at once; go tag-by-tag (v9.0.0, v9.1.0, v10.0.0, ...) to keep conflict scope manageable
+- **CHANGELOG.md**: Always `git rm CHANGELOG.md` — Mela doesn't use it, sharetribe modifies it every release
+
+### Mela Brand Values — Always Keep in Conflicts
+- **Primary color**: `--marketplaceColor: #262261` (purple) — never accept sharetribe's default
+- **Button color**: `--colorPrimaryButton: #e67e71` (coral) — never accept sharetribe's default
+- **Topbar navigation**: Keep `CategoriesPage` and `BrandsPage` links; sharetribe repurposes these components for SignupPage/LoginPage
+- **Mobile menu Browse section**: Keep Mela's custom Browse/Account sections; sharetribe removes them
+
+### Redux Toolkit Migration (v9.0.0+)
+- **`@reduxjs/toolkit`**: Added as dependency in v9.0.0. Run `yarn install` after first merge that includes it.
+- **`CURRENT_USER_SHOW_SUCCESS` removed**: Replaced with `fetchCurrentUserThunk.fulfilled.type` from `user.duck`. Import `fetchCurrentUserThunk` and derive the type — payload shape (user entity) is unchanged.
+- **`migrateLocalSavesToProfile`**: Must be preserved in `login` and `signupWithIdp` wrappers in `auth.duck.js`. Chain `.then(() => dispatch(migrateLocalSavesToProfile()))` after `.unwrap()` in both wrappers.
+- **Test pattern changed**: Duck tests now use Redux store + action type assertions, not direct dispatch mocks.
+
+### Babel Compatibility (v9.0.0+)
+- **`@babel/plugin-proposal-private-property-in-object`**: Add to `devDependencies` — sharetribe's dependencies import it transitively but don't declare it, causing a crash at startup.
+
+### SearchPage SEO (Keep Mela Logic in Conflicts)
+- **`SearchPage.shared.js` `createSearchResultSchema`**: Our version uses `location` param to generate custom SEO titles for `/categories/*` and `/brands/*` URLs. Sharetribe adds `pageHeading` param. Resolution: accept both params; pass `pageHeading` in the default case's `schemaTitle` interpolation.
+
+### Semantic HTML Changes (v10.7.0+)
+- Sharetribe replaced `<div>` with `<ul>/<li>` for listing cards and menu items (accessibility).
+- **SearchResultsPanel**: Accept `<ul>/<li>` structure, keep Mela badge calculation logic inside.
+- **TopbarMobileMenu authenticated links**: Accept `<ul>/<li>`, keep Mela Browse section as-is.
+
 ## Session Log
 2024-10-10: Fixed CategoryProducts to display proper category names + product filtering improvements
 2025-10-10: Implemented HeroProducts with real API integration, randomization, and comprehensive testing
@@ -206,3 +271,4 @@ results.forEach(r => allEntities = updatedEntities(allEntities, r.responseData, 
 2025-11-18: Phase 2 - CategoryShowcase product-first, ListingCard badges, image variant fallback
 2025-11-29: Fixed addMarketplaceEntities payload format issue in Brands page implementation
 2025-12-15: Brand storefront UX - scroll affordance, mobile-first CSS, lazy loading, tab navigation component fix
+2026-04-19: Sharetribe upstream merge v8.8.0→v10.7.0 — incremental tag-by-tag strategy, Redux Toolkit migration fixes, Mela brand color/nav preservation patterns

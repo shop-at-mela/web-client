@@ -1,0 +1,217 @@
+.root {
+  padding: 16px;
+}
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--colorTextSecondary, #6b7280);
+  margin-bottom: 20px;
+}
+
+.breadcrumbLink {
+  color: var(--colorTextSecondary, #6b7280);
+  text-decoration: none;
+}
+
+.breadcrumbLink:hover {
+  text-decoration: underline;
+}
+
+.breadcrumbSep {
+  color: var(--colorTextSecondary, #9ca3af);
+  margin: 0 2px;
+}
+
+.breadcrumbCurrent {
+  color: var(--colorTextPrimary, #111827);
+  font-weight: 500;
+}
+
+/* ── Header ── */
+.header {
+  margin-bottom: 20px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--colorTextPrimary, #111827);
+  margin: 0 0 8px;
+  line-height: 1.2;
+}
+
+.description {
+  font-size: 15px;
+  color: var(--colorTextSecondary, #6b7280);
+  margin: 0;
+  max-width: 640px;
+}
+
+/* ── Subcategory pills ── */
+.subcategoryNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.subcategoryPill {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--colorBorder, #e5e7eb);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--colorTextPrimary, #374151);
+  text-decoration: none;
+  background: var(--colorBackground, #fff);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.subcategoryPill:hover {
+  background: var(--colorBackgroundHover, #f9fafb);
+  border-color: var(--colorBorderHover, #d1d5db);
+}
+
+/* ── Occasion strip wrapper ── */
+.occasionSection {
+  margin-bottom: 32px;
+}
+
+/* ── Products ── */
+.productsSection {
+  margin-top: 4px;
+}
+
+.productGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.productItem {
+  min-width: 0;
+}
+
+/* ── States ── */
+.loading,
+.empty {
+  padding: 48px 0;
+  text-align: center;
+  color: var(--colorTextSecondary, #6b7280);
+}
+
+.emptyText {
+  margin: 0 0 16px;
+  font-size: 16px;
+}
+
+.emptyLink {
+  display: inline-block;
+  padding: 10px 24px;
+  background: var(--marketplaceColor, #4f46e5);
+  color: #fff;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ── Tablet+ ── */
+@media (min-width: 768px) {
+  .root {
+    padding: 24px 32px;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+
+  .productGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .subcategoryPill {
+    font-size: 14px;
+    padding: 7px 16px;
+  }
+}
+
+/* ── Desktop ── */
+@media (min-width: 1024px) {
+  .root {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 32px 40px;
+  }
+
+  .productGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .categoryCardGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ── Category cards (root /categories page) ── */
+.categoryCardGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.categoryCard {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border: 1px solid var(--colorBorder, #e5e7eb);
+  border-radius: 10px;
+  background: var(--colorBackground, #fff);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.categoryCard:hover {
+  border-color: var(--marketplaceColor, #4f46e5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.categoryCardTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--colorTextPrimary, #111827);
+  margin: 0 0 10px;
+  line-height: 1.3;
+}
+
+.categoryCardSubs {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  flex: 1;
+}
+
+.categoryCardSub {
+  font-size: 13px;
+  color: var(--colorTextSecondary, #6b7280);
+  line-height: 1.6;
+}
+
+.categoryCardCta {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--marketplaceColor, #4f46e5);
+  margin-top: auto;
+}

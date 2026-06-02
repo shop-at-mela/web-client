@@ -16,14 +16,20 @@
   }
 }
 
-/* Header with logo + name + tagline */
-.header {
+/* Header — entire area is a link; block display preserves layout */
+.headerLink {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   padding: 16px;
   border-bottom: 1px solid var(--colorGrey100);
   background: var(--colorWhite);
+  text-decoration: none;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--colorGrey50);
+  }
 }
 
 .brandInfo {
@@ -212,7 +218,7 @@
 
 /* Mobile optimizations */
 @media (max-width: 640px) {
-  .header {
+  .headerLink {
     padding: 14px;
   }
 
@@ -272,7 +278,7 @@
 
 /* Tablet and up */
 @media (--viewportMedium) {
-  .header {
+  .headerLink {
     padding: 18px;
   }
 

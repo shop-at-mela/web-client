@@ -5,6 +5,19 @@ import { IntlProvider } from 'react-intl';
 import { MemoryRouter } from 'react-router-dom';
 import { ConfigurationProvider } from '../../context/configurationContext';
 import { RouteConfigurationProvider } from '../../context/routeConfigurationContext';
+
+// Break the import chain: components/index.js → UserNav → routeConfiguration → pageDataLoadingAPI → ducks
+jest.mock('../../routing/routeConfiguration', () => []);
+
+// Mock ListingCardMini to avoid Money type dependency in unit tests
+jest.mock('../ListingCardMini/ListingCardMini', () => {
+  const ListingCardMini = ({ listing }) => (
+    <div data-testid="listing-card-mini">{listing ? listing.attributes.title : 'Coming Soon'}</div>
+  );
+  ListingCardMini.displayName = 'ListingCardMini';
+  return { __esModule: true, ListingCardMini };
+});
+
 import BrandCardHome from './BrandCardHome';
 
 const mockBrand = {
@@ -52,6 +65,7 @@ const mockConfig = {
 
 const mockRoutes = [
   { path: '/u/:id', name: 'ProfilePage' },
+  { path: '/brands/:brandSlug', name: 'BrandPage' },
   { path: '/l/:slug/:id', name: 'ListingPage' },
 ];
 
@@ -84,10 +98,23 @@ describe('BrandCardHome', () => {
     );
 
     expect(screen.getByText('Masilo')).toBeInTheDocument();
-    expect(screen.getByAlt('Masilo')).toBeInTheDocument();
+    expect(screen.getByAltText('Masilo')).toBeInTheDocument();
   });
 
-  it('renders tagline from bio (first sentence, max 60 chars)', () => {
+  it('header area is a link to the brand page', () => {
+    const { container } = render(
+      <TestWrapper>
+        <BrandCardHome brand={mockBrand} products={mockProducts} />
+      </TestWrapper>
+    );
+
+    // The headerLink wraps logo + name — it must be an anchor
+    const headerLink = container.querySelector('a.headerLink');
+    expect(headerLink).toBeInTheDocument();
+    expect(headerLink).toContainElement(screen.getByText('Masilo'));
+  });
+
+  it('renders tagline from bio (first sentence, max 80 chars)', () => {
     render(
       <TestWrapper>
         <BrandCardHome brand={mockBrand} products={mockProducts} />
@@ -229,32 +256,70 @@ describe('BrandCardHome', () => {
       </TestWrapper>
     );
 
-    // Should render CertificationBadge components
     const badges = container.querySelectorAll('[data-certification]');
     expect(badges.length).toBe(3);
   });
 
-  it('renders 2x2 product grid with placeholders', () => {
-    render(
-      <TestWrapper>
-        <BrandCardHome brand={mockBrand} products={[mockProducts[0]]} />
-      </TestWrapper>
-    );
+  describe('maxProducts prop', () => {
+    it('renders 2x2 grid (4 slots) by default', () => {
+      render(
+        <TestWrapper>
+          <BrandCardHome brand={mockBrand} products={[mockProducts[0]]} />
+        </TestWrapper>
+      );
 
-    const placeholders = screen.getAllByText('Coming Soon');
-    expect(placeholders.length).toBe(3); // 1 product + 3 placeholders
+      // 1 real product + 3 placeholders = 4 slots
+      const placeholders = screen.getAllByText('Coming Soon');
+      expect(placeholders.length).toBe(3);
+    });
+
+    it('renders 1x2 grid (2 slots) when maxProducts={2}', () => {
+      render(
+        <TestWrapper>
+          <BrandCardHome brand={mockBrand} products={[mockProducts[0]]} maxProducts={2} />
+        </TestWrapper>
+      );
+
+      // 1 real product + 1 placeholder = 2 slots
+      const placeholders = screen.getAllByText('Coming Soon');
+      expect(placeholders.length).toBe(1);
+    });
+
+    it('shows no placeholders when products fill all slots', () => {
+      const twoProducts = [mockProducts[0], { ...mockProducts[0], id: { uuid: 'product-2' } }];
+
+      render(
+        <TestWrapper>
+          <BrandCardHome brand={mockBrand} products={twoProducts} maxProducts={2} />
+        </TestWrapper>
+      );
+
+      expect(screen.queryByText('Coming Soon')).not.toBeInTheDocument();
+    });
   });
 
-  it('renders Shop All CTA linking to profile page', () => {
-    render(
-      <TestWrapper>
-        <BrandCardHome brand={mockBrand} products={mockProducts} />
-      </TestWrapper>
-    );
+  describe('showCta prop', () => {
+    it('renders Shop All CTA by default', () => {
+      render(
+        <TestWrapper>
+          <BrandCardHome brand={mockBrand} products={mockProducts} />
+        </TestWrapper>
+      );
 
-    const shopAllLink = screen.getByText('Shop All Products').closest('a');
-    expect(shopAllLink).toBeInTheDocument();
-    expect(shopAllLink.getAttribute('href')).toContain('brand-123');
+      const shopAllLink = screen.getByText('Shop All Products').closest('a');
+      expect(shopAllLink).toBeInTheDocument();
+      expect(shopAllLink.getAttribute('href')).toContain('brand-123');
+    });
+
+    it('hides Shop All CTA when showCta={false}', () => {
+      render(
+        <TestWrapper>
+          <BrandCardHome brand={mockBrand} products={mockProducts} showCta={false} />
+        </TestWrapper>
+      );
+
+      expect(screen.queryByText('Shop All Products')).not.toBeInTheDocument();
+    });
   });
 
   it('renders placeholder logo when no logo available', () => {

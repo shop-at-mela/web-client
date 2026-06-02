@@ -23,23 +23,39 @@
 /* Category Section */
 .categorySection {
   width: 100%;
-  padding: 2rem 0;
+  padding: 1.5rem 0;
   background: #ffffff;
 
   @media (min-width: 768px) {
-    padding: 2.5rem 0;
+    padding: 2rem 0;
   }
 
   @media (min-width: 1024px) {
-    padding: 3rem 0;
+    padding: 2rem 0;
   }
 }
 
 /* Featured Brands Section */
 .brandsSection {
   width: 100%;
-  padding: 2rem 0;
+  padding: 1.5rem 0;
   background: #ffffff;
+
+  @media (min-width: 768px) {
+    padding: 2rem 0;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 2rem 0;
+  }
+}
+
+/* Coming Soon Section */
+.comingSoonSection {
+  width: 100%;
+  padding: 2rem 0;
+  background: #fdf8f4;
+  border-top: 1px solid #ede8e3;
 
   @media (min-width: 768px) {
     padding: 2.5rem 0;

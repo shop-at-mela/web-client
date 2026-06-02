@@ -1,14 +1,56 @@
 import React from 'react';
 import '@testing-library/jest-dom';
+import { render as rtlRender, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { IntlProvider } from 'react-intl';
+import { MemoryRouter } from 'react-router-dom';
 
-import { renderWithProviders as render, testingLibrary } from '../../../util/testHelpers';
-import { fakeIntl } from '../../../util/testData';
+// Break the import chain: components/index.js → UserNav → routeConfiguration → pageDataLoadingAPI → ducks
+jest.mock('../../../routing/routeConfiguration', () => []);
 
 import SignupForm from './SignupForm';
 
-const { screen, fireEvent, userEvent, waitFor } = testingLibrary;
+const mockMessages = {
+  'SignupForm.emailLabel': 'Email address',
+  'SignupForm.emailPlaceholder': 'Enter your email',
+  'SignupForm.emailRequired': 'Email is required',
+  'SignupForm.emailInvalid': 'Please enter a valid email address',
+  'SignupForm.firstNameLabel': 'First name',
+  'SignupForm.firstNamePlaceholder': 'Enter your first name',
+  'SignupForm.firstNameRequired': 'First name is required',
+  'SignupForm.lastNameLabel': 'Last name',
+  'SignupForm.lastNamePlaceholder': 'Enter your last name',
+  'SignupForm.lastNameRequired': 'Last name is required',
+  'SignupForm.brandNameLabel': 'Brand name',
+  'SignupForm.brandNamePlaceholder': 'e.g. Masilo',
+  'SignupForm.brandNameRequired': 'Brand name is required',
+  'SignupForm.contactFirstNameLabel': 'Your first name',
+  'SignupForm.contactFirstNamePlaceholder': 'Enter your first name',
+  'SignupForm.contactLastNameLabel': 'Your last name',
+  'SignupForm.contactLastNamePlaceholder': 'Enter your last name',
+  'SignupForm.passwordLabel': 'Password',
+  'SignupForm.passwordPlaceholder': 'Create a password',
+  'SignupForm.passwordRequired': 'Password is required',
+  'SignupForm.passwordTooShort': 'Password must be at least {minLength} characters',
+  'SignupForm.passwordTooLong': 'Password must be less than {maxLength} characters',
+  'SignupForm.startShopping': 'Start Saving Favorites',
+  'SignupForm.startSelling': 'Start Selling',
+  'SignupForm.signUp': 'Sign Up',
+  'SignupForm.customerHelpText': 'Create an account to save your favorite Indian products and never lose track of what you love',
+  'SignupForm.providerHelpText': 'Join as an Indian brand and start selling to customers who value authentic products',
+  'SignupForm.termsText': 'By signing up, you agree to our {termsLink} and {privacyLink}',
+  'SignupForm.termsLinkText': 'Terms of Service',
+  'SignupForm.privacyLinkText': 'Privacy Policy',
+};
 
-const noop = () => null;
+const render = (ui) =>
+  rtlRender(
+    <MemoryRouter>
+      <IntlProvider locale="en" messages={mockMessages}>
+        {ui}
+      </IntlProvider>
+    </MemoryRouter>
+  );
 
 const mockProps = {
   onSubmit: jest.fn(),
@@ -27,14 +69,20 @@ describe('SignupForm', () => {
     jest.clearAllMocks();
   });
 
-  describe('Form rendering', () => {
-    it('renders all required form fields', () => {
+  describe('Form rendering (customer)', () => {
+    it('renders all required form fields for customer', () => {
       render(<SignupForm {...mockProps} />);
 
       expect(screen.getByLabelText(/Email address/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/First name/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Last name/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
+    });
+
+    it('does not show Brand name field for customers', () => {
+      render(<SignupForm {...mockProps} userType="customer" />);
+
+      expect(screen.queryByLabelText(/Brand name/i)).not.toBeInTheDocument();
     });
 
     it('includes hidden userType field', () => {
@@ -69,6 +117,18 @@ describe('SignupForm', () => {
 
       expect(screen.getByText(/Create an account to save your favorite Indian products/i)).toBeInTheDocument();
     });
+
+    it('uses "First name" label for customers', () => {
+      render(<SignupForm {...customerProps} />);
+
+      expect(screen.getByLabelText(/^First name$/i)).toBeInTheDocument();
+    });
+
+    it('uses "Last name" label for customers', () => {
+      render(<SignupForm {...customerProps} />);
+
+      expect(screen.getByLabelText(/^Last name$/i)).toBeInTheDocument();
+    });
   });
 
   describe('Provider-specific rendering', () => {
@@ -77,7 +137,7 @@ describe('SignupForm', () => {
     it('shows provider submit button text', () => {
       render(<SignupForm {...providerProps} />);
 
-      expect(screen.getByText(/Start Selling/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Start Selling/i })).toBeInTheDocument();
     });
 
     it('shows provider help text', () => {
@@ -85,16 +145,38 @@ describe('SignupForm', () => {
 
       expect(screen.getByText(/Join as an Indian brand and start selling/i)).toBeInTheDocument();
     });
+
+    it('shows Brand name field for providers', () => {
+      render(<SignupForm {...providerProps} />);
+
+      expect(screen.getByLabelText(/Brand name/i)).toBeInTheDocument();
+    });
+
+    it('uses "Your first name" label for providers', () => {
+      render(<SignupForm {...providerProps} />);
+
+      expect(screen.getByLabelText(/Your first name/i)).toBeInTheDocument();
+    });
+
+    it('uses "Your last name" label for providers', () => {
+      render(<SignupForm {...providerProps} />);
+
+      expect(screen.getByLabelText(/Your last name/i)).toBeInTheDocument();
+    });
+
+    it('Brand name field uses organization autocomplete', () => {
+      render(<SignupForm {...providerProps} />);
+
+      expect(screen.getByLabelText(/Brand name/i)).toHaveAttribute('autoComplete', 'organization');
+    });
   });
 
   describe('Form validation', () => {
-    it('shows required field validation messages', async () => {
-      render(<SignupForm {...mockProps} />);
+    it('shows required field validation messages for customer', async () => {
+      const { container } = render(<SignupForm {...mockProps} />);
 
-      const submitButton = screen.getByRole('button', { name: /Start Saving Favorites/i });
-
-      // Try to submit without filling fields
-      fireEvent.click(submitButton);
+      // Submit directly on the form since button is disabled when form is invalid
+      fireEvent.submit(container.querySelector('form'));
 
       await waitFor(() => {
         expect(screen.getByText(/Email is required/i)).toBeInTheDocument();
@@ -104,11 +186,21 @@ describe('SignupForm', () => {
       });
     });
 
+    it('requires Brand name for provider signup', async () => {
+      const { container } = render(<SignupForm {...mockProps} userType="provider" />);
+
+      // Submit directly on the form since button is disabled when form is invalid
+      fireEvent.submit(container.querySelector('form'));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Brand name is required/i)).toBeInTheDocument();
+      });
+    });
+
     it('validates email format', async () => {
       render(<SignupForm {...mockProps} />);
 
       const emailField = screen.getByLabelText(/Email address/i);
-
       await userEvent.type(emailField, 'invalid-email');
       fireEvent.blur(emailField);
 
@@ -121,8 +213,7 @@ describe('SignupForm', () => {
       render(<SignupForm {...mockProps} />);
 
       const passwordField = screen.getByLabelText(/Password/i);
-
-      await userEvent.type(passwordField, '123'); // Too short
+      await userEvent.type(passwordField, '123');
       fireEvent.blur(passwordField);
 
       await waitFor(() => {
@@ -130,7 +221,7 @@ describe('SignupForm', () => {
       });
     });
 
-    it('accepts valid form data', async () => {
+    it('accepts valid customer form data', async () => {
       render(<SignupForm {...mockProps} />);
 
       await userEvent.type(screen.getByLabelText(/Email address/i), 'test@example.com');
@@ -139,8 +230,6 @@ describe('SignupForm', () => {
       await userEvent.type(screen.getByLabelText(/Password/i), 'password123');
 
       const submitButton = screen.getByRole('button', { name: /Start Saving Favorites/i });
-
-      // Form should not show validation errors with valid data
       fireEvent.click(submitButton);
 
       await waitFor(() => {
@@ -153,7 +242,7 @@ describe('SignupForm', () => {
   });
 
   describe('Form submission', () => {
-    it('calls onSubmit with form data when valid', async () => {
+    it('calls onSubmit with form data when valid (customer)', async () => {
       const onSubmitMock = jest.fn();
       render(<SignupForm {...mockProps} onSubmit={onSubmitMock} />);
 
@@ -166,13 +255,40 @@ describe('SignupForm', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(onSubmitMock).toHaveBeenCalledWith(
+        // Final Form calls onSubmit(values, form, callback) — check first argument
+        expect(onSubmitMock.mock.calls[0][0]).toEqual(
           expect.objectContaining({
             email: 'test@example.com',
             fname: 'John',
             lname: 'Doe',
             password: 'password123',
-            userType: 'customer'
+            userType: 'customer',
+          })
+        );
+      });
+    });
+
+    it('includes displayName in submission for providers', async () => {
+      const onSubmitMock = jest.fn();
+      render(<SignupForm {...mockProps} onSubmit={onSubmitMock} userType="provider" />);
+
+      await userEvent.type(screen.getByLabelText(/Email address/i), 'brand@example.com');
+      await userEvent.type(screen.getByLabelText(/Brand name/i), 'Masilo');
+      await userEvent.type(screen.getByLabelText(/Your first name/i), 'Priya');
+      await userEvent.type(screen.getByLabelText(/Your last name/i), 'Sharma');
+      await userEvent.type(screen.getByLabelText(/Password/i), 'password123');
+
+      const submitButton = screen.getByRole('button', { name: /Start Selling/i });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(onSubmitMock.mock.calls[0][0]).toEqual(
+          expect.objectContaining({
+            email: 'brand@example.com',
+            displayName: 'Masilo',
+            fname: 'Priya',
+            lname: 'Sharma',
+            userType: 'provider',
           })
         );
       });
@@ -183,17 +299,18 @@ describe('SignupForm', () => {
       render(<SignupForm {...mockProps} onSubmit={onSubmitMock} userType="provider" />);
 
       await userEvent.type(screen.getByLabelText(/Email address/i), 'provider@example.com');
-      await userEvent.type(screen.getByLabelText(/First name/i), 'Jane');
-      await userEvent.type(screen.getByLabelText(/Last name/i), 'Smith');
+      await userEvent.type(screen.getByLabelText(/Brand name/i), 'TestBrand');
+      await userEvent.type(screen.getByLabelText(/Your first name/i), 'Jane');
+      await userEvent.type(screen.getByLabelText(/Your last name/i), 'Smith');
       await userEvent.type(screen.getByLabelText(/Password/i), 'password123');
 
       const submitButton = screen.getByRole('button', { name: /Start Selling/i });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(onSubmitMock).toHaveBeenCalledWith(
+        expect(onSubmitMock.mock.calls[0][0]).toEqual(
           expect.objectContaining({
-            userType: 'provider'
+            userType: 'provider',
           })
         );
       });
@@ -209,17 +326,19 @@ describe('SignupForm', () => {
     });
 
     it('disables submit button when in progress', () => {
-      render(<SignupForm {...mockProps} inProgress={true} />);
+      const { container } = render(<SignupForm {...mockProps} inProgress={true} />);
 
-      const submitButton = screen.getByRole('button', { name: /Start Saving Favorites/i });
+      // When inProgress=true, button shows a spinner (no text), so find by type
+      const submitButton = container.querySelector('button[type="submit"]');
       expect(submitButton).toBeDisabled();
     });
 
     it('shows loading state on submit button when in progress', () => {
-      render(<SignupForm {...mockProps} inProgress={true} />);
+      const { container } = render(<SignupForm {...mockProps} inProgress={true} />);
 
-      const submitButton = screen.getByRole('button', { name: /Start Saving Favorites/i });
-      expect(submitButton).toHaveAttribute('aria-busy', 'true');
+      // When inProgress=true, button replaces text with a spinner (inProgress CSS class applied)
+      const submitButton = container.querySelector('button[type="submit"]');
+      expect(submitButton).toHaveClass('inProgress');
     });
 
     it('disables submit button when no userType is provided', () => {
@@ -291,12 +410,22 @@ describe('SignupForm', () => {
   });
 
   describe('Accessibility', () => {
-    it('has proper form labels', () => {
+    it('has proper form labels for customer', () => {
       render(<SignupForm {...mockProps} />);
 
       expect(screen.getByLabelText(/Email address/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/First name/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Last name/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
+    });
+
+    it('has proper form labels for provider', () => {
+      render(<SignupForm {...mockProps} userType="provider" />);
+
+      expect(screen.getByLabelText(/Email address/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Brand name/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Your first name/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Your last name/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
     });
 
@@ -316,7 +445,7 @@ describe('SignupForm', () => {
       expect(screen.getByLabelText(/Last name/i)).toHaveAttribute('type', 'text');
     });
 
-    it('includes autocomplete attributes', () => {
+    it('includes autocomplete attributes for customer', () => {
       render(<SignupForm {...mockProps} />);
 
       expect(screen.getByLabelText(/Email address/i)).toHaveAttribute('autoComplete', 'email');

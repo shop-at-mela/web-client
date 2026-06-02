@@ -5,7 +5,6 @@ import { MemoryRouter } from 'react-router-dom';
 import { IntlProvider } from 'react-intl';
 import MelaHomePage from './MelaHomePage';
 
-// Mock child components
 jest.mock('./sections/HeroSection/HeroSection', () => {
   return function HeroSection() {
     return <div data-testid="hero-section">Hero Section</div>;
@@ -18,15 +17,15 @@ jest.mock('./sections/CategoryShowcase/CategoryShowcase', () => {
   };
 });
 
-jest.mock('./sections/CustomerFavorites/CustomerFavorites', () => {
-  return function CustomerFavorites() {
-    return <div data-testid="customer-favorites">Customer Favorites</div>;
+jest.mock('./sections/FeaturedBrandPartners/FeaturedBrandPartnersContainer', () => {
+  return function FeaturedBrandPartnersContainer() {
+    return <div data-testid="featured-brand-partners">Featured Brand Partners</div>;
   };
 });
 
-jest.mock('./sections/FeaturedBrands/FeaturedBrands', () => {
-  return function FeaturedBrands() {
-    return <div data-testid="featured-brands">Featured Brands</div>;
+jest.mock('./sections/ComingSoonSection/ComingSoonSection', () => {
+  return function ComingSoonSection() {
+    return <div data-testid="coming-soon-section">Coming Soon Section</div>;
   };
 });
 
@@ -36,7 +35,12 @@ jest.mock('./sections/TrustAssurance/TrustAssurance', () => {
   };
 });
 
-// Mock Page component to capture props
+jest.mock('./sections/SavedItems/SavedItemsModule', () => {
+  return function SavedItemsModule() {
+    return <div data-testid="saved-items-module">Saved Items</div>;
+  };
+});
+
 jest.mock('../../components', () => ({
   Page: ({ title, description, facebookImages, twitterImages, children }) => (
     <div data-testid="page-component">
@@ -47,10 +51,8 @@ jest.mock('../../components', () => ({
       {children}
     </div>
   ),
-  LayoutSingleColumn: ({ children }) => <div data-testid="layout">{children}</div>,
 }));
 
-// Mock containers
 jest.mock('../TopbarContainer/TopbarContainer', () => {
   return function TopbarContainer() {
     return <div data-testid="topbar">Topbar</div>;
@@ -63,13 +65,9 @@ jest.mock('../FooterContainer/FooterContainer', () => {
   };
 });
 
-const mockMessages = {
-  'MelaHomePage.title': 'Mela Home',
-};
-
 const TestWrapper = ({ children }) => (
   <MemoryRouter>
-    <IntlProvider locale="en" messages={mockMessages}>
+    <IntlProvider locale="en" messages={{}}>
       {children}
     </IntlProvider>
   </MemoryRouter>
@@ -88,7 +86,7 @@ describe('MelaHomePage', () => {
     );
   });
 
-  it('renders page with correct title and description', () => {
+  it('renders page with discovery-first meta title', () => {
     const { getByTestId } = render(
       <TestWrapper>
         <MelaHomePage {...defaultProps} />
@@ -96,10 +94,19 @@ describe('MelaHomePage', () => {
     );
 
     expect(getByTestId('page-title').textContent).toBe(
-      'Sustainable Baby Fashion with Global Design Diversity - Mela'
+      'Sustainable Indian Design for Families | Baby, Fashion & More | Mela'
     );
+  });
+
+  it('renders page with discovery-positioning meta description', () => {
+    const { getByTestId } = render(
+      <TestWrapper>
+        <MelaHomePage {...defaultProps} />
+      </TestWrapper>
+    );
+
     expect(getByTestId('page-description').textContent).toBe(
-      'Discover organic, ethically-made baby clothes from innovative designers worldwide. GOTS certified, premium quality, and sustainably crafted for your little one.'
+      'Mela curates the best Indian baby, fashion, and home brands for families in the US. Discover quality-verified brands, explore products, and shop directly on brand stores.'
     );
   });
 
@@ -110,7 +117,8 @@ describe('MelaHomePage', () => {
       </TestWrapper>
     );
 
-    const expectedSocialImage = 'https://sharetribe-assets.imgix.net/68ab648b-6d39-4b2b-bd2c-f99295eeb366/raw/06/5ce7d29d9cfbdfb391af7bc0a744511b9fc1c4?auto=format&fit=clip&h=800&w=800&s=f0fae1b6a833c943e3af463df9cbb484';
+    const expectedSocialImage =
+      'https://sharetribe-assets.imgix.net/68ab648b-6d39-4b2b-bd2c-f99295eeb366/raw/06/5ce7d29d9cfbdfb391af7bc0a744511b9fc1c4?auto=format&fit=clip&h=800&w=800&s=f0fae1b6a833c943e3af463df9cbb484';
 
     const facebookImages = JSON.parse(getByTestId('facebook-images').textContent);
     const twitterImages = JSON.parse(getByTestId('twitter-images').textContent);
@@ -127,10 +135,27 @@ describe('MelaHomePage', () => {
     );
 
     expect(getByTestId('hero-section')).toBeTruthy();
+    expect(getByTestId('saved-items-module')).toBeTruthy();
     expect(getByTestId('category-showcase')).toBeTruthy();
-    expect(getByTestId('customer-favorites')).toBeTruthy();
-    expect(getByTestId('featured-brands')).toBeTruthy();
+    expect(getByTestId('featured-brand-partners')).toBeTruthy();
+    expect(getByTestId('coming-soon-section')).toBeTruthy();
     expect(getByTestId('trust-assurance')).toBeTruthy();
+  });
+
+  it('renders coming-soon-section before trust-assurance', () => {
+    const { getByTestId } = render(
+      <TestWrapper>
+        <MelaHomePage {...defaultProps} />
+      </TestWrapper>
+    );
+
+    const comingSoon = getByTestId('coming-soon-section');
+    const trustAssurance = getByTestId('trust-assurance');
+
+    // compareDocumentPosition: 4 means comingSoon comes before trustAssurance
+    expect(
+      comingSoon.compareDocumentPosition(trustAssurance) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 
   it('includes structured data schema', () => {
@@ -140,7 +165,6 @@ describe('MelaHomePage', () => {
       </TestWrapper>
     );
 
-    // Verify the component renders (schema is passed to Page component)
     expect(container.querySelector('[data-testid="page-component"]')).toBeTruthy();
   });
 });

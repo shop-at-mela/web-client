@@ -6,6 +6,8 @@ import {
   denormalisedEntities,
   humanizeLineItemCode,
   denormalizeAssetData,
+  pickRandom,
+  pickBrandDiverse,
 } from './data';
 
 const { UUID } = sdkTypes;
@@ -340,11 +342,11 @@ describe('humanizeLineItemCode', () => {
   });
 
   it('should reject a code with missing namespace', () => {
-    expect(() => humanizeLineItemCode('new-line-item')).toThrowError(Error);
+    expect(() => humanizeLineItemCode('new-line-item')).toThrow(Error);
   });
 
   it('should reject a code with missing code value', () => {
-    expect(() => humanizeLineItemCode('line-item/')).toThrowError(Error);
+    expect(() => humanizeLineItemCode('line-item/')).toThrow(Error);
   });
 });
 
@@ -427,5 +429,140 @@ describe('denormalizeAssetData', () => {
       },
     };
     expect(JSON.stringify(denormalizeAssetData(jsonObj))).toEqual(JSON.stringify(expected));
+  });
+
+  describe('pickRandom()', () => {
+    it('returns exactly n items', () => {
+      const arr = [1, 2, 3, 4, 5, 6, 7, 8];
+      expect(pickRandom(arr, 3)).toHaveLength(3);
+    });
+
+    it('returns all items when n >= array length', () => {
+      const arr = [1, 2, 3];
+      expect(pickRandom(arr, 10)).toHaveLength(3);
+    });
+
+    it('returns empty array for empty input', () => {
+      expect(pickRandom([], 5)).toHaveLength(0);
+    });
+
+    it('returns no duplicate items', () => {
+      const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+      const result = pickRandom(arr, 8);
+      expect(new Set(result).size).toBe(result.length);
+    });
+
+    it('does not mutate the original array', () => {
+      const arr = [1, 2, 3, 4, 5];
+      const copy = [...arr];
+      pickRandom(arr, 3);
+      expect(arr).toEqual(copy);
+    });
+
+    it('returns all items when n equals array length', () => {
+      const arr = ['a', 'b', 'c'];
+      const result = pickRandom(arr, 3);
+      expect(result).toHaveLength(3);
+      expect(result.sort()).toEqual(['a', 'b', 'c']);
+    });
+
+    it('each returned item exists in the original array', () => {
+      const arr = ['x', 'y', 'z', 'w'];
+      const result = pickRandom(arr, 2);
+      result.forEach(item => {
+        expect(arr).toContain(item);
+      });
+    });
+  });
+});
+
+describe('pickBrandDiverse()', () => {
+  const makeListing = (listingUuid, sellerUuid) => ({
+    id: { uuid: listingUuid },
+    relationships: { author: { data: { id: { uuid: sellerUuid } } } },
+  });
+
+  it('returns exactly n IDs', () => {
+    const listings = [
+      makeListing('l1', 'seller-a'),
+      makeListing('l2', 'seller-b'),
+      makeListing('l3', 'seller-c'),
+      makeListing('l4', 'seller-d'),
+    ];
+    expect(pickBrandDiverse(listings, 3)).toHaveLength(3);
+  });
+
+  it('returns all listings when n >= total', () => {
+    const listings = [makeListing('l1', 'a'), makeListing('l2', 'b')];
+    expect(pickBrandDiverse(listings, 10)).toHaveLength(2);
+  });
+
+  it('returns no duplicates', () => {
+    const listings = [
+      makeListing('l1', 'seller-a'),
+      makeListing('l2', 'seller-a'),
+      makeListing('l3', 'seller-b'),
+      makeListing('l4', 'seller-b'),
+      makeListing('l5', 'seller-c'),
+    ];
+    const result = pickBrandDiverse(listings, 4);
+    const uuids = result.map(id => id.uuid);
+    expect(new Set(uuids).size).toBe(uuids.length);
+  });
+
+  it('spreads across sellers when there are enough', () => {
+    const listings = [
+      makeListing('l1', 'seller-a'),
+      makeListing('l2', 'seller-b'),
+      makeListing('l3', 'seller-c'),
+      makeListing('l4', 'seller-d'),
+      makeListing('l5', 'seller-e'),
+      makeListing('l6', 'seller-f'),
+      makeListing('l7', 'seller-g'),
+      makeListing('l8', 'seller-h'),
+    ];
+    const result = pickBrandDiverse(listings, 8);
+    const resultUuids = result.map(id => id.uuid);
+    // All 8 listings are from different sellers, so all should appear
+    expect(new Set(resultUuids).size).toBe(8);
+  });
+
+  it('fills remaining slots from same seller when brands are exhausted', () => {
+    // Only 2 sellers but we want 4 — must pick 2 from each seller
+    const listings = [
+      makeListing('l1', 'seller-a'),
+      makeListing('l2', 'seller-a'),
+      makeListing('l3', 'seller-b'),
+      makeListing('l4', 'seller-b'),
+    ];
+    const result = pickBrandDiverse(listings, 4);
+    expect(result).toHaveLength(4);
+    const uuids = result.map(id => id.uuid);
+    expect(new Set(uuids).size).toBe(4);
+  });
+
+  it('handles empty input', () => {
+    expect(pickBrandDiverse([], 8)).toHaveLength(0);
+  });
+
+  it('falls back to listing UUID when author relationship is absent', () => {
+    const listings = [
+      { id: { uuid: 'l1' } },
+      { id: { uuid: 'l2' } },
+    ];
+    const result = pickBrandDiverse(listings, 2);
+    expect(result).toHaveLength(2);
+  });
+
+  it('returned IDs are the raw id objects from the input listings', () => {
+    const listings = [
+      makeListing('l1', 'seller-a'),
+      makeListing('l2', 'seller-b'),
+    ];
+    const result = pickBrandDiverse(listings, 2);
+    const inputIds = listings.map(l => l.id);
+    result.forEach(id => {
+      expect(inputIds).toContain(id);
+    });
   });
 });

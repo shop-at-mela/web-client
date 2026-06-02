@@ -282,6 +282,7 @@ const renderForm = formRenderProps => {
       <div className={css.submitButton}>
         {brand && productUrl ? (
           <PrimaryButton
+            type="button"
             onClick={() => window.open(productUrl, '_blank', 'noopener,noreferrer')}
           >
             {hasStock ? (

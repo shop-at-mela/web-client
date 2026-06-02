@@ -4,6 +4,7 @@ import classNames from 'classnames';
 
 import { FormattedMessage } from '../../../../util/reactIntl';
 import { BrandCardHome, PartnerCTACard, NamedLink } from '../../../../components';
+import { getAllBrandIds } from '../../../../config/configBrands';
 
 import css from './FeaturedBrandPartners.module.css';
 
@@ -88,9 +89,7 @@ const FeaturedBrandPartners = props => {
 
   const classes = classNames(rootClassName || css.root, className);
 
-  // Limit to 6 brands maximum (4-6 per user preference)
-  const displayBrands = brandsWithProducts.slice(0, 6);
-  const totalBrandCount = brandsWithProducts.length;
+  const totalBrandCount = getAllBrandIds().length;
 
   return (
     <div className={classes}>
@@ -105,14 +104,24 @@ const FeaturedBrandPartners = props => {
           </p>
         </div>
 
-        {/* Brand Grid */}
-        <div className={css.grid}>
-          {displayBrands.map(({ brand, products }) => (
-            <BrandCardHome key={brand.id.uuid} brand={brand} products={products} />
+        {/* Brand Carousel */}
+        <div className={css.carousel}>
+          {brandsWithProducts.map(({ brand, products }) => (
+            <div key={brand.id.uuid} className={css.carouselCard}>
+              <BrandCardHome
+              brand={brand}
+              products={products}
+              showCertifications={false}
+              showTagline={false}
+              showLocation={false}
+            />
+            </div>
           ))}
-
-          {/* Partner CTA Card */}
-          <PartnerCTACard partnerUrl="/partner" />
+          {/* COMMENTED OUT: partner recruitment CTA card
+          <div className={css.carouselCard}>
+            <PartnerCTACard partnerUrl="/partner" />
+          </div>
+          */}
         </div>
 
         {/* View All Brands CTA */}

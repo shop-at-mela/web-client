@@ -132,15 +132,26 @@ const SignupFormComponent = props => (
                 id={formId ? `${formId}.email` : 'email'}
                 name="email"
                 autoComplete="email"
-                label={intl.formatMessage({
-                  id: 'SignupForm.emailLabel',
-                })}
-                placeholder={intl.formatMessage({
-                  id: 'SignupForm.emailPlaceholder',
-                })}
+                label={intl.formatMessage({ id: 'SignupForm.emailLabel' })}
+                placeholder={intl.formatMessage({ id: 'SignupForm.emailPlaceholder' })}
                 validate={validators.composeValidators(emailRequired, emailValid)}
                 className={css.emailField}
               />
+
+              {/* Brand Name — providers only; maps to displayName for public storefront */}
+              {currentUserType === 'provider' && (
+                <FieldTextInput
+                  type="text"
+                  id={formId ? `${formId}.displayName` : 'displayName'}
+                  name="displayName"
+                  autoComplete="organization"
+                  label={intl.formatMessage({ id: 'SignupForm.brandNameLabel' })}
+                  placeholder={intl.formatMessage({ id: 'SignupForm.brandNamePlaceholder' })}
+                  validate={validators.required(
+                    intl.formatMessage({ id: 'SignupForm.brandNameRequired' })
+                  )}
+                />
+              )}
 
               <div className={css.nameFields}>
                 <FieldTextInput
@@ -150,15 +161,17 @@ const SignupFormComponent = props => (
                   name="fname"
                   autoComplete="given-name"
                   label={intl.formatMessage({
-                    id: 'SignupForm.firstNameLabel',
+                    id: currentUserType === 'provider'
+                      ? 'SignupForm.contactFirstNameLabel'
+                      : 'SignupForm.firstNameLabel',
                   })}
                   placeholder={intl.formatMessage({
-                    id: 'SignupForm.firstNamePlaceholder',
+                    id: currentUserType === 'provider'
+                      ? 'SignupForm.contactFirstNamePlaceholder'
+                      : 'SignupForm.firstNamePlaceholder',
                   })}
                   validate={validators.required(
-                    intl.formatMessage({
-                      id: 'SignupForm.firstNameRequired',
-                    })
+                    intl.formatMessage({ id: 'SignupForm.firstNameRequired' })
                   )}
                 />
                 <FieldTextInput
@@ -168,15 +181,17 @@ const SignupFormComponent = props => (
                   name="lname"
                   autoComplete="family-name"
                   label={intl.formatMessage({
-                    id: 'SignupForm.lastNameLabel',
+                    id: currentUserType === 'provider'
+                      ? 'SignupForm.contactLastNameLabel'
+                      : 'SignupForm.lastNameLabel',
                   })}
                   placeholder={intl.formatMessage({
-                    id: 'SignupForm.lastNamePlaceholder',
+                    id: currentUserType === 'provider'
+                      ? 'SignupForm.contactLastNamePlaceholder'
+                      : 'SignupForm.lastNamePlaceholder',
                   })}
                   validate={validators.required(
-                    intl.formatMessage({
-                      id: 'SignupForm.lastNameRequired',
-                    })
+                    intl.formatMessage({ id: 'SignupForm.lastNameRequired' })
                   )}
                 />
               </div>
@@ -187,12 +202,8 @@ const SignupFormComponent = props => (
                 id={formId ? `${formId}.password` : 'password'}
                 name="password"
                 autoComplete="new-password"
-                label={intl.formatMessage({
-                  id: 'SignupForm.passwordLabel',
-                })}
-                placeholder={intl.formatMessage({
-                  id: 'SignupForm.passwordPlaceholder',
-                })}
+                label={intl.formatMessage({ id: 'SignupForm.passwordLabel' })}
+                placeholder={intl.formatMessage({ id: 'SignupForm.passwordPlaceholder' })}
                 validate={passwordValidators}
               />
             </div>

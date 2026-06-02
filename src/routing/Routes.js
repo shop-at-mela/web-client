@@ -23,9 +23,9 @@ const isBanned = currentUser => {
 };
 
 const canShowComponent = props => {
-  const { isAuthenticated, currentUser, route } = props;
+  const { isAuthenticated, currentUser, route, accountMarkedDeleted } = props;
   const { auth } = route;
-  return !auth || (isAuthenticated && !isBanned(currentUser));
+  return !auth || (isAuthenticated && !isBanned(currentUser) && !accountMarkedDeleted);
 };
 
 const callLoadData = props => {
@@ -36,6 +36,13 @@ const callLoadData = props => {
 
   if (shouldLoadData) {
     dispatch(loadData(match.params, location.search, config))
+      .then(() => {
+        if (props.logLoadDataCalls) {
+          // This gives good input for debugging issues on live environments, but with test it's not needed.
+          // eslint-disable-next-line no-console
+          console.log(`loadData success for ${name} route`);
+        }
+      })
       .catch(e => {
         log.error(e, 'load-data-failed', { routeName: name });
       });
@@ -50,7 +57,9 @@ const setPageScrollPosition = (location, delayed) => {
       left: 0,
     });
   } else {
-    const el = document.querySelector(location.hash);
+    const idString = location.hash.substring(1); // Remove the # from the hash
+    const escapedHashId = `#${CSS.escape(idString)}`; // Escape the id string to avoid invalid CSS id
+    const el = document.querySelector(escapedHashId);
     if (el) {
       // Found element from the current page with the given fragment identifier,
       // scrolling to that element.
@@ -70,7 +79,7 @@ const setPageScrollPosition = (location, delayed) => {
       // Note: 300 milliseconds might not be enough, but adding too much delay
       // might affect user initiated scrolling.
       delayed = window.setTimeout(() => {
-        const reTry = document.querySelector(location.hash);
+        const reTry = document.querySelector(escapedHashId);
         reTry?.scrollIntoView({
           block: 'start',
           behavior: 'smooth',
@@ -83,7 +92,20 @@ const setPageScrollPosition = (location, delayed) => {
 const handleLocationChanged = (dispatch, location, routeConfiguration, delayed) => {
   setPageScrollPosition(location, delayed);
   const path = canonicalRoutePath(routeConfiguration, location);
-  dispatch(locationChanged(location, path));
+  dispatch(locationChanged({ location, canonicalPath: path }));
+};
+
+const handleFocusedElement = delayed => {
+  if (window.__focusedElementId__) {
+    delayed = window.setTimeout(() => {
+      const focusedElement = document.getElementById(window.__focusedElementId__);
+      if (focusedElement) {
+        focusedElement.focus();
+      } else {
+        window.__focusedElementId__ = null;
+      }
+    }, 300);
+  }
 };
 
 /**
@@ -117,6 +139,7 @@ class RouteComponentRenderer extends Component {
     // Calling loadData on initial rendering (on client side).
     callLoadData(this.props);
     handleLocationChanged(dispatch, location, routeConfiguration, this.delayed);
+    handleFocusedElement(this.focusedElementDelay);
   }
 
   componentDidUpdate(prevProps) {
@@ -130,16 +153,27 @@ class RouteComponentRenderer extends Component {
       callLoadData(this.props);
       handleLocationChanged(dispatch, location, routeConfiguration, this.delayed);
     }
+    handleFocusedElement(this.focusedElementDelay);
   }
 
   componentWillUnmount() {
     if (this.delayed) {
       window.clearTimeout(this.resetTimeoutId);
     }
+    if (this.focusedElementDelay) {
+      window.clearTimeout(this.focusedElementDelay);
+    }
   }
 
   render() {
-    const { route, match, location, staticContext = {}, currentUser } = this.props;
+    const {
+      route,
+      match,
+      location,
+      staticContext = {},
+      currentUser,
+      accountMarkedDeleted,
+    } = this.props;
     const { component: RouteComponent, authPage = 'SignupPage', extraProps } = route;
     const canShow = canShowComponent(this.props);
     if (!canShow) {
@@ -159,7 +193,7 @@ class RouteComponentRenderer extends Component {
           {...extraProps}
         />
       </LoadableComponentErrorBoundary>
-    ) : isBannedFromAuthPages ? (
+    ) : isBannedFromAuthPages || accountMarkedDeleted ? (
       <NamedRedirect name="LandingPage" />
     ) : (
       <NamedRedirect
@@ -172,8 +206,15 @@ class RouteComponentRenderer extends Component {
 
 const mapStateToProps = state => {
   const { isAuthenticated, logoutInProgress } = state.auth;
-  const { currentUser } = state.user;
-  return { isAuthenticated, logoutInProgress, currentUser };
+  const { currentUser } = state?.user || {};
+  const { accountMarkedDeleted } = state.ManageAccountPage;
+
+  return {
+    isAuthenticated,
+    logoutInProgress,
+    currentUser,
+    accountMarkedDeleted,
+  };
 };
 const RouteComponentContainer = compose(connect(mapStateToProps))(RouteComponentRenderer);
 

@@ -55,7 +55,12 @@ const SignInLink = () => {
 const InboxLink = ({ notificationCount, inboxTab }) => {
   const notificationDot = notificationCount > 0 ? <div className={css.notificationDot} /> : null;
   return (
-    <NamedLink className={css.topbarLink} name="InboxPage" params={{ tab: inboxTab }}>
+    <NamedLink
+      id="inbox-link"
+      className={css.topbarLink}
+      name="InboxPage"
+      params={{ tab: inboxTab }}
+    >
       <span className={css.topbarLinkLabel}>
         <FormattedMessage id="TopbarDesktop.inbox" />
         {notificationDot}
@@ -64,7 +69,7 @@ const InboxLink = ({ notificationCount, inboxTab }) => {
   );
 };
 
-const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLink }) => {
+const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLink, intl }) => {
   const currentPageClass = page => {
     const isAccountSettingsPage =
       page === 'AccountSettingsPage' && ACCOUNT_SETTINGS_PAGES.includes(currentPage);
@@ -72,8 +77,13 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
   };
 
   return (
-    <Menu>
-      <MenuLabel className={css.profileMenuLabel} isOpenClassName={css.profileMenuIsOpen}>
+    <Menu skipFocusOnNavigation={true}>
+      <MenuLabel
+        id="profile-menu-label"
+        className={css.profileMenuLabel}
+        isOpenClassName={css.profileMenuIsOpen}
+        ariaLabel={intl.formatMessage({ id: 'TopbarDesktop.screenreader.profileMenu' })}
+      >
         <Avatar className={css.avatar} user={currentUser} disableProfileLink />
       </MenuLabel>
       <MenuContent className={css.profileMenuContent}>
@@ -169,6 +179,14 @@ const TopbarDesktop = props => {
   const giveSpaceForSearch = customLinks == null || customLinks?.length === 0;
   const classes = classNames(rootClassName || css.root, className);
 
+  const savedLinkMaybe = authenticatedOnClientSide ? (
+    <NamedLink name="SavedPage" className={css.topbarLink}>
+      <span className={css.topbarLinkLabel}>
+        ❤ <FormattedMessage id="TopbarDesktop.savedItemsLink" />
+      </span>
+    </NamedLink>
+  ) : null;
+
   const inboxLinkMaybe = authenticatedOnClientSide ? (
     <InboxLink notificationCount={notificationCount} inboxTab={inboxTab} />
   ) : null;
@@ -179,6 +197,7 @@ const TopbarDesktop = props => {
       currentUser={currentUser}
       onLogout={onLogout}
       showManageListingsLink={showCreateListingsLink}
+      intl={intl}
     />
   ) : null;
 
@@ -201,8 +220,12 @@ const TopbarDesktop = props => {
   );
 
   return (
-    <nav className={classes}>
+    <nav
+      className={classes}
+      aria-label={intl.formatMessage({ id: 'TopbarDesktop.screenreader.topbarNavigation' })}
+    >
       <LinkedLogo
+        id="logo-topbar-desktop"
         className={css.logoLink}
         layout="desktop"
         alt={intl.formatMessage({ id: 'TopbarDesktop.logo' }, { marketplaceName })}
@@ -225,6 +248,7 @@ const TopbarDesktop = props => {
         currentUser={currentUser}
       />
 
+      {savedLinkMaybe}
       {inboxLinkMaybe}
       {profileMenuMaybe}
       {signInLinkMaybe}

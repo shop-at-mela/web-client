@@ -137,7 +137,8 @@ const CustomLinksMenu = ({
   }, []);
 
   useEffect(() => {
-    const createListingLinks = createListingLinkConfigMaybe(intl, showCreateListingsLink, currentUser);
+    // COMMENTED OUT: suppress "Sell on Mela" / "Post a new listing" link generation
+    const createListingLinks = createListingLinkConfigMaybe(intl, false, currentUser);
     setLinks([
       ...createListingLinks,
       ...customLinks,
@@ -205,10 +206,13 @@ const CustomLinksMenu = ({
 
   const { priorityLinks, menuLinks, containerWidth } = layoutData;
 
-  // If there are no custom links, just render createListing link.
-  if (customLinks?.length === 0 && showCreateListingsLink) {
-    return <CreateListingMenuLink customLinksMenuClass={css.createListingLinkOnly} currentUser={currentUser} intl={intl} />;
-  }
+  // COMMENTED OUT: entry point to provider signup / listing creation ("Sell on Mela" / "Post a new listing")
+  // if (customLinks?.length === 0 && showCreateListingsLink) {
+  //   return <CreateListingMenuLink customLinksMenuClass={css.createListingLinkOnly} currentUser={currentUser} intl={intl} />;
+  // }
+
+  // No links to show — return nothing so the topbar flex layout reflows naturally
+  if (links.length === 0 && !customLinks?.length) return null;
 
   const styleMaybe = mounted ? { style: { width: `${containerWidth}px` } } : {};
   const isMeasured = !!links?.[0]?.width;

@@ -3,6 +3,7 @@
  * shows login actions for those who are not authenticated.
  */
 import React from 'react';
+import { Link } from 'react-router-dom';
 import classNames from 'classnames';
 
 import { ACCOUNT_SETTINGS_PAGES } from '../../../../routing/routeConfiguration';
@@ -39,17 +40,21 @@ const CustomLinkComponent = ({ linkConfig, currentPage }) => {
     const { name, params, to } = route || {};
     const className = classNames(css.navigationLink, getCurrentPageClass(name));
     return (
-      <NamedLink name={name} params={params} to={to} className={className}>
-        <span className={css.menuItemBorder} />
-        {text}
-      </NamedLink>
+      <li className={className}>
+        <NamedLink name={name} params={params} to={to}>
+          <span className={css.menuItemBorder} />
+          {text}
+        </NamedLink>
+      </li>
     );
   }
   return (
-    <ExternalLink href={href} className={css.navigationLink}>
-      <span className={css.menuItemBorder} />
-      {text}
-    </ExternalLink>
+    <li className={css.navigationLink}>
+      <ExternalLink href={href}>
+        <span className={css.menuItemBorder} />
+        {text}
+      </ExternalLink>
+    </li>
   );
 };
 
@@ -91,13 +96,15 @@ const TopbarMobileMenu = props => {
     );
   });
 
-  const createListingsLinkMaybe = showCreateListingsLink ? (
-    <NamedLink className={css.createNewListingLink} name="NewListingPage">
-      <FormattedMessage
-        id={isAuthenticated ? "TopbarMobileMenu.newListingLink" : "TopbarMobileMenu.startSelling"}
-      />
-    </NamedLink>
-  ) : null;
+  // COMMENTED OUT: entry point to provider signup / listing creation ("Apply to Partner" / "Post a new listing")
+  // const createListingsLinkMaybe = showCreateListingsLink ? (
+  //   <NamedLink className={css.createNewListingLink} name="NewListingPage">
+  //     <FormattedMessage
+  //       id={isAuthenticated ? "TopbarMobileMenu.newListingLink" : "TopbarMobileMenu.startSelling"}
+  //     />
+  //   </NamedLink>
+  // ) : null;
+  const createListingsLinkMaybe = null;
 
   if (!isAuthenticated) {
     return (
@@ -128,45 +135,53 @@ const TopbarMobileMenu = props => {
             </div>
           </div>
 
-          {/* Navigation Section - Baby Focused */}
+          {/* Discover Section */}
           <div className={css.sectionHeader}>
             <FormattedMessage id="TopbarMobileMenu.browseHeader" />
           </div>
           <div className={css.navigationSection}>
-            <NamedLink
-              name="SearchPage"
-              to={{ search: '?pub_categoryLevel1=Baby-Clothes-Accessories' }}
-              className={css.navigationLink}
-            >
-              <span className={css.navigationLinkContent}>
-                <FormattedMessage id="TopbarMobileMenu.forLittleOnes" />
-                <span className={css.navigationArrow}>→</span>
-              </span>
-            </NamedLink>
             <NamedLink name="BrandsPage" className={css.navigationLink}>
               <span className={css.navigationLinkContent}>
-                <FormattedMessage id="TopbarMobileMenu.organicBrands" />
+                <FormattedMessage id="TopbarMobileMenu.allBrandsLink" />
                 <span className={css.navigationArrow}>→</span>
               </span>
             </NamedLink>
-          </div>
-
-          {/* Featured Brands Section */}
-          <div className={css.featuredBrandsSection}>
-            <div className={css.sectionHeader}>
-              <FormattedMessage id="TopbarMobileMenu.featuredBrands" />
-            </div>
-            <div className={css.brandLogos}>
-              <div className={css.brandLogo}></div>
-              <div className={css.brandLogo}></div>
-              <div className={css.brandLogo}></div>
-              <div className={css.brandLogo}></div>
-              <div className={css.brandLogo}></div>
-              <div className={css.brandLogo}></div>
-            </div>
-            <p className={css.featuredBrandsTagline}>
-              <FormattedMessage id="TopbarMobileMenu.featuredBrandsTagline" />
-            </p>
+            <Link to="/categories/Baby-Kids" className={css.navigationLink}>
+              <span className={css.navigationLinkContent}>
+                <FormattedMessage id="TopbarMobileMenu.babyKidsLink" />
+                <span className={css.navigationArrow}>→</span>
+              </span>
+            </Link>
+            <Link to="/categories/Fashion" className={css.navigationLink}>
+              <span className={css.navigationLinkContent}>
+                <FormattedMessage id="TopbarMobileMenu.fashionLink" />
+                <span className={css.navigationArrow}>→</span>
+              </span>
+            </Link>
+            <Link to="/categories/Home-Kitchen" className={css.navigationLink}>
+              <span className={css.navigationLinkContent}>
+                <FormattedMessage id="TopbarMobileMenu.homeKitchenLink" />
+                <span className={css.navigationArrow}>→</span>
+              </span>
+            </Link>
+            <Link to="/categories/Jewelry-Accessories" className={css.navigationLink}>
+              <span className={css.navigationLinkContent}>
+                <FormattedMessage id="TopbarMobileMenu.jewelryLink" defaultMessage="Jewelry & Accessories" />
+                <span className={css.navigationArrow}>→</span>
+              </span>
+            </Link>
+            <Link to="/categories/Beauty-Wellness" className={css.navigationLink}>
+              <span className={css.navigationLinkContent}>
+                <FormattedMessage id="TopbarMobileMenu.beautyLink" defaultMessage="Beauty & Wellness" />
+                <span className={css.navigationArrow}>→</span>
+              </span>
+            </Link>
+            <NamedLink name="CategoriesPage" className={css.navigationLink}>
+              <span className={css.navigationLinkContent}>
+                <FormattedMessage id="TopbarMobileMenu.allCategoriesLink" />
+                <span className={css.navigationArrow}>→</span>
+              </span>
+            </NamedLink>
           </div>
 
           {/* Custom Links */}
@@ -181,17 +196,21 @@ const TopbarMobileMenu = props => {
 
           <div className={css.spacer} />
         </div>
+        {/* COMMENTED OUT: "LIST YOUR BRAND ON MELA" partner recruitment footer
         <div className={css.footer}>
           <div className={css.footerContent}>
-            <div className={css.footerHeader}>SELL ON MELA</div>
+            <div className={css.footerHeader}>
+              <FormattedMessage id="TopbarMobileMenu.partnerHeader" />
+            </div>
             <p className={css.footerTagline}>
-              <FormattedMessage id="TopbarMobileMenu.sellerCTA" />
+              <FormattedMessage id="TopbarMobileMenu.partnerTagline" />
             </p>
             <NamedLink className={css.createNewListingLink} name="NewListingPage">
               <FormattedMessage id="TopbarMobileMenu.startSelling" />
             </NamedLink>
           </div>
         </div>
+        */}
       </nav>
     );
   }
@@ -210,12 +229,11 @@ const TopbarMobileMenu = props => {
   };
 
   const manageListingsLinkMaybe = showCreateListingsLink ? (
-    <NamedLink
-      className={classNames(css.navigationLink, currentPageClass('ManageListingsPage'))}
-      name="ManageListingsPage"
-    >
-      <FormattedMessage id="TopbarMobileMenu.yourListingsLink" />
-    </NamedLink>
+    <li className={classNames(css.navigationLink, currentPageClass('ManageListingsPage'))}>
+      <NamedLink name="ManageListingsPage">
+        <FormattedMessage id="TopbarMobileMenu.yourListingsLink" />
+      </NamedLink>
+    </li>
   ) : null;
 
   return (
@@ -229,30 +247,67 @@ const TopbarMobileMenu = props => {
           <FormattedMessage id="TopbarMobileMenu.logoutLink" />
         </InlineTextButton>
 
+        {/* Browse Section */}
+        <div className={css.sectionHeader}>
+          <FormattedMessage id="TopbarMobileMenu.browseSection" />
+        </div>
         <div className={css.accountLinksWrapper}>
           <NamedLink
-            className={classNames(css.inbox, currentPageClass(`InboxPage:${inboxTab}`))}
-            name="InboxPage"
-            params={{ tab: inboxTab }}
+            className={classNames(css.navigationLink, currentPageClass('BrandsPage'))}
+            name="BrandsPage"
           >
-            <FormattedMessage id="TopbarMobileMenu.inboxLink" />
-            {notificationCountBadge}
+            <FormattedMessage id="TopbarMobileMenu.allBrandsLink" />
           </NamedLink>
-          {manageListingsLinkMaybe}
+          <Link to="/categories/Baby-Kids" className={css.navigationLink}>
+            <FormattedMessage id="TopbarMobileMenu.babyKidsLink" />
+          </Link>
+          <Link to="/categories/Fashion" className={css.navigationLink}>
+            <FormattedMessage id="TopbarMobileMenu.fashionLink" />
+          </Link>
+          <Link to="/categories/Home-Kitchen" className={css.navigationLink}>
+            <FormattedMessage id="TopbarMobileMenu.homeKitchenLink" />
+          </Link>
+          <Link to="/categories/Jewelry-Accessories" className={css.navigationLink}>
+            <FormattedMessage id="TopbarMobileMenu.jewelryLink" defaultMessage="Jewelry & Accessories" />
+          </Link>
           <NamedLink
-            className={classNames(css.navigationLink, currentPageClass('ProfileSettingsPage'))}
-            name="ProfileSettingsPage"
+            className={classNames(css.navigationLink, currentPageClass('CategoriesPage'))}
+            name="CategoriesPage"
           >
-            <FormattedMessage id="TopbarMobileMenu.profileSettingsLink" />
+            <FormattedMessage id="TopbarMobileMenu.allCategoriesLink" />
           </NamedLink>
           <NamedLink
-            className={classNames(css.navigationLink, currentPageClass('AccountSettingsPage'))}
-            name="AccountSettingsPage"
+            className={classNames(css.navigationLink, currentPageClass('SavedPage'))}
+            name="SavedPage"
           >
-            <FormattedMessage id="TopbarMobileMenu.accountSettingsLink" />
+            ❤ <FormattedMessage id="TopbarMobileMenu.savedItemsLink" />
           </NamedLink>
         </div>
-        <div className={css.customLinksWrapper}>{extraLinks}</div>
+
+        {/* Account Section */}
+        <div className={css.sectionHeader}>
+          <FormattedMessage id="TopbarMobileMenu.accountSection" />
+        </div>
+        <ul className={css.accountLinksWrapper}>
+          <li className={classNames(css.inbox, currentPageClass(`InboxPage:${inboxTab}`))}>
+            <NamedLink name="InboxPage" params={{ tab: inboxTab }}>
+              <FormattedMessage id="TopbarMobileMenu.inboxLink" />
+              {notificationCountBadge}
+            </NamedLink>
+          </li>
+          {manageListingsLinkMaybe}
+          <li className={classNames(css.navigationLink, currentPageClass('ProfileSettingsPage'))}>
+            <NamedLink name="ProfileSettingsPage">
+              <FormattedMessage id="TopbarMobileMenu.profileSettingsLink" />
+            </NamedLink>
+          </li>
+          <li className={classNames(css.navigationLink, currentPageClass('AccountSettingsPage'))}>
+            <NamedLink name="AccountSettingsPage">
+              <FormattedMessage id="TopbarMobileMenu.accountSettingsLink" />
+            </NamedLink>
+          </li>
+        </ul>
+        <ul className={css.customLinksWrapper}>{extraLinks}</ul>
         <div className={css.spacer} />
       </div>
       <div className={css.footer}>{createListingsLinkMaybe}</div>

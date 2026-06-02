@@ -1,5 +1,4 @@
 import React from 'react';
-import mapValues from 'lodash/mapValues';
 
 import * as reactTestingLibrary from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -71,7 +70,7 @@ export const getDefaultConfiguration = () => {
             { option: 'kids-bikes', label: 'Kids bikes' },
           ],
           filterConfig: {
-            indexForSearch: true,
+            showFilter: true,
             filterType: 'SelectSingleFilter',
             label: 'Bike type',
             group: 'primary',
@@ -111,7 +110,7 @@ export const getDefaultConfiguration = () => {
             { option: 18, label: '18' },
           ],
           filterConfig: {
-            indexForSearch: true,
+            showFilter: true,
             label: 'Tire size',
             group: 'secondary',
           },
@@ -150,7 +149,7 @@ export const getDefaultConfiguration = () => {
             { option: 'vermont', label: 'Vermont' },
           ],
           filterConfig: {
-            indexForSearch: true,
+            showFilter: true,
             label: 'Brand',
             group: 'secondary',
           },
@@ -368,7 +367,7 @@ export const getHostedConfiguration = () => {
             },
           ],
           filterConfig: {
-            indexForSearch: true,
+            showFilter: true,
             group: 'primary',
           },
           scope: 'public',
@@ -411,7 +410,7 @@ export const getHostedConfiguration = () => {
             },
           ],
           filterConfig: {
-            indexForSearch: true,
+            showFilter: true,
             group: 'secondary',
           },
           scope: 'public',
@@ -458,7 +457,7 @@ export const getHostedConfiguration = () => {
             },
           ],
           filterConfig: {
-            indexForSearch: true,
+            showFilter: true,
             group: 'secondary',
           },
           scope: 'public',
@@ -489,7 +488,7 @@ export const getHostedConfiguration = () => {
             },
           ],
           filterConfig: {
-            indexForSearch: true,
+            showFilter: true,
             group: 'secondary',
           },
           scope: 'public',
@@ -722,17 +721,21 @@ export const dispatchedActions = fakeDispatch => {
 
 // Locale should not affect the tests. We ensure this by providing
 // messages with the key as the value of each message.
-const testMessages = mapValues(messages, (val, key) => key);
+const testMessages = Object.fromEntries(Object.entries(messages).map(([key]) => [key, key]));
 
 // Provide all the context for components that connect to the Redux
 // store, i18n, router, etc.
-export const TestProvider = ({ children, initialState, config, routeConfiguration }) => {
-  const store = configureStore(initialState || {});
+export const TestProvider = ({ children, initialState, config, routeConfiguration, messages }) => {
+  const store = configureStore({ initialState: initialState || {} });
   const hostedConfig = config || getHostedConfiguration();
+
+  // Allow passing customized messages from a single test suite in addition to the
+  // default translation keys
+  const mergedMessages = { ...testMessages, ...messages };
   return (
     <ConfigurationProvider value={mergeConfig(hostedConfig, getDefaultConfiguration())}>
       <RouteConfigurationProvider value={routeConfiguration || getRouteConfiguration()}>
-        <IntlProvider locale="en" messages={testMessages} textComponent="span">
+        <IntlProvider locale="en" messages={mergedMessages} textComponent="span">
           <Provider store={store}>
             <HelmetProvider>
               <MemoryRouter>{children}</MemoryRouter>
@@ -759,7 +762,7 @@ export const TestProvider = ({ children, initialState, config, routeConfiguratio
 
 export const renderWithProviders = (
   ui,
-  { initialState, config, routeConfiguration, withPortals, ...renderOptions } = {}
+  { initialState, config, routeConfiguration, withPortals, messages, ...renderOptions } = {}
 ) => {
   const Wrapper = ({ children }) => {
     return (
@@ -767,6 +770,7 @@ export const renderWithProviders = (
         initialState={initialState}
         config={config}
         routeConfiguration={routeConfiguration}
+        messages={messages}
       >
         {children}
       </TestProvider>
@@ -780,6 +784,7 @@ export const renderWithProviders = (
             initialState={initialState}
             config={config}
             routeConfiguration={routeConfiguration}
+            messages={messages}
           >
             {children}
           </TestProvider>

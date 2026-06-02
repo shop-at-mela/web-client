@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { compose } from 'redux';
-import { connect } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useCallback } from 'react';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import loadable from '@loadable/component';
 import classNames from 'classnames';
 import { useDesktopLayoutManager } from './layoutUtils';
 
-// Contexts
-import { useConfiguration } from '../../context/configurationContext';
-import { useRouteConfiguration } from '../../context/routeConfigurationContext';
 // Utils
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { getAspectsForSchema } from '../../util/itemAspectsParser';
 import { getItemSpecificsAttributes, getItemAspectsForSEO } from '../../util/itemAspectsHelpers';
+import { shouldShowRedirectTrust, markRedirectTrustShown } from '../../util/sentimentCapture';
+import { isMelaVerified } from '../../util/certificationHelpers';
 import { LISTING_STATE_PENDING_APPROVAL, LISTING_STATE_CLOSED, propTypes } from '../../util/types';
 import { types as sdkTypes } from '../../util/sdkLoader';
 import {
@@ -39,7 +37,10 @@ import {
 } from '../../util/data';
 import { richText } from '../../util/richText';
 import {
+  OFFER,
+  REQUEST,
   isBookingProcess,
+  isNegotiationProcess,
   isPurchaseProcess,
   resolveLatestProcessName,
 } from '../../transactions/transaction';
@@ -51,15 +52,18 @@ import { initializeCardPaymentData } from '../../ducks/stripe.duck.js';
 
 // Shared components
 import {
-  H4,
+  H2,
   H3,
+  H4,
   Page,
   NamedLink,
-  NamedRedirect,
   OrderPanel,
   LayoutSingleColumn,
   CategoryBreadcrumb,
   ItemSpecifics,
+  ListingTrustChips,
+  RedirectTrustSheet,
+  SectionText,
 } from '../../components';
 
 // Related components and modules
@@ -77,20 +81,22 @@ import {
 import {
   LoadingPage,
   ErrorPage,
-  priceData,
-  listingImages,
   handleContactUser,
   handleSubmitInquiry,
+  handleNavigateToMakeOfferPage,
+  handleNavigateToRequestQuotePage,
   handleSubmit,
   priceForSchemaMaybe,
+  getDerivedRenderData,
 } from './ListingPage.shared';
 import SectionHero from './SectionHero';
-import SectionTextMaybe from './SectionTextMaybe';
 import SectionReviews from './SectionReviews';
 import SectionAuthorMaybe from './SectionAuthorMaybe';
 import SectionMapMaybe from './SectionMapMaybe';
 import CustomListingFields from './CustomListingFields';
-import ActionBarMaybe from './ActionBarMaybe';
+import VariantDisplay from '../../components/VariantDisplay/VariantDisplay';
+import Notifications from './Notifications/Notifications';
+import ListingPageAccessWrapper from './ListingPageAccessWrapper';
 
 // Lazy-loaded components
 const RecommendedProducts = loadable(() =>
@@ -104,8 +110,6 @@ import css from './ListingPage.module.css';
 
 const MIN_LENGTH_FOR_LONG_WORDS_IN_TITLE = 16;
 
-const { UUID } = sdkTypes;
-
 export const ListingPageComponent = props => {
   const [inquiryModalOpen, setInquiryModalOpen] = useState(
     props.inquiryModalOpenForListingId === props.params.id
@@ -113,6 +117,8 @@ export const ListingPageComponent = props => {
   const [imageCarouselOpen, setImageCarouselOpen] = useState(false);
 
   const [mounted, setMounted] = useState(false);
+  const [redirectSheetOpen, setRedirectSheetOpen] = useState(false);
+  const [pendingRedirectUrl, setPendingRedirectUrl] = useState(null);
 
   // Desktop-only layout management (mobile-safe)
   const { registerOrderPanel, registerContentSection, layoutManager } = useDesktopLayoutManager();
@@ -154,20 +160,55 @@ export const ListingPageComponent = props => {
     ...restOfProps
   } = props;
 
-  const listingConfig = config.listing;
-  const listingId = new UUID(rawParams.id);
-  const isVariant = rawParams.variant != null;
-  const isPendingApprovalVariant = rawParams.variant === LISTING_PAGE_PENDING_APPROVAL_VARIANT;
-  const isDraftVariant = rawParams.variant === LISTING_PAGE_DRAFT_VARIANT;
-  const currentListing =
-    isPendingApprovalVariant || isDraftVariant || showOwnListingsOnly
-      ? ensureOwnListing(getOwnListing(listingId))
-      : ensureListing(getListing(listingId));
+  const derivedData = getDerivedRenderData({
+    rawParams,
+    getListing,
+    getOwnListing,
+    showOwnListingsOnly,
+    currentUser,
+    config,
+    intl,
+    location,
+    longWordMinLength: MIN_LENGTH_FOR_LONG_WORDS_IN_TITLE,
+    longWordClassName: css.longWord,
+    payoutDetailsWarningClassName: css.payoutDetailsWarning,
+  });
+  const {
+    listingConfig,
+    listingId,
+    isVariant,
+    currentListing,
+    listingSlug,
+    params,
+    listingPathParamType,
+    listingTab,
+    description,
+    geolocation,
+    price,
+    title,
+    publicData,
+    metadata,
+    richTitle,
+    isOwnListing,
+    showListingImage,
+    showDescription,
+    processType,
+    ensuredAuthor,
+    noPayoutDetailsSetWithOwnListing,
+    payoutDetailsWarning,
+    authorDisplayName,
+    facebookImages,
+    twitterImages,
+    schemaImages,
+    productURL,
+    availabilityMaybe,
+    noIndexMaybe,
+    hasInvalidListingData,
+  } = derivedData;
 
   // Helper function to recursively search through nested category structure
   const findCategoryById = (categories, categoryId) => {
     if (!categories || !Array.isArray(categories)) return null;
-
     for (const category of categories) {
       if (category.id === categoryId) {
         return category;
@@ -183,45 +224,16 @@ export const ListingPageComponent = props => {
   // Helper function to resolve category IDs to readable names
   const resolveCategoryNames = (categoryIds, categoryConfig) => {
     if (!categoryConfig || !categoryIds) return {};
-
     const resolved = {};
     Object.keys(categoryIds).forEach(levelKey => {
       const categoryId = categoryIds[levelKey];
       if (categoryId) {
         const categoryItem = findCategoryById(categoryConfig, categoryId);
-        resolved[levelKey] = categoryItem?.name || categoryId; // Use 'name' property
+        resolved[levelKey] = categoryItem?.name || categoryId;
       }
     });
     return resolved;
   };
-
-  const listingSlug = rawParams.slug || createSlug(currentListing.attributes.title || '');
-  const params = { slug: listingSlug, ...rawParams };
-
-  const listingPathParamType = isDraftVariant
-    ? LISTING_PAGE_PARAM_TYPE_DRAFT
-    : LISTING_PAGE_PARAM_TYPE_EDIT;
-  const listingTab = isDraftVariant ? 'photos' : 'details';
-
-  const isApproved =
-    currentListing.id && currentListing.attributes.state !== LISTING_STATE_PENDING_APPROVAL;
-
-  const pendingIsApproved = isPendingApprovalVariant && isApproved;
-
-  // If a /pending-approval URL is shared, the UI requires
-  // authentication and attempts to fetch the listing from own
-  // listings. This will fail with 403 Forbidden if the author is
-  // another user. We use this information to try to fetch the
-  // public listing.
-  const pendingOtherUsersListing =
-    (isPendingApprovalVariant || isDraftVariant) &&
-    showListingError &&
-    showListingError.status === 403;
-  const shouldShowPublicListingPage = pendingIsApproved || pendingOtherUsersListing;
-
-  if (shouldShowPublicListingPage) {
-    return <NamedRedirect name="ListingPage" params={params} search={location.search} />;
-  }
 
   const topbar = <TopbarContainer />;
 
@@ -236,34 +248,9 @@ export const ListingPageComponent = props => {
     return <LoadingPage topbar={topbar} scrollingDisabled={scrollingDisabled} intl={intl} />;
   }
 
-  const {
-    description = '',
-    geolocation = null,
-    price = null,
-    title = '',
-    publicData = {},
-    metadata = {},
-  } = currentListing.attributes;
-
-  const richTitle = (
-    <span>
-      {richText(title, {
-        longWordMinLength: MIN_LENGTH_FOR_LONG_WORDS_IN_TITLE,
-        longWordClass: css.longWord,
-      })}
-    </span>
-  );
-
-  const authorAvailable = currentListing && currentListing.author;
-  const userAndListingAuthorAvailable = !!(currentUser && authorAvailable);
-  const isOwnListing =
-    userAndListingAuthorAvailable && currentListing.author.id.uuid === currentUser.id.uuid;
-
   // Memoize the recommended products SKUs to prevent infinite re-renders
-  // IMPORTANT: This must be called before any conditional returns to follow Rules of Hooks
   const recommendedProductSKUs = useMemo(() => {
     if (!publicData.recommendedProducts) return null;
-
     return typeof publicData.recommendedProducts === 'string'
       ? publicData.recommendedProducts.split(',').map(sku => sku.trim()).filter(Boolean)
       : Array.isArray(publicData.recommendedProducts)
@@ -271,115 +258,94 @@ export const ListingPageComponent = props => {
       : null;
   }, [publicData.recommendedProducts]);
 
-  const { listingType, transactionProcessAlias, unitType } = publicData;
-  if (!(listingType && transactionProcessAlias && unitType)) {
+  if (hasInvalidListingData) {
     // Listing should always contain listingType, transactionProcessAlias and unitType)
     return (
       <ErrorPage topbar={topbar} scrollingDisabled={scrollingDisabled} intl={intl} invalidListing />
     );
   }
-  const processName = resolveLatestProcessName(transactionProcessAlias.split('/')[0]);
-  const isBooking = isBookingProcess(processName);
-  const isPurchase = isPurchaseProcess(processName);
-  const processType = isBooking ? 'booking' : isPurchase ? 'purchase' : 'inquiry';
-
-  const validListingTypes = listingConfig.listingTypes;
-  const foundListingTypeConfig = validListingTypes.find(conf => conf.listingType === listingType);
-  const showListingImage = requireListingImage(foundListingTypeConfig);
-
-  const currentAuthor = authorAvailable ? currentListing.author : null;
-  const ensuredAuthor = ensureUser(currentAuthor);
-  const noPayoutDetailsSetWithOwnListing =
-    isOwnListing && (processType !== 'inquiry' && !currentUser?.attributes?.stripeConnected);
-  const payoutDetailsWarning = noPayoutDetailsSetWithOwnListing ? (
-    <div>
-      <FormattedMessage id="ListingPage.payoutDetailsWarning" values={{ processType }} />
-      <NamedLink name="StripePayoutPage">
-        <FormattedMessage id="ListingPage.payoutDetailsWarningLink" />
-      </NamedLink>
-    </div>
-  ) : null;
-
-  // When user is banned or deleted the listing is also deleted.
-  // Because listing can be never showed with banned or deleted user we don't have to provide
-  // banned or deleted display names for the function
-  const authorDisplayName = userDisplayNameAsString(ensuredAuthor, '');
-
-  const { formattedPrice } = priceData(price, config.currency, intl);
+  const unitType = publicData.unitType;
+  const isNegotiation = processType === 'negotiation';
 
   const commonParams = { params, history, routes: routeConfiguration };
   const onContactUser = handleContactUser({
     ...commonParams,
     currentUser,
     callSetInitialValues,
+    setInitialValues, // from ListingPage.duck.js (set initial values for the listing page)
     location,
-    setInitialValues,
     setInquiryModalOpen,
   });
-  // Note: this is for inquiry state in booking and purchase processes. Inquiry process is handled through handleSubmit.
+  // Note: this is for inquire transition to inquiry state in booking, purchase and negotiation processes.
+  // Inquiry process is handled through handleSubmit.
   const onSubmitInquiry = handleSubmitInquiry({
     ...commonParams,
     getListing,
     onSendInquiry,
     setInquiryModalOpen,
   });
-  const onSubmit = handleSubmit({
-    ...commonParams,
-    currentUser,
-    callSetInitialValues,
-    getListing,
-    onInitializeCardPaymentData,
-  });
 
   const handleOrderSubmit = values => {
     const isCurrentlyClosed = currentListing.attributes.state === LISTING_STATE_CLOSED;
     if (isOwnListing || isCurrentlyClosed) {
       window.scrollTo(0, 0);
+    } else if (isNegotiation && unitType === REQUEST) {
+      // This is to navigate to MakeOfferPage when NegotiationForm is submitted
+      const onNavigateToMakeOfferPage = handleNavigateToMakeOfferPage({
+        ...commonParams,
+        getListing,
+      });
+      onNavigateToMakeOfferPage(values);
+    } else if (isNegotiation && unitType === OFFER) {
+      const onNavigateToRequestQuotePage = handleNavigateToRequestQuotePage({
+        ...commonParams,
+        getListing,
+      });
+      onNavigateToRequestQuotePage(values);
     } else {
+      const onSubmit = handleSubmit({
+        ...commonParams,
+        currentUser,
+        callSetInitialValues,
+        getListing,
+        onInitializeCardPaymentData,
+      });
       onSubmit(values);
     }
   };
 
-  const facebookImages = listingImages(currentListing, 'facebook');
-  const twitterImages = listingImages(currentListing, 'twitter');
-  const schemaImages = listingImages(
-    currentListing,
-    `${config.layout.listingImage.variantPrefix}-2x`
-  ).map(img => img.url);
+
+  const handleShopNow = url => {
+    if (shouldShowRedirectTrust()) {
+      markRedirectTrustShown();
+      setPendingRedirectUrl(url);
+      setRedirectSheetOpen(true);
+    } else {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   const marketplaceName = config.marketplaceName;
-  // SEO ONLY: Browser tab title and search engine results title
-  // This does NOT affect the visible product page content
-  // Format: "[Product Name] by [Brand] - Authentic Indian Baby Products | Laem"
-  // Used for: <title> tag, Open Graph, Twitter Cards
   const brandName = publicData.brand;
   const brandPart = brandName ? ` by ${brandName}` : '';
   const schemaTitle = `${title}${brandPart} - Authentic Indian Baby Products | ${marketplaceName}`;
 
-  // SEO ONLY: Meta description for search engines and social media sharing
-  // This does NOT replace the visible product description on the page
-  // The original product description still displays in SectionTextMaybe component
-  // This is only used for: <meta name="description">, Open Graph, Twitter Cards
-  const generateSEODescription = (title, brandName, description, price) => {
-    const brandPart = brandName ? `${brandName} ` : '';
-    const priceText = formattedPrice ? ` at ${formattedPrice}` : '';
-    const truncatedDesc = description ? description.substring(0, 100) : '';
-    
-    // Creates SEO-focused description targeting "Indian diaspora families" keywords
-    return `Shop authentic ${brandPart}${title} for Indian diaspora families${priceText}. ${truncatedDesc} Trusted Indian baby products delivered to USA. Cultural heritage meets modern parenting.`.substring(0, 160);
+  const generateSEODescription = (titleArg, brandNameArg, descriptionArg) => {
+    const bPart = brandNameArg ? `${brandNameArg} ` : '';
+    const truncatedDesc = descriptionArg ? descriptionArg.substring(0, 100) : '';
+    return `Shop authentic ${bPart}${titleArg} for Indian diaspora families. ${truncatedDesc} Trusted Indian baby products delivered to USA. Cultural heritage meets modern parenting.`.substring(0, 160);
   };
-  
-  const seoDescription = generateSEODescription(title, brandName, description, price);
-  // You could add reviews, sku, etc. into page schema
-  // Read more about product schema
-  // https://developers.google.com/search/docs/advanced/structured-data/product
-  const productURL = `${config.marketplaceRootURL}${location.pathname}${location.search}${location.hash}`;
+
+  const seoDescription = publicData.metaDescription
+    || generateSEODescription(title, brandName, description);
+
   const currentStock = currentListing.currentStock?.attributes?.quantity || 0;
-  // Always provide availability - default to InStock if no stock tracking
   const schemaAvailability = !currentListing.currentStock
     ? 'https://schema.org/InStock'
     : currentStock > 0
     ? 'https://schema.org/InStock'
     : 'https://schema.org/OutOfStock';
+
 
   const handleViewPhotosClick = e => {
     // Stop event from bubbling up to prevent image click handler
@@ -388,36 +354,25 @@ export const ListingPageComponent = props => {
     setImageCarouselOpen(true);
   };
 
-  const actionBar =
-    mounted && currentListing.id && isOwnListing ? (
-      <>
-        {noPayoutDetailsSetWithOwnListing ? (
-          <ActionBarMaybe
-            className={classNames(css.actionBarForHeroLayout, {
-              [css.actionBarNoBorderRadiusOnMobile]: !showListingImage,
-            })}
-            isOwnListing={isOwnListing}
-            listing={currentListing}
-            showNoPayoutDetailsSet={noPayoutDetailsSetWithOwnListing}
-            currentUser={currentUser}
-          />
-        ) : null}
-        <ActionBarMaybe
-          className={classNames(css.actionBarForHeroLayout, {
-            [css.actionBarNoBorderRadiusOnMobile]: !showListingImage,
-          })}
-          isOwnListing={isOwnListing}
-          listing={currentListing}
-          currentUser={currentUser}
-          editParams={{
-            id: listingId.uuid,
-            slug: listingSlug,
-            type: listingPathParamType,
-            tab: listingTab,
-          }}
-        />
-      </>
-    ) : null;
+  const actionBarClassName = classNames(css.actionBarForHeroLayout, {
+    [css.actionBarNoBorderRadiusOnMobile]: !showListingImage,
+  });
+  const actionBar = (
+    <Notifications
+      mounted={mounted}
+      listing={currentListing}
+      isOwnListing={isOwnListing}
+      noPayoutDetailsSetWithOwnListing={noPayoutDetailsSetWithOwnListing}
+      currentUser={currentUser}
+      className={actionBarClassName}
+      editParams={{
+        id: listingId.uuid,
+        slug: listingSlug,
+        type: listingPathParamType,
+        tab: listingTab,
+      }}
+    />
+  );
 
   return (
     <Page
@@ -427,6 +382,7 @@ export const ListingPageComponent = props => {
       description={seoDescription} // SEO ONLY: Meta description for search engines, NOT visible on page
       facebookImages={facebookImages}
       twitterImages={twitterImages}
+      {...noIndexMaybe}
       schema={{
         // SEO ONLY: JSON-LD structured data for search engines (Google, Bing, etc.)
         // This is invisible to users but helps search engines understand the product
@@ -480,6 +436,11 @@ export const ListingPageComponent = props => {
           }
         },
 
+        // Consumer search synonyms — machine-readable for AI answer engines (AEO)
+        ...(publicData.searchSynonyms?.length > 0 && {
+          keywords: publicData.searchSynonyms,
+        }),
+
         // ENHANCEMENT: Parsed item aspects with benefits from itemAspectsParser
         additionalProperty: [
           // Parse benefit-enriched Item_Aspects from publicData
@@ -511,16 +472,16 @@ export const ListingPageComponent = props => {
             actionBar={actionBar}
           />
         ) : (
-          isOwnListing && <div className={css.actionBarContainerForNoListingImage}>{actionBar}</div>
+          <div className={css.actionBarContainerForNoListingImage}>{actionBar}</div>
         )}
         <div className={css.contentWrapperForHeroLayout}>
           <div className={css.mainColumnForHeroLayout}>
             <div className={showListingImage ? css.mobileHeading : css.noListingImageHeadingHero}>
               {showListingImage ? (
                 // add css logic here that applies larger margin on mobile view to push down title
-                <H4 as="h1" className={css.orderPanelTitle}>
+                <H2 as="h1" className={css.orderPanelTitle}>
                   <FormattedMessage id="ListingPage.orderTitle" values={{ title: richTitle }} />
-                </H4>
+                </H2>
               ) : (
                 <H3
                   as="h1"
@@ -532,6 +493,27 @@ export const ListingPageComponent = props => {
                 </H3>
               )}
             </div>
+
+            {/* Certification + occasion trust chips */}
+            <ListingTrustChips
+              certifications={publicData.certification}
+              itemAspects={publicData.itemAspects}
+            />
+
+            {/* Brand / author section — placed early for affiliate trust */}
+            <SectionAuthorMaybe
+              title={title}
+              listing={currentListing}
+              authorDisplayName={authorDisplayName}
+              onContactUser={onContactUser}
+              isInquiryModalOpen={isAuthenticated && inquiryModalOpen}
+              onCloseInquiryModal={() => setInquiryModalOpen(false)}
+              sendInquiryError={sendInquiryError}
+              sendInquiryInProgress={sendInquiryInProgress}
+              onSubmitInquiry={onSubmitInquiry}
+              currentUser={currentUser}
+              onManageDisableScrolling={onManageDisableScrolling}
+            />
 
             {/* Item Specifics Section */}
             <ItemSpecifics
@@ -555,7 +537,9 @@ export const ListingPageComponent = props => {
               }
             />
 
-            <SectionTextMaybe text={description} showAsIngress />
+            <VariantDisplay variantsString={publicData.variantsString} />
+
+            {showDescription && <SectionText text={description} showAsIngress />}
 
             <CustomListingFields
               publicData={publicData}
@@ -590,13 +574,9 @@ export const ListingPageComponent = props => {
               )}
             </div>
 
-            <SectionMapMaybe
-              geolocation={geolocation}
-              publicData={publicData}
-              listingId={currentListing.id}
-              mapsConfig={config.maps}
-            />
-            <SectionReviews reviews={reviews} fetchReviewsError={fetchReviewsError} />
+            {reviews.length > 0 && (
+              <SectionReviews reviews={reviews} fetchReviewsError={fetchReviewsError} />
+            )}
             {/* Recommended Products Section */}
             {recommendedProductSKUs && recommendedProductSKUs.length > 0 && (
               <RecommendedProducts
@@ -605,19 +585,6 @@ export const ListingPageComponent = props => {
                 onManageDisableScrolling={onManageDisableScrolling}
               />
             )}
-            <SectionAuthorMaybe
-              title={title}
-              listing={currentListing}
-              authorDisplayName={authorDisplayName}
-              onContactUser={onContactUser}
-              isInquiryModalOpen={isAuthenticated && inquiryModalOpen}
-              onCloseInquiryModal={() => setInquiryModalOpen(false)}
-              sendInquiryError={sendInquiryError}
-              sendInquiryInProgress={sendInquiryInProgress}
-              onSubmitInquiry={onSubmitInquiry}
-              currentUser={currentUser}
-              onManageDisableScrolling={onManageDisableScrolling}
-            />
           </div>
           <div className={css.orderColumnForHeroLayout}>
             <OrderPanel
@@ -652,6 +619,7 @@ export const ListingPageComponent = props => {
               dayCountAvailableForBooking={config.stripe.dayCountAvailableForBooking}
               marketplaceName={config.marketplaceName}
               showListingImage={showListingImage}
+              onShopNow={handleShopNow}
             />
           </div>
         </div>
@@ -661,8 +629,6 @@ export const ListingPageComponent = props => {
           <CategoryProducts
             categoryLevel="categoryLevel3"
             categoryName={publicData.categoryLevel3}
-            layoutManager={layoutManager}
-            useFullWidth={true}
             currentListingId={currentListing?.id?.uuid}
           />
         )}
@@ -670,8 +636,6 @@ export const ListingPageComponent = props => {
           <CategoryProducts
             categoryLevel="categoryLevel2"
             categoryName={publicData.categoryLevel2}
-            layoutManager={layoutManager}
-            useFullWidth={true}
             currentListingId={currentListing?.id?.uuid}
           />
         )}
@@ -679,13 +643,23 @@ export const ListingPageComponent = props => {
           <CategoryProducts
             categoryLevel="categoryLevel1"
             categoryName={publicData.categoryLevel1}
-            layoutManager={layoutManager}
-            useFullWidth={true}
             currentListingId={currentListing?.id?.uuid}
           />
         )}
 
       </LayoutSingleColumn>
+
+      {/* Pre-redirect trust sheet — shown first CTA click per session */}
+      {redirectSheetOpen && pendingRedirectUrl && (
+        <RedirectTrustSheet
+          isOpen={redirectSheetOpen}
+          brandName={brandName || authorDisplayName}
+          productUrl={pendingRedirectUrl}
+          isVerified={isMelaVerified(publicData)}
+          onContinue={url => window.open(url, '_blank', 'noopener,noreferrer')}
+          onClose={() => setRedirectSheetOpen(false)}
+        />
+      )}
     </Page>
   );
 };
@@ -707,7 +681,7 @@ export const ListingPageComponent = props => {
  * @param {boolean} props.scrollingDisabled - Whether scrolling is disabled
  * @param {string} props.inquiryModalOpenForListingId - The inquiry modal open for the specific listing id
  * @param {propTypes.error} props.showListingError - The show listing error
- * @param {Function} props.callSetInitialValues - The call setInitialValues function, which is given to this function as a parameter
+ * @param {Function} props.callSetInitialValues - The call page-specific setInitialValues function, which is given to this function as a parameter
  * @param {Array<propTypes.review>} props.reviews - The reviews
  * @param {propTypes.error} props.fetchReviewsError - The fetch reviews error
  * @param {Object<string, Object>} props.monthlyTimeSlots - The monthly time slots. E.g. { '2019-11': { timeSlots: [], fetchTimeSlotsInProgress: false, fetchTimeSlotsError: null } }
@@ -724,67 +698,11 @@ export const ListingPageComponent = props => {
 
  * @returns {JSX.Element} listing page component
  */
-const EnhancedListingPage = props => {
-  const config = useConfiguration();
-  const routeConfiguration = useRouteConfiguration();
-  const intl = useIntl();
-  const history = useHistory();
-  const location = useLocation();
+const ListingPage = props => {
+  const dispatch = useDispatch();
+  const store = useStore();
 
-  const showListingError = props.showListingError;
-  const isVariant = props.params?.variant != null;
-  const currentUser = props.currentUser;
-  if (isForbiddenError(showListingError) && !isVariant && !currentUser) {
-    // This can happen if private marketplace mode is active
-    return (
-      <NamedRedirect
-        name="SignupPage"
-        state={{ from: `${location.pathname}${location.search}${location.hash}` }}
-      />
-    );
-  }
-
-  const isPrivateMarketplace = config.accessControl.marketplace.private === true;
-  const isUnauthorizedUser = currentUser && !isUserAuthorized(currentUser);
-  const hasNoViewingRights = currentUser && !hasPermissionToViewData(currentUser);
-  const hasUserPendingApprovalError = isErrorUserPendingApproval(showListingError);
-
-  if ((isPrivateMarketplace && isUnauthorizedUser) || hasUserPendingApprovalError) {
-    return (
-      <NamedRedirect
-        name="NoAccessPage"
-        params={{ missingAccessRight: NO_ACCESS_PAGE_USER_PENDING_APPROVAL }}
-      />
-    );
-  } else if (
-    (hasNoViewingRights && isForbiddenError(showListingError)) ||
-    isErrorNoViewingPermission(showListingError)
-  ) {
-    // If the user has no viewing rights, fetching anything but their own listings
-    // will return a 403 error. If that happens, redirect to NoAccessPage.
-    return (
-      <NamedRedirect
-        name="NoAccessPage"
-        params={{ missingAccessRight: NO_ACCESS_PAGE_VIEW_LISTINGS }}
-      />
-    );
-  }
-
-  return (
-    <ListingPageComponent
-      config={config}
-      routeConfiguration={routeConfiguration}
-      intl={intl}
-      history={history}
-      location={location}
-      showOwnListingsOnly={hasNoViewingRights}
-      {...props}
-    />
-  );
-};
-
-const mapStateToProps = state => {
-  const { isAuthenticated } = state.auth;
+  const { isAuthenticated } = useSelector(state => state.auth);
   const {
     showListingError,
     reviews,
@@ -797,64 +715,83 @@ const mapStateToProps = state => {
     fetchLineItemsInProgress,
     fetchLineItemsError,
     inquiryModalOpenForListingId,
-  } = state.ListingPage;
-  const { currentUser } = state.user;
+  } = useSelector(state => state.ListingPage);
+  const currentUser = useSelector(state => state.user?.currentUser);
+  const scrollingDisabled = useSelector(state => isScrollingDisabled(state));
 
-  const getListing = id => {
-    const ref = { id, type: 'listing' };
-    const listings = getMarketplaceEntities(state, [ref]);
-    return listings.length === 1 ? listings[0] : null;
-  };
+  const getListing = useCallback(
+    id => {
+      const state = store.getState();
+      const ref = { id, type: 'listing' };
+      const listings = getMarketplaceEntities(state, [ref]);
+      return listings.length === 1 ? listings[0] : null;
+    },
+    [store]
+  );
+  const getOwnListing = useCallback(
+    id => {
+      const state = store.getState();
+      const ref = { id, type: 'ownListing' };
+      const listings = getMarketplaceEntities(state, [ref]);
+      return listings.length === 1 ? listings[0] : null;
+    },
+    [store]
+  );
 
-  const getOwnListing = id => {
-    const ref = { id, type: 'ownListing' };
-    const listings = getMarketplaceEntities(state, [ref]);
-    return listings.length === 1 ? listings[0] : null;
-  };
+  const onManageDisableScrolling = useCallback(
+    (componentId, disableScrolling) =>
+      dispatch(manageDisableScrolling(componentId, disableScrolling)),
+    [dispatch]
+  );
+  const callSetInitialValues = useCallback(
+    (setInitialValuesFn, values, saveToSessionStorage) =>
+      dispatch(setInitialValuesFn(values, saveToSessionStorage)),
+    [dispatch]
+  );
+  const onFetchTransactionLineItems = useCallback(
+    params => dispatch(fetchTransactionLineItems(params)),
+    [dispatch]
+  );
+  const onSendInquiry = useCallback((listing, message) => dispatch(sendInquiry(listing, message)), [
+    dispatch,
+  ]);
+  const onInitializeCardPaymentData = useCallback(() => dispatch(initializeCardPaymentData()), [
+    dispatch,
+  ]);
+  const onFetchTimeSlots = useCallback(
+    (listingId, start, end, timeZone, options) =>
+      dispatch(fetchTimeSlots(listingId, start, end, timeZone, options)),
+    [dispatch]
+  );
 
-  return {
-    isAuthenticated,
-    currentUser,
-    getListing,
-    getOwnListing,
-    scrollingDisabled: isScrollingDisabled(state),
-    inquiryModalOpenForListingId,
-    showListingError,
-    reviews,
-    fetchReviewsError,
-    monthlyTimeSlots, // for OrderPanel
-    timeSlotsForDate, // for OrderPanel
-    lineItems, // for OrderPanel
-    fetchLineItemsInProgress, // for OrderPanel
-    fetchLineItemsError, // for OrderPanel
-    sendInquiryInProgress,
-    sendInquiryError,
-  };
+  return (
+    <ListingPageAccessWrapper
+      {...props}
+      PageComponent={ListingPageComponent}
+      isAuthenticated={isAuthenticated}
+      currentUser={currentUser}
+      getListing={getListing}
+      getOwnListing={getOwnListing}
+      scrollingDisabled={scrollingDisabled}
+      inquiryModalOpenForListingId={inquiryModalOpenForListingId}
+      showListingError={showListingError}
+      reviews={reviews}
+      fetchReviewsError={fetchReviewsError}
+      monthlyTimeSlots={monthlyTimeSlots}
+      timeSlotsForDate={timeSlotsForDate}
+      lineItems={lineItems}
+      fetchLineItemsInProgress={fetchLineItemsInProgress}
+      fetchLineItemsError={fetchLineItemsError}
+      sendInquiryInProgress={sendInquiryInProgress}
+      sendInquiryError={sendInquiryError}
+      onManageDisableScrolling={onManageDisableScrolling}
+      callSetInitialValues={callSetInitialValues}
+      onFetchTransactionLineItems={onFetchTransactionLineItems}
+      onSendInquiry={onSendInquiry}
+      onInitializeCardPaymentData={onInitializeCardPaymentData}
+      onFetchTimeSlots={onFetchTimeSlots}
+    />
+  );
 };
-
-const mapDispatchToProps = dispatch => ({
-  onManageDisableScrolling: (componentId, disableScrolling) =>
-    dispatch(manageDisableScrolling(componentId, disableScrolling)),
-  callSetInitialValues: (setInitialValues, values, saveToSessionStorage) =>
-    dispatch(setInitialValues(values, saveToSessionStorage)),
-  onFetchTransactionLineItems: params => dispatch(fetchTransactionLineItems(params)), // for OrderPanel
-  onSendInquiry: (listing, message) => dispatch(sendInquiry(listing, message)),
-  onInitializeCardPaymentData: () => dispatch(initializeCardPaymentData()),
-  onFetchTimeSlots: (listingId, start, end, timeZone, options) =>
-    dispatch(fetchTimeSlots(listingId, start, end, timeZone, options)), // for OrderPanel
-});
-
-// Note: it is important that the withRouter HOC is **outside** the
-// connect HOC, otherwise React Router won't rerender any Route
-// components since connect implements a shouldComponentUpdate
-// lifecycle hook.
-//
-// See: https://github.com/ReactTraining/react-router/issues/4671
-const ListingPage = compose(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )
-)(EnhancedListingPage);
 
 export default ListingPage;

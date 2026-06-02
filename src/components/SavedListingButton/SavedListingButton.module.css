@@ -1,0 +1,114 @@
+@import '../../styles/customMediaQueries.css';
+
+/* ── Icon variant (overlay on card images) ─────────────────────────── */
+
+.iconRoot {
+  /* Positioning handled by parent — typically absolute bottom-right of image */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+
+  transition: background-color 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 1);
+    transform: scale(1.1);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--marketplaceColor);
+    outline-offset: 2px;
+  }
+
+  @media (--viewportMedium) {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+.heartIcon {
+  width: 18px;
+  height: 18px;
+  fill: var(--colorGrey300);
+  stroke: var(--colorGrey400);
+  stroke-width: 1px;
+  transition: fill 0.15s ease, stroke 0.15s ease;
+
+  @media (--viewportMedium) {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Saved state */
+.iconRoot.saved .heartIcon {
+  fill: #e74c3c;
+  stroke: #e74c3c;
+}
+
+/* ── Button variant (ListingPage explicit save button) ──────────────── */
+
+.buttonRoot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: var(--borderRadiusMedium);
+  border: 2px solid var(--colorGrey200);
+  background-color: transparent;
+  cursor: pointer;
+
+  composes: textSmall from global;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey700);
+
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    border-color: #e74c3c;
+    color: #e74c3c;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--marketplaceColor);
+    outline-offset: 2px;
+  }
+}
+
+.buttonRoot.saved {
+  border-color: #e74c3c;
+  color: #e74c3c;
+  background-color: rgba(231, 76, 60, 0.05);
+}
+
+.buttonContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.heartIconInline {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+/* ── Loading state ───────────────────────────────────────────────────── */
+
+.inProgress {
+  opacity: 0.7;
+  cursor: wait;
+}

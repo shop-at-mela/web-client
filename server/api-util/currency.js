@@ -1,5 +1,4 @@
 const Decimal = require('decimal.js');
-const has = require('lodash/has');
 const { types } = require('sharetribe-flex-sdk');
 const { Money } = types;
 
@@ -172,7 +171,7 @@ const subUnitDivisors = {
 
 // Get the minor unit divisor for the given currency
 exports.unitDivisor = currency => {
-  if (!has(subUnitDivisors, currency)) {
+  if (!subUnitDivisors[currency]) {
     throw new Error(
       `No minor unit divisor defined for currency: ${currency} in /server/api-util/currency.js`
     );
@@ -222,7 +221,6 @@ exports.getAmountAsDecimalJS = value => {
     // the Transit tooling in the Sharetribe JS SDK. This should be
     // removed when the value.amount will be a proper Decimal type.
 
-    // eslint-disable-next-line no-console
     console.warn('goog.math.Long value in money amount:', value.amount, value.amount.toString());
 
     amount = new Decimal(value.amount.toString());

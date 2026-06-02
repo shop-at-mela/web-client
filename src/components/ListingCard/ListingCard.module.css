@@ -4,11 +4,36 @@
   /* Layout */
   display: flex;
   flex-direction: column;
+}
 
-  /* Remove link's hover effect */
+/* Shared positioning parent for the image link and the save button */
+.imageWrapper {
+  position: relative;
+}
+
+/* Link that wraps only the image area */
+.imageLink {
+  display: block;
+
   &:hover {
     text-decoration: none;
   }
+}
+
+/* Link that wraps only the info area */
+.infoLink {
+  display: block;
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+/* Heart save button — bottom-right corner of the image */
+.saveButton {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
 }
 
 .imageContainer {
@@ -19,10 +44,18 @@
 
 .aspectRatioWrapper {
   transition: var(--transitionStyleButton);
-  background: var(--colorGrey100); /* Loading BG color */
+  /* Off-white background shows as letterbox when image doesn't fill the container */
+  background: #f7f5f2;
   border-radius: var(--borderRadiusMedium);
+  /* Compact portrait on mobile — shallow enough for narrow 3-col cards */
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
 
   @media (--viewportMedium) {
+    /* Deeper portrait on desktop — wider cards can carry more height */
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+
     &:hover {
       transform: scale(1.02);
       box-shadow: var(--boxShadowListingCard);
@@ -35,21 +68,30 @@
   border-radius: var(--borderRadiusMedium);
   width: 100%;
   height: 100%;
+  /* Preserve original photo proportions — letterbox with container background */
+  object-fit: contain;
+}
+
+.title.lightText {
+  color: var(--colorWhite);
+}
+
+.authorInfo.lightText {
+  color: var(--colorWhite);
 }
 
 .info {
   /* Layout */
   display: flex;
   flex-direction: column;
+  /* ⚠️ padding width is hardcoded in SectionListings.js calculateCarouselHeight() as cardInfoPadding*/
   padding: 14px 0 2px 0;
 }
 
+/* ⚠️ the total calculated height of this selector is hardcoded in SectionListings.js calculateCarouselHeight() as priceHeight*/
 .price {
   composes: textSmall from global;
   /* Layout */
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
   flex-shrink: 0;
   margin-bottom: 4px;
   color: var(--colorGrey700);
@@ -85,11 +127,32 @@
   }
 }
 
+.inrPrice {
+  display: block;
+  font-size: 11px;
+  color: var(--colorGrey500);
+  font-weight: var(--fontWeightRegular);
+  margin-top: 1px;
+}
+
+.variantPill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey600);
+  background: var(--colorGrey100);
+  border-radius: 20px;
+  padding: 2px 8px;
+  margin-bottom: 4px;
+  width: fit-content;
+}
+
 .mainInfo {
   display: flex;
   flex-direction: column;
 }
 
+/* ⚠️ the calculated height of this selector is hardcoded in SectionListings.js calculateCarouselHeight() as titleHeightSingleLine */
 .title {
   /* Font */
   composes: textSmall from global;
@@ -108,6 +171,7 @@
   margin-bottom: 2px;
 }
 
+/* ⚠️ the calculated height of this selector is hardcoded in SectionListings.js calculateCarouselHeight() as authorInfoHeight & authorInfoHeighMobile */
 .authorInfo {
   /* Font */
   composes: marketplaceTinyFontStyles from global;

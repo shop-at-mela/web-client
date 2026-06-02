@@ -22,11 +22,13 @@ const ContactDetailsPage = loadable(() => import(/* webpackChunkName: "ContactDe
 const EditListingPage = loadable(() => import(/* webpackChunkName: "EditListingPage" */ '../containers/EditListingPage/EditListingPage'));
 const EmailVerificationPage = loadable(() => import(/* webpackChunkName: "EmailVerificationPage" */ '../containers/EmailVerificationPage/EmailVerificationPage'));
 const InboxPage = loadable(() => import(/* webpackChunkName: "InboxPage" */ '../containers/InboxPage/InboxPage'));
+const MakeOfferPage = loadable(() => import(/* webpackChunkName: "MakeOfferPage" */ '../containers/MakeOfferPage/MakeOfferPage'));
 const LandingPage = loadable(() => import(/* webpackChunkName: "LandingPage" */ '../containers/LandingPage/LandingPage'));
 const MelaHomePage = loadable(() => import(/* webpackChunkName: "MelaHomePage" */ '../containers/MelaHomePage/MelaHomePage'));
 const ListingPageCoverPhoto = loadable(() => import(/* webpackChunkName: "ListingPageCoverPhoto" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCoverPhoto'));
 const ListingPageCarousel = loadable(() => import(/* webpackChunkName: "ListingPageCarousel" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCarousel'));
 const ManageListingsPage = loadable(() => import(/* webpackChunkName: "ManageListingsPage" */ '../containers/ManageListingsPage/ManageListingsPage'));
+const ManageAccountPage = loadable(() => import(/* webpackChunkName: "ManageAccountPage" */ '../containers/ManageAccountPage/ManageAccountPage'));
 const PasswordChangePage = loadable(() => import(/* webpackChunkName: "PasswordChangePage" */ '../containers/PasswordChangePage/PasswordChangePage'));
 const PasswordRecoveryPage = loadable(() => import(/* webpackChunkName: "PasswordRecoveryPage" */ '../containers/PasswordRecoveryPage/PasswordRecoveryPage'));
 const PasswordResetPage = loadable(() => import(/* webpackChunkName: "PasswordResetPage" */ '../containers/PasswordResetPage/PasswordResetPage'));
@@ -34,6 +36,7 @@ const PaymentMethodsPage = loadable(() => import(/* webpackChunkName: "PaymentMe
 const PrivacyPolicyPage = loadable(() => import(/* webpackChunkName: "PrivacyPolicyPage" */ '../containers/PrivacyPolicyPage/PrivacyPolicyPage'));
 const ProfilePage = loadable(() => import(/* webpackChunkName: "ProfilePage" */ '../containers/ProfilePage/ProfilePage'));
 const ProfileSettingsPage = loadable(() => import(/* webpackChunkName: "ProfileSettingsPage" */ '../containers/ProfileSettingsPage/ProfileSettingsPage'));
+const RequestQuotePage = loadable(() => import(/* webpackChunkName: "RequestQuotePage" */ '../containers/RequestQuotePage/RequestQuotePage'));
 const SearchPageWithMap = loadable(() => import(/* webpackChunkName: "SearchPageWithMap" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithMap'));
 const SearchPageWithGrid = loadable(() => import(/* webpackChunkName: "SearchPageWithGrid" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithGrid'));
 const StripePayoutPage = loadable(() => import(/* webpackChunkName: "StripePayoutPage" */ '../containers/StripePayoutPage/StripePayoutPage'));
@@ -43,12 +46,15 @@ const NoAccessPage = loadable(() => import(/* webpackChunkName: "NoAccessPage" *
 
 // Styleguide helps you to review current components and develop new ones
 const StyleguidePage = loadable(() => import(/* webpackChunkName: "StyleguidePage" */ '../containers/StyleguidePage/StyleguidePage'));
+const SavedPage = loadable(() => import(/* webpackChunkName: "SavedPage" */ '../containers/SavedPage/SavedPage'));
+const CategoryPage = loadable(() => import(/* webpackChunkName: "CategoryPage" */ '../containers/CategoryPage/CategoryPage'));
 
 export const ACCOUNT_SETTINGS_PAGES = [
   'ContactDetailsPage',
   'PasswordChangePage',
   'StripePayoutPage',
   'PaymentMethodsPage',
+  'ManageAccountPage'
 ];
 
 // https://en.wikipedia.org/wiki/Universally_unique_identifier#Nil_UUID
@@ -66,9 +72,8 @@ const RedirectToLandingPage = () => <NamedRedirect name="LandingPage" />;
 // Our routes are exact by default.
 // See behaviour from Routes.js where Route is created.
 const routeConfiguration = (layoutConfig, accessControlConfig) => {
-  const SearchPage = layoutConfig.searchPage?.variantType === 'map' 
-    ? SearchPageWithMap 
-    : SearchPageWithGrid;
+  const isSearchPageWithMap = layoutConfig.searchPage?.variantType === 'map';
+  const SearchPage = isSearchPageWithMap ? SearchPageWithMap : SearchPageWithGrid;
   const ListingPage = layoutConfig.listingPage?.variantType === 'carousel' 
     ? ListingPageCarousel 
     : ListingPageCoverPhoto;
@@ -102,6 +107,7 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       ...authForPrivateMarketplace,
       component: SearchPage,
       loadData: pageDataLoadingAPI.SearchPage.loadData,
+      prioritizeMapLibraryLoading: isSearchPageWithMap,
     },
     {
       path: '/s/:listingType',
@@ -109,20 +115,21 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       ...authForPrivateMarketplace,
       component: SearchPage,
       loadData: pageDataLoadingAPI.SearchPage.loadData,
+      prioritizeMapLibraryLoading: isSearchPageWithMap,
     },
     {
       path: '/categories',
       name: 'CategoriesPage',
       ...authForPrivateMarketplace,
-      component: SearchPage,
-      loadData: pageDataLoadingAPI.SearchPage.loadData,
+      component: CategoryPage,
+      loadData: null,
     },
     {
       path: '/categories/:level1/:level2?/:level3?',
       name: 'CategoryPage',
       ...authForPrivateMarketplace,
-      component: SearchPage,
-      loadData: pageDataLoadingAPI.SearchPage.loadData,
+      component: CategoryPage,
+      loadData: pageDataLoadingAPI.CategoryPage.loadData,
     },
     {
       path: '/brands',
@@ -135,8 +142,8 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/brands/:brandSlug',
       name: 'BrandPage',
       ...authForPrivateMarketplace,
-      component: SearchPage,
-      loadData: pageDataLoadingAPI.SearchPage.loadData,
+      component: ProfilePage,
+      loadData: pageDataLoadingAPI.ProfilePage.loadData,
     },
     {
       path: '/l',
@@ -149,6 +156,22 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       ...authForPrivateMarketplace,
       component: ListingPage,
       loadData: pageDataLoadingAPI.ListingPage.loadData,
+      prioritizeMapLibraryLoading: true,
+    },
+    {
+      path: '/l/:slug/:id/make-offer',
+      name: 'MakeOfferPage',
+      auth: true,
+      component: MakeOfferPage,
+      loadData: pageDataLoadingAPI.MakeOfferPage.loadData,
+    },
+    {
+      path: '/l/:slug/:id/request-quote',
+      name: 'RequestQuotePage',
+      auth: true,
+      component: RequestQuotePage,
+      extraProps: { mode: 'request-quote' },
+      loadData: pageDataLoadingAPI.RequestQuotePage.loadData,
     },
     {
       path: '/l/:slug/:id/checkout',
@@ -164,6 +187,7 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       authPage: 'LoginPage',
       component: ListingPage,
       loadData: pageDataLoadingAPI.ListingPage.loadData,
+      prioritizeMapLibraryLoading: true,
     },
     {
       path: '/l/new',
@@ -194,6 +218,7 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       ...authForPrivateMarketplace,
       component: ListingPage,
       loadData: pageDataLoadingAPI.ListingPage.loadData,
+      prioritizeMapLibraryLoading: true,
     },
     {
       path: '/u',
@@ -210,7 +235,7 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
     {
       path: '/u/:id/:variant',
       name: 'ProfilePageVariant',
-      auth: true,
+      ...authForPrivateMarketplace,
       component: ProfilePage,
       loadData: pageDataLoadingAPI.ProfilePage.loadData,
     },
@@ -220,6 +245,13 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       auth: true,
       authPage: 'LoginPage',
       component: ProfileSettingsPage,
+    },
+    {
+      path: '/saved',
+      name: 'SavedPage',
+      auth: true,
+      authPage: 'LoginPage',
+      component: SavedPage,
     },
 
     // Note: authenticating with IdP (e.g. Facebook) expects that /login path exists
@@ -357,6 +389,13 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       authPage: 'LoginPage',
       component: PaymentMethodsPage,
       loadData: pageDataLoadingAPI.PaymentMethodsPage.loadData,
+    },
+    {
+      path: '/account/manage',
+      name: 'ManageAccountPage',
+      auth: true,
+      authPage: 'LoginPage',
+      component: ManageAccountPage,
     },
     {
       path: '/terms-of-service',

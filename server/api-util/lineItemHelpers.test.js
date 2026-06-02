@@ -57,7 +57,7 @@ describe('calculateTotalPriceFromSeats()', () => {
     const unitPrice = new Money(1000, 'EUR');
     const unitCount = 1;
     const seats = -3;
-    expect(() => calculateTotalPriceFromSeats(unitPrice, unitCount, seats)).toThrowError(
+    expect(() => calculateTotalPriceFromSeats(unitPrice, unitCount, seats)).toThrow(
       "Value of seats can't be negative"
     );
   });
@@ -82,7 +82,7 @@ describe('calculateQuantityFromDates()', () => {
     const start = new Date(2017, 0, 1);
     const end = new Date(2017, 0, 3);
     const type = 'line-item/units';
-    expect(() => calculateQuantityFromDates(start, end, type)).toThrowError(
+    expect(() => calculateQuantityFromDates(start, end, type)).toThrow(
       `Can't calculate quantity from dates to unit type: ${type}`
     );
   });
@@ -151,7 +151,7 @@ describe('calculateLineTotal()', () => {
       includeFor: ['customer', 'provider'],
     };
     const code = lineItem.code;
-    expect(() => calculateLineTotal(lineItem)).toThrowError(
+    expect(() => calculateLineTotal(lineItem)).toThrow(
       `Can't calculate the lineTotal of lineItem: ${code}. Make sure the lineItem has quantity, percentage or both seats and units`
     );
   });
@@ -399,9 +399,7 @@ describe('constructValidLineItems()', () => {
       },
     ];
 
-    expect(() => constructValidLineItems(lineItems)).toThrowError(
-      `Invalid line item code: ${code}`
-    );
+    expect(() => constructValidLineItems(lineItems)).toThrow(`Invalid line item code: ${code}`);
   });
 });
 
@@ -419,10 +417,8 @@ describe('hasCommissionPercentage()', () => {
   });
 
   it('should throw error if percentage property does not contain number', () => {
-    expect(() => hasCommissionPercentage({ percentage: '10' })).toThrowError('10 is not a number.');
-    expect(() => hasCommissionPercentage({ percentage: 'asdf' })).toThrowError(
-      'asdf is not a number.'
-    );
+    expect(() => hasCommissionPercentage({ percentage: '10' })).toThrow('10 is not a number.');
+    expect(() => hasCommissionPercentage({ percentage: 'asdf' })).toThrow('asdf is not a number.');
   });
 });
 
@@ -440,17 +436,13 @@ describe('hasMinimumCommission()', () => {
   });
 
   it('should throw error if minimum commission property does not contain number', () => {
-    expect(() => hasMinimumCommission({ minimum_amount: '10' })).toThrowError(
-      '10 is not a number.'
-    );
-    expect(() => hasMinimumCommission({ minimum_amount: 'asdf' })).toThrowError(
-      'asdf is not a number.'
-    );
+    expect(() => hasMinimumCommission({ minimum_amount: '10' })).toThrow('10 is not a number.');
+    expect(() => hasMinimumCommission({ minimum_amount: 'asdf' })).toThrow('asdf is not a number.');
   });
 });
 
 describe('getProviderCommissionMaybe()', () => {
-  const priceAttribute = new Money(10000, 'USD');
+  const currency = 'USD';
 
   const order = {
     code: 'line-item/night',
@@ -484,24 +476,24 @@ describe('getProviderCommissionMaybe()', () => {
       minimum_amount: null,
       percentage: null,
     };
-    expect(getProviderCommissionMaybe(commission, order, priceAttribute)).toEqual([]);
+    expect(getProviderCommissionMaybe(commission, order, currency)).toEqual([]);
   });
   it('should return an empty array when both percentage and minimum commission are undefined in provider commission', () => {
     const commission = {};
-    expect(getProviderCommissionMaybe(commission, order, priceAttribute)).toEqual([]);
+    expect(getProviderCommissionMaybe(commission, order, currency)).toEqual([]);
   });
   it('should return an empty array when both percentage and minimum commission are negative in provider commission', () => {
     const commission = {
       minimum_amount: -250,
       percentage: -5,
     };
-    expect(getProviderCommissionMaybe(commission, order, priceAttribute)).toEqual([]);
+    expect(getProviderCommissionMaybe(commission, order, currency)).toEqual([]);
   });
   it('should throw an error when percentage is not a number in provider commission', () => {
     const commission = {
       percentage: '5',
     };
-    expect(() => getProviderCommissionMaybe(commission, order, priceAttribute)).toThrowError(
+    expect(() => getProviderCommissionMaybe(commission, order, currency)).toThrow(
       '5 is not a number'
     );
   });
@@ -509,7 +501,7 @@ describe('getProviderCommissionMaybe()', () => {
     const commission = {
       minimum_amount: '250',
     };
-    expect(() => getProviderCommissionMaybe(commission, order, priceAttribute)).toThrowError(
+    expect(() => getProviderCommissionMaybe(commission, order, currency)).toThrow(
       '250 is not a number'
     );
   });
@@ -520,7 +512,7 @@ describe('getProviderCommissionMaybe()', () => {
       minimum_amount: null,
       percentage: 5,
     };
-    expect(getProviderCommissionMaybe(commission, order, priceAttribute)).toEqual(
+    expect(getProviderCommissionMaybe(commission, order, currency)).toEqual(
       expectedLineItemsPercentage
     );
   });
@@ -528,7 +520,7 @@ describe('getProviderCommissionMaybe()', () => {
     const commission = {
       percentage: 5,
     };
-    expect(getProviderCommissionMaybe(commission, order, priceAttribute)).toEqual(
+    expect(getProviderCommissionMaybe(commission, order, currency)).toEqual(
       expectedLineItemsPercentage
     );
   });
@@ -537,7 +529,7 @@ describe('getProviderCommissionMaybe()', () => {
       minimum_amount: -250,
       percentage: 5,
     };
-    expect(getProviderCommissionMaybe(commission, order, priceAttribute)).toEqual(
+    expect(getProviderCommissionMaybe(commission, order, currency)).toEqual(
       expectedLineItemsPercentage
     );
   });
@@ -546,7 +538,7 @@ describe('getProviderCommissionMaybe()', () => {
       minimum_amount: 250,
       percentage: 5,
     };
-    expect(getProviderCommissionMaybe(commission, order, priceAttribute)).toEqual(
+    expect(getProviderCommissionMaybe(commission, order, currency)).toEqual(
       expectedLineItemsPercentage
     );
   });
@@ -557,26 +549,20 @@ describe('getProviderCommissionMaybe()', () => {
       minimum_amount: 250,
       percentage: null,
     };
-    expect(getProviderCommissionMaybe(commission, order, priceAttribute)).toEqual(
-      expectedLineItemsFixed
-    );
+    expect(getProviderCommissionMaybe(commission, order, currency)).toEqual(expectedLineItemsFixed);
   });
   it('should return correct line items when a minimum commission is provided and percentage is undefined in provider commission', () => {
     const commission = {
       minimum_amount: 250,
     };
-    expect(getProviderCommissionMaybe(commission, order, priceAttribute)).toEqual(
-      expectedLineItemsFixed
-    );
+    expect(getProviderCommissionMaybe(commission, order, currency)).toEqual(expectedLineItemsFixed);
   });
   it('should return correct line items when a minimum commission is provided and percentage is negative in provider commission', () => {
     const commission = {
       minimum_amount: 250,
       percentage: -5,
     };
-    expect(getProviderCommissionMaybe(commission, order, priceAttribute)).toEqual(
-      expectedLineItemsFixed
-    );
+    expect(getProviderCommissionMaybe(commission, order, currency)).toEqual(expectedLineItemsFixed);
   });
   it('should return correct line items when a minimum commission is provided and percentage is a lower value in provider commission', () => {
     const commission = {
@@ -591,14 +577,12 @@ describe('getProviderCommissionMaybe()', () => {
         includeFor: ['provider'],
       },
     ];
-    expect(getProviderCommissionMaybe(commission, order, priceAttribute)).toEqual(
-      expectedLineItems
-    );
+    expect(getProviderCommissionMaybe(commission, order, currency)).toEqual(expectedLineItems);
   });
 });
 
 describe('getCustomerCommissionMaybe()', () => {
-  const priceAttribute = new Money(10000, 'USD');
+  const currency = 'USD';
 
   const order = {
     code: 'line-item/night',
@@ -632,24 +616,24 @@ describe('getCustomerCommissionMaybe()', () => {
       minimum_amount: null,
       percentage: null,
     };
-    expect(getCustomerCommissionMaybe(commission, order, priceAttribute)).toEqual([]);
+    expect(getCustomerCommissionMaybe(commission, order, currency)).toEqual([]);
   });
   it('should return an empty array when both percentage and minimum commission are undefined in customer commission', () => {
     const commission = {};
-    expect(getCustomerCommissionMaybe(commission, order, priceAttribute)).toEqual([]);
+    expect(getCustomerCommissionMaybe(commission, order, currency)).toEqual([]);
   });
   it('should return an empty array when both percentage and minimum commission are negative in customer commission', () => {
     const commission = {
       minimum_amount: -250,
       percentage: -5,
     };
-    expect(getCustomerCommissionMaybe(commission, order, priceAttribute)).toEqual([]);
+    expect(getCustomerCommissionMaybe(commission, order, currency)).toEqual([]);
   });
   it('should throw an error when percentage is not a number in customer commission', () => {
     const commission = {
       percentage: '5',
     };
-    expect(() => getCustomerCommissionMaybe(commission, order, priceAttribute)).toThrowError(
+    expect(() => getCustomerCommissionMaybe(commission, order, currency)).toThrow(
       '5 is not a number'
     );
   });
@@ -657,7 +641,7 @@ describe('getCustomerCommissionMaybe()', () => {
     const commission = {
       minimum_amount: '250',
     };
-    expect(() => getCustomerCommissionMaybe(commission, order, priceAttribute)).toThrowError(
+    expect(() => getCustomerCommissionMaybe(commission, order, currency)).toThrow(
       '250 is not a number'
     );
   });
@@ -668,7 +652,7 @@ describe('getCustomerCommissionMaybe()', () => {
       minimum_amount: null,
       percentage: 5,
     };
-    expect(getCustomerCommissionMaybe(commission, order, priceAttribute)).toEqual(
+    expect(getCustomerCommissionMaybe(commission, order, currency)).toEqual(
       expectedLineItemsPercentage
     );
   });
@@ -676,7 +660,7 @@ describe('getCustomerCommissionMaybe()', () => {
     const commission = {
       percentage: 5,
     };
-    expect(getCustomerCommissionMaybe(commission, order, priceAttribute)).toEqual(
+    expect(getCustomerCommissionMaybe(commission, order, currency)).toEqual(
       expectedLineItemsPercentage
     );
   });
@@ -685,7 +669,7 @@ describe('getCustomerCommissionMaybe()', () => {
       minimum_amount: -250,
       percentage: 5,
     };
-    expect(getCustomerCommissionMaybe(commission, order, priceAttribute)).toEqual(
+    expect(getCustomerCommissionMaybe(commission, order, currency)).toEqual(
       expectedLineItemsPercentage
     );
   });
@@ -694,7 +678,7 @@ describe('getCustomerCommissionMaybe()', () => {
       minimum_amount: 250,
       percentage: 5,
     };
-    expect(getCustomerCommissionMaybe(commission, order, priceAttribute)).toEqual(
+    expect(getCustomerCommissionMaybe(commission, order, currency)).toEqual(
       expectedLineItemsPercentage
     );
   });
@@ -705,26 +689,20 @@ describe('getCustomerCommissionMaybe()', () => {
       minimum_amount: 250,
       percentage: null,
     };
-    expect(getCustomerCommissionMaybe(commission, order, priceAttribute)).toEqual(
-      expectedLineItemsFixed
-    );
+    expect(getCustomerCommissionMaybe(commission, order, currency)).toEqual(expectedLineItemsFixed);
   });
   it('should return correct line items when a minimum commission is provided and percentage is undefined in customer commission', () => {
     const commission = {
       minimum_amount: 250,
     };
-    expect(getCustomerCommissionMaybe(commission, order, priceAttribute)).toEqual(
-      expectedLineItemsFixed
-    );
+    expect(getCustomerCommissionMaybe(commission, order, currency)).toEqual(expectedLineItemsFixed);
   });
   it('should return correct line items when a minimum commission is provided and percentage is negative in customer commission', () => {
     const commission = {
       minimum_amount: 250,
       percentage: -5,
     };
-    expect(getCustomerCommissionMaybe(commission, order, priceAttribute)).toEqual(
-      expectedLineItemsFixed
-    );
+    expect(getCustomerCommissionMaybe(commission, order, currency)).toEqual(expectedLineItemsFixed);
   });
   it('should return correct line items when a minimum commission is provided and percentage is a lower value in customer commission', () => {
     const commission = {
@@ -739,8 +717,6 @@ describe('getCustomerCommissionMaybe()', () => {
         includeFor: ['customer'],
       },
     ];
-    expect(getCustomerCommissionMaybe(commission, order, priceAttribute)).toEqual(
-      expectedLineItems
-    );
+    expect(getCustomerCommissionMaybe(commission, order, currency)).toEqual(expectedLineItems);
   });
 });

@@ -243,7 +243,7 @@ export const SignupPageComponent = props => {
               </NamedLink>
             </div>
 
-            {/* Provider CTA - only show for customer mode */}
+            {/* COMMENTED OUT: "Want to sell products instead?" entry point to /signup/provider
             {userType === 'customer' && (
               <div className={css.providerCta}>
                 <h3 className={css.providerCtaTitle}>
@@ -262,6 +262,7 @@ export const SignupPageComponent = props => {
                 </button>
               </div>
             )}
+            */}
             </div>
           </div>
         </section>

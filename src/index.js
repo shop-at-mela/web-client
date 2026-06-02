@@ -38,6 +38,7 @@ import * as log from './util/log';
 import { authInfo } from './ducks/auth.duck';
 import { fetchAppAssets } from './ducks/hostedAssets.duck';
 import { fetchCurrentUser } from './ducks/user.duck';
+import { initAnonSaved } from './ducks/savedListings.duck';
 
 // Route config
 import routeConfiguration from './routing/routeConfiguration';
@@ -57,6 +58,8 @@ const render = (store, shouldHydrate) => {
     .then(() => {
       // Ensure that Loadable Components is ready
       // and fetch hosted assets in parallel before initializing the ClientApp
+      // Load anon saved items from localStorage on boot (client-side only)
+      store.dispatch(initAnonSaved());
       return Promise.all([
         loadableReady(),
         store.dispatch(fetchAppAssets(defaultConfig.appCdnAssets, cdnAssetsVersion)),
@@ -128,7 +131,6 @@ if (typeof window !== 'undefined') {
     ? { assetCdnBaseUrl: appSettings.sdk.assetCdnBaseUrl }
     : {};
 
-  // eslint-disable-next-line no-underscore-dangle
   const preloadedState = window.__PRELOADED_STATE__ || '{}';
   const initialState = JSON.parse(preloadedState, sdkTypes.reviver);
   const sdk = createInstance({
@@ -144,7 +146,7 @@ if (typeof window !== 'undefined') {
   const googleAnalyticsIdFromSSR = initialState?.hostedAssets?.googleAnalyticsId;
   const googleAnalyticsId = googleAnalyticsIdFromSSR || process.env.REACT_APP_GOOGLE_ANALYTICS_ID;
   const analyticsHandlers = setupAnalyticsHandlers(googleAnalyticsId);
-  const store = configureStore(initialState, sdk, analyticsHandlers);
+  const store = configureStore({ initialState, sdk, analyticsHandlers });
 
   require('./util/polyfills');
   render(store, !!window.__PRELOADED_STATE__);

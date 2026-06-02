@@ -1,6 +1,11 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
+
+jest.mock('../../../../config/configBrands', () => ({
+  getAllBrandIds: () => Array.from({ length: 12 }, (_, i) => `brand-uuid-${i}`),
+  getBrandSlugById: () => null,
+}));
 import { IntlProvider } from 'react-intl';
 import { MemoryRouter } from 'react-router-dom';
 import { ConfigurationProvider } from '../../../../context/configurationContext';
@@ -84,7 +89,7 @@ const mockRoutes = [
 const mockMessages = {
   'FeaturedBrandPartners.title': 'Trusted by Parents, Verified by Us',
   'FeaturedBrandPartners.subtitle':
-    'Discover premium brands that meet our strict quality and safety standards',
+    'We vet every Indian brand so you don\'t have to — quality, safety, and cultural craft, all in one place.',
   'FeaturedBrandPartners.loading': 'Loading trusted brands...',
   'FeaturedBrandPartners.error': 'Unable to load brands. Please try again later.',
   'FeaturedBrandPartners.viewAllBrands': 'Explore All Brands',
@@ -96,9 +101,6 @@ const mockMessages = {
   'BrandCardHome.addDescription': '✏️ Add description',
   'BrandCardHome.addOriginYear': '📍 Add location & year',
   'BrandCardHome.addCertifications': '🏆 Add certifications',
-  'PartnerCTACard.title': 'Become a Partner',
-  'PartnerCTACard.description': 'Join our network of trusted brands.',
-  'PartnerCTACard.cta': 'Apply Now',
 };
 
 const TestWrapper = ({ children }) => (
@@ -121,7 +123,9 @@ describe('FeaturedBrandPartners', () => {
 
     expect(screen.getByText('Trusted by Parents, Verified by Us')).toBeInTheDocument();
     expect(
-      screen.getByText('Discover premium brands that meet our strict quality and safety standards')
+      screen.getByText(
+        "We vet every Indian brand so you don't have to — quality, safety, and cultural craft, all in one place."
+      )
     ).toBeInTheDocument();
   });
 
@@ -136,37 +140,20 @@ describe('FeaturedBrandPartners', () => {
     expect(screen.getByText('Baby Forest')).toBeInTheDocument();
   });
 
-  it('renders PartnerCTACard', () => {
-    render(
-      <TestWrapper>
-        <FeaturedBrandPartners brandsWithProducts={mockBrandsWithProducts} />
-      </TestWrapper>
-    );
-
-    expect(screen.getByText('Become a Partner')).toBeInTheDocument();
-    expect(screen.getByText('Apply Now')).toBeInTheDocument();
-  });
-
-  it('limits display to 6 brands maximum', () => {
-    const sevenBrands = [
-      ...mockBrandsWithProducts,
-      { brand: { ...mockBrand1, id: { uuid: 'brand-3' } }, products: [] },
-      { brand: { ...mockBrand1, id: { uuid: 'brand-4' } }, products: [] },
-      { brand: { ...mockBrand1, id: { uuid: 'brand-5' } }, products: [] },
-      { brand: { ...mockBrand1, id: { uuid: 'brand-6' } }, products: [] },
-      { brand: { ...mockBrand1, id: { uuid: 'brand-7' } }, products: [] },
-    ];
+  it('renders all provided brands without a hard cap', () => {
+    const manyBrands = Array.from({ length: 8 }, (_, i) => ({
+      brand: { ...mockBrand1, id: { uuid: `brand-${i}` } },
+      products: [],
+    }));
 
     const { container } = render(
       <TestWrapper>
-        <FeaturedBrandPartners brandsWithProducts={sevenBrands} />
+        <FeaturedBrandPartners brandsWithProducts={manyBrands} />
       </TestWrapper>
     );
 
-    // Count BrandCardHome components (should be 6, not 7)
-    // Plus 1 PartnerCTACard = 7 total grid items
-    const grid = container.querySelector('.grid');
-    expect(grid.children.length).toBe(7); // 6 brands + 1 partner card
+    const carousel = container.querySelector('.carousel');
+    expect(carousel.children.length).toBe(8);
   });
 
   it('shows loading state when fetchInProgress is true and no brands', () => {
@@ -295,31 +282,20 @@ describe('FeaturedBrandPartners', () => {
       </TestWrapper>
     );
 
-    expect(screen.getByText('Explore All 2 Brands')).toBeInTheDocument();
+    expect(screen.getByText('Explore All 12 Brands')).toBeInTheDocument();
 
-    const viewAllLink = screen.getByText('Explore All 2 Brands').closest('a');
+    const viewAllLink = screen.getByText('Explore All 12 Brands').closest('a');
     expect(viewAllLink).toBeInTheDocument();
   });
 
-  it('renders grid container', () => {
+  it('renders carousel container', () => {
     const { container } = render(
       <TestWrapper>
         <FeaturedBrandPartners brandsWithProducts={mockBrandsWithProducts} />
       </TestWrapper>
     );
 
-    const grid = container.querySelector('.grid');
-    expect(grid).toBeInTheDocument();
-  });
-
-  it('passes correct partnerUrl to PartnerCTACard', () => {
-    render(
-      <TestWrapper>
-        <FeaturedBrandPartners brandsWithProducts={mockBrandsWithProducts} />
-      </TestWrapper>
-    );
-
-    const partnerLink = screen.getByText('Apply Now').closest('a');
-    expect(partnerLink).toHaveAttribute('href', '/partner');
+    const carousel = container.querySelector('.carousel');
+    expect(carousel).toBeInTheDocument();
   });
 });

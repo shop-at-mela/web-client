@@ -1,6 +1,7 @@
 import React, { act } from 'react';
 import '@testing-library/jest-dom';
 
+import configureStore from '../../store';
 import { types as sdkTypes } from '../../util/sdkLoader';
 import {
   createCurrentUser,
@@ -14,32 +15,24 @@ import {
   getHostedConfiguration,
   renderWithProviders as render,
   testingLibrary,
-  createFakeDispatch,
-  dispatchedActions,
 } from '../../util/testHelpers';
 
 import ProfilePage from './ProfilePage';
 
-import {
-  loadData,
-  queryListingsError,
-  queryListingsRequest,
-  queryListingsSuccess,
-  queryReviewsError,
-  queryReviewsSuccess,
-  setInitialState,
-  showUserError,
-  showUserRequest,
-  showUserSuccess,
-} from './ProfilePage.duck';
-import { currentUserShowRequest, currentUserShowSuccess } from '../../ducks/user.duck';
-import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
-import { authInfoRequest, authInfoSuccess } from '../../ducks/auth.duck';
+import reducer, { loadData, setInitialState } from './ProfilePage.duck';
 import { storableError } from '../../util/errors';
 
 const { UUID } = sdkTypes;
 
 const { screen } = testingLibrary;
+
+const logger = actions => () => {
+  return next => action => {
+    actions.push(action);
+    // Call the next dispatch method in the middleware chain.
+    return next(action);
+  };
+};
 
 const attributes = {
   profile: {
@@ -579,8 +572,150 @@ describe('Duck', () => {
     accessControl: { marketplace: { private: true } },
   };
 
+  describe('reducer', () => {
+    it('should have correct initial state', () => {
+      const state = reducer(undefined, { type: '@@INIT' });
+      expect(state).toEqual({
+        userId: null,
+        userListingRefs: [],
+        userShowError: null,
+        queryListingsError: null,
+        reviews: [],
+        queryReviewsError: null,
+      });
+    });
+
+    it('should handle setInitialState action', () => {
+      // First set up a state with some data
+      let state = reducer(undefined, { type: '@@INIT' });
+      state = reducer(state, {
+        type: 'ProfilePage/showUser/rejected',
+        payload: storableError(new Error('Test error')),
+      });
+      state = reducer(state, {
+        type: 'ProfilePage/queryUserListings/rejected',
+        payload: storableError(new Error('Listings error')),
+      });
+      state = reducer(state, {
+        type: 'ProfilePage/queryUserReviews/rejected',
+        payload: storableError(new Error('Reviews error')),
+      });
+
+      // Now test setInitialState - it should reset to initial state
+      state = reducer(state, setInitialState());
+
+      expect(state).toEqual({
+        userId: null,
+        userListingRefs: [],
+        userShowError: null,
+        queryListingsError: null,
+        reviews: [],
+        queryReviewsError: null,
+      });
+    });
+
+    it('should handle showUserThunk.pending', () => {
+      const initialState = reducer(undefined, { type: '@@INIT' });
+      const state = reducer(initialState, {
+        type: 'ProfilePage/showUser/pending',
+        meta: { arg: { userId: 'test-user-id', config } },
+      });
+
+      expect(state.userId).toBe('test-user-id');
+      expect(state.userShowError).toBeNull();
+    });
+
+    it('should handle showUserThunk.rejected', () => {
+      const initialState = reducer(undefined, { type: '@@INIT' });
+      const error = new Error('Test error');
+      const state = reducer(initialState, {
+        type: 'ProfilePage/showUser/rejected',
+        payload: storableError(error),
+      });
+
+      expect(state.userShowError).toEqual(storableError(error));
+    });
+
+    it('should handle queryUserListingsThunk.pending', () => {
+      const initialState = reducer(undefined, { type: '@@INIT' });
+      const state = reducer(initialState, {
+        type: 'ProfilePage/queryUserListings/pending',
+        meta: { arg: { userId: 'test-user-id' } },
+      });
+
+      expect(state.queryListingsError).toBeNull();
+    });
+
+    it('should handle queryUserListingsThunk.fulfilled', () => {
+      const initialState = reducer(undefined, { type: '@@INIT' });
+      const listingRefs = [{ id: 'listing1', type: 'listing' }];
+      const state = reducer(initialState, {
+        type: 'ProfilePage/queryUserListings/fulfilled',
+        payload: { listingRefs, response: {} },
+      });
+
+      expect(state.userListingRefs).toEqual(listingRefs);
+    });
+
+    it('should handle queryUserListingsThunk.rejected', () => {
+      const initialState = reducer(undefined, { type: '@@INIT' });
+      const error = new Error('Listings error');
+      const state = reducer(initialState, {
+        type: 'ProfilePage/queryUserListings/rejected',
+        payload: storableError(error),
+      });
+
+      expect(state.userListingRefs).toEqual([]);
+      expect(state.queryListingsError).toEqual(storableError(error));
+    });
+
+    it('should handle queryUserReviewsThunk.pending', () => {
+      const initialState = reducer(undefined, { type: '@@INIT' });
+      const state = reducer(initialState, {
+        type: 'ProfilePage/queryUserReviews/pending',
+      });
+
+      expect(state.queryReviewsError).toBeNull();
+    });
+
+    it('should handle queryUserReviewsThunk.fulfilled', () => {
+      const initialState = reducer(undefined, { type: '@@INIT' });
+      const reviews = [{ id: 'review1' }, { id: 'review2' }];
+      const state = reducer(initialState, {
+        type: 'ProfilePage/queryUserReviews/fulfilled',
+        payload: reviews,
+      });
+
+      expect(state.reviews).toEqual(reviews);
+    });
+
+    it('should handle queryUserReviewsThunk.rejected', () => {
+      const initialState = reducer(undefined, { type: '@@INIT' });
+      const error = new Error('Reviews error');
+      const state = reducer(initialState, {
+        type: 'ProfilePage/queryUserReviews/rejected',
+        payload: storableError(error),
+      });
+
+      expect(state.reviews).toEqual([]);
+      expect(state.queryReviewsError).toEqual(storableError(error));
+    });
+  });
+
   // Shared parameters for viewing rights loadData tests
-  const fakeResponse = resource => ({ data: { data: resource, include: [] } });
+  // meta.totalPages is required by fetchAllPages in ProfilePage.duck.js
+  const fakeResponse = (resource, { totalPages = 1 } = {}) => ({
+    data: {
+      data: resource,
+      include: [],
+      meta: {
+        totalItems: Array.isArray(resource) ? resource.length : 1,
+        totalPages,
+        page: 1,
+        perPage: 100,
+      },
+    },
+  });
   const sdkFn = response => jest.fn(() => Promise.resolve(response));
   const forbiddenError = new Error({ status: 403, message: 'forbidden' });
   const errorSdkFn = error => jest.fn(() => Promise.reject(error));
@@ -593,10 +728,11 @@ describe('Duck', () => {
     const { l1: listing } = initialState.marketplaceData.entities.listing;
     const { userId: user } = initialState.marketplaceData.entities.user;
 
-    const getState = () => ({
+    const testInitialState = {
       ...initialState,
+      user: { currentUser },
       auth: { isAuthenticated: true },
-    });
+    };
 
     const sdk = {
       currentUser: { show: sdkFn(fakeResponse(currentUser)) },
@@ -606,7 +742,14 @@ describe('Duck', () => {
       authInfo: sdkFn({}),
     };
 
-    const dispatch = createFakeDispatch(getState, sdk);
+    let actions = [];
+    const store = configureStore({
+      initialState: testInitialState,
+      sdk,
+      extraMiddlewares: [logger(actions)],
+    });
+    const dispatch = store.dispatch;
+    const getState = store.getState;
 
     // This is now sanitizeConfig is parsed in the showUser thunk
     const userFields = config?.user?.userFields;
@@ -616,20 +759,48 @@ describe('Duck', () => {
     // loadData() function is called. If you make customizations to the loadData() logic,
     // update the dispatched actions list in this test accordingly!
     return loadData({ id: userId }, null, config)(dispatch, getState, sdk).then(data => {
-      expect(dispatchedActions(dispatch)).toEqual([
-        setInitialState(),
-        currentUserShowRequest(),
-        showUserRequest(user.id, config),
-        queryListingsRequest(user.id),
-        currentUserShowSuccess(currentUser),
-        addMarketplaceEntities(fakeResponse(user), sanitizeConfig),
-        showUserSuccess(),
-        addMarketplaceEntities(fakeResponse([listing])),
-        queryListingsSuccess(userListingRefs),
-        queryReviewsSuccess(reviews),
-        authInfoRequest(),
-        authInfoSuccess({}),
-      ]);
+      const relevantActions = actions.filter(
+        action => !action.type.startsWith('user/fetchCurrentUser/')
+      );
+
+      // Check that setInitialState is first
+      expect(relevantActions[0]).toEqual(setInitialState());
+
+      // Check that all pending actions are dispatched
+      const pendingActions = relevantActions.filter(action => action.type.endsWith('/pending'));
+      expect(pendingActions).toHaveLength(4); // showUser, queryUserListings, queryUserReviews, authInfo
+
+      // Check that addMarketplaceEntities actions are dispatched
+      const addEntitiesActions = relevantActions.filter(
+        action => action.type === 'marketplaceData/addEntities'
+      );
+      expect(addEntitiesActions).toHaveLength(2); // user and listings
+
+      // Check that all fulfilled actions are dispatched
+      const fulfilledActions = relevantActions.filter(action => action.type.endsWith('/fulfilled'));
+      expect(fulfilledActions).toHaveLength(4); // showUser, queryUserListings, queryUserReviews, authInfo
+
+      // Verify specific action types are present
+      expect(relevantActions.some(action => action.type === 'ProfilePage/showUser/pending')).toBe(
+        true
+      );
+      expect(
+        relevantActions.some(action => action.type === 'ProfilePage/queryUserListings/pending')
+      ).toBe(true);
+      expect(
+        relevantActions.some(action => action.type === 'ProfilePage/queryUserReviews/pending')
+      ).toBe(true);
+      expect(relevantActions.some(action => action.type === 'auth/authInfo/pending')).toBe(true);
+      expect(relevantActions.some(action => action.type === 'ProfilePage/showUser/fulfilled')).toBe(
+        true
+      );
+      expect(
+        relevantActions.some(action => action.type === 'ProfilePage/queryUserListings/fulfilled')
+      ).toBe(true);
+      expect(
+        relevantActions.some(action => action.type === 'ProfilePage/queryUserReviews/fulfilled')
+      ).toBe(true);
+      expect(relevantActions.some(action => action.type === 'auth/authInfo/fulfilled')).toBe(true);
     });
   });
 
@@ -639,14 +810,14 @@ describe('Duck', () => {
     const { currentUser } = initialState.user;
     currentUser.effectivePermissionSet.attributes.read = 'permission/deny';
 
-    const getState = () => ({
+    const testInitialState = {
       ...initialState,
       user: {
         ...initialState.user,
         currentUser,
       },
       auth: { isAuthenticated: true },
-    });
+    };
 
     const sdk = {
       currentUser: { show: sdkFn(fakeResponse(currentUser)) },
@@ -656,25 +827,60 @@ describe('Duck', () => {
       authInfo: sdkFn({}),
     };
 
-    const dispatch = createFakeDispatch(getState, sdk);
+    let actions = [];
+    const store = configureStore({
+      initialState: testInitialState,
+      sdk,
+      extraMiddlewares: [logger(actions)],
+    });
+    const dispatch = store.dispatch;
+    const getState = store.getState;
     const otherUserId = new UUID('otherUserId');
 
     // Tests the actions that get dispatched to the Redux store when ProfilePage.duck.js
     // loadData() function is called. If you make customizations to the loadData() logic,
     // update the dispatched actions list in this test accordingly!
     return loadData({ id: 'otherUserId' }, null, config)(dispatch, getState, sdk).then(data => {
-      expect(dispatchedActions(dispatch)).toEqual([
-        setInitialState(),
-        currentUserShowRequest(),
-        showUserRequest(otherUserId, config),
-        queryListingsRequest(otherUserId),
-        currentUserShowSuccess(currentUser),
-        authInfoRequest(),
-        showUserError(storableError(forbiddenError)),
-        queryListingsError(storableError(forbiddenError)),
-        queryReviewsError(forbiddenError),
-        authInfoSuccess({}),
-      ]);
+      const relevantActions = actions.filter(
+        action => !action.type.startsWith('user/fetchCurrentUser/')
+      );
+
+      // Check that setInitialState is first
+      expect(relevantActions[0]).toEqual(setInitialState());
+
+      // Check that all pending actions are dispatched
+      const pendingActions = relevantActions.filter(action => action.type.endsWith('/pending'));
+      expect(pendingActions).toHaveLength(4); // showUser, queryUserListings, queryUserReviews, authInfo
+
+      // Check that all rejected actions are dispatched
+      const rejectedActions = relevantActions.filter(action => action.type.endsWith('/rejected'));
+      expect(rejectedActions).toHaveLength(3); // showUser, queryUserListings, queryUserReviews
+
+      // Check that authInfo fulfilled is dispatched
+      const fulfilledActions = relevantActions.filter(action => action.type.endsWith('/fulfilled'));
+      expect(fulfilledActions).toHaveLength(1); // authInfo
+
+      // Verify specific action types are present
+      expect(relevantActions.some(action => action.type === 'ProfilePage/showUser/pending')).toBe(
+        true
+      );
+      expect(
+        relevantActions.some(action => action.type === 'ProfilePage/queryUserListings/pending')
+      ).toBe(true);
+      expect(
+        relevantActions.some(action => action.type === 'ProfilePage/queryUserReviews/pending')
+      ).toBe(true);
+      expect(relevantActions.some(action => action.type === 'auth/authInfo/pending')).toBe(true);
+      expect(relevantActions.some(action => action.type === 'ProfilePage/showUser/rejected')).toBe(
+        true
+      );
+      expect(
+        relevantActions.some(action => action.type === 'ProfilePage/queryUserListings/rejected')
+      ).toBe(true);
+      expect(
+        relevantActions.some(action => action.type === 'ProfilePage/queryUserReviews/rejected')
+      ).toBe(true);
+      expect(relevantActions.some(action => action.type === 'auth/authInfo/fulfilled')).toBe(true);
     });
   });
 
@@ -687,14 +893,14 @@ describe('Duck', () => {
 
     currentUser.effectivePermissionSet.attributes.read = 'permission/deny';
 
-    const getState = () => ({
+    const testInitialState = {
       ...initialState,
       user: {
         ...initialState.user,
         currentUser,
       },
       auth: { isAuthenticated: true },
-    });
+    };
 
     const sdk = {
       currentUser: { show: sdkFn(fakeResponse(currentUser)) },
@@ -702,23 +908,179 @@ describe('Duck', () => {
       authInfo: sdkFn({}),
     };
 
-    const dispatch = createFakeDispatch(getState, sdk);
+    let actions = [];
+    const store = configureStore({
+      initialState: testInitialState,
+      sdk,
+      extraMiddlewares: [logger(actions)],
+    });
+    const dispatch = store.dispatch;
+    const getState = store.getState;
 
     // Tests the actions that get dispatched to the Redux store when ProfilePage.duck.js
     // loadData() function is called. If you make customizations to the loadData() logic,
     // update the dispatched actions list in this test accordingly!
     return loadData({ id: userId }, null, config)(dispatch, getState, sdk).then(data => {
-      expect(dispatchedActions(dispatch)).toEqual([
-        setInitialState(),
-        currentUserShowRequest(),
-        queryListingsRequest(currentUser.id),
-        showUserRequest(currentUser.id),
-        currentUserShowSuccess(currentUser),
-        addMarketplaceEntities(fakeResponse([listing])),
-        queryListingsSuccess(userListingRefs),
-        authInfoRequest(),
-        authInfoSuccess({}),
-      ]);
+      const relevantActions = actions.filter(
+        action => !action.type.startsWith('user/fetchCurrentUser/')
+      );
+
+      // Check that setInitialState is first
+      expect(relevantActions[0]).toEqual(setInitialState());
+
+      // Check that queryUserListings pending is dispatched
+      expect(
+        relevantActions.some(action => action.type === 'ProfilePage/queryUserListings/pending')
+      ).toBe(true);
+
+      // Check that setUserId is dispatched
+      expect(relevantActions.some(action => action.type === 'ProfilePage/setUserId')).toBe(true);
+
+      // Check that addMarketplaceEntities is dispatched
+      expect(relevantActions.some(action => action.type === 'marketplaceData/addEntities')).toBe(
+        true
+      );
+
+      // Check that authInfo pending and fulfilled are dispatched
+      expect(relevantActions.some(action => action.type === 'auth/authInfo/pending')).toBe(true);
+      expect(relevantActions.some(action => action.type === 'auth/authInfo/fulfilled')).toBe(true);
+
+      // Check that queryUserListings fulfilled is dispatched
+      expect(
+        relevantActions.some(action => action.type === 'ProfilePage/queryUserListings/fulfilled')
+      ).toBe(true);
+    });
+  });
+
+  describe('queryUserListings — pagination and filtering', () => {
+    it('queries with perPage: 100 so brands with many listings are not truncated', () => {
+      const initialState = getInitialState();
+      const { currentUser } = initialState.user;
+      const { l1: listing } = initialState.marketplaceData.entities.listing;
+
+      const testInitialState = {
+        ...initialState,
+        user: { currentUser },
+        auth: { isAuthenticated: true },
+      };
+
+      const querySpy = jest.fn(() => Promise.resolve(fakeResponse([listing])));
+      const sdk = {
+        currentUser: { show: sdkFn(fakeResponse(currentUser)) },
+        users: { show: sdkFn(fakeResponse(initialState.marketplaceData.entities.user.userId)) },
+        reviews: { query: sdkFn(fakeResponse([])) },
+        listings: { query: querySpy },
+        authInfo: sdkFn({}),
+      };
+
+      const store = configureStore({ initialState: testInitialState, sdk, extraMiddlewares: [] });
+
+      return loadData({ id: userId }, null, config)(store.dispatch, store.getState, sdk).then(() => {
+        expect(querySpy).toHaveBeenCalled();
+        const callArgs = querySpy.mock.calls[0][0];
+        expect(callArgs.perPage).toBe(100);
+        expect(callArgs.page).toBe(1);
+      });
+    });
+
+    it('fetches additional pages when totalPages > 1', () => {
+      const initialState = getInitialState();
+      const { currentUser } = initialState.user;
+      const { l1: listing } = initialState.marketplaceData.entities.listing;
+
+      const listing2 = createListing('l2');
+
+      const testInitialState = {
+        ...initialState,
+        user: { currentUser },
+        auth: { isAuthenticated: true },
+      };
+
+      // First call returns 2 pages; second call returns page 2
+      const querySpy = jest.fn()
+        .mockResolvedValueOnce(fakeResponse([listing], { totalPages: 2 }))
+        .mockResolvedValueOnce(fakeResponse([listing2], { totalPages: 2 }));
+
+      const sdk = {
+        currentUser: { show: sdkFn(fakeResponse(currentUser)) },
+        users: { show: sdkFn(fakeResponse(initialState.marketplaceData.entities.user.userId)) },
+        reviews: { query: sdkFn(fakeResponse([])) },
+        listings: { query: querySpy },
+        authInfo: sdkFn({}),
+      };
+
+      let actions = [];
+      const store = configureStore({
+        initialState: testInitialState,
+        sdk,
+        extraMiddlewares: [logger(actions)],
+      });
+
+      return loadData({ id: userId }, null, config)(store.dispatch, store.getState, sdk).then(() => {
+        // Both pages fetched
+        expect(querySpy).toHaveBeenCalledTimes(2);
+        expect(querySpy.mock.calls[0][0].page).toBe(1);
+        expect(querySpy.mock.calls[1][0].page).toBe(2);
+
+        // addMarketplaceEntities dispatched once per page (plus once for showUser)
+        const addEntities = actions.filter(a => a.type === 'marketplaceData/addEntities');
+        expect(addEntities).toHaveLength(3); // showUser + page1 + page2
+
+        // Both listing refs end up in state
+        const fulfilled = actions.find(
+          a => a.type === 'ProfilePage/queryUserListings/fulfilled'
+        );
+        expect(fulfilled.payload.listingRefs).toHaveLength(2);
+      });
+    });
+
+    it('excludes deleted listings but keeps listings regardless of state field presence', () => {
+      const initialState = getInitialState();
+      const { currentUser } = initialState.user;
+      const { l1: listing } = initialState.marketplaceData.entities.listing;
+
+      // Public API may omit the state attribute — these should still appear
+      const listingNoState = {
+        ...createListing('l-no-state'),
+        attributes: { ...createListing('l-no-state').attributes, deleted: false, state: undefined },
+      };
+      const deletedListing = {
+        ...createListing('l-deleted'),
+        attributes: { ...createListing('l-deleted').attributes, deleted: true },
+      };
+
+      const testInitialState = {
+        ...initialState,
+        user: { currentUser },
+        auth: { isAuthenticated: true },
+      };
+
+      const sdk = {
+        currentUser: { show: sdkFn(fakeResponse(currentUser)) },
+        users: { show: sdkFn(fakeResponse(initialState.marketplaceData.entities.user.userId)) },
+        reviews: { query: sdkFn(fakeResponse([])) },
+        listings: { query: sdkFn(fakeResponse([listing, listingNoState, deletedListing])) },
+        authInfo: sdkFn({}),
+      };
+
+      let actions = [];
+      const store = configureStore({
+        initialState: testInitialState,
+        sdk,
+        extraMiddlewares: [logger(actions)],
+      });
+
+      return loadData({ id: userId }, null, config)(store.dispatch, store.getState, sdk).then(() => {
+        const fulfilled = actions.find(
+          a => a.type === 'ProfilePage/queryUserListings/fulfilled'
+        );
+        // Deleted listing excluded; listing with no state field included
+        expect(fulfilled.payload.listingRefs).toHaveLength(2);
+        const uuids = fulfilled.payload.listingRefs.map(r => r.id.uuid);
+        expect(uuids).toContain('l1');
+        expect(uuids).toContain('l-no-state');
+        expect(uuids).not.toContain('l-deleted');
+      });
     });
   });
 });

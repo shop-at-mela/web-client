@@ -4,11 +4,10 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import loadable from '@loadable/component';
 
-import { propTypes } from '../../util/types';
-
 import { sendVerificationEmail, hasCurrentUserErrors } from '../../ducks/user.duck';
 import { logout, authenticationInProgress } from '../../ducks/auth.duck';
 import { manageDisableScrolling } from '../../ducks/ui.duck';
+import { SavedItemsBanner } from '../../components';
 
 const Topbar = loadable(() => import(/* webpackChunkName: "Topbar" */ './Topbar/Topbar'));
 
@@ -29,7 +28,10 @@ export const TopbarContainerComponent = props => {
   const { notificationCount = 0, hasGenericError, ...rest } = props;
 
   return (
-    <Topbar notificationCount={notificationCount} showGenericError={hasGenericError} {...rest} />
+    <>
+      <Topbar notificationCount={notificationCount} showGenericError={hasGenericError} {...rest} />
+      <SavedItemsBanner />
+    </>
   );
 };
 
@@ -41,7 +43,8 @@ const mapStateToProps = state => {
     currentUser,
     currentUserHasListings,
     currentUserHasOrders,
-    currentUserNotificationCount: notificationCount,
+    currentUserSaleNotificationCount = 0,
+    currentUserOrderNotificationCount = 0,
     sendVerificationEmailInProgress,
     sendVerificationEmailError,
   } = state.user;
@@ -51,7 +54,7 @@ const mapStateToProps = state => {
     currentUser,
     currentUserHasListings,
     currentUserHasOrders,
-    notificationCount,
+    notificationCount: currentUserSaleNotificationCount + currentUserOrderNotificationCount,
     isAuthenticated,
     isLoggedInAs,
     authScopes,

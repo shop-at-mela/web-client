@@ -7,6 +7,8 @@ import ImageCarousel from './ImageCarousel/ImageCarousel';
 
 import css from './ListingPage.module.css';
 
+const VIEW_PHOTOS_BUTTON_ID = 'viewPhotosButton';
+
 const SectionHero = props => {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -16,7 +18,6 @@ const SectionHero = props => {
   const {
     title,
     listing,
-    isOwnListing,
     handleViewPhotosClick,
     imageCarouselOpen,
     onImageCarouselClose,
@@ -31,7 +32,7 @@ const SectionHero = props => {
     : [];
 
   const viewPhotosButton = hasImages ? (
-    <button className={css.viewPhotos} onClick={handleViewPhotosClick}>
+    <button id={VIEW_PHOTOS_BUTTON_ID} className={css.viewPhotos} onClick={handleViewPhotosClick}>
       <FormattedMessage
         id="ListingPage.viewImagesButton"
         values={{ count: listing.images.length }}
@@ -42,7 +43,7 @@ const SectionHero = props => {
   return (
     <section className={css.sectionHero} data-testid="hero">
       <div className={css.imageWrapperForSectionHero} onClick={handleViewPhotosClick}>
-        {mounted && listing.id && isOwnListing ? (
+        {mounted && listing.id ? (
           <div onClick={e => e.stopPropagation()} className={css.actionBarContainerForHeroLayout}>
             {actionBar}
           </div>
@@ -65,6 +66,7 @@ const SectionHero = props => {
         onClose={onImageCarouselClose}
         usePortal
         onManageDisableScrolling={onManageDisableScrolling}
+        focusElementId={VIEW_PHOTOS_BUTTON_ID}
       >
         <ImageCarousel
           images={listing.images}

@@ -9,6 +9,7 @@ import emailVerification from './emailVerification.duck';
 import routing from './routing.duck';
 import ui from './ui.duck';
 import hostedAssets from './hostedAssets.duck';
+import featuredListings from './featuredListings.duck';
 import marketplaceData from './marketplaceData.duck';
 import paymentMethods from './paymentMethods.duck';
 import recommendedProducts from './recommendedProducts.duck';
@@ -17,6 +18,7 @@ import heroProducts from './heroProducts.duck';
 import stripe from './stripe.duck';
 import stripeConnectAccount from './stripeConnectAccount.duck';
 import user from './user.duck';
+import savedListings from './savedListings.duck';
 
 export {
   auth,
@@ -24,6 +26,7 @@ export {
   routing,
   ui,
   hostedAssets,
+  featuredListings,
   marketplaceData,
   paymentMethods,
   recommendedProducts,
@@ -32,4 +35,5 @@ export {
   stripe,
   stripeConnectAccount,
   user,
+  savedListings,
 };

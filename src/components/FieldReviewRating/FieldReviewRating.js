@@ -7,7 +7,6 @@ import { IconReviewStar, ValidationError } from '../../components';
 import css from './FieldReviewRating.module.css';
 
 const FieldReviewRatingComponent = props => {
-  /* eslint-disable no-unused-vars */
   const {
     rootClassName,
     className,
@@ -20,7 +19,6 @@ const FieldReviewRatingComponent = props => {
     meta,
     ...rest
   } = props;
-  /* eslint-enable no-unused-vars */
 
   const handleChange = event => {
     input.onChange(event.target.value);
@@ -66,7 +64,7 @@ const FieldReviewRatingComponent = props => {
         >
           <IconReviewStar
             rootClassName={css.star}
-            label={intl.formatMessage({ id: `FieldReviewRating.${starId}` })}
+            ariaLabel={intl.formatMessage({ id: `FieldReviewRating.${starId}` })}
           />
         </label>
       );

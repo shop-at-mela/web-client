@@ -1,0 +1,344 @@
+/* ── RedirectTrustSheet ──────────────────────────────────────────────────────
+ *
+ * Combined pre-redirect trust context + sentiment collection.
+ * Slides up from bottom on CTA click. "Continue" button always visible.
+ *
+ * Mobile: full-width fixed bottom sheet.
+ * Desktop (≥768px): 480px centered, same pattern as SentimentSheet.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 998;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+  border-radius: 16px 16px 0 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  max-height: 75vh;
+  overflow: hidden;
+
+  /* Entry animation */
+  animation: slideUp 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sheet.expanded {
+  max-height: 85vh;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@media (min-width: 768px) {
+  .sheet {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: 480px;
+    border-left: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .sheet.expanded {
+    /* override transform to keep centering */
+    transform: translateX(-50%);
+  }
+}
+
+/* ── Drag handle ── */
+
+.handle {
+  width: 36px;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+
+/* ── Trust section ── */
+
+.trustSection {
+  padding: 1rem 1.25rem 0.75rem;
+}
+
+.trustHeading {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 0.625rem;
+  line-height: 1.4;
+}
+
+.trustList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.trustList li {
+  font-size: 0.875rem;
+  color: #4a5568;
+  line-height: 1.4;
+}
+
+/* ── Divider ── */
+
+.divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* ── Sentiment row ── */
+
+.sentimentRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  gap: 0.75rem;
+}
+
+.sentimentPrompt {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #2d3748;
+  flex: 1;
+}
+
+.thumbsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+}
+
+.thumbBtn {
+  background: none;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  width: 40px;
+  height: 36px;
+  font-size: 1.125rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, background 0.15s;
+  padding: 0;
+}
+
+.thumbBtn:hover {
+  border-color: var(--marketplaceColor, #262261);
+  background: rgba(38, 34, 97, 0.04);
+}
+
+.thumbBtn.thumbSelected {
+  border-color: var(--marketplaceColor, #262261);
+  background: rgba(38, 34, 97, 0.08);
+}
+
+/* ── Expanded content ── */
+
+.expandedContent {
+  padding: 0.25rem 1.25rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.textPrompt {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.textarea {
+  width: 100%;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  color: #2d3748;
+  resize: none;
+  font-family: inherit;
+  line-height: 1.5;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--marketplaceColor, #262261);
+}
+
+.textarea::placeholder {
+  color: #a0aec0;
+}
+
+.emailField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.emailLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.emailInput {
+  width: 100%;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #2d3748;
+  font-family: inherit;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.emailInput:focus {
+  outline: none;
+  border-color: var(--marketplaceColor, #262261);
+}
+
+.emailInput::placeholder {
+  color: #a0aec0;
+}
+
+.emailInputError {
+  border-color: #e53e3e;
+}
+
+.emailInputError:focus {
+  border-color: #e53e3e;
+}
+
+.emailErrorMsg {
+  font-size: 0.75rem;
+  color: #e53e3e;
+}
+
+.sentimentActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.submitBtn {
+  background: var(--marketplaceColor, #262261);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 36px;
+  transition: background 0.15s;
+}
+
+.submitBtn:hover {
+  background: var(--marketplaceColorDark, #1a1744);
+}
+
+.skipBtn {
+  background: none;
+  border: none;
+  font-size: 0.875rem;
+  color: #718096;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.skipBtn:hover {
+  color: #2d3748;
+}
+
+/* ── Thank-you ── */
+
+.thankYou {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+/* ── CTA row — always pinned at bottom ── */
+
+.ctaRow {
+  padding: 0.875rem 1.25rem calc(0.875rem + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  background: #fff;
+}
+
+.continueBtn {
+  flex: 1;
+  background: var(--marketplaceColor, #262261);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 48px;
+  transition: background 0.15s;
+  text-align: center;
+}
+
+.continueBtn:hover {
+  background: var(--marketplaceColorDark, #1a1744);
+}
+
+.dismissBtn {
+  background: none;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0 0.875rem;
+  font-size: 0.875rem;
+  color: #718096;
+  cursor: pointer;
+  height: 48px;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.dismissBtn:hover {
+  border-color: #a0aec0;
+  color: #2d3748;
+}

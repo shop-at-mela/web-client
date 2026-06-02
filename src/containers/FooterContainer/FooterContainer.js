@@ -1,6 +1,7 @@
 import React from 'react';
 import { useConfiguration } from '../../context/configurationContext';
 import loadable from '@loadable/component';
+import SentimentSheet from '../../components/SentimentSheet/SentimentSheet';
 
 const SectionBuilder = loadable(
   () => import(/* webpackChunkName: "SectionBuilder" */ '../PageBuilder/PageBuilder'),
@@ -27,17 +28,12 @@ const FooterComponent = () => {
     linkLogoToExternalSite: topbar?.logoLink,
   };
 
-  return <SectionBuilder sections={[footerSection]} />;
+  return (
+    <>
+      <SectionBuilder sections={[footerSection]} />
+      <SentimentSheet />
+    </>
+  );
 };
-
-// NOTE: if you want to add dynamic data to FooterComponent,
-//       you could just connect this FooterContainer to Redux Store
-//
-// const mapStateToProps = state => {
-//   const { currentUser } = state.user;
-//   return { currentUser };
-// };
-// const FooterContainer = compose(connect(mapStateToProps))(FooterComponent);
-// export default FooterContainer;
 
 export default FooterComponent;

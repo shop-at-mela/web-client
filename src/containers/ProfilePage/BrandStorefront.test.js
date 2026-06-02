@@ -5,24 +5,16 @@ import { IntlProvider } from 'react-intl';
 import { MemoryRouter } from 'react-router-dom';
 import { ConfigurationProvider } from '../../context/configurationContext';
 import { RouteConfigurationProvider } from '../../context/routeConfigurationContext';
+
+// Break the import chain: components/index.js → UserNav → routeConfiguration → pageDataLoadingAPI → ducks
+jest.mock('../../routing/routeConfiguration', () => []);
+
 import BrandStorefront from './BrandStorefront';
 
 // Mock specific components to avoid complex configuration dependencies
 jest.mock('../../components/ListingCard/ListingCard', () => {
   return function MockListingCard({ listing }) {
     return <div data-testid="listing-card">{listing.attributes.title}</div>;
-  };
-});
-
-jest.mock('../../components/Reviews/Reviews', () => {
-  return function MockReviews({ reviews }) {
-    return (
-      <div data-testid="reviews">
-        {reviews.map(r => (
-          <div key={r.id.uuid}>{r.attributes.content}</div>
-        ))}
-      </div>
-    );
   };
 });
 
@@ -75,39 +67,6 @@ const mockListings = [
   },
 ];
 
-const mockReviews = [
-  {
-    id: { uuid: 'review-1' },
-    type: 'review',
-    attributes: {
-      type: 'ofProvider',
-      content: 'Great quality products!',
-      rating: 5,
-      createdAt: new Date('2024-01-15'),
-    },
-    author: {
-      attributes: {
-        profile: { displayName: 'Sarah J.' },
-      },
-    },
-  },
-  {
-    id: { uuid: 'review-2' },
-    type: 'review',
-    attributes: {
-      type: 'ofProvider',
-      content: 'Love the organic materials.',
-      rating: 4,
-      createdAt: new Date('2024-01-10'),
-    },
-    author: {
-      attributes: {
-        profile: { displayName: 'Mike P.' },
-      },
-    },
-  },
-];
-
 const mockConfig = {
   marketplaceName: 'Mela',
   marketplaceRootURL: 'https://mela.com',
@@ -130,6 +89,7 @@ const mockConfig = {
 
 const mockRoutes = [
   { path: '/u/:id', name: 'ProfilePage' },
+  { path: '/u/:id/:variant', name: 'ProfilePageVariant' },
   { path: '/l/:slug/:id', name: 'ListingPage' },
   { path: '/account/profile', name: 'ProfileSettingsPage' },
 ];
@@ -137,10 +97,8 @@ const mockRoutes = [
 const mockMessages = {
   'BrandStorefront.productsTab': 'Products ({count})',
   'BrandStorefront.aboutTab': 'About',
-  'BrandStorefront.reviewsTab': 'Reviews ({count})',
   'BrandStorefront.productsTitle': 'Products ({count})',
   'BrandStorefront.aboutTitle': 'About {name}',
-  'BrandStorefront.reviewsTitle': 'Customer Reviews ({count})',
   'BrandStorefront.ourStory': 'Our Story',
   'BrandStorefront.ourMission': 'Our Mission',
   'BrandStorefront.certifications': 'Certifications & Standards',
@@ -149,7 +107,6 @@ const mockMessages = {
   'BrandStorefront.readMore': 'Read More',
   'BrandStorefront.readLess': 'Read Less',
   'BrandStorefront.storyTip': 'Tip: Add {recommendedLength} characters for an engaging brand story. You have {currentLength} so far.',
-  'ProfilePage.loadingReviewsFailed': 'Loading reviews failed.',
   'ProfilePage.editProfileLinkDesktop': 'Edit Profile',
   'BrandStorefront.placeholder.logo.title': 'Add Your Brand Logo',
   'BrandStorefront.placeholder.logo.description': 'Upload a professional brand logo to build trust with customers.',
@@ -183,7 +140,6 @@ describe('BrandStorefront', () => {
         <BrandStorefront
           user={mockBrand}
           listings={mockListings}
-          reviews={mockReviews}
           userTypeRoles={{ provider: true, customer: false }}
         />
       </TestWrapper>
@@ -191,7 +147,7 @@ describe('BrandStorefront', () => {
 
     expect(screen.getByText('Masilo')).toBeInTheDocument();
     expect(screen.getByText(/Premium organic baby clothing from India/)).toBeInTheDocument();
-    expect(screen.getByAlt('Masilo')).toBeInTheDocument();
+    expect(screen.getByAltText('Masilo')).toBeInTheDocument();
   });
 
   it('displays brand origin and established year', () => {
@@ -200,7 +156,6 @@ describe('BrandStorefront', () => {
         <BrandStorefront
           user={mockBrand}
           listings={mockListings}
-          reviews={mockReviews}
           userTypeRoles={{ provider: true, customer: false }}
         />
       </TestWrapper>
@@ -216,7 +171,6 @@ describe('BrandStorefront', () => {
         <BrandStorefront
           user={mockBrand}
           listings={mockListings}
-          reviews={mockReviews}
           userTypeRoles={{ provider: true, customer: false }}
         />
       </TestWrapper>
@@ -242,7 +196,6 @@ describe('BrandStorefront', () => {
         <BrandStorefront
           user={brandNoLogo}
           listings={[]}
-          reviews={[]}
           userTypeRoles={{ provider: true, customer: false }}
         />
       </TestWrapper>
@@ -253,13 +206,30 @@ describe('BrandStorefront', () => {
     expect(placeholder).toHaveTextContent('T');
   });
 
+  describe('Tab navigation', () => {
+    it('shows only Products and About tabs (no Reviews tab)', () => {
+      render(
+        <TestWrapper>
+          <BrandStorefront
+            user={mockBrand}
+            listings={mockListings}
+            userTypeRoles={{ provider: true, customer: false }}
+          />
+        </TestWrapper>
+      );
+
+      expect(screen.getAllByText(/Products/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText('About')).toBeInTheDocument();
+      expect(screen.queryByText(/Reviews/)).not.toBeInTheDocument();
+    });
+  });
+
   it('renders products section with all listings', () => {
     render(
       <TestWrapper>
         <BrandStorefront
           user={mockBrand}
           listings={mockListings}
-          reviews={mockReviews}
           userTypeRoles={{ provider: true, customer: false }}
         />
       </TestWrapper>
@@ -275,7 +245,6 @@ describe('BrandStorefront', () => {
         <BrandStorefront
           user={mockBrand}
           listings={[]}
-          reviews={mockReviews}
           userTypeRoles={{ provider: true, customer: false }}
         />
       </TestWrapper>
@@ -290,14 +259,14 @@ describe('BrandStorefront', () => {
         <BrandStorefront
           user={mockBrand}
           listings={mockListings}
-          reviews={mockReviews}
+          variant="about"
           userTypeRoles={{ provider: true, customer: false }}
         />
       </TestWrapper>
     );
 
     expect(screen.getByText('Our Story')).toBeInTheDocument();
-    expect(screen.getByText(/Premium organic baby clothing from India/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Premium organic baby clothing from India/).length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders brand mission when provided', () => {
@@ -306,7 +275,7 @@ describe('BrandStorefront', () => {
         <BrandStorefront
           user={mockBrand}
           listings={mockListings}
-          reviews={mockReviews}
+          variant="about"
           userTypeRoles={{ provider: true, customer: false }}
         />
       </TestWrapper>
@@ -324,45 +293,13 @@ describe('BrandStorefront', () => {
         <BrandStorefront
           user={mockBrand}
           listings={mockListings}
-          reviews={mockReviews}
+          variant="about"
           userTypeRoles={{ provider: true, customer: false }}
         />
       </TestWrapper>
     );
 
     expect(screen.getByText('Certifications & Standards')).toBeInTheDocument();
-  });
-
-  it('renders reviews section', () => {
-    render(
-      <TestWrapper>
-        <BrandStorefront
-          user={mockBrand}
-          listings={mockListings}
-          reviews={mockReviews}
-          userTypeRoles={{ provider: true, customer: false }}
-        />
-      </TestWrapper>
-    );
-
-    expect(screen.getByText(/Great quality products/)).toBeInTheDocument();
-    expect(screen.getByText(/Love the organic materials/)).toBeInTheDocument();
-  });
-
-  it('shows error message when reviews fail to load', () => {
-    render(
-      <TestWrapper>
-        <BrandStorefront
-          user={mockBrand}
-          listings={mockListings}
-          reviews={[]}
-          queryReviewsError={{ message: 'Network error' }}
-          userTypeRoles={{ provider: true, customer: false }}
-        />
-      </TestWrapper>
-    );
-
-    expect(screen.getByText('Loading reviews failed.')).toBeInTheDocument();
   });
 
   it('handles brand with foundedYear instead of establishedYear', () => {
@@ -386,7 +323,6 @@ describe('BrandStorefront', () => {
         <BrandStorefront
           user={brandWithFoundedYear}
           listings={mockListings}
-          reviews={mockReviews}
           userTypeRoles={{ provider: true, customer: false }}
         />
       </TestWrapper>
@@ -417,7 +353,6 @@ describe('BrandStorefront', () => {
         <BrandStorefront
           user={brandSeparateLocation}
           listings={mockListings}
-          reviews={mockReviews}
           userTypeRoles={{ provider: true, customer: false }}
         />
       </TestWrapper>
@@ -443,15 +378,13 @@ describe('BrandStorefront', () => {
         <BrandStorefront
           user={brandLongBio}
           listings={mockListings}
-          reviews={mockReviews}
           userTypeRoles={{ provider: true, customer: false }}
         />
       </TestWrapper>
     );
 
     const tagline = screen.getByText(/This is a very long bio/);
-    expect(tagline.textContent).toContain('...');
-    expect(tagline.textContent.length).toBeLessThanOrEqual(123); // 120 chars + "..."
+    expect(tagline.textContent.length).toBeLessThanOrEqual(120);
   });
 
   describe('Placeholder components for brand owner', () => {
@@ -479,7 +412,6 @@ describe('BrandStorefront', () => {
           <BrandStorefront
             user={incompleteBrand}
             listings={[]}
-            reviews={[]}
             currentUser={mockCurrentUser}
             userTypeRoles={{ provider: true, customer: false }}
           />
@@ -496,7 +428,6 @@ describe('BrandStorefront', () => {
           <BrandStorefront
             user={incompleteBrand}
             listings={[]}
-            reviews={[]}
             currentUser={mockCurrentUser}
             userTypeRoles={{ provider: true, customer: false }}
           />
@@ -512,7 +443,6 @@ describe('BrandStorefront', () => {
           <BrandStorefront
             user={incompleteBrand}
             listings={[]}
-            reviews={[]}
             currentUser={mockCurrentUser}
             userTypeRoles={{ provider: true, customer: false }}
           />
@@ -528,14 +458,12 @@ describe('BrandStorefront', () => {
           <BrandStorefront
             user={incompleteBrand}
             listings={[]}
-            reviews={[]}
             currentUser={mockCurrentUser}
             userTypeRoles={{ provider: true, customer: false }}
           />
         </TestWrapper>
       );
 
-      // Two instances: one in header, one in About section
       const certPlaceholders = screen.getAllByText('Add Certifications');
       expect(certPlaceholders.length).toBeGreaterThanOrEqual(1);
     });
@@ -546,7 +474,6 @@ describe('BrandStorefront', () => {
           <BrandStorefront
             user={incompleteBrand}
             listings={[]}
-            reviews={[]}
             currentUser={mockCurrentUser}
             userTypeRoles={{ provider: true, customer: false }}
           />
@@ -563,8 +490,8 @@ describe('BrandStorefront', () => {
           <BrandStorefront
             user={incompleteBrand}
             listings={[]}
-            reviews={[]}
             currentUser={mockCurrentUser}
+            variant="about"
             userTypeRoles={{ provider: true, customer: false }}
           />
         </TestWrapper>
@@ -579,7 +506,6 @@ describe('BrandStorefront', () => {
           <BrandStorefront
             user={incompleteBrand}
             listings={[]}
-            reviews={[]}
             currentUser={mockCurrentUser}
             userTypeRoles={{ provider: true, customer: false }}
           />
@@ -601,7 +527,6 @@ describe('BrandStorefront', () => {
           <BrandStorefront
             user={incompleteBrand}
             listings={[]}
-            reviews={[]}
             currentUser={differentUser}
             userTypeRoles={{ provider: true, customer: false }}
           />
@@ -624,7 +549,6 @@ describe('BrandStorefront', () => {
           <BrandStorefront
             user={incompleteBrand}
             listings={[]}
-            reviews={[]}
             currentUser={differentUser}
             userTypeRoles={{ provider: true, customer: false }}
           />

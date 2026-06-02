@@ -1,0 +1,92 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+
+  @media (--viewportMedium) {
+    padding: 40px 24px 80px;
+  }
+
+  @media (--viewportLarge) {
+    padding: 48px 32px 80px;
+  }
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.title {
+  composes: marketplaceH1FontStyles from global;
+  color: var(--colorGrey800);
+  margin: 0 0 8px;
+}
+
+.subheading {
+  composes: textSmall from global;
+  color: var(--colorGrey500);
+  font-style: italic;
+  margin: 0;
+}
+
+.loading,
+.error {
+  composes: textSmall from global;
+  color: var(--colorGrey500);
+  padding: 40px 0;
+  text-align: center;
+}
+
+.error {
+  color: var(--colorFail);
+}
+
+/* ── Empty state ─────────────────────────────── */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.emptyHeading {
+  composes: marketplaceH2FontStyles from global;
+  color: var(--colorGrey700);
+  margin: 0 0 8px;
+}
+
+.emptySubheading {
+  composes: textSmall from global;
+  color: var(--colorGrey500);
+  font-style: italic;
+  margin: 0 0 32px;
+}
+
+.browseCta {
+  composes: marketplaceButtonStyles from global;
+  display: inline-block;
+  padding: 14px 32px;
+  text-decoration: none;
+}
+
+/* ── Listings grid ───────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+
+  @media (--viewportMedium) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  @media (--viewportLarge) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+}

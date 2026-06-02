@@ -9,6 +9,7 @@ import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { ensureCurrentUser } from '../../util/data';
 import { propTypes } from '../../util/types';
 import { showCreateListingLinkForUser, showPaymentDetailsForUser } from '../../util/userHelpers';
+import { getDisplayAccountType } from '../../util/stripeConnect';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import {
   stripeAccountClearError,
@@ -143,7 +144,7 @@ export const StripePayoutPageComponent = props => {
       hasRequirements(stripeAccountData, 'currently_due'));
 
   const savedCountry = stripeAccountData ? stripeAccountData.country : null;
-  const savedAccountType = stripeAccountData ? stripeAccountData.business_type : null;
+  const savedAccountType = stripeAccountData ? getDisplayAccountType(stripeAccountData) : null;
 
   const handleGetStripeConnectAccountLink = handleGetStripeConnectAccountLinkFn(
     onGetStripeConnectAccountLink,
@@ -202,6 +203,7 @@ export const StripePayoutPageComponent = props => {
         useAccountSettingsNav
         accountSettingsNavProps={accountSettingsNavProps}
         footer={<FooterContainer />}
+        intl={intl}
       >
         <div className={css.content}>
           <H3 as="h1" className={css.heading}>

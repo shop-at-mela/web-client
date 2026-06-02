@@ -25,9 +25,9 @@ describe('SearchResultsPanel', () => {
   });
 
   describe('Badge calculations', () => {
-    it('calculates isNew correctly for listings created within 30 days', () => {
+    it('calculates isNew correctly for listings created within 7 days', () => {
       const now = new Date();
-      const recentDate = new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000); // 20 days ago
+      const recentDate = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
 
       const listing = createListingWithAttributes({
         createdAt: recentDate.toISOString(),
@@ -50,7 +50,7 @@ describe('SearchResultsPanel', () => {
       expect(screen.getByText(listing.attributes.title)).toBeInTheDocument();
     });
 
-    it('calculates isNew correctly for listings older than 30 days', () => {
+    it('calculates isNew correctly for listings older than 7 days', () => {
       const now = new Date();
       const oldDate = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000); // 40 days ago
 
@@ -178,7 +178,7 @@ describe('SearchResultsPanel', () => {
   describe('Rendering', () => {
     it('renders multiple listings with correct badge props', () => {
       const now = new Date();
-      const recentDate = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
+      const recentDate = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
 
       const listing1 = createListingWithAttributes({
         createdAt: recentDate.toISOString(),

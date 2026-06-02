@@ -3,14 +3,14 @@
 .showcase {
   width: 100%;
   background: #ffffff;
-  padding: 2rem 0;
+  padding: 1.5rem 0;
 
   @media (min-width: 768px) {
-    padding: 3rem 0;
+    padding: 2rem 0;
   }
 
   @media (min-width: 1024px) {
-    padding: 4rem 0;
+    padding: 2.5rem 0;
   }
 }
 
@@ -42,10 +42,10 @@
 /* Section Header */
 .header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 
   @media (min-width: 768px) {
-    margin-bottom: 3rem;
+    margin-bottom: 1.5rem;
   }
 }
 
@@ -77,14 +77,194 @@
   }
 }
 
+/* Horizontal swipe carousel — mobile + desktop */
+.productCarousel {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: 0.5rem;
+  /* Peek: partial next card visible signals more content */
+  padding-right: 2.5rem;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 1024px) {
+    gap: 1.5rem;
+    padding-right: 4rem;
+    /* Show a thin scrollbar on desktop — mouse users need the affordance */
+    scrollbar-width: thin;
+    scrollbar-color: var(--colorGrey300) transparent;
+    padding-bottom: 1rem;
+
+    &::-webkit-scrollbar {
+      display: block;
+      height: 4px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: var(--colorGrey300);
+      border-radius: 2px;
+    }
+  }
+}
+
+.carouselCard {
+  flex: 0 0 calc(50% - 0.5rem);
+  scroll-snap-align: start;
+
+  @media (min-width: 640px) {
+    flex: 0 0 calc(33.333% - 0.75rem);
+  }
+
+  @media (min-width: 1024px) {
+    /* 4 cards fill the viewport, peek of 5th via padding-right */
+    flex: 0 0 calc(25% - 18px);
+  }
+}
+
+/* ── Occasion Strip ───────────────────────────────────────────────────── */
+
+.occasionStrip {
+  margin-bottom: 2rem;
+  padding: 2rem 0 0;
+
+  @media (min-width: 768px) {
+    margin-bottom: 2.5rem;
+  }
+}
+
+/* Two-panel editorial grid: stacked on mobile, side-by-side on tablet+ */
+.occasionPanels {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+}
+
+.occasionPanel {
+  /* Mobile: edge-to-edge, no rounded corners — removes box-in-box layering */
+  border-radius: 0;
+  margin: 0 -1rem;
+  padding: 1.25rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+
+  @media (min-width: 640px) {
+    margin: 0 -1.5rem;
+    padding: 1.5rem 1.5rem 1.25rem;
+  }
+
+  @media (min-width: 768px) {
+    /* Restore card appearance on tablet+ where side-by-side layout looks right */
+    border-radius: 16px;
+    margin: 0;
+    padding: 2rem 2rem 1.5rem;
+  }
+}
+
+/* Festive panel: light indigo tint — maps to Mela's primary brand color */
+.occasionPanelFestive {
+  background: rgba(38, 34, 97, 0.05);
+  border: 1px solid rgba(38, 34, 97, 0.15);
+}
+
+/* Gifting panel: very light coral tint — panel stays pale so coral CTA reads clearly */
+.occasionPanelGifting {
+  background: rgba(230, 126, 113, 0.06);
+  border: 1px solid rgba(230, 126, 113, 0.2);
+}
+
+.occasionPanelHeader {
+  margin-bottom: 1.25rem;
+}
+
+.occasionPanelTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 0.375rem;
+
+  @media (min-width: 640px) {
+    font-size: 1.375rem;
+  }
+}
+
+.occasionPanelDescription {
+  font-size: 0.875rem;
+  color: #4a5568;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.occasionCtaRow {
+  margin-top: 1.25rem;
+}
+
+.occasionCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  min-height: 44px;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  @media (min-width: 640px) {
+    font-size: 1rem;
+  }
+}
+
+/* Festive CTA: Mela indigo — primary brand color */
+.occasionCtaFestive {
+  background: var(--marketplaceColor);
+  color: #fff;
+
+  &:hover {
+    background: var(--marketplaceColorDark);
+    box-shadow: 0 4px 12px rgba(38, 34, 97, 0.3);
+  }
+}
+
+/* Gifting CTA: deep coral on white — high contrast against pale coral panel */
+.occasionCtaGifting {
+  background: #fff;
+  color: var(--colorPrimaryButtonDark);
+  border: 1.5px solid var(--colorPrimaryButton);
+
+  &:hover {
+    background: var(--colorPrimaryButton);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(230, 126, 113, 0.35);
+  }
+}
+
 /* Age-Based Navigation - SEO Critical */
 .ageNavigation {
-  margin-bottom: 3rem;
-  padding: 2rem 0;
+  margin-bottom: 2rem;
+  padding: 1.5rem 0;
   border-bottom: 1px solid #e2e8f0;
 
   @media (min-width: 768px) {
-    margin-bottom: 4rem;
+    margin-bottom: 2.5rem;
   }
 }
 
@@ -169,10 +349,10 @@
 .categorySections {
   display: flex;
   flex-direction: column;
-  gap: 3rem;
+  gap: 2rem;
 
   @media (min-width: 768px) {
-    gap: 4rem;
+    gap: 2.5rem;
   }
 }
 

@@ -127,8 +127,10 @@ class PageComponent extends Component {
       twitterHandle,
       twitterImages,
       updated,
+      noIndex,
       config,
       routeConfiguration,
+      canonicalURL,
     } = this.props;
 
     const classes = classNames(rootClassName || css.root, className, {
@@ -140,7 +142,8 @@ class PageComponent extends Component {
     const marketplaceRootURL = config.marketplaceRootURL;
     const shouldReturnPathOnly = referrer && referrer !== 'unsafe-url';
     const canonicalPath = canonicalRoutePath(routeConfiguration, location, shouldReturnPathOnly);
-    const canonicalUrl = `${marketplaceRootURL}${canonicalPath}`;
+    // Allow callers to override the canonical URL (e.g. ProfilePage at /u/:id pointing to /brands/:slug)
+    const canonicalUrl = canonicalURL || `${marketplaceRootURL}${canonicalPath}`;
 
     const marketplaceName = config.marketplaceName;
     const schemaTitle = intl.formatMessage({ id: 'Page.schemaTitle' }, { marketplaceName });
@@ -191,6 +194,7 @@ class PageComponent extends Component {
         updated,
         url: canonicalUrl,
         locale: intl.locale,
+        noIndex,
       },
       config
     );

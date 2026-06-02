@@ -26,6 +26,7 @@ const getSeatsQueryParam = queryParamNames => {
  * @param {string} props.name
  * @param {Array<string>} props.queryParamNames
  * @param {string} props.label
+ * @param {Function} props.getAriaLabel - The function to retrieve the aria label for the component
  * @param {Function} props.onSubmit
  * @param {Object?} props.initialValues
  * @param {string | number} props.initialValues.seats
@@ -43,6 +44,7 @@ const SeatsFilter = props => {
     id,
     name,
     label,
+    getAriaLabel,
     initialValues,
     contentPlacementOffset = 0,
     onSubmit,
@@ -88,9 +90,9 @@ const SeatsFilter = props => {
     <FilterPopup
       className={classes}
       rootClassName={rootClassName}
-      popupClassName={css.popupSize}
       name={name}
       label={labelForPopup}
+      ariaLabel={getAriaLabel(label, initialSeats)}
       isSelected={hasInitialValues}
       id={`${id}.popup`}
       showAsPopup
@@ -122,6 +124,7 @@ const SeatsFilter = props => {
       className={className}
       rootClassName={rootClassName}
       label={labelForPlain}
+      ariaLabel={getAriaLabel(label, initialSeats)}
       isSelected={hasInitialValues}
       id={`${id}.plain`}
       liveEdit

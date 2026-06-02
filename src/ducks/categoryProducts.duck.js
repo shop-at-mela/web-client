@@ -97,6 +97,7 @@ export const fetchCategoryProducts = (categoryLevel, categoryName, config, exclu
       'price',
       'publicData.brand',
       'publicData.sku',
+      'publicData.certification',
     ],
     'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
     'fields.image': ['variants.listing-card', 'variants.listing-card-2x'],
@@ -129,9 +130,9 @@ export const fetchCategoryProducts = (categoryLevel, categoryName, config, exclu
 
           return {
             ...listing,
+            images: images, // Top-level: required by ListingImage (listing.images[0])
             attributes: {
               ...listing.attributes,
-              images: images // Images with their original attributes structure
             }
           };
         });

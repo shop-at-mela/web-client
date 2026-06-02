@@ -16,15 +16,20 @@
 :root {
   /* ================ Colors ================ */
 
-  /* Colors used for different functions (like error texts) */
-
-  --colorSuccess: #2ecc71;
-  --colorSuccessDark: #239954;
-  --colorSuccessLight: #f0fff6;
-  --colorFail: #ff0000;
-  --colorFailLight: #fff0f0;
+  /**
+  * Colors used for different functions (like error texts)
+  * Subtle color variants are used in Stripe verification status box
+  */
+  --colorSuccess: #138041;
+  --colorSuccessDark: #0d542a;
+  --colorSuccessLight: #1aad57;
+  --colorSuccessSubtle: #f0fff6;
+  --colorFail: #e7000b;
+  --colorFailDark: #cc0000;
+  --colorFailSubtle: #fff0f0;
   --colorAttention: #ffaa00;
-  --colorAttentionLight: #fff7f0;
+  --colorAttentionDark: #b25900;
+  --colorAttentionSubtle: #fff7f0;
   --colorBannedLight: var(--marketplaceColorLight);
   --colorBannedDark: var(--marketplaceColor);
 
@@ -70,6 +75,13 @@
   --colorSecondaryButtonDark: var(--colorWhite);
   --colorSecondaryButtonLight: var(--colorWhite);
 
+  /**
+   * Colors used for the user inbox item status
+   */
+  --colorStatusNormal: var(--colorGrey900);
+  --colorStatusActionNeeded: var(--colorAttentionDark);
+  --colorStatusFinalState: var(--colorGrey600);
+
   /* ================ Font ================ */
   --fontFamily: -apple-system, BlinkMacSystemFont, 'Inter', Helvetica, Arial, sans-serif,
     'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
@@ -104,6 +116,7 @@
   --boxShadowBreakdown: 0 3px 6px 0 rgba(0, 0, 0, 0.2);
   --boxShadowButton: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
   --boxShadowListingCard: 0 0 50px 0 rgba(0, 0, 0, 0.1);
+  --boxShadowFeaturedListingCard: 0 0 30px 0px rgba(0, 0, 0, 0.1);
   --boxShadowNotFoundPageSearch: 0 2px 4px 0 rgba(0, 0, 0, 0.5);
   --boxShadowSectionLocationHover: 0 10px 30px 0 rgba(0, 0, 0, 0.1);
   --boxShadowBottomForm: 0 -2px 4px 0 rgba(0, 0, 0, 0.05);
@@ -312,14 +325,15 @@ h3 {
 
 h4 {
   font-weight: var(--fontWeightBold);
-  font-size: 21px;
+  font-size: 16px;
   line-height: 30px;
-  padding: 1px 0 5px 0;
+  padding: 5px 0 1px 0;
   /* x * 6px */
   margin-top: 12px;
   margin-bottom: 6px;
 
   @media (--viewportMedium) {
+    font-size: 21px;
     line-height: 32px;
     padding: 0;
     /* x * 8px */
@@ -671,14 +685,15 @@ textarea {
 
 .h4 {
   font-weight: var(--fontWeightBold);
-  font-size: 21px;
+  font-size: 16px;
   line-height: 30px;
-  padding: 1px 0 5px 0;
+  padding: 5px 0 1px 0;
   /* x * 6px */
   margin-top: 12px;
   margin-bottom: 6px;
 
   @media (--viewportMedium) {
+    font-size: 21px;
     line-height: 32px;
     padding: 0;
     /* x * 8px */
@@ -1015,7 +1030,7 @@ textarea {
   cursor: not-allowed;
   text-decoration: none;
   background-color: var(--colorGrey100);
-  color: var(--colorWhite);
+  color: var(--colorGrey700);
 }
 
 /**
@@ -1406,7 +1421,7 @@ textarea {
 
   -webkit-font-smoothing: subpixel-antialiased;
 
-  color: var(--colorGrey300);
+  color: var(--colorGrey600);
   margin: 0;
 
   @media (--viewportMedium) {

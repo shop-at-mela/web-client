@@ -5,14 +5,7 @@ import classNames from 'classnames';
 
 import { useConfiguration } from '../../context/configurationContext';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
-import {
-  REVIEW_TYPE_OF_PROVIDER,
-  REVIEW_TYPE_OF_CUSTOMER,
-  SCHEMA_TYPE_MULTI_ENUM,
-  SCHEMA_TYPE_TEXT,
-  SCHEMA_TYPE_YOUTUBE,
-  propTypes,
-} from '../../util/types';
+import { REVIEW_TYPE_OF_PROVIDER, REVIEW_TYPE_OF_CUSTOMER, propTypes } from '../../util/types';
 import {
   NO_ACCESS_PAGE_USER_PENDING_APPROVAL,
   NO_ACCESS_PAGE_VIEW_LISTINGS,
@@ -24,7 +17,11 @@ import {
   isForbiddenError,
   isNotFoundError,
 } from '../../util/errors';
-import { pickCustomFieldProps } from '../../util/fieldHelpers';
+import {
+  getDetailCustomFieldValue,
+  getFieldValue,
+  pickCustomFieldProps,
+} from '../../util/fieldHelpers';
 import {
   getCurrentUserTypeRoles,
   hasPermissionToViewData,
@@ -46,17 +43,16 @@ import {
   ButtonTabNavHorizontal,
   LayoutSideNavigation,
   NamedRedirect,
+  CustomExtendedDataSection,
 } from '../../components';
 
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
 import FooterContainer from '../../containers/FooterContainer/FooterContainer';
 import NotFoundPage from '../../containers/NotFoundPage/NotFoundPage';
 
+import { getBrandSlugById } from '../../config/configBrands';
+
 import css from './ProfilePage.module.css';
-import SectionDetailsMaybe from './SectionDetailsMaybe';
-import SectionTextMaybe from './SectionTextMaybe';
-import SectionMultiEnumMaybe from './SectionMultiEnumMaybe';
-import SectionYoutubeVideoMaybe from './SectionYoutubeVideoMaybe';
 import BrandStorefront from './BrandStorefront';
 
 const MAX_MOBILE_SCREEN_WIDTH = 768;
@@ -122,7 +118,7 @@ export const MobileReviews = props => {
 };
 
 export const DesktopReviews = props => {
-  const { reviews, queryReviewsError, userTypeRoles } = props;
+  const { reviews, queryReviewsError, userTypeRoles, intl } = props;
   const { customer: isCustomerUserType, provider: isProviderUserType } = userTypeRoles;
 
   const initialReviewState = !isProviderUserType
@@ -172,7 +168,11 @@ export const DesktopReviews = props => {
   return (
     <div className={css.desktopReviews}>
       <div className={css.desktopReviewsWrapper}>
-        <ButtonTabNavHorizontal className={css.desktopReviewsTabNav} tabs={desktopReviewTabs} />
+        <ButtonTabNavHorizontal
+          className={css.desktopReviewsTabNav}
+          tabs={desktopReviewTabs}
+          ariaLabel={intl.formatMessage({ id: 'ProfilePage.screenreader.reviewsNav' })}
+        />
 
         <ReviewsErrorMaybe queryReviewsError={queryReviewsError} />
 
@@ -187,27 +187,60 @@ export const DesktopReviews = props => {
 };
 
 export const CustomUserFields = props => {
-  const { publicData, metadata, userFieldConfig } = props;
+  const { publicData, metadata, userFieldConfig, intl } = props;
 
-  const shouldPickUserField = fieldConfig => fieldConfig?.showConfig?.displayInProfile !== false;
+  const shouldPickUserField = fieldConfig =>
+    ['public', 'metadata'].includes(fieldConfig?.scope) &&
+    fieldConfig?.showConfig?.displayInProfile !== false;
   const propsForCustomFields =
-    pickCustomFieldProps(publicData, metadata, userFieldConfig, 'userType', shouldPickUserField) ||
-    [];
+    pickCustomFieldProps(
+      { publicData, metadata },
+      userFieldConfig,
+      'userType',
+      shouldPickUserField
+    ) || [];
+
+  const pickUserFields = (filteredConfigs, config) => {
+    const { key, schemaType, enumOptions, userTypeConfig = {}, showConfig = {} } = config;
+    const { limitToUserTypeIds, userTypeIds } = userTypeConfig;
+    const userType = publicData.userType;
+    const isTargetUserType = !limitToUserTypeIds || userTypeIds.includes(userType);
+
+    const { label, displayInProfile } = showConfig;
+    const publicDataValue = getFieldValue(publicData, key);
+    const metadataValue = getFieldValue(metadata, key);
+    const value = publicDataValue !== null ? publicDataValue : metadataValue;
+
+    if (displayInProfile && isTargetUserType && value !== null) {
+      const detailValue = getDetailCustomFieldValue(
+        enumOptions,
+        value,
+        schemaType,
+        key,
+        label,
+        intl,
+        'ProfilePage'
+      );
+
+      return detailValue ? filteredConfigs.concat(detailValue) : filteredConfigs;
+    }
+    return filteredConfigs;
+  };
+  const sectionDetailsProps = {
+    ...props,
+    fieldConfigs: userFieldConfig,
+    heading: 'ProfilePage.detailsTitle',
+    rootClassName: css.userFieldSection,
+  };
 
   return (
-    <>
-      <SectionDetailsMaybe {...props} />
-      {propsForCustomFields.map(customFieldProps => {
-        const { schemaType, key, ...fieldProps } = customFieldProps;
-        return schemaType === SCHEMA_TYPE_MULTI_ENUM ? (
-          <SectionMultiEnumMaybe key={key} {...fieldProps} />
-        ) : schemaType === SCHEMA_TYPE_TEXT ? (
-          <SectionTextMaybe key={key} {...fieldProps} />
-        ) : schemaType === SCHEMA_TYPE_YOUTUBE ? (
-          <SectionYoutubeVideoMaybe key={key} {...fieldProps} />
-        ) : null;
-      })}
-    </>
+    <CustomExtendedDataSection
+      sectionDetailsProps={sectionDetailsProps}
+      propsForCustomFields={propsForCustomFields}
+      idPrefix="profilePage"
+      pickExtendedDataFields={pickUserFields}
+      rootClassName={css.userFieldSection}
+    />
   );
 };
 
@@ -299,6 +332,7 @@ export const MainContent = props => {
           reviews={reviews}
           queryReviewsError={queryReviewsError}
           userTypeRoles={userTypeRoles}
+          intl={intl}
         />
       )}
     </div>
@@ -354,8 +388,11 @@ export const ProfilePageComponent = props => {
     return <NamedRedirect name="LandingPage" />;
   }
 
-  const isCurrentUser = currentUser?.id && currentUser?.id?.uuid === pathParams.id;
   const profileUser = useCurrentUser ? currentUser : user;
+  // Compare against the loaded user's UUID, not the URL param.
+  // This handles both /u/:id (pathParams.id) and /brands/:brandSlug (no pathParams.id).
+  const isCurrentUser =
+    currentUser?.id != null && currentUser.id.uuid === profileUser?.id?.uuid;
   const { bio, displayName, publicData, metadata } = profileUser?.attributes?.profile || {};
   const { userFields } = config.user;
   const isPrivateMarketplace = config.accessControl.marketplace.private === true;
@@ -379,14 +416,25 @@ export const ProfilePageComponent = props => {
   const schemaTitleVars = { name: displayName, marketplaceName: config.marketplaceName };
   const schemaTitle = intl.formatMessage({ id: 'ProfilePage.schemaTitle' }, schemaTitleVars);
 
+  // Resolve the canonical brand URL: prefer /brands/:slug over /u/:uuid
+  const profileUserId = profileUser?.id?.uuid;
+  const brandSlug = isProvider
+    ? (pathParams.brandSlug || getBrandSlugById(profileUserId))
+    : null;
+  const brandCanonicalUrl = brandSlug
+    ? `${config.marketplaceRootURL}/brands/${brandSlug}`
+    : null;
+  // Used for schema @id and url — always point to the canonical slug URL when available
+  const brandPageUrl = brandCanonicalUrl || `${config.marketplaceRootURL}/u/${profileUserId}`;
+
   // Construct Schema.org markup based on profile type
   const schemaMarkup = isProvider
     ? {
         '@context': 'http://schema.org',
         '@type': 'Organization',
-        '@id': `${config.marketplaceRootURL}/u/${pathParams.id}`,
+        '@id': brandPageUrl,
         name: displayName,
-        url: `${config.marketplaceRootURL}/u/${pathParams.id}`,
+        url: brandPageUrl,
         ...(publicData?.brandLogoUrl && {
           logo: {
             '@type': 'ImageObject',
@@ -469,6 +517,7 @@ export const ProfilePageComponent = props => {
       scrollingDisabled={scrollingDisabled}
       title={schemaTitle}
       schema={schemaMarkup}
+      canonicalURL={brandCanonicalUrl}
     >
       {isProvider ? (
         // Brand Storefront: Full-width layout without sidebar
@@ -478,8 +527,6 @@ export const ProfilePageComponent = props => {
             <BrandStorefront
               user={profileUser}
               listings={rest.listings || []}
-              reviews={rest.reviews || []}
-              queryReviewsError={rest.queryReviewsError}
               userTypeRoles={userTypeRoles}
               currentUser={currentUser}
               isCurrentUser={isCurrentUser}

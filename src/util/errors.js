@@ -54,17 +54,19 @@ const responseAPIErrors = error => {
 /**
  * 403 Forbidden
  */
-export const isForbiddenError = error => hasErrorWithCode(error, ERROR_CODE_FORBIDDEN);
+export const isForbiddenError = error =>
+  error?.status === 403 || hasErrorWithCode(error, ERROR_CODE_FORBIDDEN);
 
 /**
  * 404 Not Found
  */
-export const isNotFoundError = error => hasErrorWithCode(error, ERROR_CODE_NOT_FOUND);
+export const isNotFoundError = error =>
+  error?.status === 404 || hasErrorWithCode(error, ERROR_CODE_NOT_FOUND);
 
 /**
  * 429 Too Many Requests error
  */
-export const isTooManyRequestsError = error => error && error.status === 429;
+export const isTooManyRequestsError = error => error?.status === 429;
 
 /**
  * Check if the given API error (from `sdk.currentuser.create()`) is
@@ -330,13 +332,37 @@ export const isTransitionQuantityInfoMissingError = error =>
 
 /**
  * Check if the minimum provider commission is larger than the
- * minimum price set for the listing
+ * minimum price set for the listing.
  */
 export const isProviderCommissionBiggerThanMinPrice = error =>
   error?.status === 400 &&
   error?.statusText.startsWith(
     'Minimum commission amount is greater than the amount of money paid in'
   );
+
+/**
+ * Check if the user has any unfinished transactions that include Stripe payment
+ * processing actions.
+ */
+export const isErrorUserHasUnfinishedTransactions = error => {
+  return (
+    error?.status === 409 &&
+    error?.statusText.startsWith(
+      'User has transactions on states that include incomplete payment processing'
+    )
+  );
+};
+
+/**
+ * Check if the request failed because Stripe prevented account deletion. This happens if the
+ * user's Stripe Connect account as a non-zero balance. See the [API reference]() for details.
+ */
+export const isStripeDeletionFailedNonZeroBalance = error => {
+  return (
+    error?.status === 400 &&
+    errorAPIErrors(error).some(apiError => apiError.code === 'delete-stripe-account-failed')
+  );
+};
 
 export const storableError = err => {
   const error = err || {};

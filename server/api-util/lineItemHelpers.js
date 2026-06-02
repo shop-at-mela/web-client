@@ -216,11 +216,11 @@ exports.calculateLineTotal = lineItem => {
   const { code, unitPrice, quantity, percentage, seats, units } = lineItem;
 
   if (quantity) {
-    return this.calculateTotalPriceFromQuantity(unitPrice, quantity);
+    return exports.calculateTotalPriceFromQuantity(unitPrice, quantity);
   } else if (percentage != null) {
-    return this.calculateTotalPriceFromPercentage(unitPrice, percentage);
+    return exports.calculateTotalPriceFromPercentage(unitPrice, percentage);
   } else if (seats && units) {
-    return this.calculateTotalPriceFromSeats(unitPrice, units, seats);
+    return exports.calculateTotalPriceFromSeats(unitPrice, units, seats);
   } else {
     throw new Error(
       `Can't calculate the lineTotal of lineItem: ${code}. Make sure the lineItem has quantity, percentage or both seats and units`
@@ -236,7 +236,7 @@ exports.calculateLineTotal = lineItem => {
  */
 exports.calculateTotalFromLineItems = lineItems => {
   const totalPrice = lineItems.reduce((sum, lineItem) => {
-    const lineTotal = this.calculateLineTotal(lineItem);
+    const lineTotal = exports.calculateLineTotal(lineItem);
     return getAmountAsDecimalJS(lineTotal).add(sum);
   }, 0);
 
@@ -254,7 +254,7 @@ exports.calculateTotalFromLineItems = lineItems => {
  */
 exports.calculateTotalForProvider = lineItems => {
   const providerLineItems = lineItems.filter(lineItem => lineItem.includeFor.includes('provider'));
-  return this.calculateTotalFromLineItems(providerLineItems);
+  return exports.calculateTotalFromLineItems(providerLineItems);
 };
 
 /**
@@ -264,7 +264,7 @@ exports.calculateTotalForProvider = lineItems => {
  */
 exports.calculateTotalForCustomer = lineItems => {
   const providerLineItems = lineItems.filter(lineItem => lineItem.includeFor.includes('customer'));
-  return this.calculateTotalFromLineItems(providerLineItems);
+  return exports.calculateTotalFromLineItems(providerLineItems);
 };
 
 /**
@@ -289,7 +289,7 @@ exports.constructValidLineItems = lineItems => {
     // lineItems are expected to be in similar format as when they are returned from API
     // so that we can use them in e.g. OrderBreakdown component.
     // This means we need to convert quantity to Decimal and add attributes lineTotal and reversal to lineItems
-    const lineTotal = this.calculateLineTotal(lineItem);
+    const lineTotal = exports.calculateLineTotal(lineItem);
     return {
       ...lineItem,
       lineTotal,
@@ -343,17 +343,17 @@ exports.hasMinimumCommission = commission => {
  * @param {Object} priceAttribute object containing listing price information
  * @returns {Array} provider commission line item
  */
-exports.getProviderCommissionMaybe = (providerCommission, order, priceAttribute) => {
+exports.getProviderCommissionMaybe = (providerCommission, order, currency) => {
   // Check if either minimum commission or percentage are defined in the commission object
-  const hasMinimumCommission = this.hasMinimumCommission(providerCommission);
-  const hasCommissionPercentage = this.hasCommissionPercentage(providerCommission);
+  const hasMinimumCommission = exports.hasMinimumCommission(providerCommission);
+  const hasCommissionPercentage = exports.hasCommissionPercentage(providerCommission);
 
   if (!hasMinimumCommission && !hasCommissionPercentage) {
     return [];
   }
 
   // Calculate the total money paid into the transaction
-  const totalMoneyIn = this.calculateTotalFromLineItems([order]);
+  const totalMoneyIn = exports.calculateTotalFromLineItems([order]);
   // Calculate the estimated commission with percentage applied, if applicable
   const estimatedCommissionFromPercentage = calculateCommissionWithPercentage(
     providerCommission?.percentage,
@@ -378,7 +378,7 @@ exports.getProviderCommissionMaybe = (providerCommission, order, priceAttribute)
     ? [
         {
           code: 'line-item/provider-commission',
-          unitPrice: new Money(providerCommission?.minimum_amount, priceAttribute?.currency),
+          unitPrice: new Money(providerCommission?.minimum_amount, currency),
           quantity: getNegation(1),
           includeFor: ['provider'],
         },
@@ -399,17 +399,17 @@ exports.getProviderCommissionMaybe = (providerCommission, order, priceAttribute)
  * @param {Object} order object containing order line items
  * @returns {Array} customer commission line item
  */
-exports.getCustomerCommissionMaybe = (customerCommission, order, priceAttribute) => {
+exports.getCustomerCommissionMaybe = (customerCommission, order, currency) => {
   // Check if either minimum commission or percentage are defined in the commission object
-  const hasMinimumCommission = this.hasMinimumCommission(customerCommission);
-  const hasCommissionPercentage = this.hasCommissionPercentage(customerCommission);
+  const hasMinimumCommission = exports.hasMinimumCommission(customerCommission);
+  const hasCommissionPercentage = exports.hasCommissionPercentage(customerCommission);
 
   if (!hasMinimumCommission && !hasCommissionPercentage) {
     return [];
   }
 
   // Calculate the total money paid into the transaction
-  const totalMoneyIn = this.calculateTotalFromLineItems([order]);
+  const totalMoneyIn = exports.calculateTotalFromLineItems([order]);
   // Calculate the estimated commission with percentage applied, if applicable
   const estimatedCommissionFromPercentage = calculateCommissionWithPercentage(
     customerCommission?.percentage,
@@ -427,7 +427,7 @@ exports.getCustomerCommissionMaybe = (customerCommission, order, priceAttribute)
     ? [
         {
           code: 'line-item/customer-commission',
-          unitPrice: new Money(customerCommission?.minimum_amount, priceAttribute?.currency),
+          unitPrice: new Money(customerCommission?.minimum_amount, currency),
           quantity: 1,
           includeFor: ['customer'],
         },
@@ -435,7 +435,7 @@ exports.getCustomerCommissionMaybe = (customerCommission, order, priceAttribute)
     : [
         {
           code: 'line-item/customer-commission',
-          unitPrice: this.calculateTotalFromLineItems([order]),
+          unitPrice: exports.calculateTotalFromLineItems([order]),
           percentage: customerCommission.percentage,
           includeFor: ['customer'],
         },

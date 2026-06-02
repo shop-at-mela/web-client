@@ -10,7 +10,7 @@
 /**
  * Configuration options for listing fields (custom extended data fields):
  * - key:                           Unique key for the extended data field.
- * - scope (optional):              Scope of the extended data can be either 'public' or 'private'.
+ * - scope (optional):              Scope of the extended data can be 'public', 'private', or 'metadata'.
  *                                  Default value: 'public'.
  *                                  Note: listing doesn't support 'protected' scope atm.
  * - schemaType (optional):         Schema for this extended data field.
@@ -65,6 +65,11 @@ export const listingFields = [
       { option: '6_12_months', label: '6-12 months' },
       { option: '12_18_months', label: '12-18 months' },
       { option: '18_24_months', label: '18-24 months' },
+      { option: '2_3_years', label: '2-3 years' },
+      { option: '3_4_years', label: '3-4 years' },
+      { option: '4_6_years', label: '4-6 years' },
+      { option: '6_plus_years', label: '6+ years' },
+      { option: '8_plus_years', label: '8+ years' },
     ],
     filterConfig: {
       indexForSearch: true,
@@ -83,6 +88,32 @@ export const listingFields = [
       requiredMessage: 'You need to select an age group.',
     },
   },
+  // Gender field - select the target gender for the product
+  {
+    key: 'gender',
+    scope: 'public',
+    schemaType: 'enum',
+    enumOptions: [
+      { option: 'male', label: 'Men' },
+      { option: 'female', label: 'Women' },
+      { option: 'unisex', label: 'Unisex' },
+    ],
+    filterConfig: {
+      indexForSearch: true,
+      filterType: 'SelectSingleFilter',
+      label: 'Gender',
+      group: 'primary',
+    },
+    showConfig: {
+      label: 'Gender',
+      isDetail: true,
+    },
+    saveConfig: {
+      label: 'Gender',
+      placeholderMessage: 'Select gender…',
+      isRequired: false,
+    },
+  },
   // Material field - select multiple materials (for clothing & accessories)
   {
     key: 'material',
@@ -90,13 +121,21 @@ export const listingFields = [
     schemaType: 'multi-enum',
     enumOptions: [
       { option: 'organic_cotton', label: 'Organic Cotton' },
+      { option: 'natural_wood', label: 'Natural Wood' },
+      { option: 'solid_wood', label: 'Solid Wood' },
+      { option: 'fabric', label: 'Fabric' },
+      { option: 'silicone', label: 'Silicone' },
+      { option: 'metal', label: 'Metal' },
+      { option: 'paper_cardboard', label: 'Paper & Cardboard' },
+      { option: 'mixed_materials', label: 'Mixed Materials' },
       { option: '100_organic', label: '100% Organic' },
       { option: 'bamboo', label: 'Bamboo' },
       { option: 'cotton_jersey', label: 'Cotton Jersey' },
       { option: 'kala_cotton', label: 'Kala Cotton' },
       { option: 'muslin', label: 'Muslin' },
       { option: 'other_natural', label: 'Other Natural' },
-      { option: 'denim', label: 'Denim' }
+      { option: 'denim', label: 'Denim' },
+      { option: 'natural_rubber', label: 'Natural Rubber' }
     ],
     filterConfig: {
       indexForSearch: true,
@@ -157,6 +196,8 @@ export const listingFields = [
       { option: 'yellow', label: 'Yellow' },
       { option: 'gray', label: 'Gray' },
       { option: 'cream', label: 'Cream' },
+      { option: 'beige', label: 'Beige' },
+      { option: 'lavender', label: 'Lavender' },
       { option: 'multi_color', label: 'Multi-color' },
       { option: 'pastel', label: 'Pastel Colors' },
     ],
@@ -190,6 +231,8 @@ export const listingFields = [
       { option: 'handcrafted', label: 'Handcrafted' },
       { option: 'adjustable', label: 'Adjustable' },
       { option: 'room_to_grow', label: 'Room to Grow' },
+      { option: 'ayurvedic', label: 'Ayurvedic' },
+      { option: 'talc_free', label: 'Talc-Free' },
     ],
     filterConfig: {
       indexForSearch: true,
@@ -205,6 +248,101 @@ export const listingFields = [
     saveConfig: {
       label: 'Key Features',
       placeholderMessage: 'Select feature(s)…',
+      isRequired: false,
+    },
+  },
+  // Skill Type field - select multiple skills developed through the product
+  {
+    key: 'skill_type',
+    scope: 'public',
+    schemaType: 'multi-enum',
+    enumOptions: [
+      { option: 'fine_motor', label: 'Fine Motor Skills' },
+      { option: 'gross_motor', label: 'Gross Motor Skills' },
+      { option: 'cognitive', label: 'Cognitive Development' },
+      { option: 'problem_solving', label: 'Problem Solving' },
+      { option: 'creativity', label: 'Creativity & Imagination' },
+      { option: 'language', label: 'Language & Communication' },
+      { option: 'stem', label: 'STEM Learning' },
+      { option: 'sensory', label: 'Sensory Development' },
+      { option: 'social_emotional', label: 'Social & Emotional Learning' },
+    ],
+    filterConfig: {
+      indexForSearch: true,
+      filterType: 'SelectMultipleFilter',
+      label: 'Skills Developed',
+      searchMode: 'has_any',
+      group: 'primary',
+    },
+    showConfig: {
+      label: 'Skills Developed',
+      isDetail: true,
+    },
+    saveConfig: {
+      label: 'Skills Developed',
+      placeholderMessage: 'Select skill type(s)…',
+      isRequired: false,
+    },
+  },
+  // Play Type field - select multiple play types
+  {
+    key: 'play_type',
+    scope: 'public',
+    schemaType: 'multi-enum',
+    enumOptions: [
+      { option: 'solo_play', label: 'Solo Play' },
+      { option: 'group_play', label: 'Group Play' },
+      { option: 'parent_guided', label: 'Parent-Guided Play' },
+      { option: 'open_ended', label: 'Open-Ended Play' },
+      { option: 'pretend_play', label: 'Pretend Play' },
+      { option: 'puzzle_logic', label: 'Puzzle & Logic Play' },
+      { option: 'construction', label: 'Construction & Building' },
+    ],
+    filterConfig: {
+      indexForSearch: true,
+      filterType: 'SelectMultipleFilter',
+      label: 'Play Type',
+      searchMode: 'has_any',
+      group: 'secondary',
+    },
+    showConfig: {
+      label: 'Play Type',
+      isDetail: true,
+    },
+    saveConfig: {
+      label: 'Play Type',
+      placeholderMessage: 'Select play type(s)…',
+      isRequired: false,
+    },
+  },
+  // Sustainability Claim field - select multiple sustainability attributes
+  {
+    key: 'sustainability_claim',
+    scope: 'public',
+    schemaType: 'multi-enum',
+    enumOptions: [
+      { option: 'handmade', label: 'Handmade' },
+      { option: 'handwoven', label: 'Handwoven' },
+      { option: 'plastic_free', label: 'Plastic-Free' },
+      { option: 'low_impact_dyes', label: 'Low-Impact Dyes' },
+      { option: 'organic_materials', label: 'Organic Materials' },
+      { option: 'ethically_made', label: 'Ethically Made' },
+      { option: 'biodegradable', label: 'Biodegradable' },
+    ],
+    filterConfig: {
+      indexForSearch: true,
+      filterType: 'SelectMultipleFilter',
+      label: 'Sustainability',
+      searchMode: 'has_any',
+      group: 'primary',
+    },
+    showConfig: {
+      label: 'Sustainability',
+      isDetail: true,
+    },
+    saveConfig: {
+      label: 'Sustainability',
+      placeholderMessage: 'Select sustainability claim(s)…',
       isRequired: false,
     },
   },
@@ -262,7 +400,7 @@ export const listingFields = [
   //     categoryIds: ['cats'],
   //   },
   //   filterConfig: {
-  //     indexForSearch: true,
+  //     showFilter: true,
   //     filterType: 'SelectMultipleFilter', //'SelectSingleFilter',
   //     label: 'Bike type',
   //     group: 'primary',
@@ -292,7 +430,7 @@ export const listingFields = [
   //     { option: '18', label: '18' },
   //   ],
   //   filterConfig: {
-  //     indexForSearch: true,
+  //     showFilter: true,
   //     label: 'Tire size',
   //     group: 'secondary',
   //   },
@@ -322,7 +460,7 @@ export const listingFields = [
   //     { option: 'vermont', label: 'Vermont' },
   //   ],
   //   filterConfig: {
-  //     indexForSearch: true,
+  //     showFilter: true,
   //     label: 'Brand',
   //     group: 'secondary',
   //   },
@@ -348,7 +486,7 @@ export const listingFields = [
   //     { option: 'mudguard', label: 'Mudguard' },
   //   ],
   //   filterConfig: {
-  //     indexForSearch: true,
+  //     showFilter: true,
   //     label: 'Accessories',
   //     searchMode: 'has_all',
   //     group: 'secondary',
@@ -392,6 +530,41 @@ export const listingFields = [
   //     placeholderMessage: 'Some private note about this bike...',
   //   },
   // },
+
+  // Homepage feature flag — set to true to pin a listing in the hero carousel
+  // ⚠️ Requires Sharetribe CLI: sharetribe-cli search-schema/set --key pub_homepageFeature --type boolean
+  {
+    key: 'homepageFeature',
+    scope: 'public',
+    schemaType: 'boolean',
+    filterConfig: {
+      indexForSearch: true,
+      label: 'Homepage Feature',
+      group: 'secondary',
+    },
+    showConfig: { label: 'Featured on Homepage', isDetail: false },
+    saveConfig: { label: 'Feature on Homepage' },
+  },
+
+  // Occasion — for occasion-based product discovery on the homepage
+  // ⚠️ Requires Sharetribe CLI: sharetribe-cli search-schema/set --key pub_occasion --type multi-enum
+  {
+    key: 'occasion',
+    scope: 'public',
+    schemaType: 'multi-enum',
+    enumOptions: [
+      { option: 'diwali-festivals', label: 'Diwali & Festivals' },
+      { option: 'gifting', label: 'Gifting' },
+    ],
+    filterConfig: {
+      indexForSearch: true,
+      label: 'Occasion',
+      group: 'secondary',
+      searchMode: 'has_any',
+    },
+    showConfig: { label: 'Occasion' },
+    saveConfig: { label: 'Occasion', placeholderMessage: 'Select occasion(s)…' },
+  },
 ];
 
 ///////////////////////////////////////////////////////////////////////
@@ -446,6 +619,16 @@ export const listingFields = [
  *                        The payoutDetails flag allows provider to bypass setting of payout details.
  *                        Note: customers can't order listings, if provider has not set payout details! Monitor
  *                        providers who have not set payout details and contact them to ensure that they add the details.
+ * - transactionFields    You can define an array of custom transaction fields for each listing type. Each transaction field
+ *                        should have the following attributes:
+ *                        - key (string)
+ *                        - label (string)
+ *                        - showTo (string, options: 'customer', 'provider'). Option 'provider' is only used for negotiation process.
+ *                        - schemaType (string, options: 'enum', 'multi-enum', 'text', 'long', 'boolean', 'youtubeVideoUrl')
+ *                        - saveConfig (object, optional,  { required: true })
+ *                        - schema specific attributes:
+ *                          - numberConfig (object, for schemaType: 'long'): { minimum: number, maximum: number }
+ *                          - enumOptions (array, for schemaType: 'enum', 'multi-enum'): [{ label: string, option: string }]
  */
 
 
@@ -466,8 +649,97 @@ export const listingTypes = [
     },
   },
   */
-  // // Here are some examples for other listingTypes
+  // // Here are some examples of listingTypes
   // // TODO: SearchPage does not work well if both booking and product selling are used at the same time
+  // {
+  //   listingType: 'daily-booking',
+  //   label: 'Daily booking',
+  //   transactionType: {
+  //     process: 'default-booking',
+  //     alias: 'default-booking/release-1',
+  //     unitType: 'day',
+  //   },
+  //   availabilityType: 'oneSeat',
+  //   defaultListingFields: {
+  //     location: true,
+  //     payoutDetails: true,
+  //   },
+  //   transactionFields: [
+  //     {
+  //       showTo: 'customer',
+  //       label: 'Extra requests for the hosts',
+  //       key: 'requests',
+  //       schemaType: 'text',
+  //     },
+  //     {
+  //       showTo: 'customer',
+  //       label: 'Are you traveling with minors?',
+  //       key: 'minors',
+  //       schemaType: 'boolean',
+  //     },
+  //     {
+  //       showTo: 'customer',
+  //       numberConfig: {
+  //         minimum: 1,
+  //         maximum: 10,
+  //       },
+  //       label: 'How many people are staying at the venue',
+  //       key: 'peopleStaying',
+  //       schemaType: 'long',
+  //       saveConfig: {
+  //         required: true,
+  //       },
+  //     },
+  //     {
+  //       showTo: 'customer',
+  //       enumOptions: [
+  //         {
+  //           label: 'Morning cleanup (10am-12am)',
+  //           option: 'morning',
+  //         },
+  //         {
+  //           label: 'Afternoon cleanup (2pm-4pm)',
+  //           option: 'afternoon',
+  //         },
+  //       ],
+  //       label: 'Schedule preference',
+  //       key: 'schedulePreference',
+  //       schemaType: 'enum',
+  //     },
+  //     {
+  //       showTo: 'customer',
+  //       enumOptions: [
+  //         {
+  //           label: 'Vegetarian',
+  //           option: 'vegetarian',
+  //         },
+  //         {
+  //           label: 'Vegan',
+  //           option: 'vegan',
+  //         },
+  //         {
+  //           label: 'Gluten free',
+  //           option: 'glutenFree',
+  //         },
+  //         {
+  //           label: 'No caffeine',
+  //           option: 'decaf',
+  //         },
+  //         {
+  //           label: 'Nut free',
+  //           option: 'nutFree',
+  //         },
+  //         {
+  //           label: 'Dairy free',
+  //           option: 'dairyFree',
+  //         },
+  //       ],
+  //       label: 'Dietary preferences',
+  //       key: 'dietaryPreferences',
+  //       schemaType: 'multi-enum',
+  //     },
+  //   ],
+  // },
   // {
   //   listingType: 'nightly-booking',
   //   label: 'Nightly booking',

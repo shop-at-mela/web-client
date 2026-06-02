@@ -1,3 +1,5 @@
+// ⚠️ If you modify the styling of this component and you're using the SectionListings component in your marketplace (featured listings)
+// please reflect those changes in the calculateCarouselHeight function in SectionListing.js to avoid layout issues
 import React from 'react';
 import classNames from 'classnames';
 
@@ -9,7 +11,7 @@ import {
   isPriceVariationsEnabled,
   requireListingImage,
 } from '../../util/configHelpers';
-import { formatMoney } from '../../util/currency';
+import { formatMoney, formatCurrencyMajorUnit } from '../../util/currency';
 import { ensureListing, ensureUser } from '../../util/data';
 import { richText } from '../../util/richText';
 import { createSlug } from '../../util/urlHelpers';
@@ -19,7 +21,10 @@ import {
   NamedLink,
   ListingCardThumbnail,
   ListingImage,
+  SavedListingButton,
 } from '../../components';
+
+import { getListingCardTranslations } from './ListingCard.helpers';
 
 import css from './ListingCard.module.css';
 
@@ -139,6 +144,10 @@ const PriceMaybe = props => {
     ''
   );
 
+  const inrPrice = publicData?.priceInINR;
+  const formattedINRPrice =
+    inrPrice && formattedPrice ? formatCurrencyMajorUnit(intl, 'INR', inrPrice) : null;
+
   return (
     <div className={css.price} title={priceTitle}>
       {hasMultiplePriceVariants ? (
@@ -148,6 +157,11 @@ const PriceMaybe = props => {
         />
       ) : (
         <FormattedMessage id="ListingCard.price" values={{ priceValue, pricePerUnit }} />
+      )}
+      {formattedINRPrice && (
+        <span className={css.inrPrice}>
+          <FormattedMessage id="ListingCard.inrEquivalent" values={{ inrPrice: formattedINRPrice }} />
+        </span>
       )}
     </div>
   );
@@ -194,7 +208,7 @@ const generateListingAltText = (title, publicData, listingId) => {
  * Falls back to ListingCardThumbnail if images are disabled for the listing type.
  * @component
  * @param {Object} props
- * @param {Object} props.currentListing listing entity with image data
+ * @param {Object} props.listing listing entity with image data
  * @param {Function?} props.setActivePropsMaybe mouse enter/leave handlers for map highlighting
  * @param {string} props.title listing title for alt text
  * @param {string} props.renderSizes img/srcset size rules
@@ -207,25 +221,25 @@ const generateListingAltText = (title, publicData, listingId) => {
  */
 const ListingCardImage = props => {
   const {
-    currentListing,
+    listing,
     setActivePropsMaybe,
     title,
     renderSizes,
     aspectWidth,
     aspectHeight,
     variantPrefix,
-    showListingImage,
-    style,
+    aspectRatioClassName,
+    lazyLoadImage,
   } = props;
 
   // Generate SEO-optimized alt text
-  const publicData = currentListing.attributes?.publicData || {};
-  const altText = generateListingAltText(title, publicData, currentListing.id?.uuid);
+  const publicData = listing.attributes?.publicData || {};
+  const altText = generateListingAltText(title, publicData, listing.id?.uuid);
 
   // Render the listing image only if listing images are enabled in the listing type
-  return showListingImage ? (
+  return (
     <ListingImage
-      listing={currentListing}
+      listing={listing}
       variant={variantPrefix}
       sizes={renderSizes}
       aspectWidth={aspectWidth}
@@ -235,15 +249,6 @@ const ListingCardImage = props => {
       alt={altText}
       onMouseEnter={setActivePropsMaybe?.onMouseEnter}
       onMouseLeave={setActivePropsMaybe?.onMouseLeave}
-    />
-  ) : (
-    <ListingCardThumbnail
-      style={style}
-      listingTitle={title}
-      className={css.aspectRatioWrapper}
-      width={aspectWidth}
-      height={aspectHeight}
-      setActivePropsMaybe={setActivePropsMaybe}
     />
   );
 };
@@ -255,6 +260,7 @@ const ListingCardImage = props => {
  * @param {Object} props
  * @param {string?} props.className add more style rules in addition to component's own css.root
  * @param {string?} props.rootClassName overwrite components own css.root
+ * @param {string?} props.aspectRatioClassName custom className for AspectRatioWrapper component
  * @param {Object} props.listing API entity: listing or ownListing
  * @param {string?} props.renderSizes for img/srcset
  * @param {Function?} props.setActiveListing
@@ -273,6 +279,8 @@ export const ListingCard = props => {
   const {
     className,
     rootClassName,
+    aspectRatioClassName,
+    darkMode,
     listing,
     renderSizes,
     setActiveListing,
@@ -282,25 +290,37 @@ export const ListingCard = props => {
     isBestseller = false,
     stockCount = null,
     isNew = false,
+    lazyLoadImage = true,
   } = props;
+
+  const translations = getListingCardTranslations(listing, config, intl);
+  const {
+    titlePlain,
+    titleFormatted,
+    cardAriaLabel,
+    showPrice,
+    priceTooltip,
+    priceMessage,
+    authorName,
+  } = translations;
 
   const classes = classNames(rootClassName || css.root, className);
 
-  const currentListing = ensureListing(listing);
-  const id = currentListing.id.uuid;
-  const { title = '', price, publicData } = currentListing.attributes;
+  const id = listing?.id?.uuid;
+  const { title = '', price, publicData } = listing?.attributes || {};
   const slug = createSlug(title);
 
+  const currentListing = ensureListing(listing);
   const author = ensureUser(listing.author);
-  const authorName = author.attributes.profile.displayName;
 
   // Extract brand and certifications from publicData
   const brand = publicData?.brand || null;
   const certifications = publicData?.certification || [];
 
   const { listingType, cardStyle } = publicData || {};
-  const validListingTypes = config.listing.listingTypes;
+  const validListingTypes = config.listing.listingTypes || [];
   const foundListingTypeConfig = validListingTypes.find(conf => conf.listingType === listingType);
+  // Render the listing image only if listing images are enabled in the listing type
   const showListingImage = requireListingImage(foundListingTypeConfig);
 
   const {
@@ -312,63 +332,95 @@ export const ListingCard = props => {
   // Sets the listing as active in the search map when hovered (if the search map is enabled)
   const setActivePropsMaybe = setActiveListing
     ? {
-        onMouseEnter: () => setActiveListing(currentListing.id),
+        onMouseEnter: () => setActiveListing(listing?.id),
         onMouseLeave: () => setActiveListing(null),
       }
     : null;
 
+  // Extract the first image URL for anon localStorage saves
+  const firstImage = currentListing.images?.[0];
+  const imageUrl = firstImage?.attributes?.variants?.['listing-card']?.url || '';
+  const listingData = { title, imageUrl };
+
   return (
-    <NamedLink className={classes} name="ListingPage" params={{ id, slug }}>
-      <div className={css.imageContainer}>
-        <ListingCardImage
-          renderSizes={renderSizes}
-          title={title}
-          currentListing={currentListing}
-          config={config}
-          setActivePropsMaybe={setActivePropsMaybe}
-          aspectWidth={aspectWidth}
-          aspectHeight={aspectHeight}
-          variantPrefix={variantPrefix}
-          style={cardStyle}
-          showListingImage={showListingImage}
+    <div className={classes}>
+      {/* imageWrapper gives the save button a shared positioning parent with the image */}
+      <div className={css.imageWrapper}>
+        <NamedLink className={css.imageLink} name="ListingPage" params={{ id, slug }}>
+          <div className={css.imageContainer}>
+            {showListingImage ? (
+              <ListingCardImage
+                renderSizes={renderSizes}
+                title={title}
+                listing={listing}
+                setActivePropsMaybe={setActivePropsMaybe}
+                aspectWidth={aspectWidth}
+                aspectHeight={aspectHeight}
+                variantPrefix={variantPrefix}
+                lazyLoadImage={lazyLoadImage}
+              />
+            ) : (
+              <ListingCardThumbnail
+                style={cardStyle}
+                listingTitle={title}
+                className={css.aspectRatioWrapper}
+                width={aspectWidth}
+                height={aspectHeight}
+                setActivePropsMaybe={setActivePropsMaybe}
+              />
+            )}
+            {showTrustBadges && <TrustBadges certifications={certifications} />}
+            {showConversionBadges && (
+              <ConversionBadges isBestseller={isBestseller} stockCount={stockCount} isNew={isNew} />
+            )}
+          </div>
+        </NamedLink>
+        <SavedListingButton
+          listingId={id}
+          listingData={listingData}
+          variant="icon"
+          className={css.saveButton}
         />
-        {showTrustBadges && <TrustBadges certifications={certifications} />}
-        {showConversionBadges && (
-          <ConversionBadges isBestseller={isBestseller} stockCount={stockCount} isNew={isNew} />
-        )}
       </div>
-      <div className={css.info}>
-        <PriceMaybe
-          price={price}
-          publicData={publicData}
-          config={config}
-          intl={intl}
-          listingTypeConfig={foundListingTypeConfig}
-        />
-        <div className={css.mainInfo}>
-          {showListingImage && (
-            <div className={css.title}>
-              {richText(title, {
-                longWordMinLength: MIN_LENGTH_FOR_LONG_WORDS,
-                longWordClass: css.longWord,
-              })}
+      <NamedLink className={css.infoLink} name="ListingPage" params={{ id, slug }}>
+        <div className={css.info}>
+          <PriceMaybe
+            price={price}
+            publicData={publicData}
+            config={config}
+            intl={intl}
+            listingTypeConfig={foundListingTypeConfig}
+          />
+          {publicData?.variantCount > 1 && (
+            <div className={css.variantPill}>
+              {publicData.variantCount} variants
             </div>
           )}
-          {showAuthorInfo ? (
-            <div className={css.authorInfo}>
-              {brand && (
-                <div className={css.brandName}>
-                  <FormattedMessage id="ListingCard.brand" values={{ brandName: brand }} />
-                </div>
-              )}
-              <div className={css.author}>
-                <FormattedMessage id="ListingCard.author" values={{ authorName }} />
+          <div className={css.mainInfo}>
+            {showListingImage && (
+              <div className={css.title}>
+                {richText(title, {
+                  longWordMinLength: MIN_LENGTH_FOR_LONG_WORDS,
+                  longWordClass: css.longWord,
+                })}
               </div>
-            </div>
-          ) : null}
+            )}
+            {showAuthorInfo ? (
+              <div className={css.authorInfo}>
+                {brand && (
+                  <div className={css.brandName}>
+                    <FormattedMessage id="ListingCard.brand" values={{ brandName: brand }} />
+                  </div>
+                )}
+                <div className={css.author}>
+                  <FormattedMessage id="ListingCard.author" values={{ authorName }} />
+                </div>
+              </div>
+            ) : null}
+          </div>
         </div>
-      </div>
-    </NamedLink>
+      </NamedLink>
+    </div>
   );
 };
 

@@ -114,7 +114,6 @@ const expectedUserFieldInput = (n, userTypeArray) => [
   {
     key: `pub_enumField${n}`,
     name: `pub_enumField${n}`,
-    defaultRequiredMessage: 'CustomExtendedDataField.required',
     fieldConfig: {
       enumOptions: [
         { label: 'l1', option: 'o1' },
@@ -151,7 +150,6 @@ const expectedUserFieldInput = (n, userTypeArray) => [
         limitToUserTypeIds: false,
       },
     },
-    defaultRequiredMessage: 'CustomExtendedDataField.required',
   },
   {
     key: 'prot_booleanField',
@@ -169,7 +167,6 @@ const expectedUserFieldInput = (n, userTypeArray) => [
         limitToUserTypeIds: false,
       },
     },
-    defaultRequiredMessage: 'CustomExtendedDataField.required',
   },
 ];
 
@@ -271,7 +268,7 @@ describe('userHelpers', () => {
 
   describe('getPropsForCustomUserFieldInputs', () => {
     it('returns the correct input config if no user type is specified in a non-signup setting', () => {
-      const inputConfig1 = getPropsForCustomUserFieldInputs(config, fakeIntl, null, false);
+      const inputConfig1 = getPropsForCustomUserFieldInputs(config, null, false);
       const sharedConfig = [
         {
           key: 'priv_textField',
@@ -289,7 +286,6 @@ describe('userHelpers', () => {
               limitToUserTypeIds: false,
             },
           },
-          defaultRequiredMessage: 'CustomExtendedDataField.required',
         },
         {
           key: 'prot_booleanField',
@@ -307,7 +303,6 @@ describe('userHelpers', () => {
               limitToUserTypeIds: false,
             },
           },
-          defaultRequiredMessage: 'CustomExtendedDataField.required',
         },
       ];
 
@@ -315,15 +310,15 @@ describe('userHelpers', () => {
     });
 
     it('returns the correct input config based on user type in a non-signup setting', () => {
-      const inputConfig1 = getPropsForCustomUserFieldInputs(config, fakeIntl, 'a', false);
-      const inputConfig2 = getPropsForCustomUserFieldInputs(config, fakeIntl, 'c', false);
+      const inputConfig1 = getPropsForCustomUserFieldInputs(config, 'a', false);
+      const inputConfig2 = getPropsForCustomUserFieldInputs(config, 'c', false);
 
       expect(inputConfig1).toEqual(expectedUserFieldInput(1, ['a', 'b']));
       expect(inputConfig2).toEqual(expectedUserFieldInput(2, ['c', 'd']));
     });
 
     it('returns the correct input config if no user type is specified in a signup setting', () => {
-      const inputConfig1 = getPropsForCustomUserFieldInputs(config, fakeIntl);
+      const inputConfig1 = getPropsForCustomUserFieldInputs(config);
       const sharedConfig = [
         {
           key: 'priv_textField',
@@ -341,7 +336,6 @@ describe('userHelpers', () => {
               limitToUserTypeIds: false,
             },
           },
-          defaultRequiredMessage: 'CustomExtendedDataField.required',
         },
       ];
 
@@ -349,8 +343,8 @@ describe('userHelpers', () => {
     });
 
     it('returns the correct input config based on user type in a signup setting', () => {
-      const inputConfig1 = getPropsForCustomUserFieldInputs(config, fakeIntl, 'a');
-      const inputConfig2 = getPropsForCustomUserFieldInputs(config, fakeIntl, 'c');
+      const inputConfig1 = getPropsForCustomUserFieldInputs(config, 'a');
+      const inputConfig2 = getPropsForCustomUserFieldInputs(config, 'c');
 
       const filterFn = f => f.fieldConfig.saveConfig.displayInSignUp;
       const filteredConfig1 = expectedUserFieldInput(1, ['a', 'b']).filter(filterFn);

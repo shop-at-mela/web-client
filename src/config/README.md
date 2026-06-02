@@ -86,12 +86,13 @@ listings might need to be updated (which can be made with Integration API).
 The unit type's main functionality is to work as a pricing unit. Changing unit type should always
 also mean that pricing needs to be updated.
 
-Some processes could support multiple unit types. E.g. booking process supports _day_, _night_, and
-_hour_.
+Some processes could support multiple unit types. E.g. booking process supports _day_, _night_,
+_hour_, and _fixed_.
 
 We recommend that you don't use the same unit types with different processes. By default, the
-_"item"_ is for the product selling process; and _"day"_, _"night"_, and _"hour"_ are for the
-booking process.
+_"item"_ is for the product selling process (default-purchase); and _"day"_, _"night"_, _"hour"_,
+and _"fixed"_ are for the default-booking process. Then _"request"_ and _"offer"_ are for the
+default-negotiation process and _"inquiry"_ is for the default-inquiry process.
 
 ### [src/util/configHelpers.js](../util/configHelpers.js)
 
@@ -124,3 +125,136 @@ Read More:
 
 - [Manage search schemas with Flex CLI](https://www.sharetribe.com/docs/how-to/manage-search-schemas-with-flex-cli/#adding-listing-search-schemas)
 - [SearchPage.duck.js](../containers/SearchPage/SearchPage.duck.js)
+
+## Search Schemas Configuration
+
+### What are search schemas?
+
+Search schemas tell Sharetribe which extended data fields should be indexed for search and filtering. Without search schemas configured on the backend, filters will not work even if they are configured in the frontend (`indexForSearch: true` in configListing.js).
+
+**Important:** Any field in configListing.js with `indexForSearch: true` MUST have a corresponding search schema configured in Sharetribe, or the filter will not function.
+
+### Architecture Overview
+
+Search schemas have **two separate concerns**:
+
+1. **Search Schema Structure** (Backend): Defines which fields are searchable (key, type, scope)
+2. **Enum Values** (Frontend): Defined in `configListing.js` - controls filter options displayed to users
+
+The Sharetribe CLI only needs the schema structure. Enum values are NOT passed to the backend via CLI.
+
+### Current indexed fields
+
+The following fields have search schemas configured:
+
+- **age_group** (enum) - Baby age ranges
+- **material** (multi-enum) - Product materials
+- **certification** (multi-enum) - Safety certifications
+- **color** (multi-enum) - Product colors
+- **key_features** (multi-enum) - Product features
+
+**Note:** Enum values for these fields are defined in `configListing.js` and are managed separately from the search schema structure.
+
+### How to apply search schemas to Sharetribe
+
+Search schemas are applied once per environment (dev, staging, production) using the Sharetribe CLI.
+
+**Option 1: Use the provided script (recommended)**
+
+```bash
+cd src/config
+chmod +x apply-search-schemas.sh
+./apply-search-schemas.sh
+```
+
+**Option 2: Apply schemas manually**
+
+```bash
+# 1. Install Sharetribe CLI
+npm install -g @sharetribe/flex-cli
+
+# 2. Login to Sharetribe
+flex-cli login
+
+# 3. Select your marketplace
+flex-cli marketplace select
+
+# 4. Apply search schemas (one command per field)
+flex-cli search set --key age_group --type enum --scope public
+flex-cli search set --key material --type multi-enum --scope public
+flex-cli search set --key certification --type multi-enum --scope public
+flex-cli search set --key color --type multi-enum --scope public
+flex-cli search set --key key_features --type multi-enum --scope public
+
+# 5. Verify the schemas were applied
+flex-cli search show
+```
+
+### Adding a new searchable field
+
+When you need to add a new searchable field:
+
+**1. Update configListing.js**
+```javascript
+{
+  key: 'new_field',
+  scope: 'public',
+  schemaType: 'multi-enum',
+  enumOptions: [
+    { option: 'value1', label: 'Value 1' },
+    { option: 'value2', label: 'Value 2' },
+  ],
+  filterConfig: {
+    indexForSearch: true,
+    // ... other filter config
+  },
+}
+```
+
+**2. Apply search schema via CLI**
+```bash
+flex-cli search set --key new_field --type multi-enum --scope public
+```
+
+**3. (Optional) Update apply-search-schemas.sh**
+
+Add the new command to the script for future reference:
+```bash
+echo "Setting new_field schema..."
+flex-cli search set --key new_field --type multi-enum --scope public
+```
+
+**4. Deploy and test**
+- Deploy your web-client changes
+- Test that the new filter appears and works correctly on SearchPage
+
+### Troubleshooting
+
+**Problem:** Filter options don't appear on search page
+
+**Solution:** Check that:
+1. Field has `indexForSearch: true` in configListing.js
+2. Search schema has been applied via CLI (`flex-cli search show` to verify)
+3. enumOptions are defined in configListing.js
+4. Web-client has been deployed with the updated configListing.js
+
+**Problem:** Search schema command fails
+
+**Solution:**
+- Verify you're logged in: `flex-cli whoami`
+- Verify marketplace is selected: `flex-cli marketplace list`
+- Check the CLI documentation for syntax updates
+
+### Where enum values are defined
+
+**IMPORTANT:** Enum values (the actual filter options users see) are defined in `configListing.js`, NOT in the search schema CLI commands.
+
+- Search schema CLI: Defines structure (key, type, scope)
+- configListing.js: Defines enum values, labels, filter configuration
+
+This separation allows you to update filter options without touching the backend search schema.
+
+Read More:
+
+- [Extended Data Search Schemas](https://www.sharetribe.com/docs/references/extended-data/#search-schema)
+- [Manage Search Schemas with CLI](https://www.sharetribe.com/docs/how-to/manage-search-schemas-with-flex-cli/)

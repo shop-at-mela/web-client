@@ -6,58 +6,16 @@ import classNames from 'classnames';
 
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { propTypes } from '../../util/types';
-import { formatMoney } from '../../util/currency';
-import { createSlug } from '../../util/urlHelpers';
 import { useConfiguration } from '../../context/configurationContext';
-import { H3, NamedLink, ResponsiveImage } from '../../components';
+import { ProductCarousel } from '../../components';
 
 import { fetchRecommendedProducts } from '../../ducks/recommendedProducts.duck';
 import css from './RecommendedProducts.module.css';
 
 /**
- * Simple product card for recommended products
- */
-const RecommendedProductCard = ({ product, intl }) => {
-  const { title, price, images } = product.attributes;
-  const { sku } = product.attributes.publicData || {};
-
-  const primaryImage = images && images.length > 0 ? images[0] : null;
-  const formattedPrice = price ? formatMoney(intl, price) : null;
-  const slug = createSlug(title);
-
-  const linkProps = {
-    name: 'ListingPage',
-    params: { id: product.id.uuid, slug },
-  };
-
-  return (
-    <NamedLink className={css.productCard} {...linkProps}>
-      <div className={css.imageContainer}>
-        {primaryImage ? (
-          <ResponsiveImage
-            rootClassName={css.productImage}
-            alt={title}
-            image={primaryImage}
-            variants={['listing-card', 'listing-card-2x']}
-            sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
-          />
-        ) : (
-          <div className={css.noImage}>
-            <FormattedMessage id="RecommendedProducts.noImage" />
-          </div>
-        )}
-      </div>
-      <div className={css.productInfo}>
-        <h4 className={css.productTitle}>{title}</h4>
-        {formattedPrice && <div className={css.productPrice}>{formattedPrice}</div>}
-      </div>
-    </NamedLink>
-  );
-};
-
-/**
- * RecommendedProducts component displays a "You may also like" section
- * with products fetched based on SKUs from publicData.recommendedProducts
+ * RecommendedProducts component displays a "You may also like" carousel
+ * with products fetched based on SKUs from publicData.recommendedProducts.
+ * Uses the shared ProductCarousel component — same horizontal scroll pattern as the home page.
  */
 const RecommendedProductsComponent = ({
   rootClassName = null,
@@ -99,47 +57,28 @@ const RecommendedProductsComponent = ({
   const isLoading = fetchRecommendedProductsInProgress;
   const hasProducts = recommendedProducts && recommendedProducts.length > 0;
 
+  const carouselTitle = brandName
+    ? intl.formatMessage({ id: 'RecommendedProducts.titleWithBrand' }, { brandName })
+    : intl.formatMessage({ id: 'RecommendedProducts.title' });
+
+  const brandSlug = brandName
+    ? brandName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    : null;
+
   return (
     <div className={classes}>
-      <H3 as="h2" className={css.title}>
-        {brandName ? (
-          <FormattedMessage id="RecommendedProducts.titleWithBrand" values={{ brandName }} />
-        ) : (
-          <FormattedMessage id="RecommendedProducts.title" />
-        )}
-      </H3>
-
       {hasError ? (
         <div className={css.error}>
           <FormattedMessage id="RecommendedProducts.loadError" />
         </div>
-      ) : isLoading ? (
-        <div className={css.loading}>
-          <FormattedMessage id="RecommendedProducts.loading" />
-        </div>
-      ) : hasProducts ? (
-        <>
-          <div className={css.productsGrid}>
-            {recommendedProducts.map(product => (
-              <RecommendedProductCard
-                key={product.id.uuid}
-                product={product}
-                intl={intl}
-              />
-            ))}
-          </div>
-          {brandName && (
-            <div className={css.viewMoreContainer}>
-              <NamedLink
-                name="BrandPage"
-                params={{ brandSlug: brandName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') }}
-                className={css.viewMoreLink}
-              >
-                <FormattedMessage id="RecommendedProducts.viewMoreFromBrand" values={{ brandName }} />
-              </NamedLink>
-            </div>
-          )}
-        </>
+      ) : hasProducts || isLoading ? (
+        <ProductCarousel
+          title={carouselTitle}
+          viewAllLinkName={brandSlug ? 'BrandPage' : undefined}
+          viewAllLinkParams={brandSlug ? { brandSlug } : undefined}
+          listings={recommendedProducts}
+          isLoading={isLoading}
+        />
       ) : (
         <div className={css.noProducts}>
           <FormattedMessage id="RecommendedProducts.noProducts" />

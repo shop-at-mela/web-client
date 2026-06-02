@@ -1,10 +1,11 @@
 import { storableError } from '../../util/errors';
 import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 import {
-  getFeaturedBrandIds,
+  getRandomBrandIds,
   getPaginatedBrandIds,
   getFeaturedProductIds,
   getBrandConfiguration,
+  getBrandCategory,
 } from '../../config/configBrands';
 import { denormalisedEntities } from '../../util/data';
 
@@ -323,7 +324,7 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
 export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
   dispatch(fetchFeaturedBrandsRequest());
 
-  const featuredIds = getFeaturedBrandIds();
+  const featuredIds = getRandomBrandIds(6);
 
   if (featuredIds.length === 0) {
     // No featured brands
@@ -498,15 +499,9 @@ export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
  */
 export const loadData = (params, search) => dispatch => {
   const { page = 1, perPage = 24 } = params;
-
-  const promises = [dispatch(fetchBrands({ page, perPage }))];
-
-  // Fetch featured brands on first page load
-  if (page === 1 || page === '1') {
-    promises.push(dispatch(fetchFeaturedBrands()));
-  }
-
-  return Promise.all(promises);
+  // Only fetch all brands for the /brands page.
+  // Homepage random brands are fetched client-side by HeroSection and FeaturedBrandPartners.
+  return dispatch(fetchBrands({ page, perPage }));
 };
 
 // ================ Selectors ================ //
@@ -602,6 +597,21 @@ export const getFeaturedBrandsWithProducts = state => {
       products,
     };
   });
+};
+
+/**
+ * Get all brands grouped by category
+ * Returns an object keyed by category id, each value is an array of { brand, products }
+ */
+export const getBrandsGroupedByCategory = state => {
+  const all = getBrandsWithProducts(state);
+  const groups = {};
+  all.forEach(({ brand, products }) => {
+    const cat = getBrandCategory(brand.id.uuid) || 'uncategorized';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push({ brand, products });
+  });
+  return groups;
 };
 
 export const getBrandsPagination = state => state.BrandsPage.pagination;

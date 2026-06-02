@@ -134,4 +134,78 @@ describe('ListingCard', () => {
     );
     expect(tree.asFragment().firstChild).toMatchSnapshot();
   });
+
+  describe('INR equivalent price', () => {
+    it('shows INR price when priceInINR is in publicData', () => {
+      const listing = createListing(
+        'listing1',
+        { publicData: { priceInINR: 2499 } },
+        { author: createUser('user1') }
+      );
+      const { getByText } = render(<ListingCard listing={listing} intl={fakeIntl} />);
+      expect(getByText('ListingCard.inrEquivalent')).toBeInTheDocument();
+    });
+
+    it('does not show INR price when priceInINR is absent', () => {
+      const listing = createListing(
+        'listing1',
+        { publicData: {} },
+        { author: createUser('user1') }
+      );
+      const { queryByText } = render(<ListingCard listing={listing} intl={fakeIntl} />);
+      expect(queryByText('ListingCard.inrEquivalent')).not.toBeInTheDocument();
+    });
+
+    it('does not show INR price when priceInINR is zero', () => {
+      const listing = createListing(
+        'listing1',
+        { publicData: { priceInINR: 0 } },
+        { author: createUser('user1') }
+      );
+      const { queryByText } = render(<ListingCard listing={listing} intl={fakeIntl} />);
+      expect(queryByText('ListingCard.inrEquivalent')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('variant pill', () => {
+    it('shows variant pill when variantCount > 1', () => {
+      const listing = createListing(
+        'listing1',
+        { publicData: { variantCount: 8 } },
+        { author: createUser('user1') }
+      );
+      const { getByText } = render(<ListingCard listing={listing} intl={fakeIntl} />);
+      expect(getByText('8 variants')).toBeInTheDocument();
+    });
+
+    it('hides variant pill when variantCount is 1', () => {
+      const listing = createListing(
+        'listing1',
+        { publicData: { variantCount: 1 } },
+        { author: createUser('user1') }
+      );
+      const { queryByText } = render(<ListingCard listing={listing} intl={fakeIntl} />);
+      expect(queryByText(/variants/)).not.toBeInTheDocument();
+    });
+
+    it('hides variant pill when variantCount is absent', () => {
+      const listing = createListing(
+        'listing1',
+        { publicData: {} },
+        { author: createUser('user1') }
+      );
+      const { queryByText } = render(<ListingCard listing={listing} intl={fakeIntl} />);
+      expect(queryByText(/variants/)).not.toBeInTheDocument();
+    });
+
+    it('matches snapshot with variant pill', () => {
+      const listing = createListing(
+        'listing1',
+        { publicData: { variantCount: 4 } },
+        { author: createUser('user1') }
+      );
+      const tree = render(<ListingCard listing={listing} intl={fakeIntl} />);
+      expect(tree.asFragment().firstChild).toMatchSnapshot();
+    });
+  });
 });

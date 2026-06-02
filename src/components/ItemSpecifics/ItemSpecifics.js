@@ -1,49 +1,41 @@
 import React, { useState } from 'react';
-import { arrayOf, bool, number, object, string } from 'prop-types';
+import { arrayOf, number, object, string } from 'prop-types';
 import classNames from 'classnames';
 
 import { FormattedMessage } from '../../util/reactIntl';
-import { Modal } from '../../components';
-import { CategoryBreadcrumb } from '../../components';
 
 import css from './ItemSpecifics.module.css';
 
-const ItemSpecificsModal = ({ isOpen, onClose, attributes, categoryBreadcrumb }) => {
+const ItemSpecificsSheet = ({ isOpen, onClose, attributes, categoryBreadcrumb }) => {
   if (!isOpen) return null;
 
   return (
-    <Modal
-      id="ItemSpecificsModal"
-      isOpen={isOpen}
-      onClose={onClose}
-      onManageDisableScrolling={() => {}}
-      containerClassName={css.modalContainer}
-      className={css.modal}
-    >
-      <div className={css.modalContent}>
-        <div className={css.modalHeader}>
-          <h3 className={css.modalTitle}>
+    <>
+      <div className={css.backdrop} onClick={onClose} aria-hidden="true" />
+      <div
+        className={css.sheet}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Product details"
+      >
+        <div className={css.sheetHandle} />
+        <div className={css.sheetHeader}>
+          <span className={css.sheetTitle}>
             <FormattedMessage id="ItemSpecifics.modalTitle" />
-          </h3>
-          <button
-            className={css.modalCloseButton}
-            onClick={onClose}
-            aria-label="Close"
-          >
+          </span>
+          <button className={css.sheetClose} onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
-        <div className={css.modalBody}>
-          <table className={css.modalAttributesTable}>
+        <div className={css.sheetBody}>
+          <table className={css.attributesTable}>
             <tbody>
               {categoryBreadcrumb && (
                 <tr className={css.attributeRow}>
                   <th className={css.attributeKey}>
                     <FormattedMessage id="ItemSpecifics.category" />
                   </th>
-                  <td className={css.attributeValue}>
-                    {categoryBreadcrumb}
-                  </td>
+                  <td className={css.attributeValue}>{categoryBreadcrumb}</td>
                 </tr>
               )}
               {attributes.map(({ key, value }, index) => (
@@ -56,7 +48,7 @@ const ItemSpecificsModal = ({ isOpen, onClose, attributes, categoryBreadcrumb })
           </table>
         </div>
       </div>
-    </Modal>
+    </>
   );
 };
 
@@ -67,13 +59,12 @@ const ItemSpecifics = ({
   categoryBreadcrumb = null,
   maxMobileAttributes = 4,
 }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   if (!attributes.length && !categoryBreadcrumb) {
     return null;
   }
 
-  // Prepare all attributes with category at the top
   const allAttributes = [];
   if (categoryBreadcrumb) {
     allAttributes.push({
@@ -83,7 +74,6 @@ const ItemSpecifics = ({
   }
   allAttributes.push(...attributes);
 
-  // For mobile: show only first maxMobileAttributes
   const mobileAttributes = allAttributes.slice(0, maxMobileAttributes);
   const hasMoreAttributes = allAttributes.length > maxMobileAttributes;
 
@@ -95,7 +85,7 @@ const ItemSpecifics = ({
         <FormattedMessage id="ItemSpecifics.title" />
       </h2>
 
-      {/* Desktop Layout - eBay-style table */}
+      {/* Desktop Layout */}
       <div className={css.desktopLayout}>
         <table className={css.attributesTable}>
           <tbody>
@@ -109,7 +99,7 @@ const ItemSpecifics = ({
         </table>
       </div>
 
-      {/* Mobile Layout - eBay-style table with show more */}
+      {/* Mobile Layout */}
       <div className={css.mobileLayout}>
         <table className={css.attributesTable}>
           <tbody>
@@ -125,19 +115,19 @@ const ItemSpecifics = ({
         {hasMoreAttributes && (
           <button
             className={css.showMoreButton}
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setIsSheetOpen(true)}
           >
             <FormattedMessage
-              id="ItemSpecifics.showMore"
-              values={{ count: allAttributes.length - maxMobileAttributes }}
+              id="ItemSpecifics.showAll"
+              values={{ count: allAttributes.length }}
             />
           </button>
         )}
       </div>
 
-      <ItemSpecificsModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+      <ItemSpecificsSheet
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
         attributes={attributes}
         categoryBreadcrumb={categoryBreadcrumb}
       />

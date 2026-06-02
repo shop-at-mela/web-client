@@ -1,21 +1,52 @@
-import find from 'lodash/find';
 import { matchPath } from 'react-router-dom';
 import { compile } from 'path-to-regexp';
 // NOTE: This file imports urlHelpers.js, which may lead to circular dependency
 import { stringify } from './urlHelpers';
 
-const findRouteByName = (nameToFind, routes) => find(routes, route => route.name === nameToFind);
+const findRouteByName = (nameToFind, routes) => routes.find(route => route.name === nameToFind);
 
 /**
  * E.g. ```const toListingPath = toPathByRouteName('ListingPage', routes);```
  * Then we can generate listing paths with given params (```toListingPath({ id: uuidX })```)
+ */
+/**
+ * Build a path compiler for a route.
+ *
+ * path-to-regexp v8 (used here for compile) does not support React Router v5's
+ * `/:param?` optional param syntax. For routes that contain optional params we
+ * build the path manually: include a segment only when its param is provided,
+ * and stop at the first undefined optional segment.
  */
 const toPathByRouteName = (nameToFind, routes) => {
   const route = findRouteByName(nameToFind, routes);
   if (!route) {
     throw new Error(`Path "${nameToFind}" was not found.`);
   }
-  return compile(route.path);
+
+  // Fast path: no optional params → delegate to compile as usual.
+  if (!route.path.includes('?')) {
+    return compile(route.path);
+  }
+
+  // Slow path: manual builder for paths with optional segments.
+  return (params = {}) => {
+    const segments = route.path.split('/').filter(Boolean);
+    const built = [];
+    for (const seg of segments) {
+      const optionalParam = seg.match(/^:(\w+)\?$/); // e.g. ":level2?"
+      const requiredParam = seg.match(/^:(\w+)$/);   // e.g. ":level1"
+      if (optionalParam) {
+        const val = params[optionalParam[1]];
+        if (val != null) built.push(encodeURIComponent(val));
+        else break; // stop at first missing optional segment
+      } else if (requiredParam) {
+        built.push(encodeURIComponent(params[requiredParam[1]]));
+      } else {
+        built.push(seg); // literal segment
+      }
+    }
+    return '/' + built.join('/');
+  };
 };
 
 /**
