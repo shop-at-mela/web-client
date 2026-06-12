@@ -60,14 +60,14 @@ const ProductCarousel = ({
           ? [1, 2, 3, 4].map(i => (
               <div key={i} className={`${css.card} ${css.skeleton}`} />
             ))
-          : listingsWithImages.map((listing, index) => (
+          : listingsWithImages.map((listing) => (
               <div key={listing.id.uuid} className={css.card}>
                 <ListingCard
                   listing={listing}
                   showAuthorInfo={false}
                   showTrustBadges={true}
                   showConversionBadges={true}
-                  isBestseller={index === 0}
+                  isBestseller={listing.attributes?.publicData?.isBestseller || false}
                   renderSizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw"
                 />
               </div>

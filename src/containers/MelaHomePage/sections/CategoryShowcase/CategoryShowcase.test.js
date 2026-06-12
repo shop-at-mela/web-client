@@ -48,8 +48,12 @@ jest.mock('../../../../components', () => ({
         {title}
       </div>
     ),
-  ListingCard: ({ listing }) => (
-    <div data-testid="listing-card" data-id={listing?.id?.uuid}>
+  ListingCard: ({ listing, isBestseller }) => (
+    <div
+      data-testid="listing-card"
+      data-id={listing?.id?.uuid}
+      data-is-bestseller={String(!!isBestseller)}
+    >
       {listing?.attributes?.title}
     </div>
   ),
@@ -86,14 +90,21 @@ const emptyQueryResponse = () => ({
   data: { data: [], included: [], meta: {} },
 });
 
-/** Minimal listing. occasionTag populates publicData.occasion for OccasionStrip's client-side filter. */
-const makeListing = (id, { occasionTag = null } = {}) => ({
+/**
+ * Minimal listing.
+ * occasionTag populates publicData.occasion for OccasionStrip's client-side filter.
+ * isBestseller populates publicData.isBestseller for the badge.
+ */
+const makeListing = (id, { occasionTag = null, isBestseller = false } = {}) => ({
   id: { uuid: id },
   type: 'listing',
   attributes: {
     title: `Product ${id}`,
     price: { amount: 1500, currency: 'USD' },
-    publicData: occasionTag ? { occasion: occasionTag } : {},
+    publicData: {
+      ...(occasionTag ? { occasion: occasionTag } : {}),
+      ...(isBestseller ? { isBestseller: true } : {}),
+    },
   },
 });
 
@@ -123,7 +134,7 @@ describe('CategoryShowcase', () => {
   it('renders the section sub-heading', () => {
     renderInContext(<CategoryShowcase />);
     expect(
-      screen.getByText(/Baby, fashion, home, jewelry and wellness/i)
+      screen.getByText(/Baby, fashion, home, jewelry, wellness and art/i)
     ).toBeInTheDocument();
   });
 
@@ -161,9 +172,8 @@ const renderAndWaitForLoad = async (ui, config = {}) => {
 };
 
 // ── AllCategoryCarousels ──────────────────────────────────────────────────────
-// All 7 top-level categories (Baby & Kids, Fashion, Home & Kitchen, Jewelry &
-// Accessories, Beauty & Wellness, Food & Gourmet, Art & Craft) are fetched by
-// a single carousel component using ALL_CATEGORIES, all with perPage: 24 + pickRandom.
+// 6 top-level categories fetched by a single carousel component using ALL_CATEGORIES,
+// all with perPage: 100 + pickBrandDiverse.
 
 describe('AllCategoryCarousels', () => {
   beforeEach(() => {
@@ -172,16 +182,16 @@ describe('AllCategoryCarousels', () => {
     denormalisedEntities.mockReturnValue([]);
   });
 
-  it('queries all 7 categories with perPage: 24', async () => {
+  it('queries all 6 categories with perPage: 100', async () => {
     const calls = await renderAndWaitForLoad(<CategoryShowcase />);
-    const catCalls = calls.filter(([p]) => p.pub_categoryLevel1 && p.perPage === 24);
-    expect(catCalls).toHaveLength(7);
+    const catCalls = calls.filter(([p]) => p.pub_categoryLevel1 && p.perPage === 100);
+    expect(catCalls).toHaveLength(6);
   });
 
-  it('queries Baby-Kids, Fashion, Home-Kitchen, Jewelry-Accessories, Beauty-Wellness, Food-Gourmet, Art-Craft', async () => {
+  it('queries Baby-Kids, Fashion, Home-Kitchen, Jewelry-Accessories, Beauty-Wellness, Art-Craft', async () => {
     const calls = await renderAndWaitForLoad(<CategoryShowcase />);
     const categories = calls
-      .filter(([p]) => p.pub_categoryLevel1 && p.perPage === 24)
+      .filter(([p]) => p.pub_categoryLevel1 && p.perPage === 100)
       .map(([p]) => p.pub_categoryLevel1);
     expect(categories).toEqual(
       expect.arrayContaining([
@@ -190,7 +200,6 @@ describe('AllCategoryCarousels', () => {
         'Home-Kitchen',
         'Jewelry-Accessories',
         'Beauty-Wellness',
-        'Food-Gourmet',
         'Art-Craft',
       ])
     );
@@ -199,7 +208,7 @@ describe('AllCategoryCarousels', () => {
   it('includes images and currentStock in all category queries', async () => {
     const calls = await renderAndWaitForLoad(<CategoryShowcase />);
     calls
-      .filter(([p]) => p.pub_categoryLevel1 && p.perPage === 24)
+      .filter(([p]) => p.pub_categoryLevel1 && p.perPage === 100)
       .forEach(([params]) => {
         expect(params.include).toEqual(expect.arrayContaining(['images', 'currentStock']));
       });
@@ -208,11 +217,11 @@ describe('AllCategoryCarousels', () => {
   it('shows loading carousels while fetching', () => {
     mockQuery.mockReturnValue(new Promise(() => {}));
     renderInContext(<CategoryShowcase />);
-    // AllCategories(7) + AgeNavigation(3) = at least 7 loading carousels
-    expect(screen.getAllByTestId('carousel-loading').length).toBeGreaterThanOrEqual(7);
+    // AllCategories(6) + AgeNavigation(3) = at least 6 loading carousels
+    expect(screen.getAllByTestId('carousel-loading').length).toBeGreaterThanOrEqual(6);
   });
 
-  it('renders all 7 category carousels with correct titles after load', async () => {
+  it('renders all 6 category carousels with correct titles after load', async () => {
     await renderAndWaitForLoad(<CategoryShowcase />);
     const titles = screen.getAllByTestId('product-carousel').map(el => el.getAttribute('data-title'));
     expect(titles).toEqual(
@@ -222,7 +231,6 @@ describe('AllCategoryCarousels', () => {
         'Home & Kitchen',
         'Jewelry & Accessories',
         'Beauty & Wellness',
-        'Food & Gourmet',
         'Art & Craft',
       ])
     );
@@ -238,11 +246,11 @@ describe('AgeNavigation', () => {
     denormalisedEntities.mockReturnValue([]);
   });
 
-  it('queries each age group with perPage: 24', async () => {
+  it('queries each age group with perPage: 100', async () => {
     const calls = await renderAndWaitForLoad(<CategoryShowcase />);
     const ageCalls = calls.filter(([p]) => p.pub_age_group);
     expect(ageCalls).toHaveLength(3);
-    ageCalls.forEach(([params]) => expect(params.perPage).toBe(24));
+    ageCalls.forEach(([params]) => expect(params.perPage).toBe(100));
   });
 
   it('queries newborn, 0_6_months, 6_12_months', async () => {
@@ -271,14 +279,14 @@ describe('OccasionStrip', () => {
     denormalisedEntities.mockReturnValue([]);
   });
 
-  it('queries each occasion with perPage: 18', async () => {
+  it('queries each occasion with perPage: 50', async () => {
     renderInContext(<OccasionStrip />);
 
     await waitFor(() => {
       const calls = mockQuery.mock.calls.filter(([p]) => p.pub_occasion);
       expect(calls).toHaveLength(2);
       calls.forEach(([params]) => {
-        expect(params.perPage).toBe(18);
+        expect(params.perPage).toBe(50);
       });
     });
   });
@@ -392,6 +400,48 @@ describe('OccasionStrip', () => {
         .forEach(([params]) => {
           expect(params.pub_categoryLevel1).toBe('Fashion');
         });
+    });
+  });
+
+  describe('isBestseller badge', () => {
+    it('passes isBestseller=true only when publicData.isBestseller is set', async () => {
+      const listings = [
+        makeListing('g1', { occasionTag: 'gifting', isBestseller: true }),
+        makeListing('g2', { occasionTag: 'gifting' }),
+        makeListing('g3', { occasionTag: 'gifting' }),
+      ];
+
+      denormalisedEntities
+        .mockReturnValueOnce([]) // diwali → hidden
+        .mockReturnValueOnce(listings); // gifting
+
+      renderInContext(<OccasionStrip />);
+
+      await waitFor(() => {
+        const cards = screen.getAllByTestId('listing-card');
+        expect(cards[0]).toHaveAttribute('data-is-bestseller', 'true');
+        expect(cards[1]).toHaveAttribute('data-is-bestseller', 'false');
+        expect(cards[2]).toHaveAttribute('data-is-bestseller', 'false');
+      });
+    });
+
+    it('does not mark the first-position listing as bestseller when publicData.isBestseller is absent', async () => {
+      const listings = [
+        makeListing('g1', { occasionTag: 'gifting' }), // index 0, no isBestseller
+        makeListing('g2', { occasionTag: 'gifting' }),
+      ];
+
+      denormalisedEntities
+        .mockReturnValueOnce([]) // diwali → hidden
+        .mockReturnValueOnce(listings); // gifting
+
+      renderInContext(<OccasionStrip />);
+
+      await waitFor(() => {
+        screen.getAllByTestId('listing-card').forEach(card => {
+          expect(card).toHaveAttribute('data-is-bestseller', 'false');
+        });
+      });
     });
   });
 

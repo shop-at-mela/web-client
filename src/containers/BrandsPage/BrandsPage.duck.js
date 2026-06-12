@@ -327,7 +327,6 @@ export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
   const featuredIds = getRandomBrandIds(6);
 
   if (featuredIds.length === 0) {
-    // No featured brands
     dispatch(fetchFeaturedBrandsSuccess([]));
     return Promise.resolve();
   }

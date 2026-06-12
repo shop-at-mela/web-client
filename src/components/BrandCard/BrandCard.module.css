@@ -56,17 +56,26 @@
   font-size: 16px;
 }
 
+.brandText {
+  flex: 1;
+  min-width: 0;
+}
+
 .brandName {
   font-size: 16px;
   font-weight: var(--fontWeightSemiBold);
-  margin: 0;
+  margin: 0 0 3px;
   color: var(--colorGrey700);
-
-  /* Truncate if too long */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 200px;
+}
+
+.tagline {
+  font-size: 12px;
+  color: var(--colorGrey500);
+  margin: 0;
+  line-height: 1.45;
 }
 
 .menuButton {

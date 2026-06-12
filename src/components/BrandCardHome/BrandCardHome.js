@@ -62,11 +62,9 @@ const BrandCardHome = props => {
 
   const logoInitial = displayName?.charAt(0) || 'B';
 
-  // Extract first sentence from bio as tagline (max 80 chars)
+  // First sentence of bio is the tagline; brandTagline from publicData overrides if set
   const firstSentence = bio ? bio.split('.')[0].trim() : '';
-  const tagline = firstSentence
-    ? firstSentence.substring(0, 80) + (firstSentence.length > 80 ? '...' : '')
-    : null;
+  const tagline = publicData?.brandTagline || firstSentence || null;
 
   // Extract brand origin (city, country)
   const brandOrigin =

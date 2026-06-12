@@ -1,93 +1,634 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`ListingCard matches snapshot 1`] = `
-<a
-  aria-label="ListingCard.screenreader.label"
+<div
   class="root"
-  href="/l/listing1-title/listing1"
 >
   <div
-    class="root aspectRatioWrapper"
+    class="imageWrapper"
   >
-    <div
-      class="aspectPadding"
-      style="padding-bottom: 100%;"
+    <a
+      class="imageLink"
+      href="/l/listing1-title/listing1"
     >
       <div
-        class="aspectBox"
+        class="imageContainer"
+      />
+    </a>
+    <button
+      aria-label="SavedListingButton.saveAriaLabel"
+      aria-pressed="false"
+      class="iconRoot saveButton"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="heartIcon"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+        />
+      </svg>
+    </button>
+  </div>
+  <a
+    class="infoLink"
+    href="/l/listing1-title/listing1"
+  >
+    <div
+      class="info"
+    >
+      <div
+        class="price"
+        title="55"
+      >
+        <span>
+          ListingCard.price
+        </span>
+      </div>
+      <div
+        class="mainInfo"
       >
         <div
-          style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
-        />
+          class="title"
+        >
+          listing1 title
+        </div>
+        <div
+          class="authorInfo"
+        >
+          <div
+            class="author"
+          >
+            <span>
+              ListingCard.author
+            </span>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+  </a>
+</div>
+`;
+
+exports[`ListingCard matches snapshot with all badges and no author 1`] = `
+<div
+  class="root"
+>
   <div
-    class="info"
+    class="imageWrapper"
+  >
+    <a
+      class="imageLink"
+      href="/l/listing1-title/listing1"
+    >
+      <div
+        class="imageContainer"
+      >
+        <div
+          class="trustBadges"
+        >
+          <span
+            class="badge"
+          >
+            GOTS
+          </span>
+          <span
+            class="badge"
+          >
+            Non-toxic
+          </span>
+        </div>
+        <div
+          class="conversionBadge"
+        >
+          <span>
+            ListingCard.bestseller
+          </span>
+        </div>
+      </div>
+    </a>
+    <button
+      aria-label="SavedListingButton.saveAriaLabel"
+      aria-pressed="false"
+      class="iconRoot saveButton"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="heartIcon"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+        />
+      </svg>
+    </button>
+  </div>
+  <a
+    class="infoLink"
+    href="/l/listing1-title/listing1"
   >
     <div
-      class="price"
-      title="55"
-    >
-      ListingCard.price
-    </div>
-    <div
-      class="mainInfo"
+      class="info"
     >
       <div
-        class="title"
+        class="price"
+        title="55"
       >
-        listing1 title
+        <span>
+          ListingCard.price
+        </span>
       </div>
       <div
-        class="authorInfo"
+        class="mainInfo"
       >
-        ListingCard.author
+        <div
+          class="title"
+        >
+          listing1 title
+        </div>
       </div>
     </div>
+  </a>
+</div>
+`;
+
+exports[`ListingCard matches snapshot with conversion badge (bestseller) 1`] = `
+<div
+  class="root"
+>
+  <div
+    class="imageWrapper"
+  >
+    <a
+      class="imageLink"
+      href="/l/listing1-title/listing1"
+    >
+      <div
+        class="imageContainer"
+      >
+        <div
+          class="conversionBadge"
+        >
+          <span>
+            ListingCard.bestseller
+          </span>
+        </div>
+      </div>
+    </a>
+    <button
+      aria-label="SavedListingButton.saveAriaLabel"
+      aria-pressed="false"
+      class="iconRoot saveButton"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="heartIcon"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+        />
+      </svg>
+    </button>
   </div>
-</a>
+  <a
+    class="infoLink"
+    href="/l/listing1-title/listing1"
+  >
+    <div
+      class="info"
+    >
+      <div
+        class="price"
+        title="55"
+      >
+        <span>
+          ListingCard.price
+        </span>
+      </div>
+      <div
+        class="mainInfo"
+      >
+        <div
+          class="title"
+        >
+          listing1 title
+        </div>
+        <div
+          class="authorInfo"
+        >
+          <div
+            class="brandName"
+          >
+            <span>
+              ListingCard.brand
+            </span>
+          </div>
+          <div
+            class="author"
+          >
+            <span>
+              ListingCard.author
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </a>
+</div>
+`;
+
+exports[`ListingCard matches snapshot with conversion badge (low stock) 1`] = `
+<div
+  class="root"
+>
+  <div
+    class="imageWrapper"
+  >
+    <a
+      class="imageLink"
+      href="/l/listing1-title/listing1"
+    >
+      <div
+        class="imageContainer"
+      >
+        <div
+          class="conversionBadge urgencyBadge"
+        >
+          <span>
+            ListingCard.lowStock
+          </span>
+        </div>
+      </div>
+    </a>
+    <button
+      aria-label="SavedListingButton.saveAriaLabel"
+      aria-pressed="false"
+      class="iconRoot saveButton"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="heartIcon"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+        />
+      </svg>
+    </button>
+  </div>
+  <a
+    class="infoLink"
+    href="/l/listing1-title/listing1"
+  >
+    <div
+      class="info"
+    >
+      <div
+        class="price"
+        title="55"
+      >
+        <span>
+          ListingCard.price
+        </span>
+      </div>
+      <div
+        class="mainInfo"
+      >
+        <div
+          class="title"
+        >
+          listing1 title
+        </div>
+        <div
+          class="authorInfo"
+        >
+          <div
+            class="brandName"
+          >
+            <span>
+              ListingCard.brand
+            </span>
+          </div>
+          <div
+            class="author"
+          >
+            <span>
+              ListingCard.author
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </a>
+</div>
+`;
+
+exports[`ListingCard matches snapshot with trust badges 1`] = `
+<div
+  class="root"
+>
+  <div
+    class="imageWrapper"
+  >
+    <a
+      class="imageLink"
+      href="/l/listing1-title/listing1"
+    >
+      <div
+        class="imageContainer"
+      >
+        <div
+          class="trustBadges"
+        >
+          <span
+            class="badge"
+          >
+            GOTS
+          </span>
+          <span
+            class="badge"
+          >
+            BPA Free
+          </span>
+        </div>
+      </div>
+    </a>
+    <button
+      aria-label="SavedListingButton.saveAriaLabel"
+      aria-pressed="false"
+      class="iconRoot saveButton"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="heartIcon"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+        />
+      </svg>
+    </button>
+  </div>
+  <a
+    class="infoLink"
+    href="/l/listing1-title/listing1"
+  >
+    <div
+      class="info"
+    >
+      <div
+        class="price"
+        title="55"
+      >
+        <span>
+          ListingCard.price
+        </span>
+      </div>
+      <div
+        class="mainInfo"
+      >
+        <div
+          class="title"
+        >
+          listing1 title
+        </div>
+        <div
+          class="authorInfo"
+        >
+          <div
+            class="brandName"
+          >
+            <span>
+              ListingCard.brand
+            </span>
+          </div>
+          <div
+            class="author"
+          >
+            <span>
+              ListingCard.author
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </a>
+</div>
+`;
+
+exports[`ListingCard matches snapshot without author info 1`] = `
+<div
+  class="root"
+>
+  <div
+    class="imageWrapper"
+  >
+    <a
+      class="imageLink"
+      href="/l/listing1-title/listing1"
+    >
+      <div
+        class="imageContainer"
+      />
+    </a>
+    <button
+      aria-label="SavedListingButton.saveAriaLabel"
+      aria-pressed="false"
+      class="iconRoot saveButton"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="heartIcon"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+        />
+      </svg>
+    </button>
+  </div>
+  <a
+    class="infoLink"
+    href="/l/listing1-title/listing1"
+  >
+    <div
+      class="info"
+    >
+      <div
+        class="price"
+        title="55"
+      >
+        <span>
+          ListingCard.price
+        </span>
+      </div>
+      <div
+        class="mainInfo"
+      >
+        <div
+          class="title"
+        >
+          listing1 title
+        </div>
+      </div>
+    </div>
+  </a>
+</div>
 `;
 
 exports[`ListingCard matches snapshot without price 1`] = `
-<a
-  aria-label="listing1 title"
+<div
   class="root"
-  href="/l/listing1-title/listing1"
 >
   <div
-    class="root aspectRatioWrapper"
+    class="imageWrapper"
   >
-    <div
-      class="aspectPadding"
-      style="padding-bottom: 100%;"
+    <a
+      class="imageLink"
+      href="/l/listing1-title/listing1"
     >
       <div
-        class="aspectBox"
+        class="imageContainer"
+      />
+    </a>
+    <button
+      aria-label="SavedListingButton.saveAriaLabel"
+      aria-pressed="false"
+      class="iconRoot saveButton"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="heartIcon"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+        />
+      </svg>
+    </button>
+  </div>
+  <a
+    class="infoLink"
+    href="/l/listing1-title/listing1"
+  >
+    <div
+      class="info"
+    >
+      <div
+        class="mainInfo"
       >
         <div
-          style="position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px;"
-        />
+          class="title"
+        >
+          listing1 title
+        </div>
+        <div
+          class="authorInfo"
+        >
+          <div
+            class="author"
+          >
+            <span>
+              ListingCard.author
+            </span>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+  </a>
+</div>
+`;
+
+exports[`ListingCard variant pill matches snapshot with variant pill 1`] = `
+<div
+  class="root"
+>
   <div
-    class="info"
+    class="imageWrapper"
   >
-    <div
-      class="mainInfo"
+    <a
+      class="imageLink"
+      href="/l/listing1-title/listing1"
     >
       <div
-        class="title"
+        class="imageContainer"
+      />
+    </a>
+    <button
+      aria-label="SavedListingButton.saveAriaLabel"
+      aria-pressed="false"
+      class="iconRoot saveButton"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="heartIcon"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        listing1 title
+        <path
+          d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+        />
+      </svg>
+    </button>
+  </div>
+  <a
+    class="infoLink"
+    href="/l/listing1-title/listing1"
+  >
+    <div
+      class="info"
+    >
+      <div
+        class="price"
+        title="55"
+      >
+        <span>
+          ListingCard.price
+        </span>
       </div>
       <div
-        class="authorInfo"
+        class="variantPill"
       >
-        ListingCard.author
+        4 variants
+      </div>
+      <div
+        class="mainInfo"
+      >
+        <div
+          class="title"
+        >
+          listing1 title
+        </div>
+        <div
+          class="authorInfo"
+        >
+          <div
+            class="author"
+          >
+            <span>
+              ListingCard.author
+            </span>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</a>
+  </a>
+</div>
 `;

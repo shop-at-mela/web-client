@@ -193,13 +193,12 @@ export const currencyFormatting = (currency, options) => {
     );
   }
 
-  return subUnitDivisors[currency] === 1
+  return subUnitDivisors[currency] === 1 || currency === 'USD'
     ? {
         style: 'currency',
         currency,
         currencyDisplay: 'symbol',
         useGrouping: true,
-        // If the currency is not using subunits (like JPY), remove fractions.
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
       }

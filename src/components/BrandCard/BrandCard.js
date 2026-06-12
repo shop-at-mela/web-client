@@ -34,8 +34,10 @@ const BrandCard = props => {
 
   const classes = classNames(rootClassName || css.root, className);
 
-  const { displayName, publicData } = brand.attributes?.profile || {};
-  const { certifications = [] } = publicData || {};
+  const { displayName, bio, publicData } = brand.attributes?.profile || {};
+  const { certifications = [], brandTagline } = publicData || {};
+  const firstSentence = bio ? bio.split('.')[0].trim() : '';
+  const tagline = brandTagline || (firstSentence ? firstSentence.substring(0, 120) : null);
   const profileImage = brand.profileImage;
 
   const logoSrc =
@@ -67,7 +69,10 @@ const BrandCard = props => {
           ) : (
             <div className={css.logoPlaceholder}>{logoInitial}</div>
           )}
-          <h3 className={css.brandName}>{displayName}</h3>
+          <div className={css.brandText}>
+            <h3 className={css.brandName}>{displayName}</h3>
+            {tagline && <p className={css.tagline}>{tagline}</p>}
+          </div>
         </div>
 
         {/* Future: Options menu */}

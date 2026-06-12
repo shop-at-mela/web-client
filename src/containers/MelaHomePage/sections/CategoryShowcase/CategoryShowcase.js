@@ -263,14 +263,14 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
                 </div>
               ) : (
                 <div className={css.productCarousel}>
-                  {products.map((listing, i) => (
+                  {products.map((listing) => (
                     <div key={listing.id.uuid} className={css.carouselCard}>
                       <ListingCard
                         listing={listing}
                         showAuthorInfo={false}
                         showTrustBadges={true}
                         showConversionBadges={true}
-                        isBestseller={i === 0}
+                        isBestseller={listing.attributes?.publicData?.isBestseller || false}
                         renderSizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw"
                       />
                     </div>

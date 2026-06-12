@@ -12,6 +12,7 @@ import {
   truncateToSubUnitPrecision,
   formatMoney,
 } from './currency';
+import { currencyFormatting } from '../config/settingsCurrency';
 
 const { Money } = sdkTypes;
 
@@ -246,5 +247,50 @@ describe('currency utils', () => {
     // No test for that actual formatting for now. It depends on the
     // locale, and it doesn't really make sense to test the fake intl
     // implementation in the tests.
+  });
+});
+
+describe('currencyFormatting', () => {
+  it('returns 0 fraction digits for USD (whole-dollar display)', () => {
+    const opts = currencyFormatting('USD');
+    expect(opts.minimumFractionDigits).toBe(0);
+    expect(opts.maximumFractionDigits).toBe(0);
+  });
+
+  it('returns 2 fraction digits for EUR', () => {
+    const opts = currencyFormatting('EUR');
+    expect(opts.minimumFractionDigits).toBe(2);
+    expect(opts.maximumFractionDigits).toBe(2);
+  });
+
+  it('returns 2 fraction digits for GBP', () => {
+    const opts = currencyFormatting('GBP');
+    expect(opts.minimumFractionDigits).toBe(2);
+    expect(opts.maximumFractionDigits).toBe(2);
+  });
+
+  it('returns 0 fraction digits for JPY (no subunits, subUnitDivisor === 1)', () => {
+    const opts = currencyFormatting('JPY');
+    expect(opts.minimumFractionDigits).toBe(0);
+    expect(opts.maximumFractionDigits).toBe(0);
+  });
+
+  it('returns currency style for all currencies', () => {
+    expect(currencyFormatting('USD').style).toBe('currency');
+    expect(currencyFormatting('EUR').style).toBe('currency');
+    expect(currencyFormatting('JPY').style).toBe('currency');
+  });
+
+  it('returns the currency symbol display mode', () => {
+    expect(currencyFormatting('USD').currencyDisplay).toBe('symbol');
+    expect(currencyFormatting('EUR').currencyDisplay).toBe('symbol');
+  });
+
+  it('throws for an unsupported currency by default', () => {
+    expect(() => currencyFormatting('XYZ')).toThrow(/Configuration missing for currency/);
+  });
+
+  it('does not throw for unsupported currency when enforceSupportedCurrencies is false', () => {
+    expect(() => currencyFormatting('XYZ', { enforceSupportedCurrencies: false })).not.toThrow();
   });
 });

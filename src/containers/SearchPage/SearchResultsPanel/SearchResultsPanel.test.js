@@ -1,7 +1,7 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { renderWithProviders as render, testingLibrary } from '../../../util/testHelpers';
-import { createListing } from '../../../util/testData';
+import { createListing, fakeIntl } from '../../../util/testData';
 import SearchResultsPanel from './SearchResultsPanel';
 
 const { screen } = testingLibrary;
@@ -229,6 +229,7 @@ describe('SearchResultsPanel', () => {
           search={{}}
           setActiveListing={mockSetActiveListing}
           isMapVariant={false}
+          intl={fakeIntl}
         />
       );
 

@@ -109,12 +109,11 @@ const FeaturedBrandPartners = props => {
           {brandsWithProducts.map(({ brand, products }) => (
             <div key={brand.id.uuid} className={css.carouselCard}>
               <BrandCardHome
-              brand={brand}
-              products={products}
-              showCertifications={false}
-              showTagline={false}
-              showLocation={false}
-            />
+                brand={brand}
+                products={products}
+                showCertifications={false}
+                showLocation={false}
+              />
             </div>
           ))}
           {/* COMMENTED OUT: partner recruitment CTA card

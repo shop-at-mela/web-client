@@ -47,11 +47,6 @@ const BrandDataPlaceholder = ({ type, missingFields, isOwner }) => {
       title: 'BrandStorefront.placeholder.certifications.title',
       description: 'BrandStorefront.placeholder.certifications.description',
     },
-    mission: {
-      icon: '🎯',
-      title: 'BrandStorefront.placeholder.mission.title',
-      description: 'BrandStorefront.placeholder.mission.description',
-    },
     products: {
       icon: '📦',
       title: 'BrandStorefront.placeholder.products.title',
@@ -240,7 +235,6 @@ const BrandStorefront = props => {
     certifications = [],
     brandTagline,
     brandStory,
-    brandMission,
     brandLogoUrl,
     brandOrigin,
     brandCity,
@@ -478,18 +472,6 @@ const BrandStorefront = props => {
                 isOwnProfile={isOwnProfile}
               />
             )}
-
-            {/* Brand Mission */}
-            {brandMission ? (
-              <div className={css.brandMission}>
-                <H4 className={css.sectionSubtitle}>
-                  <FormattedMessage id="BrandStorefront.ourMission" />
-                </H4>
-                <p className={css.missionContent}>{brandMission}</p>
-              </div>
-            ) : isOwnProfile ? (
-              <BrandDataPlaceholder type="mission" isOwner={isOwnProfile} />
-            ) : null}
 
             {/* Certifications Detail */}
             {hasCertifications ? (

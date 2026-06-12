@@ -100,14 +100,9 @@
 
 .tagline {
   font-size: 13px;
-  line-height: 1.3;
-  color: var(--colorGrey300);
+  line-height: 1.45;
+  color: var(--colorGrey500);
   margin: 0 0 4px 0;
-
-  /* Truncate to 1 line */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .taglinePlaceholder {
@@ -240,6 +235,7 @@
 
   .tagline {
     font-size: 12px;
+    line-height: 1.45;
   }
 
   .taglinePlaceholder,
