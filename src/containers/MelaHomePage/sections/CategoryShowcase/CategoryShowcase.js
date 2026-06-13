@@ -248,10 +248,9 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
 
           return (
             <div key={occasion.option} className={`${css.occasionPanel} ${panelColorClass}`}>
-              {/* Panel header: title + description */}
+              {/* Panel header: title only */}
               <div className={css.occasionPanelHeader}>
                 <h4 className={css.occasionPanelTitle}>{occasion.label}</h4>
-                <p className={css.occasionPanelDescription}>{occasion.description}</p>
               </div>
 
               {/* Product carousel — same HTML/CSS pattern as AgeNavigation */}
@@ -469,12 +468,6 @@ const CategoryShowcase = () => {
               defaultMessage="Discover Indian Design"
             />
           </h2>
-          <p className={css.subtitle}>
-            <FormattedMessage
-              id="MelaHomePage.categorySubtitle"
-              defaultMessage="Baby, fashion, home, jewelry, wellness and art — curated from independent Indian brands"
-            />
-          </p>
         </div>
 
         {/* All 6 category carousels — single instance so all skeletons render simultaneously */}

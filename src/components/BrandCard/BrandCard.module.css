@@ -21,27 +21,29 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 12px 16px 12px 13px;
   border-bottom: 1px solid var(--colorGrey100);
+  border-left: 3px solid var(--marketplaceColor);
   background: var(--colorWhite);
 }
 
 .brandInfo {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
 }
 
 .smallLogo {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 6px;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .logoPlaceholder {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 6px;
   background: linear-gradient(
     135deg,
@@ -53,7 +55,8 @@
   align-items: center;
   justify-content: center;
   font-weight: var(--fontWeightBold);
-  font-size: 16px;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
 .brandText {
@@ -62,10 +65,11 @@
 }
 
 .brandName {
+  font-family: var(--fontFamilyBody);
   font-size: 16px;
   font-weight: var(--fontWeightSemiBold);
   margin: 0 0 3px;
-  color: var(--colorGrey700);
+  color: var(--colorGrey900);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -73,7 +77,7 @@
 
 .tagline {
   font-size: 12px;
-  color: var(--colorGrey500);
+  color: var(--colorGrey600);
   margin: 0;
   line-height: 1.45;
 }
@@ -157,11 +161,44 @@
   transform: translateX(4px);
 }
 
-/* Responsive adjustments */
+/* Mobile */
+@media (max-width: 640px) {
+  .header {
+    padding: 10px 14px 10px 11px;
+  }
+
+  .smallLogo,
+  .logoPlaceholder {
+    width: 36px;
+    height: 36px;
+  }
+
+  .brandName {
+    font-size: 15px;
+  }
+
+  .tagline {
+    font-size: 11px;
+  }
+
+  .productGrid {
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .cta {
+    padding: 12px 14px;
+  }
+
+  .ctaText {
+    font-size: 14px;
+  }
+}
+
+/* Tablet and up */
 @media (--viewportMedium) {
   .brandName {
     font-size: 17px;
-    max-width: 240px;
   }
 
   .productGrid {

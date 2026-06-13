@@ -35,6 +35,7 @@
 }
 
 .title {
+  font-family: var(--fontFamilyBody);
   font-size: 18px;
   font-weight: var(--fontWeightBold);
   color: var(--colorGrey700);

@@ -117,6 +117,7 @@
 }
 
 .storyTitle {
+  font-family: var(--fontFamilyBody);
   font-size: 1.25rem;
   font-weight: 700;
   color: #262261;
@@ -277,6 +278,7 @@
 }
 
 .ctaTitle {
+  font-family: var(--fontFamilyBody);
   font-size: 1.125rem;
   font-weight: 700;
   margin-bottom: 1rem;

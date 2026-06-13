@@ -6,80 +6,56 @@ import css from './TrustAssurance.module.css';
 
 // certification prop values match CertificationBadge / certificationIcons.js keys
 const CERTIFICATIONS = [
-  { id: 'gots_certified', name: 'GOTS Certified',   description: 'Strict environmental and social standards across every step of textile production — from farm to finished product' },
-  { id: 'organic_cotton', name: 'Organic Cotton',   description: 'Grown without toxic pesticides or synthetic fertilizers — gentler on baby skin and the planet' },
-  { id: 'oeko_tex',       name: 'OEKO-TEX®',        description: 'Independently tested against 100+ harmful substances. If it passes, it\'s safe enough to put against a newborn\'s skin' },
-  { id: 'eco_friendly',   name: 'Eco-Friendly',     description: 'Partners meet verified benchmarks for sustainable materials, production processes, and packaging' },
+  { id: 'gots_certified', name: 'GOTS Certified' },
+  { id: 'organic_cotton', name: 'Organic Cotton' },
+  { id: 'oeko_tex',       name: 'OEKO-TEX®' },
+  { id: 'eco_friendly',   name: 'Eco-Friendly' },
 ];
 
 const SECURITY_FEATURES = [
   {
     icon: '🛍️',
     title: 'Shop Directly With the Brand',
-    description: "You buy from the brand's own store — not a middleman. Your payment goes straight to them.",
   },
   {
     icon: '📦',
     title: 'Ships Directly to the US',
-    description: 'Every brand on Mela ships to US addresses. Orders go straight from the brand to your door — no re-shipping, no intermediaries.',
+    description: 'Orders ship straight from the brand to your US address.',
   },
   {
     icon: '↩️',
     title: 'Brand Return Policies',
-    description: "Each partner brand's return policy applies — we help you navigate it",
   },
-  // COMMENTED OUT: "Mela Curation Promise" — curation story now lives in section title/heading
-  // {
-  //   icon: '✅',
-  //   title: 'Mela Curation Promise',
-  //   description: 'Every brand on Mela is hand-vetted for quality, authenticity, and values',
-  // },
   {
     icon: '💳',
     title: 'US Cards Accepted on Brand Stores',
-    description: "Each brand's Shopify store accepts US-issued Visa, Mastercard, Amex, and Discover. You pay directly on their store — not on Mela.",
+    description: 'Visa, Mastercard, Amex, and Discover accepted.',
   },
 ];
 
 const US_SHOPPER_FAQS = [
   {
     question: 'Do Indian brands on Mela ship to the United States?',
-    answer: 'Yes. Every brand featured on Mela ships directly to US addresses. Most brands offer standard and express international shipping to all 50 states. Delivery typically takes 7–14 business days for standard shipping.',
+    answer: 'Yes. Every brand on Mela ships directly to US addresses. Standard delivery is 7–14 business days; express options are available.',
   },
   {
-    question: 'Can I use my US credit card to shop on Mela?',
-    answer: "Yes. Mela is a discovery platform — you purchase directly on each brand's own Shopify store, which accepts all major US-issued credit and debit cards including Visa, Mastercard, American Express, and Discover. No special international payment setup is needed.",
+    question: 'Can I use my US credit card to shop?',
+    answer: "Yes — Mela has validated each brand accepts major US-issued (international) cards on their Shopify store. Visa, Mastercard, Amex, and Discover. No special setup needed.",
   },
   {
     question: 'Are there customs duties or import taxes when ordering from India to the US?',
-    answer: 'The US de minimis exemption — which historically allowed personal-use orders under $800 to clear customs duty-free — is currently under active review by the US government. Recent executive and judicial actions have created uncertainty around this rule, and the policy may change with limited notice. For most orders from Indian brands at typical price points, duties have not been assessed, but we cannot guarantee this will remain the case. Mela recommends checking the latest US Customs and Border Protection (CBP) guidance before placing large orders. Each brand\'s checkout will show a duty estimate where available.',
+    answer: "The US de minimis exemption (duty-free under $800) is under active review. Most Mela orders fall within this threshold but we can't guarantee this remains. Check CBP.gov for current rules.",
   },
   {
     question: 'What is the return policy for brands on Mela?',
-    answer: "Each brand maintains its own return policy, displayed on their store page. Mela vets all partners for fair return terms. Contact the Mela team for help navigating any return.",
-  },
-  {
-    question: 'How long does shipping from India to the US take?',
-    answer: "Standard international shipping from India to the US takes 7–14 business days. Many brands also offer expedited options (3–7 business days). Exact timelines and costs are shown at checkout on each brand's store.",
+    answer: "Each brand has its own return policy. Mela vets partners for fair return terms — contact us for help navigating any return.",
   },
 ];
 
 const QUALITY_GUARANTEES = [
-  {
-    title: 'Proven Track Record',
-    description: 'We only list brands with years of happy customers — not just pretty products',
-    icon: '✨',
-  },
-  {
-    title: 'Verified Indian Brands',
-    description: 'Every brand is India-based and independently verified — no grey-market resellers',
-    icon: '🤝',
-  },
-  {
-    title: 'Sustainably Made',
-    description: 'Eco-friendly materials, ethical production, and responsible supply chains',
-    icon: '🌱',
-  },
+  { title: 'Proven Track Record', icon: '✨' },
+  { title: 'Verified Indian Brands', icon: '🤝' },
+  { title: 'Sustainably Made', icon: '🌱' },
 ];
 
 const TrustAssurance = () => {
@@ -94,12 +70,6 @@ const TrustAssurance = () => {
               defaultMessage="Every Brand Here Earned Its Place"
             />
           </h2>
-          <p className={css.subtitle}>
-            <FormattedMessage
-              id="MelaHomePage.trustSubtitle"
-              defaultMessage="We do the research so you don't have to."
-            />
-          </p>
         </div>
 
         {/* Quality Guarantees */}
@@ -115,7 +85,6 @@ const TrustAssurance = () => {
               <div key={index} className={css.guaranteeCard}>
                 <span className={css.guaranteeIcon}>{guarantee.icon}</span>
                 <h4 className={css.guaranteeTitle}>{guarantee.title}</h4>
-                <p className={css.guaranteeDescription}>{guarantee.description}</p>
               </div>
             ))}
           </div>
@@ -139,10 +108,7 @@ const TrustAssurance = () => {
                   showTooltip={true}
                   className={css.certLogo}
                 />
-                <div className={css.certInfo}>
-                  <p className={css.certName}>{cert.name}</p>
-                  <p className={css.certDescription}>{cert.description}</p>
-                </div>
+                <p className={css.certName}>{cert.name}</p>
               </div>
             ))}
           </div>
@@ -162,7 +128,9 @@ const TrustAssurance = () => {
                 <span className={css.securityIcon}>{feature.icon}</span>
                 <div className={css.securityInfo}>
                   <h4 className={css.securityTitle}>{feature.title}</h4>
-                  <p className={css.securityDescription}>{feature.description}</p>
+                  {feature.description && (
+                    <p className={css.securityDescription}>{feature.description}</p>
+                  )}
                 </div>
               </div>
             ))}
@@ -177,12 +145,6 @@ const TrustAssurance = () => {
               defaultMessage="Shipping & Payment to the US"
             />
           </h3>
-          <p className={css.faqSubtitle}>
-            <FormattedMessage
-              id="MelaHomePage.usShopperFaqSubtitle"
-              defaultMessage="Everything you need to know about ordering from Indian brands on Mela"
-            />
-          </p>
           <div className={css.faqList}>
             {US_SHOPPER_FAQS.map((faq, index) => (
               <div key={index} className={css.faqCard}>
@@ -202,12 +164,6 @@ const TrustAssurance = () => {
                 defaultMessage="Need Help? We're Here for You"
               />
             </h3>
-            <p className={css.serviceDescription}>
-              <FormattedMessage
-                id="MelaHomePage.customerServiceDescription"
-                defaultMessage="Our expert team is ready to help with sizing, product questions, or anything else you need"
-              />
-            </p>
             <div className={css.serviceButtons}>
               <NamedLink
                 name="ContactDetailsPage"

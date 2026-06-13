@@ -14,8 +14,6 @@ import {
 import css from './HeroSection.module.css';
 
 const TRUST_BADGES = [
-  { icon: '✨', text: 'Hand-Curated Brands' },
-  { icon: '🇮🇳', text: 'Independent Indian Brands' },
   { icon: '🇺🇸', text: 'Ships to All 50 States' },
   { icon: '💳', text: 'US Cards Accepted' },
 ];
@@ -122,9 +120,6 @@ const HeroSectionComponent = ({
 
   const categoryPills = (
     <div className={css.categoryPillsWrapper}>
-      <span className={css.pillsLabel}>
-        <FormattedMessage id="HeroSection.shopByCategory" defaultMessage="Shop by category" />
-      </span>
       <div className={css.categoryPills}>
         {TOP_CATEGORY_PILLS.map(({ id, label, icon }) => (
           <Link key={id} to={`/categories/${id}`} className={css.categoryPill}>
@@ -146,12 +141,6 @@ const HeroSectionComponent = ({
           defaultMessage="Independent Indian Brands, Curated for Your Family"
         />
       </h1>
-      <p className={css.subheadline}>
-        <FormattedMessage
-          id="SectionMelaHero.heroSubheadline"
-          defaultMessage="Baby essentials, fashion, home, jewelry, and wellness — hand-selected from the best independent brands in India, shipped directly to you in the US."
-        />
-      </p>
     </div>
   );
 

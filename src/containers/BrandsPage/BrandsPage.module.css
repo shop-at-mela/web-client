@@ -4,41 +4,76 @@
   width: 100%;
 }
 
-/* Hero Section */
+/* Hero Section — compact on mobile, fuller on desktop */
 .heroSection {
-  padding: 48px 24px;
+  padding: 16px 24px;
   text-align: center;
-  background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorWhite) 100%);
-  border-bottom: 1px solid var(--colorGrey100);
+  /* no background/border at mobile — avoids a thin coloured stripe artefact */
 
   @media (--viewportMedium) {
-    padding: 72px 24px;
+    padding: 48px 24px;
+    background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorWhite) 100%);
+    border-bottom: 1px solid var(--colorGrey100);
   }
 }
 
 .heroTitle {
-  font-size: 32px;
+  font-size: 22px;
   font-weight: var(--fontWeightBlack);
-  line-height: 40px;
-  color: var(--colorGrey700);
-  margin: 0 0 16px 0;
+  line-height: 1.2;
+  color: var(--colorGrey900);
+  margin: 0;
 
   @media (--viewportMedium) {
-    font-size: 48px;
-    line-height: 56px;
+    font-size: 40px;
+    line-height: 1.15;
+    margin: 0 0 8px 0;
   }
 }
 
-.heroSubtitle {
-  font-size: 16px;
-  line-height: 24px;
-  color: var(--colorGrey300);
-  max-width: 800px;
-  margin: 0 auto;
+/* Category Nav — sticky pill bar for jumping between brand categories */
+.categoryNav {
+  position: sticky;
+  top: var(--topbarHeight);
+  z-index: 10;
+  background: var(--colorWhite);
+  border-bottom: 1px solid var(--colorGrey100);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 
   @media (--viewportMedium) {
-    font-size: 18px;
-    line-height: 28px;
+    top: var(--topbarHeightDesktop);
+  }
+}
+
+.categoryPills {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px 24px;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.categoryPill {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--colorGrey200);
+  background: var(--colorWhite);
+  color: var(--colorGrey700);
+  font-size: 13px;
+  font-weight: var(--fontWeightMedium);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    border-color: var(--marketplaceColor);
+    color: var(--marketplaceColor);
+    background: var(--colorGrey50);
   }
 }
 
@@ -56,12 +91,12 @@
 /* Brand Grid */
 .brandGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 24px;
   margin-bottom: 48px;
 
   @media (--viewportMedium) {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 32px;
   }
 }
@@ -99,6 +134,12 @@
 /* Category Sections */
 .categorySection {
   margin-bottom: 56px;
+  /* topbar + category nav heights so anchor links land below both sticky bars */
+  scroll-margin-top: calc(var(--topbarHeight) + 56px);
+
+  @media (--viewportMedium) {
+    scroll-margin-top: calc(var(--topbarHeightDesktop) + 56px);
+  }
 
   &:last-child {
     margin-bottom: 0;

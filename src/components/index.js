@@ -47,6 +47,8 @@ export { Heading, H1, H2, H3, H4, H5, H6  } from './Heading/Heading';
 export { default as AspectRatioWrapper } from './AspectRatioWrapper/AspectRatioWrapper';
 export { default as ExternalLink } from './ExternalLink/ExternalLink';
 export { default as ExpandingTextarea } from './ExpandingTextarea/ExpandingTextarea';
+export { default as FileName } from './FileName/FileName';
+
 export { default as Form } from './Form/Form';
 export { default as KeyboardListener } from './KeyboardListener/KeyboardListener';
 export { default as LimitedAccessBanner } from './LimitedAccessBanner/LimitedAccessBanner';
@@ -131,6 +133,7 @@ export { default as ItemSpecifics } from './ItemSpecifics/ItemSpecifics';
 export { default as ListingTrustChips } from './ListingTrustChips/ListingTrustChips';
 export { default as RedirectTrustSheet } from './RedirectTrustSheet/RedirectTrustSheet';
 export const CustomExtendedDataSection = loadable(() => import(/* webpackChunkName: "CustomExtendedDataSection" */ './CustomExtendedDataSection/CustomExtendedDataSection'));
+export { default as FileUpload } from './FileUpload/FileUpload'
 export { default as OrderBreakdown } from './OrderBreakdown/OrderBreakdown';
 export { default as OrderPanel } from './OrderPanel/OrderPanel';
 export { default as ListingCard } from './ListingCard/ListingCard';

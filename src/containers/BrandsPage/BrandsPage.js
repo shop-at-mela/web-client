@@ -62,14 +62,24 @@ const BrandsPageComponent = props => {
       <h1 className={css.heroTitle}>
         <FormattedMessage id="BrandsPage.heroTitle" />
       </h1>
-      <p className={css.heroSubtitle}>
-        <FormattedMessage
-          id="BrandsPage.heroSubtitle"
-          values={{ brandCount }}
-        />
-      </p>
     </div>
   );
+
+  // Category nav — only shown when multiple categories have brands
+  const activeCategories = BRAND_CATEGORIES.filter(
+    ({ id }) => (brandsGroupedByCategory[id] || []).length > 0
+  );
+  const categoryNav = activeCategories.length > 1 ? (
+    <nav className={css.categoryNav} aria-label="Browse by category">
+      <div className={css.categoryPills}>
+        {activeCategories.map(({ id, label }) => (
+          <a key={id} href={`#category-${id}`} className={css.categoryPill}>
+            {label}
+          </a>
+        ))}
+      </div>
+    </nav>
+  ) : null;
 
   // Loading state
   const loadingContent = (
@@ -102,7 +112,7 @@ const BrandsPageComponent = props => {
           const brandsInCategory = brandsGroupedByCategory[id] || [];
           if (brandsInCategory.length === 0) return null;
           return (
-            <div key={id} className={css.categorySection}>
+            <div key={id} id={`category-${id}`} className={css.categorySection}>
               <h2 className={css.categoryTitle}>{label}</h2>
               <div className={css.brandGrid}>
                 {brandsInCategory.map(({ brand, products }) => (
@@ -137,6 +147,7 @@ const BrandsPageComponent = props => {
       >
         <div className={css.root}>
           {heroSection}
+          {categoryNav}
           <div className={css.container}>
             {content}
           </div>

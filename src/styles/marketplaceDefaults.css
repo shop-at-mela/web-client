@@ -83,8 +83,10 @@
   --colorStatusFinalState: var(--colorGrey600);
 
   /* ================ Font ================ */
-  --fontFamily: -apple-system, BlinkMacSystemFont, 'Inter', Helvetica, Arial, sans-serif,
-    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+  --fontFamilyDisplay: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --fontFamilyBody: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  /* Alias so existing var(--fontFamily) references automatically use Hanken Grotesk */
+  --fontFamily: var(--fontFamilyBody);
 
   --fontWeightRegular: 400;
   --fontWeightMedium: 500;
@@ -212,7 +214,7 @@
  */
 
 body {
-  font-family: var(--fontFamily);
+  font-family: var(--fontFamilyBody);
 
   /* A non-standard feature: https://developer.mozilla.org/en-US/docs/Web/CSS/font-smooth */
   -webkit-font-smoothing: antialiased;
@@ -267,68 +269,67 @@ a:hover {
 }
 
 h1 {
-  font-size: 24px;
-  line-height: 24px;
-  font-weight: var(--fontWeightBlack);
+  font-family: var(--fontFamilyDisplay);
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: var(--fontWeightMedium);
+  letter-spacing: -0.01em;
   padding: 3px 0 3px 0;
-  /* margin-top + n * line-height + margin-bottom => x * 6px */
   margin-top: 18px;
   margin-bottom: 18px;
 
   @media (--viewportMedium) {
-    font-size: 64px;
-    line-height: 64px;
+    font-size: 40px;
+    line-height: 1.1;
     padding: 0;
-    /* margin-top + n * line-height + margin-bottom => x * 8px */
     margin-top: 24px;
     margin-bottom: 24px;
   }
 }
 
 h2 {
-  font-size: 21px;
-  line-height: 24px;
-  font-weight: var(--fontWeightBold);
+  font-family: var(--fontFamilyDisplay);
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: var(--fontWeightMedium);
+  letter-spacing: -0.005em;
 
   padding: 4px 0 2px 0;
-  /* x * 6px */
   margin-top: 24px;
   margin-bottom: 18px;
 
   @media (--viewportMedium) {
-    font-size: 40px;
-    line-height: 56px;
+    font-size: 30px;
+    line-height: 1.15;
     padding: 5px 0 3px 0;
-    /* x * 8px */
     margin-top: 24px;
     margin-bottom: 16px;
   }
 }
 
 h3 {
-  font-weight: var(--fontWeightBold);
-  font-size: 18px;
-  line-height: 24px;
-  /* x * 6px */
+  font-family: var(--fontFamilyDisplay);
+  font-weight: var(--fontWeightMedium);
+  font-size: 20px;
+  line-height: 1.2;
   margin-top: 18px;
   margin-bottom: 12px;
 
   @media (--viewportMedium) {
-    font-size: 30px;
-    line-height: 40px;
+    font-size: 22px;
+    line-height: 1.2;
     padding: 1px 0 7px 0;
-    /* x * 8px */
     margin-top: 16px;
     margin-bottom: 16px;
   }
 }
 
 h4 {
+  font-family: var(--fontFamilyBody);
   font-weight: var(--fontWeightBold);
   font-size: 16px;
   line-height: 30px;
   padding: 5px 0 1px 0;
-  /* x * 6px */
   margin-top: 12px;
   margin-bottom: 6px;
 
@@ -336,24 +337,22 @@ h4 {
     font-size: 21px;
     line-height: 32px;
     padding: 0;
-    /* x * 8px */
     margin-top: 16px;
     margin-bottom: 16px;
   }
 }
 
 h5 {
+  font-family: var(--fontFamilyBody);
   font-weight: var(--fontWeightMedium);
   font-size: 14px;
   line-height: 18px;
-  /* x * 6px */
   padding: 3px 0 3px 0;
   margin-top: 12px;
   margin-bottom: 6px;
 
   @media (--viewportMedium) {
     line-height: 16px;
-    /* x * 8px */
     padding: 3px 0 5px 0;
     margin-top: 8px;
     margin-bottom: 16px;
@@ -361,18 +360,17 @@ h5 {
 }
 
 h6 {
+  font-family: var(--fontFamilyBody);
   font-weight: var(--fontWeightBold);
   font-size: 12px;
   line-height: 18px;
   text-transform: uppercase;
-  /* x * 6px */
   padding: 4px 0 2px 0;
   margin-top: 6px;
   margin-bottom: 6px;
 
   @media (--viewportMedium) {
     line-height: 16px;
-    /* x * 8px */
     padding: 3px 0 5px 0;
     margin-top: 8px;
     margin-bottom: 8px;
@@ -383,17 +381,17 @@ html,
 li,
 p,
 pre {
-  font-family: var(--fontFamily);
-  font-weight: var(--fontWeightMedium);
+  font-family: var(--fontFamilyBody);
+  font-weight: var(--fontWeightRegular);
 
   /* No margins for default font */
   font-size: 14px;
-  line-height: 24px;
+  line-height: 1.5;
   padding: 0;
 
   @media (--viewportMedium) {
     font-size: 16px;
-    line-height: 24px;
+    line-height: 1.65;
     padding: 5px 0 3px 0;
   }
 }
@@ -464,15 +462,16 @@ label {
 }
 
 button {
-  font-family: var(--fontFamily);
+  font-family: var(--fontFamilyBody);
   font-weight: var(--fontWeightSemiBold);
+  letter-spacing: 0.01em;
 }
 
 /* marketplaceInputFontStyles */
 select,
 input,
 textarea {
-  font-family: var(--fontFamily);
+  font-family: var(--fontFamilyBody);
   font-size: 16px;
 }
 
@@ -626,69 +625,68 @@ textarea {
 }
 
 .h1 {
-  font-weight: var(--fontWeightBlack);
-  font-size: 24px;
-  line-height: 24px;
+  font-family: var(--fontFamilyDisplay);
+  font-weight: var(--fontWeightMedium);
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
 
   padding: 3px 0 3px 0;
-  /* margin-top + n * line-height + margin-bottom => x * 6px */
   margin-top: 18px;
   margin-bottom: 18px;
 
   @media (--viewportMedium) {
-    font-size: 64px;
-    line-height: 64px;
+    font-size: 40px;
+    line-height: 1.1;
     padding: 0;
-    /* margin-top + n * line-height + margin-bottom => x * 8px */
     margin-top: 24px;
     margin-bottom: 24px;
   }
 }
 
 .h2 {
-  font-weight: var(--fontWeightBold);
-  font-size: 21px;
-  line-height: 24px;
+  font-family: var(--fontFamilyDisplay);
+  font-weight: var(--fontWeightMedium);
+  font-size: 24px;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
 
   padding: 4px 0 2px 0;
-  /* x * 6px */
   margin-top: 24px;
   margin-bottom: 18px;
 
   @media (--viewportMedium) {
-    font-size: 40px;
-    line-height: 56px;
+    font-size: 30px;
+    line-height: 1.15;
     padding: 5px 0 3px 0;
-    /* x * 8px */
     margin-top: 24px;
     margin-bottom: 16px;
   }
 }
 
 .h3 {
-  font-weight: var(--fontWeightBold);
-  font-size: 18px;
-  line-height: 24px;
-  /* x * 6px */
+  font-family: var(--fontFamilyDisplay);
+  font-weight: var(--fontWeightMedium);
+  font-size: 20px;
+  line-height: 1.2;
   margin-top: 18px;
   margin-bottom: 12px;
 
   @media (--viewportMedium) {
-    font-size: 30px;
-    line-height: 40px;
+    font-size: 22px;
+    line-height: 1.2;
     padding: 1px 0 7px 0;
-    /* x * 8px */
     margin-top: 16px;
     margin-bottom: 16px;
   }
 }
 
 .h4 {
+  font-family: var(--fontFamilyBody);
   font-weight: var(--fontWeightBold);
   font-size: 16px;
   line-height: 30px;
   padding: 5px 0 1px 0;
-  /* x * 6px */
   margin-top: 12px;
   margin-bottom: 6px;
 
@@ -696,24 +694,22 @@ textarea {
     font-size: 21px;
     line-height: 32px;
     padding: 0;
-    /* x * 8px */
     margin-top: 16px;
     margin-bottom: 16px;
   }
 }
 
 .h5 {
+  font-family: var(--fontFamilyBody);
   font-weight: var(--fontWeightMedium);
   font-size: 14px;
   line-height: 18px;
-  /* x * 6px */
   padding: 3px 0 3px 0;
   margin-top: 12px;
   margin-bottom: 6px;
 
   @media (--viewportMedium) {
     line-height: 16px;
-    /* x * 8px */
     padding: 3px 0 5px 0;
     margin-top: 8px;
     margin-bottom: 16px;
@@ -721,18 +717,17 @@ textarea {
 }
 
 .h6 {
+  font-family: var(--fontFamilyBody);
   font-weight: var(--fontWeightBold);
   font-size: 12px;
   line-height: 18px;
   text-transform: uppercase;
-  /* x * 6px */
   padding: 4px 0 2px 0;
   margin-top: 6px;
   margin-bottom: 6px;
 
   @media (--viewportMedium) {
     line-height: 16px;
-    /* x * 8px */
     padding: 3px 0 5px 0;
     margin-top: 8px;
     margin-bottom: 8px;
@@ -768,7 +763,7 @@ textarea {
 .marketplaceListingAttributeFontStyles,
 .marketplaceBodyFontStyles,
 .marketplaceDefaultFontStyles {
-  font-family: var(--fontFamily);
+  font-family: var(--fontFamilyBody);
   font-weight: var(--fontWeightMedium);
 
   /* No margins for default font */
@@ -1258,7 +1253,7 @@ textarea {
 }
 
 .buttonSmall {
-  font-family: var(--fontFamily);
+  font-family: var(--fontFamilyBody);
   font-weight: var(--fontWeightMedium);
 
   font-size: 14px;

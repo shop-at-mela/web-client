@@ -71,9 +71,12 @@ code_challenge_method=S256`;
     secure: USING_SSL,
   };
 
+  // Only accept relative paths to prevent open-redirect via a crafted target_path value.
+  const isRelativePath = p => typeof p === 'string' && p.startsWith('/') && !p.startsWith('//');
+
   res.cookie(stateKey, state, cookieOpts);
   res.cookie(codeVerifierKey, codeVerifier, cookieOpts);
-  if (targetPath) {
+  if (targetPath && isRelativePath(targetPath)) {
     res.cookie(targetPathKey, targetPath, cookieOpts);
   }
   return res.redirect(location);

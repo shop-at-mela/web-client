@@ -52,10 +52,7 @@ const FeaturedBrandPartners = props => {
             <h2 className={css.title}>
               <FormattedMessage id="FeaturedBrandPartners.title" />
             </h2>
-            <p className={css.subtitle}>
-              <FormattedMessage id="FeaturedBrandPartners.subtitle" />
-            </p>
-          </div>
+            </div>
           <div className={css.loading}>
             <FormattedMessage id="FeaturedBrandPartners.loading" />
           </div>
@@ -112,7 +109,6 @@ const FeaturedBrandPartners = props => {
                 brand={brand}
                 products={products}
                 showCertifications={false}
-                showLocation={false}
               />
             </div>
           ))}
