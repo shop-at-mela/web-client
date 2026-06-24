@@ -1,0 +1,63 @@
+/* BrandCarousel
+ * Two-layer pattern matching ProductCarousel:
+ * .root clips overflow; .carousel scrolls inside it.
+ * padding-right on .carousel creates the peek effect (partial next card)
+ * without overflowing the page — .root absorbs it via overflow-x:hidden. */
+
+.root {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.carousel {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: 0.5rem;
+  padding-right: 2.5rem;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 1024px) {
+    gap: 1.5rem;
+    padding-right: 4rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--colorGrey300) transparent;
+    padding-bottom: 1rem;
+
+    &::-webkit-scrollbar {
+      display: block;
+      height: 4px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: var(--colorGrey300);
+      border-radius: 2px;
+    }
+  }
+}
+
+.card {
+  flex: 0 0 calc(88% - 0.5rem);
+  scroll-snap-align: start;
+
+  @media (min-width: 640px) {
+    flex: 0 0 calc(45% - 0.5rem);
+  }
+
+  @media (min-width: 1024px) {
+    flex: 0 0 calc(33.333% - 1rem);
+  }
+
+  @media (min-width: 1280px) {
+    flex: 0 0 calc(30% - 1rem);
+  }
+}

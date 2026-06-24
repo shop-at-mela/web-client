@@ -531,19 +531,23 @@ export const listingFields = [
   //   },
   // },
 
-  // Homepage feature flag — set to true to pin a listing in the hero carousel
-  // ⚠️ Requires Sharetribe CLI: sharetribe-cli search-schema/set --key pub_homepageFeature --type boolean
+  // Bestseller flag — boolean schemaType can't be configured via Console, so this field
+  // is marked localOnly and merged in regardless of environment (see configHelpers.js
+  // mergeListingConfig). Search schema is set via Sharetribe CLI:
+  // sharetribe-cli search set --key isBestseller --type boolean --scope public
   {
-    key: 'homepageFeature',
+    key: 'isBestseller',
     scope: 'public',
     schemaType: 'boolean',
+    localOnly: true,
     filterConfig: {
       indexForSearch: true,
-      label: 'Homepage Feature',
-      group: 'secondary',
+      showFilter: true,
+      label: 'Bestseller',
+      group: 'primary',
     },
-    showConfig: { label: 'Featured on Homepage', isDetail: false },
-    saveConfig: { label: 'Feature on Homepage' },
+    showConfig: { label: 'Bestseller', isDetail: false },
+    saveConfig: { label: 'Mark as bestseller' },
   },
 
   // Occasion — for occasion-based product discovery on the homepage

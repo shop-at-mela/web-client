@@ -9,9 +9,6 @@ import {
   Page,
   LayoutSingleColumn,
   H2,
-  Button,
-  ExternalLink,
-  NamedLink,
 } from '../../components';
 
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
@@ -211,26 +208,13 @@ const BrandPartnershipPageComponent = () => {
         {/* Final CTA */}
         <section className={css.finalCta}>
           <div className={css.container}>
-            <H2 className={css.ctaTitle}>Ready to Reach Millions of US Families?</H2>
+            <H2 className={css.ctaTitle}>Ready to Reach US Families?</H2>
             <p className={css.ctaDescription}>
-              Join our founding partnership program and start growing your brand in the US market with zero risk.
+              Get in touch to explore a partnership with Mela.
             </p>
-            <div className={css.ctaButtons}>
-              <NamedLink
-                name="SignupForUserTypePage"
-                params={{ userType: 'provider' }}
-                className={css.primaryCtaButton}
-              >
-                Sign Up to Export Baby Clothing
-              </NamedLink>
-              <NamedLink
-                name="SignupForUserTypePage"
-                params={{ userType: 'provider' }}
-                className={css.secondaryCtaButton}
-              >
-                Join Waitlist (Other Categories)
-              </NamedLink>
-            </div>
+            <a href="mailto:shopatmela@gmail.com" className={css.primaryCtaButton}>
+              Contact Us
+            </a>
           </div>
         </section>
       </LayoutSingleColumn>

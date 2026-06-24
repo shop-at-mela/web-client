@@ -146,6 +146,7 @@ export { default as BrandCard } from './BrandCard/BrandCard';
 export { default as BrandCardHome } from './BrandCardHome/BrandCardHome';
 export { default as PartnerCTACard } from './PartnerCTACard/PartnerCTACard';
 export { default as CertificationBadge } from './CertificationBadge/CertificationBadge';
+export { default as BrandCarousel } from './BrandCarousel/BrandCarousel';
 export { default as BrandFilterBar } from './BrandFilterBar/BrandFilterBar';
 export { default as Map } from './Map/Map';
 export { default as Page } from './Page/Page';

@@ -140,7 +140,7 @@ const brandConfigurationsByEnv = {
     },
     '6a13c498-39f9-4b74-94fb-fc99a19f5a40': {
       // Vilvah Store
-      slug: 'Vilvah-store',
+      slug: 'vilvah-store',
       category: 'beauty_and_wellness',
       featuredProductIds: [
         '6a13d75a-d4ba-458d-8c46-d09e3851d3b4',
@@ -171,6 +171,12 @@ const brandConfigurationsByEnv = {
         '6a17b626-c587-4d7e-a935-a2a164163558'
       ],
     },
+    '697b81ea-9931-4a57-8b26-be04fe1daecf': {
+      // The Nesavu
+      slug: 'the-nesavu',
+      category: 'baby_and_kids',
+      featuredProductIds: [],
+    },
     '68d8a4e9-533c-4b9c-914d-8b21edb8ee2d': {
       // mela-admin (Test) — no public slug; admin account
       featuredProductIds: [],
@@ -199,9 +205,10 @@ const allBrandIdsByEnv = {
     '697c1798-79e9-46e1-a104-c6c09a512c46', // superbottoms
     '69f02a02-6330-4240-9035-fbc23bc568f0', // pluchi
     '69f7bbc7-3b97-4244-9444-bc51ed8ec4e9', // gullylabs
+    '697b81ea-9931-4a57-8b26-be04fe1daecf', // the-nesavu
     '69faa719-cc71-4e56-b6c3-48b0f510fecb', // banjaaran-studio
     '6a134ea4-dc4d-4cdb-9175-5ec00bf6d8fd', // polite-society
-    '6a13c498-39f9-4b74-94fb-fc99a19f5a40', // Vilvah-store
+    '6a13c498-39f9-4b74-94fb-fc99a19f5a40', // vilvah-store
     '6a14a6f7-615b-4f52-8725-30c064efe210', // the-alternate-india
     '6a170717-31bf-4e1e-998f-f613e05fd9c1', // fizzy-goblet
   ],

@@ -57,6 +57,7 @@ import {
   H4,
   Page,
   NamedLink,
+  NamedRedirect,
   OrderPanel,
   LayoutSingleColumn,
   CategoryBreadcrumb,
@@ -246,6 +247,10 @@ export const ListingPageComponent = props => {
   } else if (!currentListing.id) {
     // Still loading the listing
     return <LoadingPage topbar={topbar} scrollingDisabled={scrollingDisabled} intl={intl} />;
+  }
+
+  if (!rawParams.slug && currentListing.id) {
+    return <NamedRedirect name="ListingPage" params={{ slug: listingSlug, id: rawParams.id }} />;
   }
 
   // Memoize the recommended products SKUs to prevent infinite re-renders

@@ -3,7 +3,7 @@ import { bool, func, arrayOf, shape, string } from 'prop-types';
 import classNames from 'classnames';
 
 import { FormattedMessage } from '../../../../util/reactIntl';
-import { BrandCardHome, PartnerCTACard, NamedLink } from '../../../../components';
+import { BrandCardHome, BrandCarousel, NamedLink } from '../../../../components';
 import { getAllBrandIds } from '../../../../config/configBrands';
 
 import css from './FeaturedBrandPartners.module.css';
@@ -102,22 +102,17 @@ const FeaturedBrandPartners = props => {
         </div>
 
         {/* Brand Carousel */}
-        <div className={css.carousel}>
-          {brandsWithProducts.map(({ brand, products }) => (
-            <div key={brand.id.uuid} className={css.carouselCard}>
-              <BrandCardHome
-                brand={brand}
-                products={products}
-                showCertifications={false}
-              />
-            </div>
-          ))}
-          {/* COMMENTED OUT: partner recruitment CTA card
-          <div className={css.carouselCard}>
-            <PartnerCTACard partnerUrl="/partner" />
-          </div>
-          */}
-        </div>
+        <BrandCarousel
+          items={brandsWithProducts}
+          getKey={({ brand }) => brand.id.uuid}
+          renderItem={({ brand, products }) => (
+            <BrandCardHome
+              brand={brand}
+              products={products}
+              showCertifications={false}
+            />
+          )}
+        />
 
         {/* View All Brands CTA */}
         <div className={css.viewAllBrands}>

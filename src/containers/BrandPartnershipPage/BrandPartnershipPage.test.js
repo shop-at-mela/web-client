@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { IntlProvider } from 'react-intl';
 import { Provider } from 'react-redux';
@@ -17,16 +17,10 @@ jest.mock('./sections/Hero/Hero', () => {
     return (
       <div data-testid="hero">
         <a
-          data-testid="clothing-cta-link"
-          href="/signup/provider"
+          data-testid="contact-cta-link"
+          href="mailto:shopatmela@gmail.com"
         >
-          Apply for Baby Clothing
-        </a>
-        <a
-          data-testid="waitlist-cta-link"
-          href="/signup/provider"
-        >
-          Join Waitlist (Other Categories)
+          Contact Us to Partner
         </a>
       </div>
     );
@@ -101,16 +95,10 @@ const mockStore = createStore(() => ({}));
 const renderWithProviders = (component) => {
   const messages = {
     'Page.schemaTitle': 'Partner with {marketplaceName}',
-    'Page.schemaDescription': 'Join {marketplaceName} - the premium marketplace for authentic Indian products in the US market'
+    'Page.schemaDescription': 'Discover authentic Indian baby brands and products.',
   };
 
-  const mockRoutes = [
-    {
-      path: '/signup/:userType',
-      name: 'SignupForUserTypePage',
-      component: () => null
-    }
-  ];
+  const mockRoutes = [];
 
   return render(
     <HelmetProvider>
@@ -134,11 +122,9 @@ describe('BrandPartnershipPage', () => {
   it('renders all sections', async () => {
     renderWithProviders(<BrandPartnershipPage />);
 
-    // Above-the-fold sections should load immediately
     expect(screen.getByTestId('hero')).toBeInTheDocument();
     expect(screen.getByTestId('market-opportunity')).toBeInTheDocument();
 
-    // Wait for lazy loaded sections to appear
     expect(await screen.findByTestId('why-clothing')).toBeInTheDocument();
     expect(await screen.findByTestId('benefits')).toBeInTheDocument();
     expect(await screen.findByTestId('process')).toBeInTheDocument();
@@ -148,14 +134,27 @@ describe('BrandPartnershipPage', () => {
     expect(await screen.findByTestId('faq')).toBeInTheDocument();
   });
 
-  it('renders responsive content', () => {
+  it('renders hero contact CTA with mailto link', () => {
     renderWithProviders(<BrandPartnershipPage />);
 
-    // Check for hero content
-    expect(screen.getByText('Apply for Baby Clothing')).toBeInTheDocument();
-    expect(screen.getAllByText('Join Waitlist (Other Categories)').length).toBeGreaterThan(0);
+    const contactCta = screen.getByTestId('contact-cta-link');
+    expect(contactCta).toHaveAttribute('href', 'mailto:shopatmela@gmail.com');
+    expect(contactCta).toHaveTextContent('Contact Us to Partner');
+  });
 
-    // Check for all section content
+  it('renders final CTA section with contact link', () => {
+    renderWithProviders(<BrandPartnershipPage />);
+
+    expect(screen.getByText('Ready to Reach US Families?')).toBeInTheDocument();
+    expect(screen.getByText('Contact Us')).toBeInTheDocument();
+
+    const finalCtaLink = screen.getByText('Contact Us').closest('a');
+    expect(finalCtaLink).toHaveAttribute('href', 'mailto:shopatmela@gmail.com');
+  });
+
+  it('renders responsive section content', () => {
+    renderWithProviders(<BrandPartnershipPage />);
+
     expect(screen.getByText('Market Opportunity')).toBeInTheDocument();
     expect(screen.getByText('Why Baby Clothing')).toBeInTheDocument();
     expect(screen.getByText('Why Partner with Mela?')).toBeInTheDocument();
@@ -165,42 +164,10 @@ describe('BrandPartnershipPage', () => {
     expect(screen.getByText('Success Stories')).toBeInTheDocument();
   });
 
-  it('renders signup CTAs with correct routes', () => {
+  it('does not contain provider signup links', () => {
     renderWithProviders(<BrandPartnershipPage />);
 
-    const clothingCTA = screen.getByTestId('clothing-cta-link');
-    const waitlistCTA = screen.getByTestId('waitlist-cta-link');
-
-    expect(clothingCTA).toHaveAttribute('href', '/signup/provider');
-    expect(waitlistCTA).toHaveAttribute('href', '/signup/provider');
-
-    // Verify CTA text
-    expect(clothingCTA).toHaveTextContent('Apply for Baby Clothing');
-    expect(waitlistCTA).toHaveTextContent('Join Waitlist (Other Categories)');
-  });
-
-  it('renders final CTA section with signup links', () => {
-    renderWithProviders(<BrandPartnershipPage />);
-
-    // Check for final CTA section content
-    expect(screen.getByText('Ready to Reach Millions of US Families?')).toBeInTheDocument();
-    expect(screen.getByText('Sign Up to Export Baby Clothing')).toBeInTheDocument();
-    expect(screen.getAllByText('Join Waitlist (Other Categories)').length).toBeGreaterThan(0);
-  });
-
-  it('renders with correct page metadata', () => {
-    renderWithProviders(<BrandPartnershipPage />);
-
-    // The page should render without errors and have proper content
-    expect(screen.getByText('Apply for Baby Clothing')).toBeInTheDocument();
-    expect(screen.getByText('Market Opportunity')).toBeInTheDocument();
-  });
-
-  it('includes desktop and mobile responsive layout features', () => {
-    renderWithProviders(<BrandPartnershipPage />);
-
-    // Verify sections that should show carousels on mobile, grids on desktop
-    expect(screen.getByText('Why Baby Clothing')).toBeInTheDocument();
-    expect(screen.getByText('Market Timing')).toBeInTheDocument();
+    const links = document.querySelectorAll('a[href*="signup/provider"]');
+    expect(links.length).toBe(0);
   });
 });

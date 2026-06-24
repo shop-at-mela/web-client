@@ -1378,9 +1378,15 @@ const mergeListingConfig = (hostedConfig, defaultConfigs, categoriesInUse) => {
   const listingTypes = shouldMerge
     ? union(hostedListingTypes, defaultListingTypes, 'listingType')
     : hostedListingTypes;
+
+  // Some schemaTypes (e.g. 'boolean') can't be configured through Console, so fields
+  // marked localOnly in configListing.js are always merged in, regardless of the debug
+  // flag above — they can never collide with a hosted field since Console has no way
+  // to define them.
+  const localOnlyListingFields = defaultListingFields.filter(field => field.localOnly);
   const listingFields = shouldMerge
     ? union(hostedListingFields, defaultListingFields, 'key')
-    : hostedListingFields;
+    : union(hostedListingFields, localOnlyListingFields, 'key');
 
   const listingTypesInUse = listingTypes.map(lt => `${lt.listingType}`);
 

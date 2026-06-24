@@ -1,16 +1,8 @@
-import React, { useState } from 'react';
-import { H1, H3, Button, NamedLink } from '../../../../components';
+import React from 'react';
+import { H1, H3 } from '../../../../components';
 import css from './Hero.module.css';
 
-const Hero = ({ onFormClick, clothingFormUrl, waitlistFormUrl }) => {
-  const [showWaitlist, setShowWaitlist] = useState(false);
-
-  const handleFormClick = (formUrl, formType) => {
-    if (onFormClick) {
-      onFormClick(formUrl, formType);
-    }
-  };
-
+const Hero = () => {
   return (
     <section className={css.hero}>
       <div className={css.container}>
@@ -46,41 +38,11 @@ const Hero = ({ onFormClick, clothingFormUrl, waitlistFormUrl }) => {
           with diaspora families in the USA. No upfront costs, only success fees.
         </p>
 
-        {/* Progressive disclosure for CTAs */}
+        {/* CTA */}
         <div className={css.ctaSection}>
-          {!showWaitlist ? (
-            <>
-              <NamedLink
-                name="SignupForUserTypePage"
-                params={{ userType: 'provider' }}
-                className={css.primaryCta}
-              >
-                Apply for Baby Clothing
-              </NamedLink>
-              <button
-                className={css.secondaryLink}
-                onClick={() => setShowWaitlist(true)}
-              >
-                Other categories →
-              </button>
-            </>
-          ) : (
-            <>
-              <NamedLink
-                name="SignupForUserTypePage"
-                params={{ userType: 'provider' }}
-                className={css.waitlistCta}
-              >
-                Join Waitlist (Other Categories)
-              </NamedLink>
-              <button
-                className={css.backLink}
-                onClick={() => setShowWaitlist(false)}
-              >
-                ← Back to baby clothing
-              </button>
-            </>
-          )}
+          <a href="mailto:shopatmela@gmail.com" className={css.primaryCta}>
+            Contact Us to Partner
+          </a>
         </div>
 
         {/* Market indicators */}

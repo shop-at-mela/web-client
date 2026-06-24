@@ -9,6 +9,7 @@ import {
 } from '../../util/data';
 import { PROFILE_PAGE_PENDING_APPROVAL_VARIANT } from '../../util/urlHelpers';
 import { isUserAuthorized } from '../../util/userHelpers';
+import { getBrandSlugById } from '../../config/configBrands';
 
 import { ResponsiveImage, IconBannedUser, NamedLink } from '../../components/';
 
@@ -80,12 +81,15 @@ export const Avatar = props => {
   const displayName = userDisplayNameAsString(avatarUser, defaultUserDisplayName);
   const abbreviatedName = userAbbreviatedName(avatarUser, defaultUserAbbreviatedName);
   const rootProps = { className: classes, title: displayName };
+  const avatarBrandSlug = avatarUser.id ? getBrandSlugById(avatarUser.id.uuid) : null;
   const linkProps =
     isUnauthorizedUser && avatarUser.id
       ? {
           name: 'ProfilePageVariant',
           params: { id: avatarUser.id.uuid, variant },
         }
+      : avatarUser.id && avatarBrandSlug
+      ? { name: 'BrandPage', params: { brandSlug: avatarBrandSlug } }
       : avatarUser.id
       ? { name: 'ProfilePage', params: { id: avatarUser.id.uuid } }
       : { name: 'ProfileBasePage' };

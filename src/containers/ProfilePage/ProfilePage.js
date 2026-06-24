@@ -508,6 +508,9 @@ export const ProfilePageComponent = props => {
     // This preview of the profile page is not rendered on server-side
     // and the first pass on client-side should render the same UI.
     return null;
+  } else if (!isPreview && isProvider && brandSlug && pathParams.id && !pathParams.brandSlug) {
+    // Brand accessed via /u/:id — redirect to canonical /brands/:slug URL
+    return <NamedRedirect name="BrandPage" params={{ brandSlug }} />;
   }
 
   // This is rendering normal profile page (not preview for pending-approval)

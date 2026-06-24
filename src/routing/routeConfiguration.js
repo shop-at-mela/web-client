@@ -150,6 +150,13 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       loadData: pageDataLoadingAPI.ProfilePage.loadData,
     },
     {
+      path: '/brands/:brandSlug/:variant',
+      name: 'BrandPageVariant',
+      ...authForPrivateMarketplace,
+      component: ProfilePage,
+      loadData: pageDataLoadingAPI.ProfilePage.loadData,
+    },
+    {
       path: '/l',
       name: 'ListingBasePage',
       component: RedirectToLandingPage,

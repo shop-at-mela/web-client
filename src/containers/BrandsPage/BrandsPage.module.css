@@ -2,6 +2,7 @@
 
 .root {
   width: 100%;
+  overflow-x: hidden;
 }
 
 /* Hero Section — compact on mobile, fuller on desktop */
@@ -88,17 +89,9 @@
   }
 }
 
-/* Brand Grid */
-.brandGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
-  margin-bottom: 48px;
-
-  @media (--viewportMedium) {
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 32px;
-  }
+/* Gap between 2nd+ carousel rows within one category */
+.carouselRowGap {
+  margin-top: 16px;
 }
 
 /* Loading State */

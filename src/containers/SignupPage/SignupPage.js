@@ -183,20 +183,6 @@ export const SignupPageComponent = props => {
         <section className={css.root}>
           <div className={css.contentContainer}>
             <div className={css.content}>
-            {/* Back to Customer navigation for provider mode */}
-            {userType === 'provider' && (
-              <div className={css.backNavigation}>
-                <button
-                  className={css.backButton}
-                  onClick={() => {
-                    window.location.href = '/signup';
-                  }}
-                >
-                  ← Back to Customer Signup
-                </button>
-              </div>
-            )}
-
             {/* Value Proposition */}
             <ValueProposition userType={userType} />
 
@@ -243,26 +229,6 @@ export const SignupPageComponent = props => {
               </NamedLink>
             </div>
 
-            {/* COMMENTED OUT: "Want to sell products instead?" entry point to /signup/provider
-            {userType === 'customer' && (
-              <div className={css.providerCta}>
-                <h3 className={css.providerCtaTitle}>
-                  <FormattedMessage id="ProviderCTA.title" />
-                </h3>
-                <p className={css.providerCtaDescription}>
-                  <FormattedMessage id="ProviderCTA.description" />
-                </p>
-                <button
-                  className={css.providerCtaButton}
-                  onClick={() => {
-                    window.location.href = '/signup/provider';
-                  }}
-                >
-                  <FormattedMessage id="ProviderCTA.buttonText" />
-                </button>
-              </div>
-            )}
-            */}
             </div>
           </div>
         </section>

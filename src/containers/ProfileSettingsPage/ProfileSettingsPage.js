@@ -16,6 +16,7 @@ import {
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 
 import { H3, Page, UserNav, NamedLink, LayoutSingleColumn } from '../../components';
+import { getBrandSlugById } from '../../config/configBrands';
 
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
 import FooterContainer from '../../containers/FooterContainer/FooterContainer';
@@ -34,12 +35,17 @@ const onImageUploadHandler = (values, fn) => {
 
 const ViewProfileLink = props => {
   const { userUUID, isUnauthorizedUser } = props;
+  const brandSlug = userUUID ? getBrandSlugById(userUUID) : null;
   return userUUID && isUnauthorizedUser ? (
     <NamedLink
       className={css.profileLink}
       name="ProfilePageVariant"
       params={{ id: userUUID, variant: PROFILE_PAGE_PENDING_APPROVAL_VARIANT }}
     >
+      <FormattedMessage id="ProfileSettingsPage.viewProfileLink" />
+    </NamedLink>
+  ) : userUUID && brandSlug ? (
+    <NamedLink className={css.profileLink} name="BrandPage" params={{ brandSlug }}>
       <FormattedMessage id="ProfileSettingsPage.viewProfileLink" />
     </NamedLink>
   ) : userUUID ? (

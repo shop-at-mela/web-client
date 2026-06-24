@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
@@ -10,7 +10,7 @@ import { createResourceLocatorString } from '../../util/routes';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 
 import { BRAND_CATEGORIES } from '../../config/configBrands';
-import { Page, LayoutSingleColumn, BrandCard } from '../../components';
+import { Page, LayoutSingleColumn, BrandCarousel, BrandCardHome } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
@@ -20,6 +20,30 @@ import {
   getBrandsInProgress,
 } from './BrandsPage.duck';
 import css from './BrandsPage.module.css';
+
+const BRANDS_PER_ROW = 6;
+
+const shuffleArray = arr => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+// Splits brands into balanced rows of at most BRANDS_PER_ROW.
+// 7 brands → [4,3]; 13 → [5,5,3]
+const chunkIntoRows = brands => {
+  if (brands.length <= BRANDS_PER_ROW) return [brands];
+  const numRows = Math.ceil(brands.length / BRANDS_PER_ROW);
+  const size = Math.ceil(brands.length / numRows);
+  const rows = [];
+  for (let i = 0; i < brands.length; i += size) {
+    rows.push(brands.slice(i, i + size));
+  }
+  return rows;
+};
 
 const BrandsPageComponent = props => {
   const {
@@ -32,31 +56,36 @@ const BrandsPageComponent = props => {
   const routeConfiguration = useRouteConfiguration();
   const intl = useIntl();
 
-  // Build canonical URL
-  const canonicalUrl = createResourceLocatorString(
-    'BrandsPage',
-    routeConfiguration,
-    {},
-    {}
-  );
+  const canonicalUrl = createResourceLocatorString('BrandsPage', routeConfiguration, {}, {});
 
-  // Total brand count across all categories
   const brandCount = Object.values(brandsGroupedByCategory).reduce(
     (sum, brands) => sum + brands.length,
     0
   );
 
-  // SEO metadata
-  const siteTitle = config.marketplaceName;
   const schemaTitle = intl.formatMessage({ id: 'BrandsPage.title' }, { brandCount });
   const schemaDescription = intl.formatMessage({ id: 'BrandsPage.description' }, { brandCount });
 
-  // Favorite handler
-  const handleFavorite = listingId => {
-    console.log('Favorite clicked:', listingId);
-  };
+  // Stable key changes only when the data set changes (new API response)
+  const dataKey = Object.entries(brandsGroupedByCategory)
+    .map(([cat, brands]) => `${cat}:${brands.length}`)
+    .sort()
+    .join('|');
 
-  // Hero section
+  // Randomise brand order once per page load; stable within the session
+  const shuffledByCategory = useMemo(() => {
+    const result = {};
+    for (const [catId, brands] of Object.entries(brandsGroupedByCategory)) {
+      result[catId] = shuffleArray(brands);
+    }
+    return result;
+    // dataKey is a stable string digest of brandsGroupedByCategory — changes only
+    // when the API delivers new data, not on every re-render of the parent.
+    // Using it instead of the object reference prevents reshuffling the brand order
+    // on unrelated re-renders while still updating when brands actually change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataKey]);
+
   const heroSection = (
     <div className={css.heroSection}>
       <h1 className={css.heroTitle}>
@@ -65,10 +94,10 @@ const BrandsPageComponent = props => {
     </div>
   );
 
-  // Category nav — only shown when multiple categories have brands
   const activeCategories = BRAND_CATEGORIES.filter(
     ({ id }) => (brandsGroupedByCategory[id] || []).length > 0
   );
+
   const categoryNav = activeCategories.length > 1 ? (
     <nav className={css.categoryNav} aria-label="Browse by category">
       <div className={css.categoryPills}>
@@ -81,14 +110,12 @@ const BrandsPageComponent = props => {
     </nav>
   ) : null;
 
-  // Loading state
   const loadingContent = (
     <div className={css.loading}>
       <FormattedMessage id="BrandsPage.loadingState" />
     </div>
   );
 
-  // Empty state
   const emptyContent = (
     <div className={css.emptyState}>
       <h2 className={css.emptyStateTitle}>
@@ -109,21 +136,32 @@ const BrandsPageComponent = props => {
     : (
       <>
         {BRAND_CATEGORIES.map(({ id, label }) => {
-          const brandsInCategory = brandsGroupedByCategory[id] || [];
-          if (brandsInCategory.length === 0) return null;
+          const brands = shuffledByCategory[id] || brandsGroupedByCategory[id] || [];
+          if (brands.length === 0) return null;
+          const rows = chunkIntoRows(brands);
           return (
             <div key={id} id={`category-${id}`} className={css.categorySection}>
               <h2 className={css.categoryTitle}>{label}</h2>
-              <div className={css.brandGrid}>
-                {brandsInCategory.map(({ brand, products }) => (
-                  <BrandCard
-                    key={brand.id.uuid}
-                    brand={brand}
-                    products={products}
-                    onFavorite={handleFavorite}
-                  />
-                ))}
-              </div>
+              {rows.map((rowBrands, rowIndex) => (
+                <BrandCarousel
+                  key={rowIndex}
+                  className={rowIndex > 0 ? css.carouselRowGap : undefined}
+                  items={rowBrands}
+                  getKey={({ brand }) => brand.id.uuid}
+                  renderItem={({ brand, products }) => (
+                    <BrandCardHome
+                      brand={brand}
+                      products={products}
+                      showCertifications={true}
+                      showPlaceholders={false}
+                      showTagline={true}
+                      showLocation={true}
+                      showCta={true}
+                      maxProducts={2}
+                    />
+                  )}
+                />
+              ))}
             </div>
           );
         })}
@@ -157,13 +195,11 @@ const BrandsPageComponent = props => {
   );
 };
 
-const mapStateToProps = state => {
-  return {
-    brandsGroupedByCategory: getBrandsGroupedByCategory(state),
-    brandsInProgress: getBrandsInProgress(state),
-    scrollingDisabled: isScrollingDisabled(state),
-  };
-};
+const mapStateToProps = state => ({
+  brandsGroupedByCategory: getBrandsGroupedByCategory(state),
+  brandsInProgress: getBrandsInProgress(state),
+  scrollingDisabled: isScrollingDisabled(state),
+});
 
 const BrandsPage = compose(
   withRouter,

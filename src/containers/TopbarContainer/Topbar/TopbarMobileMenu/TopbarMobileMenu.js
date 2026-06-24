@@ -196,21 +196,6 @@ const TopbarMobileMenu = props => {
 
           <div className={css.spacer} />
         </div>
-        {/* COMMENTED OUT: "LIST YOUR BRAND ON MELA" partner recruitment footer
-        <div className={css.footer}>
-          <div className={css.footerContent}>
-            <div className={css.footerHeader}>
-              <FormattedMessage id="TopbarMobileMenu.partnerHeader" />
-            </div>
-            <p className={css.footerTagline}>
-              <FormattedMessage id="TopbarMobileMenu.partnerTagline" />
-            </p>
-            <NamedLink className={css.createNewListingLink} name="NewListingPage">
-              <FormattedMessage id="TopbarMobileMenu.startSelling" />
-            </NamedLink>
-          </div>
-        </div>
-        */}
       </nav>
     );
   }

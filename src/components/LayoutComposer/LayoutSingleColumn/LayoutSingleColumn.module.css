@@ -1,6 +1,7 @@
 @import '../../../styles/customMediaQueries.css';
 .root {
   grid-template-rows: auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr);
   min-height: 100vh;
 }
 
@@ -11,7 +12,8 @@
 }
 
 .main {
-  display: grid;
+  display: block;
+  min-width: 0;
   scroll-margin-top: var(--topbarHeight);
 
   @media (--viewportMedium) {

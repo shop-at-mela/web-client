@@ -10,7 +10,9 @@ import {
   fetchSavedListings,
 } from '../../ducks/savedListings.duck';
 
-import { Page, NamedLink, ListingCard } from '../../components';
+import { Page, NamedLink, ListingCard, LayoutSingleColumn } from '../../components';
+import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
+import FooterContainer from '../../containers/FooterContainer/FooterContainer';
 import css from './SavedPage.module.css';
 
 /**
@@ -42,56 +44,58 @@ const SavedPageComponent = props => {
 
   return (
     <Page title={schemaTitle} description={schemaDescription} scrollingDisabled={false}>
-      <div className={css.root}>
-        <div className={css.header}>
-          <h1 className={css.title}>
-            <FormattedMessage id="SavedPage.title" />
-          </h1>
-          <p className={css.subheading}>
-            <FormattedMessage id="SavedPage.subheading" />
-          </p>
-        </div>
-
-        {fetchError && (
-          <div className={css.error}>
-            <FormattedMessage id="SavedPage.error" />
-          </div>
-        )}
-
-        {fetchInProgress && !hasListings && (
-          <div className={css.loading}>
-            <FormattedMessage id="SavedPage.loading" />
-          </div>
-        )}
-
-        {!fetchInProgress && isEmpty && (
-          <div className={css.emptyState}>
-            <h2 className={css.emptyHeading}>
-              <FormattedMessage id="SavedPage.emptyHeading" />
-            </h2>
-            <p className={css.emptySubheading}>
-              <FormattedMessage id="SavedPage.emptySubheading" />
+      <LayoutSingleColumn topbar={<TopbarContainer />} footer={<FooterContainer />}>
+        <div className={css.root}>
+          <div className={css.header}>
+            <h1 className={css.title}>
+              <FormattedMessage id="SavedPage.title" />
+            </h1>
+            <p className={css.subheading}>
+              <FormattedMessage id="SavedPage.subheading" />
             </p>
-            <NamedLink name="SearchPage" className={css.browseCta}>
-              <FormattedMessage id="SavedPage.emptyBrowseCta" />
-            </NamedLink>
           </div>
-        )}
 
-        {hasListings && (
-          <div className={css.grid}>
-            {savedListings.map(listing => (
-              <ListingCard
-                key={listing.id.uuid}
-                listing={listing}
-                renderSizes={renderSizes}
-                showAuthorInfo
-                showTrustBadges
-              />
-            ))}
-          </div>
-        )}
-      </div>
+          {fetchError && (
+            <div className={css.error}>
+              <FormattedMessage id="SavedPage.error" />
+            </div>
+          )}
+
+          {fetchInProgress && !hasListings && (
+            <div className={css.loading}>
+              <FormattedMessage id="SavedPage.loading" />
+            </div>
+          )}
+
+          {!fetchInProgress && isEmpty && (
+            <div className={css.emptyState}>
+              <h2 className={css.emptyHeading}>
+                <FormattedMessage id="SavedPage.emptyHeading" />
+              </h2>
+              <p className={css.emptySubheading}>
+                <FormattedMessage id="SavedPage.emptySubheading" />
+              </p>
+              <NamedLink name="SearchPage" className={css.browseCta}>
+                <FormattedMessage id="SavedPage.emptyBrowseCta" />
+              </NamedLink>
+            </div>
+          )}
+
+          {hasListings && (
+            <div className={css.grid}>
+              {savedListings.map(listing => (
+                <ListingCard
+                  key={listing.id.uuid}
+                  listing={listing}
+                  renderSizes={renderSizes}
+                  showAuthorInfo
+                  showTrustBadges
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </LayoutSingleColumn>
     </Page>
   );
 };

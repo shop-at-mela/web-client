@@ -14,6 +14,7 @@ import {
 import CertificationBadge from '../../components/CertificationBadge/CertificationBadge';
 import BrandStorySection from './BrandStorySection';
 import { getCertification } from '../../config/certifications';
+import { getBrandSlugById } from '../../config/configBrands';
 
 import css from './BrandStorefront.module.css';
 
@@ -287,6 +288,7 @@ const BrandStorefront = props => {
 
   // User ID for routing
   const userId = user?.id?.uuid;
+  const brandSlug = userId ? getBrandSlugById(userId) : null;
 
   // Tab configuration - using routes instead of scroll anchors
   const tabs = [
@@ -297,10 +299,9 @@ const BrandStorefront = props => {
         </span>
       ),
       selected: activeTab === 'products',
-      linkProps: {
-        name: 'ProfilePage',
-        params: { id: userId },
-      },
+      linkProps: brandSlug
+        ? { name: 'BrandPage', params: { brandSlug } }
+        : { name: 'ProfilePage', params: { id: userId } },
     },
     {
       text: (
@@ -309,10 +310,9 @@ const BrandStorefront = props => {
         </span>
       ),
       selected: activeTab === 'about',
-      linkProps: {
-        name: 'ProfilePageVariant',
-        params: { id: userId, variant: 'about' },
-      },
+      linkProps: brandSlug
+        ? { name: 'BrandPageVariant', params: { brandSlug, variant: 'about' } }
+        : { name: 'ProfilePageVariant', params: { id: userId, variant: 'about' } },
     },
   ];
 

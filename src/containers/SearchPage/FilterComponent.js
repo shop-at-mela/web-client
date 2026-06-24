@@ -1,7 +1,12 @@
 import React from 'react';
 
 // utils
-import { SCHEMA_TYPE_ENUM, SCHEMA_TYPE_MULTI_ENUM, SCHEMA_TYPE_LONG } from '../../util/types';
+import {
+  SCHEMA_TYPE_ENUM,
+  SCHEMA_TYPE_MULTI_ENUM,
+  SCHEMA_TYPE_LONG,
+  SCHEMA_TYPE_BOOLEAN,
+} from '../../util/types';
 import { convertCategoriesToSelectTreeOptions, constructQueryParamName } from '../../util/search';
 
 // component imports
@@ -195,6 +200,31 @@ const FilterComponent = props => {
           options={enumOptions}
           schemaType={schemaType}
           searchMode={searchMode}
+          {...rest}
+        />
+      );
+    }
+    case SCHEMA_TYPE_BOOLEAN: {
+      const { scope, filterConfig = {} } = config;
+      const { label } = filterConfig;
+      const queryParamNames = [constructQueryParamName(key, scope)];
+      // Boolean schemaType has no enumOptions of its own, so we use synthetic string
+      // options here (not literal booleans — SelectSingleFilter's `value || null` logic
+      // would otherwise turn a selected "false" into null).
+      const options = [
+        { option: 'true', label: 'Yes' },
+        { option: 'false', label: 'No' },
+      ];
+      return (
+        <SelectSingleFilter
+          label={label}
+          getAriaLabel={getAriaLabel}
+          name={name}
+          queryParamNames={queryParamNames}
+          initialValues={initialValues(queryParamNames, liveEdit)}
+          onSubmit={getHandleChangedValueFn(useHistoryPush)}
+          options={options}
+          isNestedEnum={false}
           {...rest}
         />
       );

@@ -8,6 +8,7 @@ import { ensureUser, ensureCurrentUser } from '../../../util/data';
 import { propTypes } from '../../../util/types';
 
 import { AvatarLarge, NamedLink, InlineTextButton } from '../../../components';
+import { getBrandSlugById } from '../../../config/configBrands';
 
 import css from './UserCard.module.css';
 
@@ -141,10 +142,15 @@ const UserCard = props => {
       </NamedLink>
     ) : null;
 
+  const brandSlug = ensuredUser.id ? getBrandSlugById(ensuredUser.id.uuid) : null;
+  const brandLinkName = brandSlug ? 'BrandPage' : 'ProfilePage';
+  const brandLinkParams = brandSlug ? { brandSlug } : { id: ensuredUser.id?.uuid };
+  const brandLinkMessageId = brandSlug ? 'UserCard.viewBrandStoreLink' : 'UserCard.viewProfileLink';
+
   const links = ensuredUser.id ? (
     <p className={linkClasses}>
-      <NamedLink className={css.link} name="ProfilePage" params={{ id: ensuredUser.id.uuid }}>
-        <FormattedMessage id="UserCard.viewProfileLink" />
+      <NamedLink className={css.link} name={brandLinkName} params={brandLinkParams}>
+        <FormattedMessage id={brandLinkMessageId} />
       </NamedLink>
       {separator}
       {mounted && isCurrentUser ? editProfileMobile : contact}
