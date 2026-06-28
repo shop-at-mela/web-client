@@ -1,4 +1,5 @@
 import { storableError } from '../../util/errors';
+import { pickRandom } from '../../util/listings';
 import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 import {
   getRandomBrandIds,
@@ -8,6 +9,30 @@ import {
   getBrandCategory,
 } from '../../config/configBrands';
 import { denormalisedEntities } from '../../util/data';
+
+// ================ Utility Functions ================ //
+
+const fetchBestsellerListingsForBrand = (sdk, brandId) => {
+  return sdk.listings
+    .query({
+      'fields.listing': ['title', 'price', 'publicData', 'images'],
+      'fields.image': ['variants.square-small', 'variants.square-small2x'],
+      'imageVariant.square-small': 'w:400;h:300;fit:crop',
+      'imageVariant.square-small2x': 'w:800;h:600;fit:crop',
+      include: ['author', 'images'],
+      author: brandId,
+      pub_isBestseller: true,
+      perPage: 20,
+    })
+    .then(response => {
+      const { data = [], included = [] } = response.data || {};
+      return { data, included };
+    })
+    .catch(error => {
+      console.warn(`Failed to fetch bestseller listings for brand ${brandId}:`, error);
+      return { data: [], included: [] };
+    });
+};
 
 // ================ Action types ================ //
 
@@ -19,6 +44,8 @@ export const FETCH_FEATURED_BRANDS_REQUEST = 'app/BrandsPage/FETCH_FEATURED_BRAN
 export const FETCH_FEATURED_BRANDS_SUCCESS = 'app/BrandsPage/FETCH_FEATURED_BRANDS_SUCCESS';
 export const FETCH_FEATURED_BRANDS_ERROR = 'app/BrandsPage/FETCH_FEATURED_BRANDS_ERROR';
 
+export const SET_BESTSELLER_PRODUCTS = 'app/BrandsPage/SET_BESTSELLER_PRODUCTS';
+
 // ================ Reducer ================ //
 
 const initialState = {
@@ -29,6 +56,7 @@ const initialState = {
   fetchBrandsError: null,
   fetchFeaturedBrandsInProgress: false,
   fetchFeaturedBrandsError: null,
+  bestsellerProductsByBrand: {}, // Map of brandId -> { data: [...], included: [...] }
 };
 
 export default function brandsPageReducer(state = initialState, action = {}) {
@@ -81,6 +109,12 @@ export default function brandsPageReducer(state = initialState, action = {}) {
         fetchFeaturedBrandsError: payload,
       };
 
+    case SET_BESTSELLER_PRODUCTS:
+      return {
+        ...state,
+        bestsellerProductsByBrand: payload,
+      };
+
     default:
       return state;
   }
@@ -116,6 +150,11 @@ export const fetchFeaturedBrandsError = error => ({
   type: FETCH_FEATURED_BRANDS_ERROR,
   payload: error,
   error: true,
+});
+
+export const setBestsellerProducts = bestsellersByBrand => ({
+  type: SET_BESTSELLER_PRODUCTS,
+  payload: bestsellersByBrand,
 });
 
 // ================ Thunks ================ //
@@ -170,6 +209,12 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
       })
   );
 
+  // Fetch bestseller products for each brand in parallel
+  const bestsellerPromises = brandIds.map(brandId =>
+    fetchBestsellerListingsForBrand(sdk, brandId)
+      .then(result => ({ brandId, ...result }))
+  );
+
   // Batch fetch ALL featured products for these brands in ONE query (performance optimization)
   const allProductIds = getFeaturedProductIds(brandIds);
   const productsPromise =
@@ -195,11 +240,23 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
           })
       : Promise.resolve({ data: [], included: [] });
 
-  // Wait for both brands and products to fetch in parallel
-  return Promise.all([Promise.all(brandPromises), productsPromise])
-    .then(([brandResponses, productsResponse]) => {
+  // Wait for brands, bestsellers, and configured products to fetch in parallel
+  return Promise.all([Promise.all(brandPromises), Promise.all(bestsellerPromises), productsPromise])
+    .then(([brandResponses, bestsellerResponses, configProductsResponse]) => {
       // Filter out failed brand requests
       const validResponses = brandResponses.filter(r => r !== null);
+
+      // Build bestseller products map by brand ID
+      const bestsellersByBrand = {};
+      (bestsellerResponses || []).forEach(({ brandId, data = [], included = [] }) => {
+        if (data.length > 0) {
+          // Randomize and select up to 4 bestseller products
+          bestsellersByBrand[brandId] = {
+            data: pickRandom(data, 4),
+            included,
+          };
+        }
+      });
 
       // Combine all responses and filter out any invalid user objects
       const users = validResponses
@@ -260,12 +317,12 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
 
       const validIncluded = included.filter(e => e !== undefined && e !== null);
 
-      // Process products response
-      const products = productsResponse.data || [];
-      const productImages = productsResponse.included || [];
+      // Process configured products response
+      const configProducts = configProductsResponse.data || [];
+      const configProductImages = configProductsResponse.included || [];
 
-      // Filter valid products
-      const validProducts = products.filter(
+      // Filter valid configured products
+      const validConfigProducts = configProducts.filter(
         listing =>
           listing &&
           typeof listing === 'object' &&
@@ -274,7 +331,7 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
           listing.type === 'listing'
       );
 
-      const validProductImages = productImages.filter(
+      const validConfigProductImages = configProductImages.filter(
         entity =>
           entity &&
           typeof entity === 'object' &&
@@ -283,9 +340,35 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
           entity.type === 'image'
       );
 
-      // Combine all entities (users + products + images)
-      const allEntities = [...validUsers, ...validProducts];
-      const allIncluded = [...validIncluded, ...validProductImages];
+      // Process bestseller products and include them
+      let bestsellerProducts = [];
+      let bestsellerImages = [];
+      Object.values(bestsellersByBrand).forEach(({ data = [], included = [] }) => {
+        bestsellerProducts = bestsellerProducts.concat(
+          data.filter(
+            listing =>
+              listing &&
+              typeof listing === 'object' &&
+              listing.id &&
+              listing.id.uuid &&
+              listing.type === 'listing'
+          )
+        );
+        bestsellerImages = bestsellerImages.concat(
+          included.filter(
+            entity =>
+              entity &&
+              typeof entity === 'object' &&
+              entity.id &&
+              entity.id.uuid &&
+              entity.type === 'image'
+          )
+        );
+      });
+
+      // Combine all entities (users + configured products + bestseller products + images)
+      const allEntities = [...validUsers, ...validConfigProducts, ...bestsellerProducts];
+      const allIncluded = [...validIncluded, ...validConfigProductImages, ...bestsellerImages];
 
       // Only dispatch if we have valid data
       if (allEntities.length > 0 || allIncluded.length > 0) {
@@ -299,7 +382,7 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
         dispatch(addMarketplaceEntities({ data: entityPayload }));
       }
 
-      // Store brand IDs and pagination
+      // Store brand IDs, bestseller products info, and pagination
       const successfulBrandIds = validUsers.map(user => user.id.uuid);
       dispatch(
         fetchBrandsSuccess(successfulBrandIds, {
@@ -309,6 +392,9 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
           totalItems,
         })
       );
+
+      // Store bestseller products metadata for selector to use
+      dispatch(setBestsellerProducts(bestsellersByBrand));
 
       return { data: validUsers };
     })
@@ -354,6 +440,12 @@ export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
       })
   );
 
+  // Fetch bestseller products for each featured brand in parallel
+  const bestsellerPromises = featuredIds.map(brandId =>
+    fetchBestsellerListingsForBrand(sdk, brandId)
+      .then(result => ({ brandId, ...result }))
+  );
+
   // Batch fetch ALL featured products for these brands in ONE query (performance optimization)
   const allProductIds = getFeaturedProductIds(featuredIds);
   const productsPromise =
@@ -379,10 +471,22 @@ export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
           })
       : Promise.resolve({ data: [], included: [] });
 
-  // Wait for both brands and products to fetch in parallel
-  return Promise.all([Promise.all(brandPromises), productsPromise])
-    .then(([brandResponses, productsResponse]) => {
+  // Wait for brands, bestsellers, and configured products to fetch in parallel
+  return Promise.all([Promise.all(brandPromises), Promise.all(bestsellerPromises), productsPromise])
+    .then(([brandResponses, bestsellerResponses, configProductsResponse]) => {
       const validResponses = brandResponses.filter(r => r !== null);
+
+      // Build bestseller products map by brand ID
+      const bestsellersByBrand = {};
+      (bestsellerResponses || []).forEach(({ brandId, data = [], included = [] }) => {
+        if (data.length > 0) {
+          // Randomize and select up to 4 bestseller products
+          bestsellersByBrand[brandId] = {
+            data: pickRandom(data, 4),
+            included,
+          };
+        }
+      });
 
       // Filter out any invalid user objects
       const users = validResponses
@@ -443,12 +547,12 @@ export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
 
       const validIncluded = included.filter(e => e !== undefined && e !== null);
 
-      // Process products response
-      const products = productsResponse.data || [];
-      const productImages = productsResponse.included || [];
+      // Process configured products response
+      const configProducts = configProductsResponse.data || [];
+      const configProductImages = configProductsResponse.included || [];
 
-      // Filter valid products
-      const validProducts = products.filter(
+      // Filter valid configured products
+      const validConfigProducts = configProducts.filter(
         listing =>
           listing &&
           typeof listing === 'object' &&
@@ -457,7 +561,7 @@ export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
           listing.type === 'listing'
       );
 
-      const validProductImages = productImages.filter(
+      const validConfigProductImages = configProductImages.filter(
         entity =>
           entity &&
           typeof entity === 'object' &&
@@ -466,9 +570,35 @@ export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
           entity.type === 'image'
       );
 
-      // Combine all entities (users + products + images)
-      const allEntities = [...validUsers, ...validProducts];
-      const allIncluded = [...validIncluded, ...validProductImages];
+      // Process bestseller products and include them
+      let bestsellerProducts = [];
+      let bestsellerImages = [];
+      Object.values(bestsellersByBrand).forEach(({ data = [], included = [] }) => {
+        bestsellerProducts = bestsellerProducts.concat(
+          data.filter(
+            listing =>
+              listing &&
+              typeof listing === 'object' &&
+              listing.id &&
+              listing.id.uuid &&
+              listing.type === 'listing'
+          )
+        );
+        bestsellerImages = bestsellerImages.concat(
+          included.filter(
+            entity =>
+              entity &&
+              typeof entity === 'object' &&
+              entity.id &&
+              entity.id.uuid &&
+              entity.type === 'image'
+          )
+        );
+      });
+
+      // Combine all entities (users + configured products + bestseller products + images)
+      const allEntities = [...validUsers, ...validConfigProducts, ...bestsellerProducts];
+      const allIncluded = [...validIncluded, ...validConfigProductImages, ...bestsellerImages];
 
       // Only dispatch if we have valid data
       if (allEntities.length > 0 || allIncluded.length > 0) {
@@ -484,6 +614,9 @@ export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
 
       const successfulBrandIds = validUsers.map(user => user.id.uuid);
       dispatch(fetchFeaturedBrandsSuccess(successfulBrandIds));
+
+      // Store bestseller products metadata for selector to use
+      dispatch(setBestsellerProducts(bestsellersByBrand));
 
       return { data: validUsers };
     })
@@ -525,7 +658,7 @@ export const getBrands = state => {
  * Returns array of { brand, products } objects
  */
 export const getBrandsWithProducts = state => {
-  const { brandIds } = state.BrandsPage;
+  const { brandIds, bestsellerProductsByBrand } = state.BrandsPage;
   const { entities } = state.marketplaceData;
 
   // Get denormalized brands
@@ -537,14 +670,29 @@ export const getBrandsWithProducts = state => {
 
   // Attach products to each brand
   return brands.map(brand => {
-    const brandConfig = getBrandConfiguration(brand.id.uuid);
-    const productIds = brandConfig?.featuredProductIds || [];
+    const brandId = brand.id.uuid;
+    const brandConfig = getBrandConfiguration(brandId);
 
-    const products = denormalisedEntities(
-      entities,
-      productIds.map(id => ({ id: { uuid: id }, type: 'listing' })),
-      false
-    );
+    // Try to use bestseller products first; fallback to configured products
+    let products = [];
+    const bestsellerInfo = bestsellerProductsByBrand?.[brandId];
+
+    if (bestsellerInfo?.data && bestsellerInfo.data.length > 0) {
+      // Denormalize bestseller product IDs to attach images from marketplace entities
+      products = denormalisedEntities(
+        entities,
+        bestsellerInfo.data.map(listing => ({ id: { uuid: listing.id.uuid }, type: 'listing' })),
+        false
+      );
+    } else {
+      // Fallback to configured featured product IDs
+      const configuredProductIds = brandConfig?.featuredProductIds || [];
+      products = denormalisedEntities(
+        entities,
+        configuredProductIds.map(id => ({ id: { uuid: id }, type: 'listing' })),
+        false
+      );
+    }
 
     return {
       brand,
@@ -570,7 +718,7 @@ export const getFeaturedBrands = state => {
  * Returns array of { brand, products } objects
  */
 export const getFeaturedBrandsWithProducts = state => {
-  const { featuredBrandIds } = state.BrandsPage;
+  const { featuredBrandIds, bestsellerProductsByBrand } = state.BrandsPage;
   const { entities } = state.marketplaceData;
 
   // Get denormalized brands
@@ -582,14 +730,29 @@ export const getFeaturedBrandsWithProducts = state => {
 
   // Attach products to each brand
   return brands.map(brand => {
-    const brandConfig = getBrandConfiguration(brand.id.uuid);
-    const productIds = brandConfig?.featuredProductIds || [];
+    const brandId = brand.id.uuid;
+    const brandConfig = getBrandConfiguration(brandId);
 
-    const products = denormalisedEntities(
-      entities,
-      productIds.map(id => ({ id: { uuid: id }, type: 'listing' })),
-      false
-    );
+    // Try to use bestseller products first; fallback to configured products
+    let products = [];
+    const bestsellerInfo = bestsellerProductsByBrand?.[brandId];
+
+    if (bestsellerInfo?.data && bestsellerInfo.data.length > 0) {
+      // Denormalize bestseller product IDs to attach images from marketplace entities
+      products = denormalisedEntities(
+        entities,
+        bestsellerInfo.data.map(listing => ({ id: { uuid: listing.id.uuid }, type: 'listing' })),
+        false
+      );
+    } else {
+      // Fallback to configured featured product IDs
+      const configuredProductIds = brandConfig?.featuredProductIds || [];
+      products = denormalisedEntities(
+        entities,
+        configuredProductIds.map(id => ({ id: { uuid: id }, type: 'listing' })),
+        false
+      );
+    }
 
     return {
       brand,

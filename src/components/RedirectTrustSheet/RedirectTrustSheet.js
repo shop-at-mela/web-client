@@ -40,6 +40,7 @@ const RedirectTrustSheet = ({ isOpen, brandName, productUrl, isVerified, onConti
   const [freeText, setFreeText] = useState('');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState(false);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(true);
   const textareaRef = useRef(null);
 
   // Reset internal state each time the sheet opens
@@ -50,8 +51,17 @@ const RedirectTrustSheet = ({ isOpen, brandName, productUrl, isVerified, onConti
       setFreeText('');
       setEmail('');
       setEmailError(false);
+      setIsButtonDisabled(true);
     }
   }, [isOpen]);
+
+  // 1.5-second activation delay for Continue button on first show
+  useEffect(() => {
+    if (isOpen && isButtonDisabled) {
+      const timer = setTimeout(() => setIsButtonDisabled(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, isButtonDisabled]);
 
   // Focus textarea when expanded
   useEffect(() => {
@@ -208,7 +218,11 @@ const RedirectTrustSheet = ({ isOpen, brandName, productUrl, isVerified, onConti
 
         {/* ── Continue button — always visible ── */}
         <div className={css.ctaRow}>
-          <button className={css.continueBtn} onClick={handleContinue}>
+          <button
+            className={[css.continueBtn, isButtonDisabled ? css.continueBtnDisabled : ''].filter(Boolean).join(' ')}
+            onClick={handleContinue}
+            disabled={isButtonDisabled}
+          >
             {intl.formatMessage({ id: 'RedirectTrustSheet.continue' }, { brand: brandName })}
           </button>
           <button className={css.dismissBtn} onClick={onClose} aria-label={intl.formatMessage({ id: isExpanded ? 'RedirectTrustSheet.dismissLabelExpanded' : 'RedirectTrustSheet.dismissLabel' })}>

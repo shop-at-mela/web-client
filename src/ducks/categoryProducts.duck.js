@@ -1,4 +1,6 @@
 import { storableError } from '../util/errors';
+import { pickRandom, attachImagesToListings } from '../util/listings';
+import { fetchBestsellerCarousel } from '../util/bestsellerCarousel';
 
 // ================ Action types ================ //
 
@@ -84,6 +86,8 @@ export const fetchCategoryProductsError = (categoryKey, error) => ({
 
 // ================ Thunks ================ //
 
+const DISPLAY_COUNT = 9; // Limit to 9 products for optimal UX and performance
+
 export const fetchCategoryProducts = (categoryLevel, categoryName, config, excludeListingId = null) => (dispatch, getState, sdk) => {
   const categoryKey = `${categoryLevel}:${categoryName}`;
 
@@ -101,53 +105,23 @@ export const fetchCategoryProducts = (categoryLevel, categoryName, config, exclu
     ],
     'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
     'fields.image': ['variants.listing-card', 'variants.listing-card-2x'],
-    'imageVariant.listing-card': 'w:400;h:300;fit:crop', // Define listing-card variant
-    'imageVariant.listing-card-2x': 'w:800;h:600;fit:crop', // Define listing-card-2x variant
-    perPage: 9, // Limit to 9 products for optimal UX and performance
+    'imageVariant.listing-card': 'w:400;h:300;fit:crop',
+    'imageVariant.listing-card-2x': 'w:800;h:600;fit:crop',
     [`pub_${categoryLevel}`]: categoryName,
   };
 
-  return sdk.listings
-    .query(queryParams)
-    .then(response => {
-      const { data, included } = response.data;
-
-      // Helper function to attach images to listings from included data
-      const attachImagesToListings = (listings, includedData) => {
-        const imageMap = {};
-
-        // Create a map of image IDs to image objects
-        (includedData || []).forEach(item => {
-          if (item.type === 'image') {
-            imageMap[item.id.uuid] = item;
-          }
-        });
-
-        // Attach images to each listing
-        return listings.map(listing => {
-          const imageRelationships = listing.relationships?.images?.data || [];
-          const images = imageRelationships.map(rel => imageMap[rel.id.uuid]).filter(Boolean);
-
-          return {
-            ...listing,
-            images: images, // Top-level: required by ListingImage (listing.images[0])
-            attributes: {
-              ...listing.attributes,
-            }
-          };
-        });
-      };
-
-      // Process listings to include image data
-      let listingsWithImages = attachImagesToListings(data, included);
+  return fetchBestsellerCarousel(sdk, queryParams, DISPLAY_COUNT)
+    .then(({ pool, allIncluded }) => {
+      // Attach images and randomize
+      const listingsWithImages = attachImagesToListings(pool, allIncluded);
+      let finalListings = pickRandom(listingsWithImages, DISPLAY_COUNT);
 
       // Filter out the current listing if excludeListingId is provided
       if (excludeListingId) {
-        listingsWithImages = listingsWithImages.filter(listing => listing.id.uuid !== excludeListingId);
+        finalListings = finalListings.filter(listing => listing.id.uuid !== excludeListingId);
       }
 
-      dispatch(fetchCategoryProductsSuccess(categoryKey, listingsWithImages));
-      return response;
+      dispatch(fetchCategoryProductsSuccess(categoryKey, finalListings));
     })
     .catch(e => {
       const error = storableError(e);

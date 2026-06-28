@@ -391,11 +391,6 @@ export const ListingCard = props => {
             intl={intl}
             listingTypeConfig={foundListingTypeConfig}
           />
-          {publicData?.variantCount > 1 && (
-            <div className={css.variantPill}>
-              {publicData.variantCount} variants
-            </div>
-          )}
           <div className={css.mainInfo}>
             {showListingImage && (
               <div className={css.title}>
@@ -403,6 +398,11 @@ export const ListingCard = props => {
                   longWordMinLength: MIN_LENGTH_FOR_LONG_WORDS,
                   longWordClass: css.longWord,
                 })}
+              </div>
+            )}
+            {publicData?.variantCount > 1 && (
+              <div className={css.variantPill}>
+                {publicData.variantCount} variants
               </div>
             )}
             {showAuthorInfo ? (

@@ -5,6 +5,7 @@ import { NamedLink, ListingCard, ProductCarousel } from '../../../../components'
 import { useConfiguration } from '../../../../context/configurationContext';
 import { createInstance } from '../../../../util/sdkLoader';
 import { denormalisedEntities, updatedEntities, pickBrandDiverse } from '../../../../util/data';
+import { fetchBestsellerCarousel } from '../../../../util/bestsellerCarousel';
 import appSettings from '../../../../config/settings';
 import * as apiUtils from '../../../../util/api';
 
@@ -143,6 +144,7 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
   const orderedOccasions = inSeason ? OCCASIONS : [...OCCASIONS].reverse();
 
   const additionalParamsKey = JSON.stringify(additionalQueryParams);
+  const DISPLAY_COUNT = 6;
 
   useEffect(() => {
     const listingFields = config?.listing?.listingFields;
@@ -154,14 +156,19 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
         const results = await Promise.all(
           OCCASIONS.map(async ({ option }) => {
             try {
-              const response = await sdk.listings.query({
-                pub_occasion: option,
-                perPage: 50,
-                include: ['images', 'currentStock'],
-                ...additionalQueryParams,
-              });
-              const listingIds = pickBrandDiverse(response.data.data, 6);
-              return { option, listingIds, responseData: response.data };
+              const { pool, allIncluded } = await fetchBestsellerCarousel(
+                sdk,
+                {
+                  pub_occasion: option,
+                  include: ['images', 'currentStock'],
+                  ...additionalQueryParams,
+                },
+                DISPLAY_COUNT
+              );
+
+              // Pick diverse brands from the pool
+              const listingIds = pickBrandDiverse(pool, DISPLAY_COUNT);
+              return { option, listingIds, responseData: { data: pool, included: allIncluded } };
             } catch {
               return { option, listingIds: [], responseData: null };
             }
@@ -303,6 +310,8 @@ const AgeNavigation = ({ config }) => {
   const [ageProducts, setAgeProducts] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
+  const DISPLAY_COUNT = 8;
+
   useEffect(() => {
     const listingFields = config?.listing?.listingFields;
     const sanitizeConfig = { listingFields };
@@ -312,13 +321,18 @@ const AgeNavigation = ({ config }) => {
         const results = await Promise.all(
           TOP_AGE_GROUPS.map(async ({ option }) => {
             try {
-              const response = await sdk.listings.query({
-                pub_age_group: option,
-                perPage: 100,
-                include: ['images', 'currentStock'],
-              });
-              const listingIds = pickBrandDiverse(response.data.data, 8);
-              return { option, listingIds, responseData: response.data };
+              const { pool, allIncluded } = await fetchBestsellerCarousel(
+                sdk,
+                {
+                  pub_age_group: option,
+                  include: ['images', 'currentStock'],
+                },
+                DISPLAY_COUNT
+              );
+
+              // Pick diverse brands from the pool
+              const listingIds = pickBrandDiverse(pool, DISPLAY_COUNT);
+              return { option, listingIds, responseData: { data: pool, included: allIncluded } };
             } catch {
               return { option, listingIds: [], responseData: null };
             }
@@ -384,6 +398,8 @@ const makeCategoryCarousels = (categories) => {
     const [categoryProducts, setCategoryProducts] = useState({});
     const [isLoading, setIsLoading] = useState(true);
 
+    const DISPLAY_COUNT = 8;
+
     useEffect(() => {
       const listingFields = config?.listing?.listingFields;
       const sanitizeConfig = { listingFields };
@@ -393,13 +409,18 @@ const makeCategoryCarousels = (categories) => {
           const results = await Promise.all(
             categories.map(async ({ id }) => {
               try {
-                const response = await sdk.listings.query({
-                  pub_categoryLevel1: id,
-                  perPage: 100,
-                  include: ['images', 'currentStock'],
-                });
-                const listingIds = pickBrandDiverse(response.data.data, 8);
-                return { id, listingIds, responseData: response.data };
+                const { pool, allIncluded } = await fetchBestsellerCarousel(
+                  sdk,
+                  {
+                    pub_categoryLevel1: id,
+                    include: ['images', 'currentStock'],
+                  },
+                  DISPLAY_COUNT
+                );
+
+                // Pick diverse brands from the pool
+                const listingIds = pickBrandDiverse(pool, DISPLAY_COUNT);
+                return { id, listingIds, responseData: { data: pool, included: allIncluded } };
               } catch {
                 return { id, listingIds: [], responseData: null };
               }
