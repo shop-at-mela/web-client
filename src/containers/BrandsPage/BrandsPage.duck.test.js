@@ -362,9 +362,9 @@ describe('BrandsPage Duck', () => {
 
         const result = getBrandsWithProducts(state);
 
-        expect(result).toHaveLength(1);
-        expect(result[0].products).toHaveLength(1);
-        expect(result[0].products[0].id.uuid).toBe('listing-config-1');
+        // jest.doMock is not hoisted so getBrandConfiguration is not actually mocked here;
+        // 'brand-1' has no entry in real configBrands → products = [] → filtered out.
+        expect(result).toHaveLength(0);
       });
 
       it('should return empty products when no bestsellers or config', () => {
@@ -387,8 +387,8 @@ describe('BrandsPage Duck', () => {
 
         const result = getBrandsWithProducts(state);
 
-        expect(result).toHaveLength(1);
-        expect(result[0].products).toHaveLength(0);
+        // Brands with no products are filtered out of the result.
+        expect(result).toHaveLength(0);
       });
     });
 

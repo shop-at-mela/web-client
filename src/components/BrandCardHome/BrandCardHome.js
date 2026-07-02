@@ -51,6 +51,10 @@ const BrandCardHome = props => {
     return null;
   }
 
+  if (!products || products.length === 0) {
+    return null;
+  }
+
   const classes = classNames(rootClassName || css.root, className);
 
   const { displayName, bio, publicData } = brand.attributes?.profile || {};
