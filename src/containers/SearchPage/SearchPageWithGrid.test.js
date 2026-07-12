@@ -88,6 +88,9 @@ describe('SearchPageComponent', () => {
     search: {
       defaultFilters: [],
       sortConfig: { active: true, queryParamName: 'sort' },
+      mainSearch: {
+        searchType: 'keywords',
+      },
     },
     categoryConfiguration: {
       categories: [

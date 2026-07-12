@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import WhyClothing from './WhyClothing';
@@ -21,8 +21,8 @@ describe('WhyClothing', () => {
   it('renders all pillar cards', () => {
     render(<WhyClothing />);
 
-    // Should show the first pillar by default
-    expect(screen.getByText('Proven Demand')).toBeInTheDocument();
+    // Should show the first pillar by default (mobile + desktop copies both render it)
+    expect(screen.getAllByText('Proven Demand')[0]).toBeInTheDocument();
   });
 
   it('renders navigation buttons', () => {
@@ -43,77 +43,94 @@ describe('WhyClothing', () => {
   });
 
   it('navigates to next pillar when next button is clicked', () => {
-    render(<WhyClothing />);
+    const { container } = render(<WhyClothing />);
+    const mobileCarousel = container.querySelector('.mobileCarousel');
 
-    const nextButton = screen.getByLabelText('Next pillar');
+    const nextButton = within(mobileCarousel).getByLabelText('Next pillar');
     fireEvent.click(nextButton);
 
-    expect(screen.getByText('Clear Value Proposition')).toBeInTheDocument();
-    expect(screen.getByText('Unique designs')).toBeInTheDocument();
+    expect(within(mobileCarousel).getByText('Clear Value Proposition')).toBeInTheDocument();
+    expect(within(mobileCarousel).getByText('Unique designs')).toBeInTheDocument();
   });
 
   it('navigates to previous pillar when prev button is clicked', () => {
-    render(<WhyClothing />);
+    const { container } = render(<WhyClothing />);
+    const mobileCarousel = container.querySelector('.mobileCarousel');
 
     // First go to next pillar
-    const nextButton = screen.getByLabelText('Next pillar');
+    const nextButton = within(mobileCarousel).getByLabelText('Next pillar');
     fireEvent.click(nextButton);
 
     // Then go back
-    const prevButton = screen.getByLabelText('Previous pillar');
+    const prevButton = within(mobileCarousel).getByLabelText('Previous pillar');
     fireEvent.click(prevButton);
 
-    expect(screen.getByText('Proven Demand')).toBeInTheDocument();
-    expect(screen.getByText('Highest search volume')).toBeInTheDocument();
+    expect(within(mobileCarousel).getByText('Proven Demand')).toBeInTheDocument();
+    expect(within(mobileCarousel).getByText('Highest search volume')).toBeInTheDocument();
   });
 
-  it('disables prev button on first pillar', () => {
-    render(<WhyClothing />);
+  // All 3 pillar cards render simultaneously in the carousel track (position is CSS
+  // transform-driven, not conditional), so text presence alone can't confirm which
+  // card is current. The dot indicator's "active" class is the one place that does.
+  const getActivePillarIndex = mobileCarousel => {
+    const dots = within(mobileCarousel).getAllByLabelText(/Go to pillar \d+/);
+    return dots.findIndex(dot => dot.className.includes('active'));
+  };
 
-    const prevButton = screen.getByLabelText('Previous pillar');
-    expect(prevButton).toBeDisabled();
+  it('wraps to the last pillar when prev is clicked on the first pillar', () => {
+    const { container } = render(<WhyClothing />);
+    const mobileCarousel = container.querySelector('.mobileCarousel');
+
+    const prevButton = within(mobileCarousel).getByLabelText('Previous pillar');
+    expect(prevButton).not.toBeDisabled();
+
+    fireEvent.click(prevButton);
+    expect(getActivePillarIndex(mobileCarousel)).toBe(2); // wraps from first to last of 3 pillars
   });
 
-  it('disables next button on last pillar', () => {
-    render(<WhyClothing />);
+  it('wraps to the first pillar when next is clicked on the last pillar', () => {
+    const { container } = render(<WhyClothing />);
+    const mobileCarousel = container.querySelector('.mobileCarousel');
 
-    const nextButton = screen.getByLabelText('Next pillar');
+    const nextButton = within(mobileCarousel).getByLabelText('Next pillar');
+    expect(nextButton).not.toBeDisabled();
 
-    // Navigate to last pillar (click next 2 times)
+    // Navigate to last pillar (click next 2 times for 3 total), then once more to wrap
     fireEvent.click(nextButton);
     fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
 
-    expect(screen.getByText('Strategic Partnership')).toBeInTheDocument();
-    expect(nextButton).toBeDisabled();
+    expect(getActivePillarIndex(mobileCarousel)).toBe(0);
   });
 
   it('allows direct navigation via page indicators', () => {
-    render(<WhyClothing />);
+    const { container } = render(<WhyClothing />);
+    const mobileCarousel = container.querySelector('.mobileCarousel');
 
-    const thirdIndicator = screen.getByLabelText('Go to pillar 3');
+    const thirdIndicator = within(mobileCarousel).getByLabelText('Go to pillar 3');
     fireEvent.click(thirdIndicator);
 
-    expect(screen.getByText('Strategic Partnership')).toBeInTheDocument();
-    expect(screen.getByText('Focused expertise')).toBeInTheDocument();
+    expect(within(mobileCarousel).getByText('Strategic Partnership')).toBeInTheDocument();
+    expect(within(mobileCarousel).getByText('Focused expertise')).toBeInTheDocument();
   });
 
-  it('renders baby clothing market facts', () => {
+  it('renders category market insight stats', () => {
     render(<WhyClothing />);
 
-    expect(screen.getByText('Baby Clothing Market Facts')).toBeInTheDocument();
-    expect(screen.getByText('200K+')).toBeInTheDocument();
-    expect(screen.getByText('Indian babies born in US annually')).toBeInTheDocument();
+    expect(screen.getByText('Why This Category Works')).toBeInTheDocument();
     expect(screen.getByText('#1')).toBeInTheDocument();
     expect(screen.getByText('Search volume for "Indian baby clothes"')).toBeInTheDocument();
-    expect(screen.getByText('0')).toBeInTheDocument();
-    expect(screen.getByText('Indian specialty retailers in US')).toBeInTheDocument();
+    expect(screen.getByText('Limited')).toBeInTheDocument();
+    expect(screen.getByText('Specialized retailers in US')).toBeInTheDocument();
+    expect(screen.getByText('Easy')).toBeInTheDocument();
+    expect(screen.getByText('International shipping category')).toBeInTheDocument();
   });
 
   it('renders future vision section', () => {
     render(<WhyClothing />);
 
     expect(screen.getByText('Start with Baby Clothes, Expand Together')).toBeInTheDocument();
-    expect(screen.getByText('Starting with baby and children\'s clothing to prove the model, then expanding to home goods and beyond.')).toBeInTheDocument();
+    expect(screen.getByText(/Starting with baby and children's clothing to prove the model, then expanding to home goods and beyond\./)).toBeInTheDocument();
   });
 
   it('renders updated expansion path', () => {
@@ -140,14 +157,15 @@ describe('WhyClothing', () => {
   });
 
   it('handles keyboard navigation', () => {
-    render(<WhyClothing />);
+    const { container } = render(<WhyClothing />);
+    const mobileCarousel = container.querySelector('.mobileCarousel');
 
-    const nextButton = screen.getByLabelText('Next pillar');
+    const nextButton = within(mobileCarousel).getByLabelText('Next pillar');
 
     // Focus the button and press Enter
     nextButton.focus();
     fireEvent.keyDown(nextButton, { key: 'Enter' });
 
-    expect(screen.getByText('Clear Value Proposition')).toBeInTheDocument();
+    expect(within(mobileCarousel).getByText('Clear Value Proposition')).toBeInTheDocument();
   });
 });

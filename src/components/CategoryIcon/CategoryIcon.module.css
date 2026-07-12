@@ -1,0 +1,6 @@
+.root {
+  display: block;
+  flex: none;
+  /* Inherits color from the parent so callers control navy/marigold via `color`. */
+  color: inherit;
+}

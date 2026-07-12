@@ -10,7 +10,7 @@ import { RouteConfigurationProvider } from '../../context/routeConfigurationCont
 
 import { SignupPageComponent } from './SignupPage';
 
-const { screen, waitFor, userEvent, fireEvent } = testingLibrary;
+const { screen } = testingLibrary;
 
 // Mock NamedLink component
 jest.mock('../../components/NamedLink/NamedLink', () => {
@@ -76,13 +76,13 @@ const TestWrapper = ({ children, config = mockConfig }) => (
       'SignupPage.schemaTitle': 'Sign up - Test Marketplace',
       'SignupPage.schemaDescription': 'Join Test Marketplace today',
       'ValueProposition.customer.title': 'Never Lose Track of Your Favorites',
-      'ValueProposition.customer.subtitle': 'Heart items to save for later',
+      'ValueProposition.customer.subtitle': 'Save the products you love',
       'ValueProposition.customer.point1': 'Heart items to save for later',
-      'ProviderCTA.title': 'Want to sell products instead?',
-      'ProviderCTA.buttonText': 'Sign up as a Brand',
       'TrustIndicators.secure': 'Secure signup',
       'TrustIndicators.instant': 'Instant access',
       'TrustIndicators.verified': 'Verified accounts',
+      'SignupForm.startShopping': 'Start Saving Favorites',
+      'SignupForm.startSelling': 'Start Selling',
     }}>
       <ConfigurationProvider value={config}>
         <RouteConfigurationProvider value={mockRouteConfiguration}>
@@ -114,13 +114,6 @@ describe('SignupPage', () => {
       // Should show customer value proposition
       expect(screen.getByText(/Never Lose Track of Your Favorites/i)).toBeInTheDocument();
       expect(screen.getByText(/Heart items to save for later/i)).toBeInTheDocument();
-
-      // Should show provider CTA at bottom
-      expect(screen.getByText(/Want to sell products instead/i)).toBeInTheDocument();
-      expect(screen.getByText(/Sign up as a Brand/i)).toBeInTheDocument();
-
-      // Should NOT show back navigation
-      expect(screen.queryByText(/Back to Customer Signup/i)).not.toBeInTheDocument();
     });
 
     it('shows "Start Saving Favorites" button for customers', () => {
@@ -131,23 +124,6 @@ describe('SignupPage', () => {
       );
 
       expect(screen.getByText(/Start Saving Favorites/i)).toBeInTheDocument();
-    });
-
-    it('navigates to provider signup when CTA is clicked', () => {
-      // Mock window.location.href
-      delete window.location;
-      window.location = { href: '' };
-
-      render(
-        <TestWrapper>
-          <SignupPageComponent {...mockProps} />
-        </TestWrapper>
-      );
-
-      const providerCtaButton = screen.getByText(/Sign up as a Brand/i);
-      fireEvent.click(providerCtaButton);
-
-      expect(window.location.href).toBe('/signup/provider');
     });
   });
 
@@ -164,28 +140,7 @@ describe('SignupPage', () => {
         </TestWrapper>
       );
 
-      // Should show back navigation for provider mode
-      expect(screen.getByText(/Back to Customer Signup/i)).toBeInTheDocument();
-
-      // Should NOT show provider CTA (since we're already in provider mode)
-      expect(screen.queryByText(/Want to sell products instead/i)).not.toBeInTheDocument();
-    });
-
-    it('navigates back to customer signup when back button is clicked', () => {
-      // Mock window.location.href
-      delete window.location;
-      window.location = { href: '' };
-
-      render(
-        <TestWrapper>
-          <SignupPageComponent {...providerProps} />
-        </TestWrapper>
-      );
-
-      const backButton = screen.getByText(/Back to Customer Signup/i);
-      fireEvent.click(backButton);
-
-      expect(window.location.href).toBe('/signup');
+      expect(screen.getByText(/Start Selling/i)).toBeInTheDocument();
     });
   });
 

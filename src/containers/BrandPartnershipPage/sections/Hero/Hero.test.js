@@ -52,7 +52,13 @@ describe('Hero', () => {
   });
 
 
-  it('shows baby clothing CTA by default', () => {
+  // The tests below cover the two-CTA form-toggle UI (Apply for Baby Clothing / Join
+  // Waitlist, driven by onFormClick/clothingFormUrl/waitlistFormUrl) that commit
+  // 1cccf788f temporarily replaced with a single mailto CTA as part of an identity
+  // refactor ("Mela is a brand-discovery/affiliate platform, not an open marketplace").
+  // This is intentional but not permanent — re-enable once the marketplace signup
+  // flows return to BrandPartnershipPage.
+  it.skip('shows baby clothing CTA by default', () => {
     render(<Hero {...defaultProps} />);
 
     expect(screen.getByText('Apply for Baby Clothing')).toBeInTheDocument();
@@ -60,7 +66,7 @@ describe('Hero', () => {
     expect(screen.queryByText('Join Waitlist (Other Categories)')).not.toBeInTheDocument();
   });
 
-  it('handles baby clothing form click', () => {
+  it.skip('handles baby clothing form click', () => {
     render(<Hero {...defaultProps} />);
 
     const clothingButton = screen.getByText('Apply for Baby Clothing');
@@ -72,7 +78,7 @@ describe('Hero', () => {
     );
   });
 
-  it('toggles to waitlist view when other categories is clicked', () => {
+  it.skip('toggles to waitlist view when other categories is clicked', () => {
     render(<Hero {...defaultProps} />);
 
     const otherCategoriesButton = screen.getByText('Other categories →');
@@ -83,7 +89,7 @@ describe('Hero', () => {
     expect(screen.queryByText('Apply for Baby Clothing')).not.toBeInTheDocument();
   });
 
-  it('handles waitlist form click', () => {
+  it.skip('handles waitlist form click', () => {
     render(<Hero {...defaultProps} />);
 
     // First toggle to waitlist view
@@ -100,7 +106,7 @@ describe('Hero', () => {
     );
   });
 
-  it('toggles back to baby clothing view when back button is clicked', () => {
+  it.skip('toggles back to baby clothing view when back button is clicked', () => {
     render(<Hero {...defaultProps} />);
 
     // First toggle to waitlist view
@@ -116,7 +122,7 @@ describe('Hero', () => {
     expect(screen.queryByText('Join Waitlist (Other Categories)')).not.toBeInTheDocument();
   });
 
-  it('handles missing onFormClick prop gracefully', () => {
+  it.skip('handles missing onFormClick prop gracefully', () => {
     const propsWithoutCallback = {
       clothingFormUrl: 'https://test-clothing-form.com',
       waitlistFormUrl: 'https://test-waitlist-form.com'
@@ -132,7 +138,7 @@ describe('Hero', () => {
     }).not.toThrow();
   });
 
-  it('has proper accessibility structure', () => {
+  it.skip('has proper accessibility structure', () => {
     render(<Hero {...defaultProps} />);
 
     // Check for proper heading hierarchy

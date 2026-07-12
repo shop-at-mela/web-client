@@ -48,9 +48,9 @@ describe('SuccessStories', () => {
   it('renders CTA section', () => {
     render(<SuccessStories />);
 
-    expect(screen.getByText('Be Our Next Success Story')).toBeInTheDocument();
-    expect(screen.getByText(/Join our founding partners and let's build your success story together/)).toBeInTheDocument();
-    expect(screen.getByText(/Apply now to be featured in our growth journey/)).toBeInTheDocument();
+    expect(screen.getByText('Become a Founding Partner Success Story')).toBeInTheDocument();
+    expect(screen.getByText(/Shape the platform, capture first-mover advantage/)).toBeInTheDocument();
+    expect(screen.getByText(/lucrative US Indian diaspora market/)).toBeInTheDocument();
   });
 
   it('has proper accessibility structure', () => {
@@ -92,7 +92,7 @@ describe('SuccessStories', () => {
     render(<SuccessStories />);
 
     // Verify the CTA messaging is encouraging but realistic
-    expect(screen.getByText('Be Our Next Success Story')).toBeInTheDocument();
-    expect(screen.getByText(/founding partners/)).toBeInTheDocument();
+    expect(screen.getByText('Become a Founding Partner Success Story')).toBeInTheDocument();
+    expect(screen.getAllByText(/Founding Partner/).length).toBeGreaterThan(0);
   });
 });

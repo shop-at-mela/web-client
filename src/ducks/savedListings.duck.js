@@ -2,8 +2,6 @@ import { storableError } from '../util/errors';
 import { addMarketplaceEntities } from './marketplaceData.duck';
 import { fetchCurrentUserThunk } from './user.duck';
 
-const CURRENT_USER_SHOW_SUCCESS = fetchCurrentUserThunk.fulfilled.type;
-
 const STORAGE_KEY = 'melaUnsavedItems';
 const MAX_SAVED = 200;
 
@@ -43,7 +41,7 @@ export default function savedListingsReducer(state = initialState, action = {}) 
   switch (type) {
     // Sync saved IDs whenever the current user entity loads (free rider on fetchCurrentUser).
     // Payload is the denormalised user entity (or null when unauthenticated).
-    case CURRENT_USER_SHOW_SUCCESS: {
+    case fetchCurrentUserThunk.fulfilled.type: {
       if (!payload) {
         return state;
       }

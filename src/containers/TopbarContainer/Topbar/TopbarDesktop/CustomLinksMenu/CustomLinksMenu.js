@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import classNames from 'classnames';
 
 import PriorityLinks, { CreateListingMenuLink } from './PriorityLinks';
 import LinksMenu from './LinksMenu';
@@ -127,8 +128,8 @@ const CustomLinksMenu = ({
   const [links, setLinks] = useState([]);
 
   const [layoutData, setLayoutData] = useState({
-    priorityLinks: links,
-    menuLinks: links,
+    priorityLinks: [],
+    menuLinks: [],
     containerWidth: 0,
   });
 
@@ -214,20 +215,32 @@ const CustomLinksMenu = ({
   // No links to show — return nothing so the topbar flex layout reflows naturally
   if (links.length === 0 && !customLinks?.length) return null;
 
-  const styleMaybe = mounted ? { style: { width: `${containerWidth}px` } } : {};
-  const isMeasured = !!links?.[0]?.width;
+  const linksMeasured = !!links?.[0]?.width;
+  const moreLabelMeasured = moreLabelWidth > 0;
+  const layoutComputed = containerWidth > 0;
+  const hasLinksToLayout = links.length > 0;
+  const layoutReady = !hasLinksToLayout || (linksMeasured && moreLabelMeasured && layoutComputed);
+
   const hasMenuLinks = menuLinks?.length > 0;
-  const hasPriorityLinks = isMeasured && priorityLinks.length > 0;
+  const hasPriorityLinks = linksMeasured && priorityLinks.length > 0;
+
+  // Render LinksMenu while measuring (hidden via layoutPending), then only when menu links exist.
+  const showLinksMenu = mounted && links.length > 0 && (!layoutReady || hasMenuLinks);
+
+  const containerClassName = classNames(css.customLinksMenu, {
+    [css.layoutPending]: !layoutReady,
+  });
+  const containerStyle = layoutReady ? { width: `${containerWidth}px` } : undefined;
 
   return (
-    <div className={css.customLinksMenu} ref={containerRef} {...styleMaybe}>
+    <div className={containerClassName} ref={containerRef} style={containerStyle}>
       <PriorityLinks links={links} priorityLinks={priorityLinks} setLinks={setLinks} />
-      {mounted && hasMenuLinks ? (
+      {showLinksMenu ? (
         <LinksMenu
           id="linksMenu"
           currentPage={currentPage}
-          links={menuLinks}
-          showMoreLabel={hasPriorityLinks}
+          links={layoutReady ? menuLinks : links}
+          showMoreLabel={layoutReady && hasPriorityLinks}
           moreLabelWidth={moreLabelWidth}
           setMoreLabelWidth={setMoreLabelWidth}
           intl={intl}

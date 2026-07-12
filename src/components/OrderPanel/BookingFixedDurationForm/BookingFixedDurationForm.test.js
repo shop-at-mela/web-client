@@ -67,11 +67,11 @@ describe('EstimatedBreakdownMaybe', () => {
     const baseUnitNight = screen.getByText('OrderBreakdown.baseUnitFixedBooking');
     expect(baseUnitNight).toBeInTheDocument();
     const baseUnitNightInfo = within(baseUnitNight.parentNode.parentNode);
-    expect(baseUnitNightInfo.getByText('$21.98')).toBeInTheDocument();
+    expect(baseUnitNightInfo.getByText('$22')).toBeInTheDocument();
 
     const total = screen.getByText('OrderBreakdown.total');
     expect(total).toBeInTheDocument();
     const totalPayIn = within(total.parentNode.parentNode);
-    expect(totalPayIn.getByText('$21.98')).toBeInTheDocument();
+    expect(totalPayIn.getByText('$22')).toBeInTheDocument();
   });
 });

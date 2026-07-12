@@ -181,10 +181,10 @@
   border: 1px solid rgba(38, 34, 97, 0.15);
 }
 
-/* Gifting panel: very light coral tint — panel stays pale so coral CTA reads clearly */
+/* Gifting panel: very light marigold tint — panel stays pale so the CTA reads clearly */
 .occasionPanelGifting {
-  background: rgba(230, 126, 113, 0.06);
-  border: 1px solid rgba(230, 126, 113, 0.2);
+  background: rgba(240, 160, 48, 0.06);
+  border: 1px solid rgba(240, 160, 48, 0.2);
 }
 
 .occasionPanelHeader {
@@ -245,7 +245,7 @@
   }
 }
 
-/* Gifting CTA: deep coral on white — high contrast against pale coral panel */
+/* Gifting CTA: navy on white — high contrast against the pale marigold gifting panel; marigold hover glow */
 .occasionCtaGifting {
   background: #fff;
   color: var(--colorPrimaryButtonDark);
@@ -254,7 +254,7 @@
   &:hover {
     background: var(--colorPrimaryButton);
     color: #fff;
-    box-shadow: 0 4px 12px rgba(230, 126, 113, 0.35);
+    box-shadow: 0 4px 12px rgba(240, 160, 48, 0.35);
   }
 }
 

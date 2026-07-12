@@ -3,9 +3,14 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { MemoryRouter } from 'react-router-dom';
+import { Provider } from 'react-redux';
 import { ConfigurationProvider } from '../../context/configurationContext';
 import { RouteConfigurationProvider } from '../../context/routeConfigurationContext';
+import { types as sdkTypes } from '../../util/sdkLoader';
+import configureStore from '../../store';
 import BrandCard from './BrandCard';
+
+const { Money } = sdkTypes;
 
 const mockBrand = {
   id: { uuid: 'brand-123' },
@@ -28,7 +33,7 @@ const mockProducts = [
     type: 'listing',
     attributes: {
       title: 'Product 1',
-      price: { amount: 1000, currency: 'INR' },
+      price: new Money(1000, 'INR'),
     },
     images: [
       {
@@ -46,7 +51,7 @@ const mockProducts = [
     type: 'listing',
     attributes: {
       title: 'Product 2',
-      price: { amount: 2000, currency: 'INR' },
+      price: new Money(2000, 'INR'),
     },
     images: [
       {
@@ -85,16 +90,22 @@ const mockRoutes = [
 const mockMessages = {
   'BrandCard.shopAll': 'Shop All Products',
   'BrandCard.noProduct': 'Coming Soon',
+  'SavedListingButton.saveAriaLabel': 'Save this item',
+  'SavedListingButton.savedAriaLabel': 'Remove from saved items',
+  'SavedListingButton.save': 'Save',
+  'SavedListingButton.saved': 'Saved',
 };
 
 const TestWrapper = ({ children }) => (
-  <MemoryRouter>
-    <IntlProvider locale="en" messages={mockMessages}>
-      <ConfigurationProvider value={mockConfig}>
-        <RouteConfigurationProvider value={mockRoutes}>{children}</RouteConfigurationProvider>
-      </ConfigurationProvider>
-    </IntlProvider>
-  </MemoryRouter>
+  <Provider store={configureStore({})}>
+    <MemoryRouter>
+      <IntlProvider locale="en" messages={mockMessages}>
+        <ConfigurationProvider value={mockConfig}>
+          <RouteConfigurationProvider value={mockRoutes}>{children}</RouteConfigurationProvider>
+        </ConfigurationProvider>
+      </IntlProvider>
+    </MemoryRouter>
+  </Provider>
 );
 
 describe('BrandCard', () => {
@@ -133,7 +144,7 @@ describe('BrandCard', () => {
 
     const { container } = render(
       <TestWrapper>
-        <BrandCard brand={brandNoLogo} products={[]} />
+        <BrandCard brand={brandNoLogo} products={mockProducts} />
       </TestWrapper>
     );
 
@@ -270,7 +281,7 @@ describe('BrandCard', () => {
 
     // ListingCardMini should receive the onFavorite prop
     // We can verify this by checking if favorite buttons are rendered
-    const favoriteButtons = screen.getAllByLabelText('Add to favorites');
+    const favoriteButtons = screen.getAllByLabelText('Save this item');
     expect(favoriteButtons.length).toBe(2); // 2 products
   });
 

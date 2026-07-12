@@ -43,6 +43,8 @@ const BrandCardHome = props => {
     showCta = true,
     maxProducts = 4,
     showPlaceholders = true,
+    showProductMeta = true,
+    showCraftOrigin = false,
     className = null,
     rootClassName = null,
   } = props;
@@ -86,6 +88,16 @@ const BrandCardHome = props => {
   );
   const brandInfo = brandInfoParts.length > 0 ? brandInfoParts.join(' · ') : null;
 
+  // Craft-origin cue (hero context) — a legible "made in India" signal built from
+  // the existing location config, always resolving to India (all Mela brands are Indian).
+  const craftLocale = publicData?.brandCity
+    ? `${publicData.brandCity}, India`
+    : brandOrigin
+    ? /india/i.test(brandOrigin)
+      ? brandOrigin
+      : `${brandOrigin}, India`
+    : 'India';
+
   const brandSlug = getBrandSlugById(brand.id.uuid);
   const brandLinkProps = brandSlug
     ? { name: 'BrandPage', params: { brandSlug } }
@@ -113,6 +125,17 @@ const BrandCardHome = props => {
           )}
           <div className={css.brandText}>
             <h3 className={css.brandName}>{displayName}</h3>
+
+            {/* Craft origin — legible "Handcrafted in … India" cue for the hero */}
+            {showCraftOrigin && (
+              <p className={css.craftOrigin}>
+                <FormattedMessage
+                  id="BrandCardHome.craftOrigin"
+                  defaultMessage="Handcrafted in {locale}"
+                  values={{ locale: craftLocale }}
+                />
+              </p>
+            )}
 
             {/* Tagline */}
             {showTagline && (tagline ? (
@@ -161,7 +184,8 @@ const BrandCardHome = props => {
               key={product.id.uuid}
               listing={product}
               onFavorite={onFavorite}
-              showFavorite={true}
+              showSave={showProductMeta}
+              showPrice={showProductMeta}
             />
           ) : (
             <div key={`placeholder-${index}`} className={css.productPlaceholder}>
@@ -204,6 +228,8 @@ BrandCardHome.propTypes = {
   showCta: bool,
   maxProducts: number,
   showPlaceholders: bool,
+  showProductMeta: bool,
+  showCraftOrigin: bool,
   className: string,
   rootClassName: string,
 };

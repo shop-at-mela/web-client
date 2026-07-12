@@ -2,7 +2,7 @@ import { storableError } from '../../util/errors';
 import { pickRandom } from '../../util/listings';
 import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 import {
-  getRandomBrandIds,
+  getCuratedBrandIds,
   getPaginatedBrandIds,
   getFeaturedProductIds,
   getBrandConfiguration,
@@ -410,7 +410,7 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
 export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
   dispatch(fetchFeaturedBrandsRequest());
 
-  const featuredIds = getRandomBrandIds(10);
+  const featuredIds = getCuratedBrandIds(10);
 
   if (featuredIds.length === 0) {
     dispatch(fetchFeaturedBrandsSuccess([]));

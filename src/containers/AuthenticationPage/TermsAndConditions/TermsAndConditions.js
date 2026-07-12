@@ -25,11 +25,13 @@ const TermsAndConditions = props => {
 
   const handleClick = callback => e => {
     e.preventDefault();
-    callback(e);
+    if (callback) {
+      callback(e);
+    }
   };
   const handleKeyUp = callback => e => {
     // Allow click action with keyboard like with normal links
-    if (e.keyCode === KEY_CODE_ENTER) {
+    if (e.keyCode === KEY_CODE_ENTER && callback) {
       callback();
     }
   };

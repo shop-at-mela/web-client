@@ -23,11 +23,8 @@ jest.mock('./sections/FeaturedBrandPartners/FeaturedBrandPartnersContainer', () 
   };
 });
 
-jest.mock('./sections/ComingSoonSection/ComingSoonSection', () => {
-  return function ComingSoonSection() {
-    return <div data-testid="coming-soon-section">Coming Soon Section</div>;
-  };
-});
+// ComingSoonSection was removed from the homepage render (homepage-hero-prd T1-6):
+// it read as a trust liability on first impression. No mock needed.
 
 jest.mock('./sections/TrustAssurance/TrustAssurance', () => {
   return function TrustAssurance() {
@@ -138,24 +135,7 @@ describe('MelaHomePage', () => {
     expect(getByTestId('saved-items-module')).toBeTruthy();
     expect(getByTestId('category-showcase')).toBeTruthy();
     expect(getByTestId('featured-brand-partners')).toBeTruthy();
-    expect(getByTestId('coming-soon-section')).toBeTruthy();
     expect(getByTestId('trust-assurance')).toBeTruthy();
-  });
-
-  it('renders coming-soon-section before trust-assurance', () => {
-    const { getByTestId } = render(
-      <TestWrapper>
-        <MelaHomePage {...defaultProps} />
-      </TestWrapper>
-    );
-
-    const comingSoon = getByTestId('coming-soon-section');
-    const trustAssurance = getByTestId('trust-assurance');
-
-    // compareDocumentPosition: 4 means comingSoon comes before trustAssurance
-    expect(
-      comingSoon.compareDocumentPosition(trustAssurance) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
   });
 
   it('includes structured data schema', () => {

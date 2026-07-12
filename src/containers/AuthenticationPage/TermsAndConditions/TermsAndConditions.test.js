@@ -28,16 +28,19 @@ jest.mock('../../../components', () => ({
   )
 }));
 
-// Mock react-intl
+// Mock react-intl. Returns plain text (not a wrapping element) so it
+// slots directly into the component's own <span role="button"> as a text
+// node — matching the real component's single-span structure, so getByText
+// resolves to the element that actually carries role/tabIndex/handlers.
 jest.mock('../../../util/reactIntl', () => ({
-  FormattedMessage: ({ id, values }) => {
+  FormattedMessage: ({ id }) => {
     if (id === 'AuthenticationPage.termsAndConditionsTermsLinkText') {
-      return <span>Terms of Service</span>;
+      return 'Terms of Service';
     }
     if (id === 'AuthenticationPage.termsAndConditionsPrivacyLinkText') {
-      return <span>Privacy Policy</span>;
+      return 'Privacy Policy';
     }
-    return <span>{id}</span>;
+    return id;
   },
   intlShape: {}
 }));
@@ -47,11 +50,31 @@ jest.mock('../../../util/validators', () => ({
   requiredFieldArrayCheckbox: (message) => jest.fn().mockReturnValue(message)
 }));
 
+// fakeIntl.formatMessage collapses to `msg => msg.id`, dropping any
+// interpolation values. The component passes React elements (termsLink,
+// privacyLink) as values to intl.formatMessage, which real react-intl
+// renders inline — replicate that here so those elements actually appear
+// in the DOM for tests that click/query them.
+const formatMessageWithRichText = (msg, values) => {
+  if (values && (values.termsLink || values.privacyLink)) {
+    return (
+      <>
+        {values.termsLink}
+        {values.privacyLink}
+      </>
+    );
+  }
+  return msg.id;
+};
+
 const defaultProps = {
   onOpenTermsOfService: jest.fn(),
   onOpenPrivacyPolicy: jest.fn(),
   formId: 'signup',
-  intl: fakeIntl
+  intl: {
+    ...fakeIntl,
+    formatMessage: formatMessageWithRichText,
+  }
 };
 
 describe('TermsAndConditions', () => {

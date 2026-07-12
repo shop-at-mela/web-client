@@ -19,10 +19,13 @@ import css from './ListingCardMini.module.css';
  * @param {Object} props
  * @param {Object} props.listing - Listing entity
  * @param {boolean} props.showSave - Whether to show save button (default: true)
+ * @param {boolean} props.showPrice - Whether to show the price row (default: true).
+ *                                    Set false in contexts (e.g. the homepage hero)
+ *                                    where price chrome would read "store".
  * @param {string} props.className - Additional CSS class
  */
 export const ListingCardMini = props => {
-  const { listing, showSave = true, className = null } = props;
+  const { listing, showSave = true, showPrice = true, className = null } = props;
 
   const intl = useIntl();
   const currentListing = ensureListing(listing);
@@ -55,7 +58,7 @@ export const ListingCardMini = props => {
             className={css.image}
           />
         </div>
-        {formattedPrice && (
+        {showPrice && formattedPrice && (
           <div className={css.priceWrapper}>
             <span className={css.usdPrice}>{formattedPrice}</span>
             <span
@@ -83,6 +86,7 @@ export const ListingCardMini = props => {
 ListingCardMini.propTypes = {
   listing: object.isRequired,
   showSave: bool,
+  showPrice: bool,
   className: string,
 };
 

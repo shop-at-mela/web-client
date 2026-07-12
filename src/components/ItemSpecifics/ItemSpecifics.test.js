@@ -173,7 +173,7 @@ describe('ItemSpecifics', () => {
 
       // Should show button since we have category + 5 attributes > 3
       const showMoreButton = screen.getByRole('button', {
-        name: /ItemSpecifics.showMore/i
+        name: /ItemSpecifics.showAll/i
       });
       expect(showMoreButton).toBeInTheDocument();
     });
@@ -189,7 +189,7 @@ describe('ItemSpecifics', () => {
 
       // Should not show button since we have category + 2 attributes <= 4
       const showMoreButton = screen.queryByRole('button', {
-        name: /ItemSpecifics.showMore/i
+        name: /ItemSpecifics.showAll/i
       });
       expect(showMoreButton).not.toBeInTheDocument();
     });
@@ -227,7 +227,7 @@ describe('ItemSpecifics', () => {
 
       // Open modal
       const showMoreButton = screen.getByRole('button', {
-        name: /ItemSpecifics.showMore/i
+        name: /ItemSpecifics.showAll/i
       });
       fireEvent.click(showMoreButton);
 
@@ -306,7 +306,7 @@ describe('ItemSpecifics', () => {
 
       // Open modal
       const showMoreButton = screen.getByRole('button', {
-        name: /ItemSpecifics.showMore/i
+        name: /ItemSpecifics.showAll/i
       });
       fireEvent.click(showMoreButton);
 
@@ -335,7 +335,7 @@ describe('ItemSpecifics', () => {
 
       // Open modal
       const showMoreButton = screen.getByRole('button', {
-        name: /ItemSpecifics.showMore/i
+        name: /ItemSpecifics.showAll/i
       });
       fireEvent.click(showMoreButton);
 

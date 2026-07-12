@@ -188,8 +188,14 @@ describe('recommendedProducts.duck', () => {
 
       await fetchRecommendedProducts(skus, config)(mockDispatch, mockGetState, mockSdk);
 
+      const expectedProducts = mockListings.map(l => ({
+        ...l,
+        images: [],
+        attributes: { ...l.attributes, images: [] },
+      }));
+
       expect(mockDispatch).toHaveBeenCalledWith(fetchRecommendedProductsRequest());
-      expect(mockDispatch).toHaveBeenCalledWith(fetchRecommendedProductsSuccess(mockListings.map(l => l.id), mockListings));
+      expect(mockDispatch).toHaveBeenCalledWith(fetchRecommendedProductsSuccess(mockListings.map(l => l.id), expectedProducts));
     });
 
     it('dispatches request and error actions on failed fetch', async () => {
@@ -289,7 +295,13 @@ describe('recommendedProducts.duck', () => {
 
       await fetchRecommendedProducts(skus)(mockDispatch, mockGetState, mockSdk);
 
-      expect(mockDispatch).toHaveBeenCalledWith(fetchRecommendedProductsSuccess(foundListings.map(l => l.id)));
+      const expectedProducts = foundListings.map(l => ({
+        ...l,
+        images: [],
+        attributes: { ...l.attributes, images: [] },
+      }));
+
+      expect(mockDispatch).toHaveBeenCalledWith(fetchRecommendedProductsSuccess(foundListings.map(l => l.id), expectedProducts));
     });
 
     it('handles API response with no results', async () => {
@@ -305,7 +317,7 @@ describe('recommendedProducts.duck', () => {
 
       await fetchRecommendedProducts(skus)(mockDispatch, mockGetState, mockSdk);
 
-      expect(mockDispatch).toHaveBeenCalledWith(fetchRecommendedProductsSuccess([]));
+      expect(mockDispatch).toHaveBeenCalledWith(fetchRecommendedProductsSuccess([], []));
     });
 
     it('maintains order of results based on input SKUs', async () => {

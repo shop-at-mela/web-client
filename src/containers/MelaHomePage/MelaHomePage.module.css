@@ -9,7 +9,8 @@
 .heroSection {
   width: 100%;
   padding: 1rem 0 2rem;
-  background: linear-gradient(135deg, #f8fffe 0%, #f1f8f6 100%);
+  /* Warm cream to match the hero — kills the old cool-mint halo around it. */
+  background: var(--colorSurfaceWarm);
 
   @media (min-width: 768px) {
     padding: 2rem 0 2.5rem;
@@ -39,7 +40,8 @@
 .brandsSection {
   width: 100%;
   padding: 1.5rem 0;
-  background: #ffffff;
+  /* Warm cream anchor for the brand grid (was white). */
+  background: var(--colorSurfaceWarm);
 
   @media (min-width: 768px) {
     padding: 2rem 0;
@@ -54,7 +56,7 @@
 .comingSoonSection {
   width: 100%;
   padding: 2rem 0;
-  background: #fdf8f4;
+  background: var(--colorSurfaceWarm);
   border-top: 1px solid #ede8e3;
 
   @media (min-width: 768px) {

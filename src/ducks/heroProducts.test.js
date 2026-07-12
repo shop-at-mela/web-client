@@ -167,8 +167,8 @@ describe('heroProducts.duck', () => {
         'fields.image': ['variants.listing-card', 'variants.listing-card-2x'],
         'imageVariant.listing-card': 'w:400;h:300;fit:crop',
         'imageVariant.listing-card-2x': 'w:800;h:600;fit:crop',
-        perPage: 25,
-        sort: 'createdAt',
+        perPage: 10,
+        pub_homepageFeature: true,
       });
 
       // Check that success action was dispatched with randomized products

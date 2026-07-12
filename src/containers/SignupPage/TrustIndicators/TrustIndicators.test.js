@@ -12,9 +12,9 @@ describe('TrustIndicators', () => {
   it('renders all trust indicators', () => {
     render(<TrustIndicators />);
 
-    expect(screen.getByText(/Secure signup/i)).toBeInTheDocument();
-    expect(screen.getByText(/Instant access/i)).toBeInTheDocument();
-    expect(screen.getByText(/Verified accounts/i)).toBeInTheDocument();
+    expect(screen.getByText('TrustIndicators.secure')).toBeInTheDocument();
+    expect(screen.getByText('TrustIndicators.instant')).toBeInTheDocument();
+    expect(screen.getByText('TrustIndicators.verified')).toBeInTheDocument();
   });
 
   it('displays correct icons for each indicator', () => {
@@ -75,9 +75,9 @@ describe('TrustIndicators', () => {
     render(<TrustIndicators />);
 
     // Each trust indicator should have descriptive text
-    const secureText = screen.getByText(/Secure signup/i);
-    const instantText = screen.getByText(/Instant access/i);
-    const verifiedText = screen.getByText(/Verified accounts/i);
+    const secureText = screen.getByText('TrustIndicators.secure');
+    const instantText = screen.getByText('TrustIndicators.instant');
+    const verifiedText = screen.getByText('TrustIndicators.verified');
 
     expect(secureText).toBeInTheDocument();
     expect(instantText).toBeInTheDocument();
@@ -124,7 +124,7 @@ describe('TrustIndicators', () => {
     // it should always render all indicators
     render(<TrustIndicators />);
 
-    const indicators = screen.getAllByText(/Secure|Instant|Verified/);
+    const indicators = screen.getAllByText(/TrustIndicators\.(secure|instant|verified)/);
     expect(indicators).toHaveLength(3);
   });
 
@@ -146,13 +146,13 @@ describe('TrustIndicators', () => {
       const { container } = render(<TrustIndicators />);
 
       // Each icon should be paired with descriptive text
-      const secureIndicator = screen.getByText(/Secure signup/i).closest('.indicator');
+      const secureIndicator = screen.getByText('TrustIndicators.secure').closest('.indicator');
       expect(secureIndicator.querySelector('.icon')).toHaveTextContent('🔒');
 
-      const instantIndicator = screen.getByText(/Instant access/i).closest('.indicator');
+      const instantIndicator = screen.getByText('TrustIndicators.instant').closest('.indicator');
       expect(instantIndicator.querySelector('.icon')).toHaveTextContent('⚡');
 
-      const verifiedIndicator = screen.getByText(/Verified accounts/i).closest('.indicator');
+      const verifiedIndicator = screen.getByText('TrustIndicators.verified').closest('.indicator');
       expect(verifiedIndicator.querySelector('.icon')).toHaveTextContent('✓');
     });
   });

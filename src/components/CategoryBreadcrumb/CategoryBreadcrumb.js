@@ -3,7 +3,6 @@ import { array, bool, object, oneOfType, string } from 'prop-types';
 import classNames from 'classnames';
 
 import { FormattedMessage } from '../../util/reactIntl';
-import { createSlug } from '../../util/urlHelpers';
 import { NamedLink, IconArrowHead } from '../../components';
 
 import css from './CategoryBreadcrumb.module.css';
@@ -14,6 +13,12 @@ import css from './CategoryBreadcrumb.module.css';
  * - "Baby Care > Feeding > Bottles" (string with separators)
  * - ["Baby Care", "Feeding", "Bottles"] (array)
  * - { main: "Baby Care", sub: "Feeding", specific: "Bottles" } (object)
+ * - { level1: "Baby Care", level2: "Feeding", level3: "Bottles" } (object)
+ *
+ * Each entry carries a levelNumber so links can be built against the
+ * pub_categoryLevelN search params that filter real listing fields
+ * (categoryLevel1/2/3) - the same convention SearchPage, CategoryPage, and
+ * CategoryShowcase use elsewhere in the app.
  */
 const parseCategoryHierarchy = (category) => {
   if (!category) return [];
@@ -22,16 +27,15 @@ const parseCategoryHierarchy = (category) => {
   if (typeof category === 'string') {
     // Split by common separators and clean whitespace
     const separators = /[>\/|→\-]/;
-    if (separators.test(category)) {
-      return category.split(separators).map(cat => cat.trim()).filter(Boolean);
-    }
-    // Single category
-    return [category];
+    const names = separators.test(category)
+      ? category.split(separators).map(cat => cat.trim()).filter(Boolean)
+      : [category];
+    return names.map((name, index) => ({ name, levelNumber: index + 1 }));
   }
 
   // If it's an array
   if (Array.isArray(category)) {
-    return category.filter(Boolean);
+    return category.filter(Boolean).map((name, index) => ({ name, levelNumber: index + 1 }));
   }
 
   // If it's an object with hierarchy properties
@@ -39,10 +43,10 @@ const parseCategoryHierarchy = (category) => {
     const hierarchy = [];
 
     // Support both legacy format (main, sub, specific, detailed) and level-based format
-    if (category.main) hierarchy.push(category.main);
-    if (category.sub) hierarchy.push(category.sub);
-    if (category.specific) hierarchy.push(category.specific);
-    if (category.detailed) hierarchy.push(category.detailed);
+    if (category.main) hierarchy.push({ name: category.main, levelNumber: 1 });
+    if (category.sub) hierarchy.push({ name: category.sub, levelNumber: 2 });
+    if (category.specific) hierarchy.push({ name: category.specific, levelNumber: 3 });
+    if (category.detailed) hierarchy.push({ name: category.detailed, levelNumber: 4 });
 
     // Support level-based format (level1, level2, level3, etc.)
     const levelKeys = Object.keys(category)
@@ -50,7 +54,9 @@ const parseCategoryHierarchy = (category) => {
       .sort(); // Sort to ensure correct order (level1, level2, level3, etc.)
 
     levelKeys.forEach(key => {
-      if (category[key]) hierarchy.push(category[key]);
+      if (category[key]) {
+        hierarchy.push({ name: category[key], levelNumber: Number(key.replace('level', '')) });
+      }
     });
 
     return hierarchy;
@@ -60,25 +66,21 @@ const parseCategoryHierarchy = (category) => {
 };
 
 /**
- * Build category path for search filtering
- * Creates cumulative category paths for each level
+ * Build category paths for search filtering.
+ * Each path accumulates the pub_categoryLevelN params for every level up to
+ * and including itself, matching the flat query params SearchPage expects.
  */
 const buildCategoryPaths = (hierarchy) => {
   const paths = [];
-  let currentPath = '';
+  const cumulativeParams = new URLSearchParams();
 
-  hierarchy.forEach((category, index) => {
-    if (index === 0) {
-      currentPath = category;
-    } else {
-      currentPath += ` > ${category}`;
-    }
+  hierarchy.forEach((entry, index) => {
+    cumulativeParams.set(`pub_categoryLevel${entry.levelNumber}`, entry.name);
 
     paths.push({
-      name: category,
-      fullPath: currentPath,
-      slug: createSlug(category),
-      level: index
+      name: entry.name,
+      search: cumulativeParams.toString(),
+      level: index,
     });
   });
 
@@ -130,11 +132,11 @@ const CategoryBreadcrumb = ({
           const isLast = index === categoryPaths.length - 1;
 
           return (
-            <li key={categoryPath.fullPath} className={css.breadcrumbItem}>
+            <li key={categoryPath.search} className={css.breadcrumbItem}>
               <NamedLink
                 name="SearchPage"
                 to={{
-                  search: `?pub_category=${encodeURIComponent(categoryPath.fullPath)}`
+                  search: `?${categoryPath.search}`
                 }}
                 className={isLast ? css.currentCategory : css.breadcrumbLink}
                 title={`View all products in ${categoryPath.name}`}

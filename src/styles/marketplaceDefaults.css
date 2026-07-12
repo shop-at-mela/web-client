@@ -64,9 +64,26 @@
    * The fill color used by <PrimaryButton>
    * These might be overwritten by values from hosted assets
    */
-  --colorPrimaryButton: #e67e71; /* Updated to Mela brand secondary (coral) */
-  --colorPrimaryButtonDark: #d96b5e; /* Darker variant */
-  --colorPrimaryButtonLight: rgba(230, 126, 113, 0.1); /* Light variant for backgrounds */
+  --colorPrimaryButton: #262261; /* Mela brand primary (navy) — CTA fill; white text passes AA */
+  --colorPrimaryButtonDark: #1a1a4e; /* navy dark — hover/active */
+  --colorPrimaryButtonLight: rgba(38, 34, 97, 0.1); /* navy light — subtle backgrounds */
+
+  /**
+   * Mela brand accent (marigold) — badges, eyebrows, highlights, decorative fills.
+   * Use on light surfaces; do NOT set white text on solid marigold (fails contrast).
+   */
+  --colorAccent: #f0a030;
+  --colorAccentDark: #d98a1f;
+  --colorAccentLight: rgba(240, 160, 48, 0.12);
+
+  /**
+   * Warm surface tints — the homepage commits to a warm palette so sections stay
+   * coherent with the marigold/navy hero (replaces the older cool mint tints).
+   * --colorSurfaceWarm: primary cream section background.
+   * --colorSurfaceWarmDeep: slightly deeper oat for trust/quiet sections.
+   */
+  --colorSurfaceWarm: #fdfaf5;
+  --colorSurfaceWarmDeep: #f8f4ec;
 
   /** 
    * The fill color used by <SecondaryButton>

@@ -22,7 +22,7 @@ describe('CategoryBreadcrumb', () => {
     renderWithProviders(<CategoryBreadcrumb category="Baby Clothing" />);
 
     expect(screen.getByText('Baby Clothing')).toBeInTheDocument();
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/s?pub_category=Baby%20Clothing');
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/s?pub_categoryLevel1=Baby+Clothing');
   });
 
   it('parses category string with separators', () => {
@@ -102,7 +102,7 @@ describe('CategoryBreadcrumb', () => {
 
     // Check that some links exist with correct href patterns
     const linkWithCategory = screen.getByRole('link', { name: 'Baby Products' });
-    expect(linkWithCategory).toHaveAttribute('href', '/s?pub_category=Baby%20Products');
+    expect(linkWithCategory).toHaveAttribute('href', '/s?pub_categoryLevel1=Baby+Products');
   });
 
   it('applies custom className', () => {
@@ -138,8 +138,8 @@ describe('CategoryBreadcrumb', () => {
     const level1Link = screen.getByRole('link', { name: 'Level1' });
     const level2Link = screen.getByRole('link', { name: 'Level2' });
 
-    expect(level1Link).toHaveAttribute('href', '/s?pub_category=Level1');
-    expect(level2Link).toHaveAttribute('href', '/s?pub_category=Level1%20%3E%20Level2');
+    expect(level1Link).toHaveAttribute('href', '/s?pub_categoryLevel1=Level1');
+    expect(level2Link).toHaveAttribute('href', '/s?pub_categoryLevel1=Level1&pub_categoryLevel2=Level2');
   });
 
   describe('routing and URL encoding', () => {
@@ -147,7 +147,7 @@ describe('CategoryBreadcrumb', () => {
       renderWithProviders(<CategoryBreadcrumb category="Baby & Toddler > Clothing & Accessories" />);
 
       const babyLink = screen.getByRole('link', { name: 'Baby & Toddler' });
-      expect(babyLink).toHaveAttribute('href', '/s?pub_category=Baby%20%26%20Toddler');
+      expect(babyLink).toHaveAttribute('href', '/s?pub_categoryLevel1=Baby+%26+Toddler');
     });
 
     it('preserves original hierarchy format in search URLs', () => {
@@ -157,8 +157,8 @@ describe('CategoryBreadcrumb', () => {
       const level1Link = screen.getByRole('link', { name: 'Level 1' });
       const level2Link = screen.getByRole('link', { name: 'Level 2' });
 
-      expect(level1Link).toHaveAttribute('href', '/s?pub_category=Level%201');
-      expect(level2Link).toHaveAttribute('href', '/s?pub_category=Level%201%20%3E%20Level%202');
+      expect(level1Link).toHaveAttribute('href', '/s?pub_categoryLevel1=Level+1');
+      expect(level2Link).toHaveAttribute('href', '/s?pub_categoryLevel1=Level+1&pub_categoryLevel2=Level+2');
     });
 
     it('handles deep hierarchy levels correctly', () => {
@@ -169,9 +169,15 @@ describe('CategoryBreadcrumb', () => {
       const bottlesLink = screen.getByRole('link', { name: 'Bottles' });
       const glassLink = screen.getByRole('link', { name: 'Glass' });
 
-      expect(feedingLink).toHaveAttribute('href', '/s?pub_category=Baby%20%3E%20Feeding');
-      expect(bottlesLink).toHaveAttribute('href', '/s?pub_category=Baby%20%3E%20Feeding%20%3E%20Bottles');
-      expect(glassLink).toHaveAttribute('href', '/s?pub_category=Baby%20%3E%20Feeding%20%3E%20Bottles%20%3E%20Glass');
+      expect(feedingLink).toHaveAttribute('href', '/s?pub_categoryLevel1=Baby&pub_categoryLevel2=Feeding');
+      expect(bottlesLink).toHaveAttribute(
+        'href',
+        '/s?pub_categoryLevel1=Baby&pub_categoryLevel2=Feeding&pub_categoryLevel3=Bottles'
+      );
+      expect(glassLink).toHaveAttribute(
+        'href',
+        '/s?pub_categoryLevel1=Baby&pub_categoryLevel2=Feeding&pub_categoryLevel3=Bottles&pub_categoryLevel4=Glass'
+      );
 
       // Last item should also be a link (updated behavior - all categories are clickable)
       expect(screen.getByText('Wide Neck')).toBeInTheDocument();
@@ -195,8 +201,8 @@ describe('CategoryBreadcrumb', () => {
       const productsLink = screen.getByRole('link', { name: 'Products' });
       const clothingLink = screen.getByRole('link', { name: 'Clothing' });
 
-      expect(productsLink).toHaveAttribute('href', '/s?pub_category=Products');
-      expect(clothingLink).toHaveAttribute('href', '/s?pub_category=Products%20%3E%20Clothing');
+      expect(productsLink).toHaveAttribute('href', '/s?pub_categoryLevel1=Products');
+      expect(clothingLink).toHaveAttribute('href', '/s?pub_categoryLevel1=Products&pub_categoryLevel2=Clothing');
     });
   });
 
@@ -206,7 +212,10 @@ describe('CategoryBreadcrumb', () => {
 
       const lastCategoryLink = screen.getByRole('link', { name: 'Level3' });
       expect(lastCategoryLink).toBeInTheDocument();
-      expect(lastCategoryLink).toHaveAttribute('href', '/s?pub_category=Level1%20%3E%20Level2%20%3E%20Level3');
+      expect(lastCategoryLink).toHaveAttribute(
+        'href',
+        '/s?pub_categoryLevel1=Level1&pub_categoryLevel2=Level2&pub_categoryLevel3=Level3'
+      );
       expect(lastCategoryLink).toHaveClass('currentCategory');
     });
 
@@ -326,8 +335,11 @@ describe('CategoryBreadcrumb', () => {
       const level1Link = screen.getByRole('link', { name: 'Baby Clothes & Accessories' });
       const level2Link = screen.getByRole('link', { name: 'Clothing' });
 
-      expect(level1Link).toHaveAttribute('href', '/s?pub_category=Baby%20Clothes%20%26%20Accessories');
-      expect(level2Link).toHaveAttribute('href', '/s?pub_category=Baby%20Clothes%20%26%20Accessories%20%3E%20Clothing');
+      expect(level1Link).toHaveAttribute('href', '/s?pub_categoryLevel1=Baby+Clothes+%26+Accessories');
+      expect(level2Link).toHaveAttribute(
+        'href',
+        '/s?pub_categoryLevel1=Baby+Clothes+%26+Accessories&pub_categoryLevel2=Clothing'
+      );
     });
 
     it('handles special characters in category names', () => {
@@ -344,7 +356,7 @@ describe('CategoryBreadcrumb', () => {
 
       // Check URL encoding
       const level1Link = screen.getByRole('link', { name: 'Baby & Kids' });
-      expect(level1Link).toHaveAttribute('href', '/s?pub_category=Baby%20%26%20Kids');
+      expect(level1Link).toHaveAttribute('href', '/s?pub_categoryLevel1=Baby+%26+Kids');
     });
 
     it('maintains accessibility with resolved category names', () => {

@@ -8,9 +8,14 @@ jest.mock('../../../../config/configBrands', () => ({
 }));
 import { IntlProvider } from 'react-intl';
 import { MemoryRouter } from 'react-router-dom';
+import { Provider } from 'react-redux';
 import { ConfigurationProvider } from '../../../../context/configurationContext';
 import { RouteConfigurationProvider } from '../../../../context/routeConfigurationContext';
+import { types as sdkTypes } from '../../../../util/sdkLoader';
+import configureStore from '../../../../store';
 import FeaturedBrandPartners from './FeaturedBrandPartners';
+
+const { Money } = sdkTypes;
 
 const mockBrand1 = {
   id: { uuid: '68ebd6d5-ffce-4cb9-9605-3b69f2b67152' },
@@ -49,7 +54,7 @@ const mockProducts = [
     type: 'listing',
     attributes: {
       title: 'Organic Cotton Onesie',
-      price: { amount: 1200, currency: 'INR' },
+      price: new Money(1200, 'INR'),
     },
     images: [
       {
@@ -84,6 +89,7 @@ const mockConfig = {
 const mockRoutes = [
   { path: '/u/:id', name: 'ProfilePage' },
   { path: '/l/:slug/:id', name: 'ListingPage' },
+  { path: '/brands', name: 'BrandsPage' },
 ];
 
 const mockMessages = {
@@ -104,13 +110,15 @@ const mockMessages = {
 };
 
 const TestWrapper = ({ children }) => (
-  <MemoryRouter>
-    <IntlProvider locale="en" messages={mockMessages}>
-      <ConfigurationProvider value={mockConfig}>
-        <RouteConfigurationProvider value={mockRoutes}>{children}</RouteConfigurationProvider>
-      </ConfigurationProvider>
-    </IntlProvider>
-  </MemoryRouter>
+  <Provider store={configureStore({})}>
+    <MemoryRouter>
+      <IntlProvider locale="en" messages={mockMessages}>
+        <ConfigurationProvider value={mockConfig}>
+          <RouteConfigurationProvider value={mockRoutes}>{children}</RouteConfigurationProvider>
+        </ConfigurationProvider>
+      </IntlProvider>
+    </MemoryRouter>
+  </Provider>
 );
 
 describe('FeaturedBrandPartners', () => {

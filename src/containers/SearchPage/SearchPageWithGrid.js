@@ -42,6 +42,7 @@ import {
   initialValues,
   validUrlQueryParamsFromProps,
   getDerivedRenderData,
+  getSearchPageResourceLocatorStringParams,
   onResetAll,
   createFilterValueChangeHandler,
   onSortBy,

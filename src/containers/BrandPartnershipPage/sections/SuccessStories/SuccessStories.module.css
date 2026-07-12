@@ -83,8 +83,8 @@
 
 /* Story Card */
 .storyCard {
-  background: linear-gradient(135deg, rgba(230, 126, 113, 0.1) 0%, rgba(38, 34, 97, 0.05) 100%);
-  border: 2px solid #e67e71;
+  background: linear-gradient(135deg, rgba(240, 160, 48, 0.1) 0%, rgba(38, 34, 97, 0.05) 100%);
+  border: 2px solid var(--colorAccent);
   border-radius: 16px;
   padding: 2rem 1.5rem;
   margin-bottom: 3rem;
@@ -147,7 +147,7 @@
 }
 
 .commitment {
-  background: rgba(230, 126, 113, 0.2);
+  background: rgba(240, 160, 48, 0.2);
   border-radius: 12px;
   padding: 1.25rem;
   display: flex;

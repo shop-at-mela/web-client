@@ -42,11 +42,11 @@ describe('FAQ', () => {
     expect(badges).toHaveLength(3); // Three featured questions
   });
 
-  it('renders Warren Buffett quote in FAQ answer', () => {
+  it('addresses starting now vs waiting for better times', () => {
     render(<FAQ />);
 
-    expect(screen.getByText(/Warren Buffett said it best/)).toBeInTheDocument();
-    expect(screen.getByText(/Be fearful when others are greedy, and greedy when others are fearful/)).toBeInTheDocument();
+    expect(screen.getByText(/While competitors hesitate due to uncertainty/)).toBeInTheDocument();
+    expect(screen.getByText(/capture first-mover advantages with minimal competition/)).toBeInTheDocument();
   });
 
   it('addresses tariff uncertainty with key messaging', () => {
@@ -85,8 +85,8 @@ describe('FAQ', () => {
   it('highlights competitive advantage messaging', () => {
     render(<FAQ />);
 
-    expect(screen.getByText(/While competitors hesitate, you can capture mindshare/)).toBeInTheDocument();
-    expect(screen.getByText(/build customer loyalty in the US diaspora market/)).toBeInTheDocument();
+    expect(screen.getByText(/this creates a unique window for forward-thinking brands/)).toBeInTheDocument();
+    expect(screen.getByText(/build customer relationships/)).toBeInTheDocument();
     expect(screen.getByText(/minimal competition/)).toBeInTheDocument();
   });
 });

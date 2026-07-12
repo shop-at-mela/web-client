@@ -24,7 +24,7 @@ import { storableError } from '../../util/errors';
 
 const { UUID } = sdkTypes;
 
-const { screen } = testingLibrary;
+const { screen, waitFor } = testingLibrary;
 
 const logger = actions => () => {
   return next => action => {
@@ -62,7 +62,11 @@ const createEnhancedUser = (userFn, id) => {
       profile: {
         ...user.attributes.profile,
         bio: attributes.profile.bio,
-        publicData: attributes.profile.publicData,
+        // Copy (not alias) publicData - tests mutate this object directly
+        // (e.g. `providerUser.attributes.profile.publicData.userType = 'provider'`),
+        // and sharing the same reference across calls would let one test's
+        // mutation leak into every other test's fixture.
+        publicData: { ...attributes.profile.publicData },
       },
     },
   };
@@ -413,39 +417,32 @@ describe('ProfilePage', () => {
         },
       };
 
-      let rendered = {};
       await act(async () => {
-        rendered = render(<ProfilePage {...props} />, {
+        render(<ProfilePage {...props} />, {
           initialState: stateWithBrand,
           config: brandConfig,
         });
       });
 
-      const { container } = rendered;
-
-      // Check for schema.org JSON-LD script
-      const scripts = container.querySelectorAll('script[type="application/ld+json"]');
-      expect(scripts.length).toBeGreaterThan(0);
-
-      // Parse the schema markup
-      const schemaScript = Array.from(scripts).find(script => {
-        try {
-          const schema = JSON.parse(script.textContent);
-          return schema['@type'] === 'Organization';
-        } catch {
-          return false;
-        }
+      // Page.js renders a single <script> whose JSON-LD wraps everything
+      // (page-specific schema, marketplace Organization, WebSite) inside an
+      // @graph array, not one script per @type - and react-helmet-async
+      // flushes its DOM commit via requestAnimationFrame, so it doesn't
+      // exist synchronously after render either.
+      let organizationSchema;
+      await waitFor(() => {
+        const script = document.querySelector('script[type="application/ld+json"]');
+        const parsed = script && JSON.parse(script.textContent);
+        organizationSchema = parsed?.['@graph']?.find(
+          entry => entry['@type'] === 'Organization' && entry.url?.includes('/u/')
+        );
+        expect(organizationSchema).toBeTruthy();
       });
 
-      expect(schemaScript).toBeTruthy();
-
-      if (schemaScript) {
-        const schema = JSON.parse(schemaScript.textContent);
-        expect(schema['@type']).toBe('Organization');
-        expect(schema.name).toBe('user1 display name');
-        expect(schema.logo.url).toBe('https://example.com/logo.png');
-        expect(schema.foundingDate).toBe('2018');
-      }
+      expect(organizationSchema['@type']).toBe('Organization');
+      expect(organizationSchema.name).toBe('userId display name');
+      expect(organizationSchema.logo.url).toBe('https://example.com/logo.png');
+      expect(organizationSchema.foundingDate).toBe('2018');
     });
 
     it('includes aggregateRating in Organization schema when reviews exist', async () => {
@@ -535,33 +532,28 @@ describe('ProfilePage', () => {
     });
 
     it('generates ProfilePage schema for customer users', async () => {
-      let rendered = {};
       await act(async () => {
-        rendered = render(<ProfilePage {...props} />, {
+        render(<ProfilePage {...props} />, {
           initialState: getInitialState(),
           config,
         });
       });
 
-      const { container } = rendered;
-
-      const scripts = container.querySelectorAll('script[type="application/ld+json"]');
-      const schemaScript = Array.from(scripts).find(script => {
-        try {
-          const schema = JSON.parse(script.textContent);
-          return schema['@type'] === 'ProfilePage';
-        } catch {
-          return false;
-        }
+      // Page.js renders a single <script> whose JSON-LD wraps everything
+      // (page-specific schema, marketplace Organization, WebSite) inside an
+      // @graph array, not one script per @type - and react-helmet-async
+      // flushes its DOM commit via requestAnimationFrame, so it doesn't
+      // exist synchronously after render either.
+      let profileSchema;
+      await waitFor(() => {
+        const script = document.querySelector('script[type="application/ld+json"]');
+        const parsed = script && JSON.parse(script.textContent);
+        profileSchema = parsed?.['@graph']?.find(entry => entry['@type'] === 'ProfilePage');
+        expect(profileSchema).toBeTruthy();
       });
 
-      expect(schemaScript).toBeTruthy();
-
-      if (schemaScript) {
-        const schema = JSON.parse(schemaScript.textContent);
-        expect(schema['@type']).toBe('ProfilePage');
-        expect(schema.mainEntity['@type']).toBe('Person');
-      }
+      expect(profileSchema['@type']).toBe('ProfilePage');
+      expect(profileSchema.mainEntity['@type']).toBe('Person');
     });
   });
 });

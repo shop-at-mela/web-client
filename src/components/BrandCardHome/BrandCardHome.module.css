@@ -120,6 +120,15 @@
   display: inline-block;
 }
 
+/* Craft-origin cue (hero) — deep-marigold "Handcrafted in … India" signal */
+.craftOrigin {
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: #b26a00;
+  margin: 0 0 4px 0;
+}
+
 .brandOrigin {
   font-size: 12px;
   line-height: 1.3;

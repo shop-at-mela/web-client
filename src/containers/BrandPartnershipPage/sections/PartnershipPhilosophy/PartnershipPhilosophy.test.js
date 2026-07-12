@@ -56,38 +56,15 @@ describe('PartnershipPhilosophy', () => {
     expect(screen.queryByText('We see you as a strategic partner, not just another supplier. Your success is our success.')).not.toBeInTheDocument();
   });
 
-  it('renders commitment section', () => {
+  it('renders commitment section, always visible without a toggle', () => {
     render(<PartnershipPhilosophy />);
 
-    expect(screen.getByText('🤝 OUR COMMITMENT TO YOU')).toBeInTheDocument();
-    expect(screen.getByText('See Our Commitments')).toBeInTheDocument();
-  });
-
-  it('shows commitments when toggle button is clicked', () => {
-    render(<PartnershipPhilosophy />);
-
-    const toggleButton = screen.getByText('See Our Commitments');
-    fireEvent.click(toggleButton);
-
+    expect(screen.getByText('🤝 Our Partnership Commitments')).toBeInTheDocument();
     expect(screen.getByText('Your voice shapes platform decisions')).toBeInTheDocument();
     expect(screen.getByText('Transparent communication and data')).toBeInTheDocument();
     expect(screen.getByText('We invest in your success (marketing)')).toBeInTheDocument();
+    // Remaining commitments render as a summary list, title only (no description)
     expect(screen.getByText('Performance-based - no fees unless you make sales')).toBeInTheDocument();
-  });
-
-  it('hides commitments when toggle button is clicked again', () => {
-    render(<PartnershipPhilosophy />);
-
-    const toggleButton = screen.getByText('See Our Commitments');
-
-    // First click to show
-    fireEvent.click(toggleButton);
-    expect(screen.getByText('Your voice shapes platform decisions')).toBeInTheDocument();
-
-    // Second click to hide
-    const hideButton = screen.getByText('Hide Details');
-    fireEvent.click(hideButton);
-    expect(screen.queryByText('Your voice shapes platform decisions')).not.toBeInTheDocument();
   });
 
   it('renders trust section', () => {
@@ -127,27 +104,17 @@ describe('PartnershipPhilosophy', () => {
     expect(firstComparisonButton).toHaveAttribute('aria-expanded', 'true');
   });
 
-  it('updates aria-expanded when commitments toggle is opened', () => {
-    render(<PartnershipPhilosophy />);
-
-    const toggleButton = screen.getByText('See Our Commitments');
-
-    // Initially collapsed
-    expect(toggleButton).toHaveAttribute('aria-expanded', 'false');
-
-    // Click to expand
-    fireEvent.click(toggleButton);
-    expect(toggleButton).toHaveAttribute('aria-expanded', 'true');
-  });
-
   it('handles keyboard navigation', () => {
     render(<PartnershipPhilosophy />);
 
     const firstComparisonButton = screen.getAllByRole('button')[0];
 
-    // Focus the button and press Enter
+    // Focus the button and press Enter. jsdom doesn't synthesize a native button's
+    // Enter-triggers-click behavior from keyDown alone, so fire the click explicitly
+    // to simulate what a real browser does when Enter is pressed on a focused button.
     firstComparisonButton.focus();
     fireEvent.keyDown(firstComparisonButton, { key: 'Enter' });
+    fireEvent.click(firstComparisonButton);
 
     expect(screen.getByText('We see you as a strategic partner, not just another supplier. Your success is our success.')).toBeInTheDocument();
   });

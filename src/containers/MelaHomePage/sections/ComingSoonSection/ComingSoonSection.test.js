@@ -13,20 +13,33 @@ describe('ComingSoonSection', () => {
     expect(screen.getByRole('heading', { level: 2, name: /more coming to mela/i })).toBeInTheDocument();
   });
 
-  it('renders the section subheading', () => {
+  // The subtitle, per-card description, and bottom "affiliate model" note were removed
+  // in commit 93fb9113d's "Homepage copy reduction" pass (permanent design polish, not
+  // the temporary marketplace-feature hiding covered below).
+  it('renders Wishlists & Gift Registry card', () => {
     render(<ComingSoonSection />);
-    expect(
-      screen.getByText(/we're building the complete shopping experience/i)
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /wishlists & gift registry/i })).toBeInTheDocument();
   });
 
-  it('renders all 4 feature cards', () => {
+  it('renders a "Coming Soon" badge on every card', () => {
+    render(<ComingSoonSection />);
+    const cardTitles = screen.getAllByRole('heading', { level: 3 });
+    const badges = screen.getAllByText('Coming Soon');
+    expect(badges).toHaveLength(cardTitles.length);
+  });
+
+  // The tests below cover the Unified Checkout / Community Reviews / Order Tracking
+  // cards, which commit 44f9dbfef commented out with the note "marketplace features
+  // incompatible with directory positioning" — the same temporary marketplace-signal
+  // hiding as Hero.js (see memory: project_marketplace_ux_temporarily_hidden). Skipped
+  // rather than deleted, ready to re-enable when those features return.
+  it.skip('renders all 4 feature cards', () => {
     render(<ComingSoonSection />);
     const cardTitles = screen.getAllByRole('heading', { level: 3 });
     expect(cardTitles).toHaveLength(4);
   });
 
-  it('renders Unified Checkout card with correct content', () => {
+  it.skip('renders Unified Checkout card with correct content', () => {
     render(<ComingSoonSection />);
     expect(screen.getByRole('heading', { name: /unified checkout/i })).toBeInTheDocument();
     expect(
@@ -34,7 +47,7 @@ describe('ComingSoonSection', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders Community Reviews card with correct content', () => {
+  it.skip('renders Community Reviews card with correct content', () => {
     render(<ComingSoonSection />);
     expect(screen.getByRole('heading', { name: /community reviews/i })).toBeInTheDocument();
     expect(
@@ -42,32 +55,11 @@ describe('ComingSoonSection', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders Order Tracking card with correct content', () => {
+  it.skip('renders Order Tracking card with correct content', () => {
     render(<ComingSoonSection />);
     expect(screen.getByRole('heading', { name: /order tracking/i })).toBeInTheDocument();
     expect(
       screen.getByText(/end-to-end tracking across all your indian brand orders/i)
-    ).toBeInTheDocument();
-  });
-
-  it('renders Wishlists & Gift Registry card with correct content', () => {
-    render(<ComingSoonSection />);
-    expect(screen.getByRole('heading', { name: /wishlists & gift registry/i })).toBeInTheDocument();
-    expect(
-      screen.getByText(/curate lists for baby showers, diwali gifting/i)
-    ).toBeInTheDocument();
-  });
-
-  it('renders a "Coming Soon" badge on every card', () => {
-    render(<ComingSoonSection />);
-    const badges = screen.getAllByText('Coming Soon');
-    expect(badges).toHaveLength(4);
-  });
-
-  it('renders the honest affiliate model note', () => {
-    render(<ComingSoonSection />);
-    expect(
-      screen.getByText(/checkout happens on each brand's own shopify store/i)
     ).toBeInTheDocument();
   });
 });

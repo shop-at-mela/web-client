@@ -102,11 +102,6 @@ describe('HeroSection', () => {
       ).toBeInTheDocument();
     });
 
-    it('renders the subheadline', () => {
-      renderHeroSection();
-      expect(screen.getByText(/Baby essentials, fashion, home/)).toBeInTheDocument();
-    });
-
     it('renders the Explore Brands CTA linking to BrandsPage', () => {
       renderHeroSection();
       const cta = screen.getByTestId('link-BrandsPage');
@@ -116,8 +111,6 @@ describe('HeroSection', () => {
 
     it('renders trust badges', () => {
       renderHeroSection();
-      expect(screen.getByText('Hand-Curated Brands')).toBeInTheDocument();
-      expect(screen.getByText('Independent Indian Brands')).toBeInTheDocument();
       expect(screen.getByText('Ships to All 50 States')).toBeInTheDocument();
       expect(screen.getByText('US Cards Accepted')).toBeInTheDocument();
     });

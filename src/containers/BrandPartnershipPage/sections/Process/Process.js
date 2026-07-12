@@ -80,6 +80,7 @@ const Process = () => {
               <button
                 className={css.stepHeader}
                 onClick={() => setActiveStep(activeStep === index ? -1 : index)}
+                aria-expanded={activeStep === index}
               >
                 <div className={css.stepNumber}>{step.number}</div>
                 <div className={css.stepInfo}>

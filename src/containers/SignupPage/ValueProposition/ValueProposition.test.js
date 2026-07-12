@@ -13,15 +13,15 @@ describe('ValueProposition', () => {
     it('renders default value proposition when no user type is provided', () => {
       render(<ValueProposition userType={null} />);
 
-      expect(screen.getByText(/Join our marketplace/i)).toBeInTheDocument();
-      expect(screen.getByText(/Connect with authentic Indian products/i)).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.default.title')).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.default.subtitle')).toBeInTheDocument();
     });
 
     it('renders default messaging when user type is undefined', () => {
       render(<ValueProposition userType={undefined} />);
 
-      expect(screen.getByText(/Join our marketplace/i)).toBeInTheDocument();
-      expect(screen.getByText(/Connect with authentic Indian products/i)).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.default.title')).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.default.subtitle')).toBeInTheDocument();
     });
   });
 
@@ -29,17 +29,17 @@ describe('ValueProposition', () => {
     it('renders customer-specific title and subtitle', () => {
       render(<ValueProposition userType="customer" />);
 
-      expect(screen.getByText(/Never Lose Track of Your Favorites/i)).toBeInTheDocument();
-      expect(screen.getByText(/Save and organize the Indian products you love/i)).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.customer.title')).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.customer.subtitle')).toBeInTheDocument();
     });
 
     it('renders customer value points with correct icons and text', () => {
       render(<ValueProposition userType="customer" />);
 
       // Check for value points text
-      expect(screen.getByText(/Heart items to save for later/i)).toBeInTheDocument();
-      expect(screen.getByText(/Build your personal wishlist/i)).toBeInTheDocument();
-      expect(screen.getByText(/Never forget what you wanted/i)).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.customer.point1')).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.customer.point2')).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.customer.point3')).toBeInTheDocument();
 
       // Check for correct emojis/icons
       expect(screen.getByText('❤️')).toBeInTheDocument();
@@ -47,16 +47,18 @@ describe('ValueProposition', () => {
       expect(screen.getByText('🔍')).toBeInTheDocument();
     });
 
-    it('renders customer social proof', () => {
-      render(<ValueProposition userType="customer" />);
+    it('does not render customer social proof (feature currently disabled)', () => {
+      const { container } = render(<ValueProposition userType="customer" />);
 
-      expect(screen.getByText(/XXX+ customers saving their favorites/i)).toBeInTheDocument();
+      // The socialProof block is commented out in ValueProposition.js pending
+      // finalized copy, so it should not appear in the DOM.
+      expect(container.querySelector('.socialProof')).not.toBeInTheDocument();
     });
 
     it('displays all three customer value points', () => {
       render(<ValueProposition userType="customer" />);
 
-      const valuePoints = screen.getAllByText(/Heart items|Build your|Never forget/);
+      const valuePoints = screen.getAllByText(/ValueProposition\.customer\.point[123]/);
       expect(valuePoints).toHaveLength(3);
     });
   });
@@ -65,17 +67,17 @@ describe('ValueProposition', () => {
     it('renders provider-specific title and subtitle', () => {
       render(<ValueProposition userType="provider" />);
 
-      expect(screen.getByText(/Sell to US Indian Families/i)).toBeInTheDocument();
-      expect(screen.getByText(/Reach customers who value authentic Indian products/i)).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.provider.title')).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.provider.subtitle')).toBeInTheDocument();
     });
 
     it('renders provider value points with correct icons and text', () => {
       render(<ValueProposition userType="provider" />);
 
       // Check for value points text
-      expect(screen.getByText(/Zero listing fees to start/i)).toBeInTheDocument();
-      expect(screen.getByText(/Ready US customer base/i)).toBeInTheDocument();
-      expect(screen.getByText(/Performance-based growth/i)).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.provider.point1')).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.provider.point2')).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.provider.point3')).toBeInTheDocument();
 
       // Check for correct emojis/icons
       expect(screen.getByText('💰')).toBeInTheDocument();
@@ -83,16 +85,18 @@ describe('ValueProposition', () => {
       expect(screen.getByText('📈')).toBeInTheDocument();
     });
 
-    it('renders provider social proof', () => {
-      render(<ValueProposition userType="provider" />);
+    it('does not render provider social proof (feature currently disabled)', () => {
+      const { container } = render(<ValueProposition userType="provider" />);
 
-      expect(screen.getByText(/YYY+ Indian brands growing their business/i)).toBeInTheDocument();
+      // The socialProof block is commented out in ValueProposition.js pending
+      // finalized copy, so it should not appear in the DOM.
+      expect(container.querySelector('.socialProof')).not.toBeInTheDocument();
     });
 
     it('displays all three provider value points', () => {
       render(<ValueProposition userType="provider" />);
 
-      const valuePoints = screen.getAllByText(/Zero listing|Ready US|Performance-based/);
+      const valuePoints = screen.getAllByText(/ValueProposition\.provider\.point[123]/);
       expect(valuePoints).toHaveLength(3);
     });
   });
@@ -103,7 +107,6 @@ describe('ValueProposition', () => {
 
       expect(container.querySelector('.container')).toBeInTheDocument();
       expect(container.querySelector('.valuePoints')).toBeInTheDocument();
-      expect(container.querySelector('.socialProof')).toBeInTheDocument();
     });
 
     it('applies correct CSS classes for provider', () => {
@@ -111,7 +114,6 @@ describe('ValueProposition', () => {
 
       expect(container.querySelector('.container')).toBeInTheDocument();
       expect(container.querySelector('.valuePoints')).toBeInTheDocument();
-      expect(container.querySelector('.socialProof')).toBeInTheDocument();
     });
   });
 
@@ -126,7 +128,7 @@ describe('ValueProposition', () => {
       const { container } = render(<ValueProposition userType="" />);
 
       // Should render default content for empty string
-      expect(screen.getByText(/Join our marketplace/i)).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.default.title')).toBeInTheDocument();
     });
   });
 
@@ -137,13 +139,13 @@ describe('ValueProposition', () => {
       // H2 should be rendered as heading level 2
       const heading = screen.getByRole('heading', { level: 2 });
       expect(heading).toBeInTheDocument();
-      expect(heading).toHaveTextContent(/Never Lose Track/i);
+      expect(heading).toHaveTextContent('ValueProposition.customer.title');
     });
 
     it('renders value points in proper structure', () => {
       render(<ValueProposition userType="customer" />);
 
-      const valuePointsContainer = screen.getByText(/Heart items to save for later/i).closest('.valuePoint');
+      const valuePointsContainer = screen.getByText('ValueProposition.customer.point1').closest('.valuePoint');
       expect(valuePointsContainer).toBeInTheDocument();
 
       // Should have icon and text elements
@@ -159,16 +161,16 @@ describe('ValueProposition', () => {
       render(<ValueProposition userType="customer" />);
 
       const heading = screen.getByRole('heading', { level: 2 });
-      expect(heading).toHaveTextContent(/Never Lose Track of Your Favorites/i);
+      expect(heading).toHaveTextContent('ValueProposition.customer.title');
     });
 
     it('provides meaningful text content for all value points', () => {
       render(<ValueProposition userType="provider" />);
 
       // Each value point should have descriptive text
-      expect(screen.getByText(/Zero listing fees to start/i)).toBeInTheDocument();
-      expect(screen.getByText(/Ready US customer base/i)).toBeInTheDocument();
-      expect(screen.getByText(/Performance-based growth/i)).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.provider.point1')).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.provider.point2')).toBeInTheDocument();
+      expect(screen.getByText('ValueProposition.provider.point3')).toBeInTheDocument();
     });
   });
 });

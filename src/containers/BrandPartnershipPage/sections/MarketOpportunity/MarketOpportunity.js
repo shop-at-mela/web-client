@@ -155,19 +155,6 @@ const MarketOpportunity = () => {
                 ))}
               </div>
             </div>
-
-            {/* Dots Navigation */}
-            <div className={css.indicators}>
-              {opportunityCards.map((_, index) => (
-                <button
-                  key={index}
-                  className={`${css.indicator} ${index === activeCard ? css.active : ''}`}
-                  onClick={() => goToCard(index)}
-                  aria-label={`Go to opportunity ${index + 1}`}
-                />
-              ))}
-            </div>
-
           </div>
 
           {/* Desktop Grid */}

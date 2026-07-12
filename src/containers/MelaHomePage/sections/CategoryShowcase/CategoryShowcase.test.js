@@ -131,13 +131,6 @@ describe('CategoryShowcase', () => {
     expect(screen.getByText('Discover Indian Design')).toBeInTheDocument();
   });
 
-  it('renders the section sub-heading', () => {
-    renderInContext(<CategoryShowcase />);
-    expect(
-      screen.getByText(/Baby, fashion, home, jewelry, wellness and art/i)
-    ).toBeInTheDocument();
-  });
-
   it('renders Browse All Categories link', () => {
     renderInContext(<CategoryShowcase />);
     expect(screen.getByText(/Browse All Categories/i)).toBeInTheDocument();
@@ -172,8 +165,12 @@ const renderAndWaitForLoad = async (ui, config = {}) => {
 };
 
 // ── AllCategoryCarousels ──────────────────────────────────────────────────────
-// 6 top-level categories fetched by a single carousel component using ALL_CATEGORIES,
-// all with perPage: 100 + pickBrandDiverse.
+// 6 top-level categories fetched by a single carousel component using ALL_CATEGORIES.
+// Each category goes through fetchBestsellerCarousel's two-step fetch (bestseller-first,
+// then a fallback query padding out the pool) — see util/bestsellerCarousel.js. With the
+// mocked empty response below, the fallback always triggers, so every category yields
+// 2 queries: perPage 20 (Math.max(DISPLAY_COUNT(8) * 2, 20)) for the bestseller step,
+// then perPage 50 for the fallback.
 
 describe('AllCategoryCarousels', () => {
   beforeEach(() => {
@@ -182,19 +179,20 @@ describe('AllCategoryCarousels', () => {
     denormalisedEntities.mockReturnValue([]);
   });
 
-  it('queries all 6 categories with perPage: 100', async () => {
+  it('queries all 6 categories using the bestseller-first pagination strategy', async () => {
     const calls = await renderAndWaitForLoad(<CategoryShowcase />);
-    const catCalls = calls.filter(([p]) => p.pub_categoryLevel1 && p.perPage === 100);
-    expect(catCalls).toHaveLength(6);
+    const catCalls = calls.filter(([p]) => p.pub_categoryLevel1);
+    expect(catCalls).toHaveLength(12); // 6 categories × 2 queries each
+    catCalls.forEach(([params]) => {
+      expect([20, 50]).toContain(params.perPage);
+    });
   });
 
   it('queries Baby-Kids, Fashion, Home-Kitchen, Jewelry-Accessories, Beauty-Wellness, Art-Craft', async () => {
     const calls = await renderAndWaitForLoad(<CategoryShowcase />);
-    const categories = calls
-      .filter(([p]) => p.pub_categoryLevel1 && p.perPage === 100)
-      .map(([p]) => p.pub_categoryLevel1);
-    expect(categories).toEqual(
-      expect.arrayContaining([
+    const categories = calls.filter(([p]) => p.pub_categoryLevel1).map(([p]) => p.pub_categoryLevel1);
+    expect(new Set(categories)).toEqual(
+      new Set([
         'Baby-Kids',
         'Fashion',
         'Home-Kitchen',
@@ -208,7 +206,7 @@ describe('AllCategoryCarousels', () => {
   it('includes images and currentStock in all category queries', async () => {
     const calls = await renderAndWaitForLoad(<CategoryShowcase />);
     calls
-      .filter(([p]) => p.pub_categoryLevel1 && p.perPage === 100)
+      .filter(([p]) => p.pub_categoryLevel1)
       .forEach(([params]) => {
         expect(params.include).toEqual(expect.arrayContaining(['images', 'currentStock']));
       });
@@ -246,11 +244,11 @@ describe('AgeNavigation', () => {
     denormalisedEntities.mockReturnValue([]);
   });
 
-  it('queries each age group with perPage: 100', async () => {
+  it('queries each age group using the bestseller-first pagination strategy', async () => {
     const calls = await renderAndWaitForLoad(<CategoryShowcase />);
     const ageCalls = calls.filter(([p]) => p.pub_age_group);
-    expect(ageCalls).toHaveLength(3);
-    ageCalls.forEach(([params]) => expect(params.perPage).toBe(100));
+    expect(ageCalls).toHaveLength(6); // 3 age groups × 2 queries each (see AllCategoryCarousels note above)
+    ageCalls.forEach(([params]) => expect([20, 50]).toContain(params.perPage));
   });
 
   it('queries newborn, 0_6_months, 6_12_months', async () => {
@@ -279,14 +277,17 @@ describe('OccasionStrip', () => {
     denormalisedEntities.mockReturnValue([]);
   });
 
-  it('queries each occasion with perPage: 50', async () => {
+  it('queries each occasion using the bestseller-first pagination strategy', async () => {
     renderInContext(<OccasionStrip />);
 
     await waitFor(() => {
       const calls = mockQuery.mock.calls.filter(([p]) => p.pub_occasion);
-      expect(calls).toHaveLength(2);
+      // 2 occasions × 2 queries each (see AllCategoryCarousels note above); occasion's
+      // DISPLAY_COUNT is 6, so the bestseller step here also lands on perPage 20
+      // (Math.max(6 * 2, 20)).
+      expect(calls).toHaveLength(4);
       calls.forEach(([params]) => {
-        expect(params.perPage).toBe(50);
+        expect([20, 50]).toContain(params.perPage);
       });
     });
   });

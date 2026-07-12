@@ -57,6 +57,9 @@ describe('SearchPage.duck', () => {
         private: false,
       },
     },
+    user: {
+      userTypes: [],
+    },
   });
 
   beforeEach(() => {
@@ -90,19 +93,13 @@ describe('SearchPage.duck', () => {
       const search = '?page=1&perPage=24';
 
       const thunk = loadData(params, search, config);
-      const result = await thunk(mockDispatch, mockGetState, mockSdk);
-
-      console.log('mockDispatch calls:', mockDispatch.mock.calls.length);
-      console.log('mockQuery calls:', mockQuery.mock.calls.length);
-      console.log('Result:', result);
+      await thunk(mockDispatch, mockGetState, mockSdk);
 
       // Verify SDK was called
       expect(mockQuery).toHaveBeenCalled();
       expect(mockQuery.mock.calls.length).toBe(1);
 
-      // Log the actual call to see what was passed
       const actualParams = mockQuery.mock.calls[0][0];
-      console.log('Actual SDK query params:', JSON.stringify(actualParams, null, 2));
 
       // Basic check that params object exists
       expect(actualParams).toBeDefined();

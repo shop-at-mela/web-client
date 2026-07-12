@@ -2,11 +2,35 @@
 
 .hero {
   width: 100%;
-  background: linear-gradient(135deg, #f8fffe 0%, #f1f8f6 100%);
+  /* Mobile: warm cream + a whisper of bandhani dots. Quiet by design — the loud
+     ikat color-field is desktop-only (below), where the 2-col grid guarantees the
+     white brand card floats over the loud band and text stays on cream. */
+  background:
+    radial-gradient(rgba(178, 106, 0, 0.08) 1px, transparent 1.7px) 0 0 / 18px 18px,
+    linear-gradient(135deg, #fdfaf5 0%, #f7f1e8 100%);
   padding: 1rem 0;
 
   @media (min-width: 768px) {
     padding: 2rem 0;
+    /* Ikat / bandhani-inspired color-blocking (marigold → navy), weighted to the
+       right third behind the brand card. Abstract, rights-free, pure CSS (LCP-safe). */
+    background:
+      radial-gradient(rgba(178, 106, 0, 0.09) 1px, transparent 1.7px) 0 0 / 18px 18px,
+      linear-gradient(
+        107deg,
+        #fdfaf5 0%,
+        #fdfaf5 46%,
+        #f8edd6 46%,
+        #f8edd6 56%,
+        rgba(240, 160, 48, 0.42) 56%,
+        rgba(240, 160, 48, 0.42) 66%,
+        #f0a030 66%,
+        #f0a030 76%,
+        #d98e22 76%,
+        #d98e22 86%,
+        #262261 86%,
+        #262261 100%
+      );
   }
 }
 
@@ -117,6 +141,31 @@
   }
 }
 
+/* Breadth / scale signal (T1-7) — confident credibility line above the badges */
+.breadthSignal {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--marketplaceColor);
+  margin: 0 0 0.75rem;
+
+  @media (min-width: 640px) {
+    font-size: 1rem;
+  }
+}
+
+/* Trust-model callout (T1-4) — matter-of-fact affiliate-model line near the CTA */
+.trustCallout {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: #5a6472;
+  margin: 0 0 1rem;
+  max-width: 44ch;
+
+  @media (min-width: 640px) {
+    font-size: 0.875rem;
+  }
+}
+
 /* Trust Badges — flat credential row, not interactive pills */
 .trustBadges {
   display: flex;
@@ -137,7 +186,7 @@
   gap: 0.375rem;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #718096;
+  color: #5a6472;
 
   @media (min-width: 640px) {
     font-size: 0.875rem;
@@ -276,11 +325,40 @@
   100% { background-position: -200% 0; }
 }
 
+/* Carousel controls row — dots + pause/play toggle */
+.carouselControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* Pause/play toggle for auto-advance (WCAG 2.2.2) */
+.pausePlayButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(38, 34, 97, 0.06);
+  color: var(--marketplaceColor);
+  font-size: 0.625rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: rgba(38, 34, 97, 0.12);
+  }
+}
+
 /* Product Navigation Dots */
 .productDots {
   display: flex;
   gap: 0.5rem;
-  margin-top: 1rem;
 }
 
 .dot {
@@ -330,7 +408,7 @@
     width: 3rem;
     height: 100%;
     border-radius: 0 12px 12px 0;
-    background: linear-gradient(to right, transparent, #f1f8f6);
+    background: linear-gradient(to right, transparent, #f7f1e8);
     pointer-events: none;
 
     @media (min-width: 768px) {
@@ -411,8 +489,10 @@
 }
 
 .pillIcon {
-  font-size: 1rem;
-  line-height: 1;
+  /* Custom CategoryIcon (SVG). Strokes with currentColor so it inherits the
+     pill's navy text — and flips to white on hover with the label. */
+  display: block;
+  flex: none;
 }
 
 .pillLabel {

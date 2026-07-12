@@ -229,6 +229,21 @@ export const allBrandIds = allBrandIdsByEnv[currentEnv];
 export const getAllBrandIds = () => allBrandIds;
 
 /**
+ * Count of distinct categories that have at least one brand in the live config.
+ * Powers the homepage hero breadth signal (threshold-gated counter) — never
+ * counts the empty category buckets.
+ * @returns {number}
+ */
+export const getPopulatedCategoryCount = () => {
+  const cats = new Set();
+  allBrandIds.forEach(id => {
+    const c = brandConfigurations[id]?.category;
+    if (c) cats.add(c);
+  });
+  return cats.size;
+};
+
+/**
  * Return `count` randomly selected brand IDs from the full pool.
  * Called fresh on each homepage mount so every page refresh shows different brands.
  * @param {number} count - Number of brands to return
@@ -241,6 +256,48 @@ export const getRandomBrandIds = count => {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr.slice(0, Math.min(count, arr.length));
+};
+
+/**
+ * Curated carousel order for the homepage hero — craft-legible brands first,
+ * Western-styled/utility brands last, per `homepage-hero-prd.md` §12 (the hero
+ * is a curation statement; leading with US-DTC-looking brands reinforces "how is
+ * this different from Amazon?"). Brands not listed are appended in config order
+ * so nothing is ever dropped. Nicobar (§12 rank 2) is intentionally absent until
+ * it is ingested.
+ */
+const CURATED_BRAND_SLUG_ORDER = [
+  'fizzy-goblet',
+  'baby-forest',
+  'banjaaran-studio',
+  'gullylabs',
+  'the-alternate-india',
+  'vilvah-store',
+  'aagghhoo',
+  'masilo',
+  'the-nesavu',
+  // demoted — visually indistinguishable from a US DTC brand
+  'polite-society',
+  'pluchi',
+  'choosekind',
+  'superbottoms',
+];
+
+/**
+ * Return `count` brand IDs in the curated hero order (see CURATED_BRAND_SLUG_ORDER).
+ * @param {number} count - Number of brands to return
+ * @returns {Array<string>}
+ */
+export const getCuratedBrandIds = count => {
+  const idBySlug = {};
+  allBrandIds.forEach(id => {
+    const slug = brandConfigurations[id]?.slug;
+    if (slug) idBySlug[slug] = id;
+  });
+  const ordered = CURATED_BRAND_SLUG_ORDER.map(slug => idBySlug[slug]).filter(Boolean);
+  const remaining = allBrandIds.filter(id => !ordered.includes(id));
+  const full = [...ordered, ...remaining];
+  return typeof count === 'number' ? full.slice(0, Math.min(count, full.length)) : full;
 };
 
 /**

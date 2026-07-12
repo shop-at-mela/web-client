@@ -40,7 +40,10 @@ describe('Application - node environment', () => {
     const loginPath = '/login';
     const signupPath = '/signup';
     const urlRedirects = {
-      '/l/new': signupPath,
+      // Note: '/l/new' is intentionally auth: false (see routeConfiguration.js) -
+      // it shows BrandPartnershipPage for anonymous/non-provider visitors
+      // instead of redirecting to signup, as part of the directory/affiliate
+      // positioning (commit 58978cc7d7).
       '/l/listing-title-slug/1234/new/description': signupPath,
       '/l/listing-title-slug/1234/checkout': signupPath,
       '/profile-settings': loginPath,

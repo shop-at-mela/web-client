@@ -264,6 +264,21 @@ const categoryPath = (level1, level2, level3) => {
 - **SearchResultsPanel**: Accept `<ul>/<li>` structure, keep Mela badge calculation logic inside.
 - **TopbarMobileMenu authenticated links**: Accept `<ul>/<li>`, keep Mela Browse section as-is.
 
+### USD Currency Display: Always 0 Decimal Digits
+- **Rule**: `currencyFormatting()` in `src/config/settingsCurrency.js` hardcodes `minimumFractionDigits`/`maximumFractionDigits: 0` for USD specifically (and for genuinely 0-decimal currencies like JPY) — **every** USD amount renders without cents, rounded, not just round-dollar amounts. `$21.98` → `$22`, `$55.00` → `$55`, `-$30.00` → `-$30`.
+- **Does not generalize**: Other 2-decimal currencies (EUR, INR, GBP, ...) always keep `minimumFractionDigits: 2` — a round €30.00 still renders `€30.00`. Don't assume the "hide cents" behavior applies outside USD fixtures.
+- **Test impact**: Any test asserting a literal USD string with cents (`'$21.98'`, `'-$1.00'`) will never match rendered text. Fix by rounding the literal to whole dollars.
+
+### Shared Mutable Test Fixture Objects
+- **Issue**: A fixture-building helper (e.g. `createEnhancedUser`) that assigns `publicData: attributes.profile.publicData` — the same object reference — to every user it constructs. One test mutating `user.attributes.profile.publicData.userType = 'x'` in place permanently pollutes every later test in the file that reuses the helper.
+- **Symptom**: Test passes in isolation, fails only when run as part of the full file/suite (order-dependent failure).
+- **Fix**: Copy (`{ ...attributes.profile.publicData }`), never alias, when a helper builds fixtures that tests are expected to mutate.
+
+### Page.js JSON-LD Schema Structure
+- **Structure**: `Page.js` renders a single `<script id="page-schema" type="application/ld+json">` whose content wraps page-specific schema, marketplace `Organization`, and `WebSite` together inside one `{"@context":..., "@graph": [...]}` array — not one script per `@type`.
+- **Timing**: Rendered via `<Helmet>` into `document.head` (outside RTL's `container`), committed asynchronously via `requestAnimationFrame` — absent immediately after `render()`/`act()`.
+- **Test pattern**: `await waitFor(() => { const script = document.querySelector('script[type="application/ld+json"]'); const parsed = script && JSON.parse(script.textContent); /* find entry in parsed['@graph'] */ })`. Query `document`, not the RTL `container`.
+
 ## Session Log
 2024-10-10: Fixed CategoryProducts to display proper category names + product filtering improvements
 2025-10-10: Implemented HeroProducts with real API integration, randomization, and comprehensive testing

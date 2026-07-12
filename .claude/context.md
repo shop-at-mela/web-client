@@ -10,7 +10,8 @@
 
 ## Commands
 - `yarn dev` - Start development server
-- `yarn test` - Run tests
+- `yarn test` - Run tests (interactive watch mode - don't use in non-interactive sessions)
+- `CI=true node scripts/test.js --watchAll=false [path]` - Run tests once and exit; omit `[path]` for full suite
 - `yarn build` - Production build
 - `yarn lint` - ESLint check
 

@@ -143,7 +143,9 @@ describe('TopbarMobileMenu — unauthenticated', () => {
     expect(screen.getByTestId('link-CategoriesPage')).toBeInTheDocument();
   });
 
-  it('renders partner footer with updated brand partnership copy', () => {
+  // Skipped: "Apply to Partner" / provider-signup entry point is commented out
+  // pending marketplace UI restoration (see TopbarMobileMenu.js createListingsLinkMaybe).
+  it.skip('renders partner footer with updated brand partnership copy', () => {
     render(<TestWrapper><TopbarMobileMenu {...defaultUnauthProps} /></TestWrapper>);
     expect(screen.getByText('LIST YOUR BRAND ON MELA')).toBeInTheDocument();
     expect(screen.getByText(/we partner with quality indian brands/i)).toBeInTheDocument();

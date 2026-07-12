@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import classNames from 'classnames';
 import ReactImageGallery from 'react-image-gallery';
 
@@ -87,23 +87,31 @@ const ListingImageGallery = props => {
   const thumbVariants = thumbnailVariants || imageVariants;
   // imageVariants are scaled variants.
   const { aspectWidth, aspectHeight } = getFirstImageAspectRatio(images?.[0], imageVariants[0]);
-  const items = images.map((img, i) => {
-    return {
-      // We will only use the image resource, but react-image-gallery
-      // requires the `original` key from each item.
-      original: '',
-      alt: intl.formatMessage(
-        { id: 'ListingImageGallery.imageAltText' },
-        { index: i + 1, count: images.length }
-      ),
-      thumbAlt: intl.formatMessage(
-        { id: 'ListingImageGallery.imageThumbnailAltText' },
-        { index: i + 1, count: images.length }
-      ),
-      thumbnail: img.attributes?.variants?.[thumbVariants[0]],
-      image: img,
-    };
-  });
+  // react-image-gallery resets its current slide back to startIndex whenever
+  // the `items` array reference changes (see its internal useEffect keyed on
+  // items). Without memoizing here, every onSlide-triggered re-render created
+  // a new items array, snapping the gallery back right after each swipe.
+  const items = useMemo(
+    () =>
+      images.map((img, i) => {
+        return {
+          // We will only use the image resource, but react-image-gallery
+          // requires the `original` key from each item.
+          original: '',
+          alt: intl.formatMessage(
+            { id: 'ListingImageGallery.imageAltText' },
+            { index: i + 1, count: images.length }
+          ),
+          thumbAlt: intl.formatMessage(
+            { id: 'ListingImageGallery.imageThumbnailAltText' },
+            { index: i + 1, count: images.length }
+          ),
+          thumbnail: img.attributes?.variants?.[thumbVariants[0]],
+          image: img,
+        };
+      }),
+    [images, thumbVariants[0], intl]
+  );
   const imageSizesMaybe = isFullscreen
     ? { sizes: '100vw' }
     : { sizes: `(max-width: 767px) 100vw, (max-width: 1024px) 80vw, (max-width: 1200px) calc(100vw - 192px), 708px` };

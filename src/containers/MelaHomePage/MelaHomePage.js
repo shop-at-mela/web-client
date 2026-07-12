@@ -10,7 +10,6 @@ import CategoryShowcase from './sections/CategoryShowcase/CategoryShowcase';
 import FeaturedBrandPartnersContainer from './sections/FeaturedBrandPartners/FeaturedBrandPartnersContainer';
 import TrustAssurance from './sections/TrustAssurance/TrustAssurance';
 import SavedItemsModule from './sections/SavedItems/SavedItemsModule';
-import ComingSoonSection from './sections/ComingSoonSection/ComingSoonSection';
 
 import css from './MelaHomePage.module.css';
 
@@ -147,11 +146,6 @@ const MelaHomePage = props => {
         {/* Featured Brand Partners */}
         <section className={css.brandsSection}>
           <FeaturedBrandPartnersContainer />
-        </section>
-
-        {/* Coming Soon - Roadmap Preview */}
-        <section className={css.comingSoonSection}>
-          <ComingSoonSection />
         </section>
 
         {/* Trust & Quality Assurance - Certifications */}

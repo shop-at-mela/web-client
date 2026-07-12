@@ -506,6 +506,7 @@ export const getHostedConfiguration = () => {
         {
           userType: 'a',
           label: 'Seller',
+          roles: { customer: true, provider: false },
           defaultListingFields: {
             displayName: true,
             phoneNumber: true,
@@ -514,6 +515,7 @@ export const getHostedConfiguration = () => {
         {
           userType: 'b',
           label: 'Buyer',
+          roles: { customer: true, provider: false },
           defaultListingFields: {
             displayName: false,
             phoneNumber: true,
@@ -522,6 +524,7 @@ export const getHostedConfiguration = () => {
         {
           userType: 'c',
           label: 'Guest',
+          roles: { customer: true, provider: false },
           defaultListingFields: {
             displayName: false,
             phoneNumber: true,
@@ -530,6 +533,7 @@ export const getHostedConfiguration = () => {
         {
           userType: 'd',
           label: 'Host',
+          roles: { customer: true, provider: false },
           defaultListingFields: {
             displayName: false,
             phoneNumber: true,

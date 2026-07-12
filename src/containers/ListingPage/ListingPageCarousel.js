@@ -479,7 +479,8 @@ export const ListingPageComponent = props => {
                   return (
                     <CategoryBreadcrumb
                       category={categoryNames}
-                      className={css.categoryBreadcrumbInline}
+                      className={css.categoryBreadcrumb}
+                      showHomeLink
                     />
                   );
                 })()

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import MarketTiming from './MarketTiming';
@@ -22,7 +22,7 @@ describe('MarketTiming', () => {
     render(<MarketTiming />);
 
     expect(screen.getByText('Strategic Advantages of Starting Now')).toBeInTheDocument();
-    expect(screen.getByText('First-Mover Advantage')).toBeInTheDocument();
+    expect(screen.getAllByText('First-Mover Advantage')[0]).toBeInTheDocument();
   });
 
   it('renders navigation buttons for advantages', () => {
@@ -43,57 +43,73 @@ describe('MarketTiming', () => {
   });
 
   it('navigates to next advantage when next button is clicked', () => {
-    render(<MarketTiming />);
+    const { container } = render(<MarketTiming />);
+    const mobileCarousel = container.querySelector('.mobileCarousel');
 
-    const nextButton = screen.getByLabelText('Next advantage');
+    const nextButton = within(mobileCarousel).getByLabelText('Next advantage');
     fireEvent.click(nextButton);
 
-    expect(screen.getByText('Warren Buffett Wisdom')).toBeInTheDocument();
-    expect(screen.getByText('Historical proof that uncertainty creates the best opportunities')).toBeInTheDocument();
+    expect(within(mobileCarousel).getByText('Warren Buffett Wisdom')).toBeInTheDocument();
+    expect(within(mobileCarousel).getByText('Historical proof that uncertainty creates the best opportunities')).toBeInTheDocument();
   });
 
   it('navigates to previous advantage when prev button is clicked', () => {
-    render(<MarketTiming />);
+    const { container } = render(<MarketTiming />);
+    const mobileCarousel = container.querySelector('.mobileCarousel');
 
     // First go to next advantage
-    const nextButton = screen.getByLabelText('Next advantage');
+    const nextButton = within(mobileCarousel).getByLabelText('Next advantage');
     fireEvent.click(nextButton);
 
     // Then go back
-    const prevButton = screen.getByLabelText('Previous advantage');
+    const prevButton = within(mobileCarousel).getByLabelText('Previous advantage');
     fireEvent.click(prevButton);
 
-    expect(screen.getByText('First-Mover Advantage')).toBeInTheDocument();
+    expect(within(mobileCarousel).getByText('First-Mover Advantage')).toBeInTheDocument();
   });
 
-  it('disables prev button on first advantage', () => {
-    render(<MarketTiming />);
+  // All 4 advantage cards render simultaneously in the carousel track (position is
+  // CSS transform-driven, not conditional), so text presence alone can't confirm which
+  // card is current. The dot indicator's "active" class is the one place that does.
+  const getActiveAdvantageIndex = mobileCarousel => {
+    const dots = within(mobileCarousel).getAllByLabelText(/Go to advantage \d+/);
+    return dots.findIndex(dot => dot.className.includes('active'));
+  };
 
-    const prevButton = screen.getByLabelText('Previous advantage');
-    expect(prevButton).toBeDisabled();
+  it('wraps to the last advantage when prev is clicked on the first advantage', () => {
+    const { container } = render(<MarketTiming />);
+    const mobileCarousel = container.querySelector('.mobileCarousel');
+
+    const prevButton = within(mobileCarousel).getByLabelText('Previous advantage');
+    expect(prevButton).not.toBeDisabled();
+
+    fireEvent.click(prevButton);
+    expect(getActiveAdvantageIndex(mobileCarousel)).toBe(3); // wraps from first to last of 4 cards
   });
 
-  it('disables next button on last advantage', () => {
-    render(<MarketTiming />);
+  it('wraps to the first advantage when next is clicked on the last advantage', () => {
+    const { container } = render(<MarketTiming />);
+    const mobileCarousel = container.querySelector('.mobileCarousel');
 
-    const nextButton = screen.getByLabelText('Next advantage');
+    const nextButton = within(mobileCarousel).getByLabelText('Next advantage');
+    expect(nextButton).not.toBeDisabled();
 
-    // Navigate to last advantage (click next 3 times)
-    for (let i = 0; i < 3; i++) {
+    // Navigate to last advantage (click next 3 times for 4 total), then once more to wrap
+    for (let i = 0; i < 4; i++) {
       fireEvent.click(nextButton);
     }
 
-    expect(screen.getByText('Performance-Based Protection')).toBeInTheDocument();
-    expect(nextButton).toBeDisabled();
+    expect(getActiveAdvantageIndex(mobileCarousel)).toBe(0);
   });
 
   it('allows direct navigation via page indicators', () => {
-    render(<MarketTiming />);
+    const { container } = render(<MarketTiming />);
+    const mobileCarousel = container.querySelector('.mobileCarousel');
 
-    const thirdIndicator = screen.getByLabelText('Go to advantage 3');
+    const thirdIndicator = within(mobileCarousel).getByLabelText('Go to advantage 3');
     fireEvent.click(thirdIndicator);
 
-    expect(screen.getByText('Building Through Cycles')).toBeInTheDocument();
+    expect(within(mobileCarousel).getByText('Building Through Cycles')).toBeInTheDocument();
   });
 
   it('renders timeline section', () => {
@@ -139,15 +155,16 @@ describe('MarketTiming', () => {
   });
 
   it('handles keyboard navigation', () => {
-    render(<MarketTiming />);
+    const { container } = render(<MarketTiming />);
+    const mobileCarousel = container.querySelector('.mobileCarousel');
 
-    const nextButton = screen.getByLabelText('Next advantage');
+    const nextButton = within(mobileCarousel).getByLabelText('Next advantage');
 
     // Focus the button and simulate click (keyboard navigation typically triggers click)
     nextButton.focus();
     fireEvent.click(nextButton);
 
     // Should now be on the second advantage
-    expect(screen.getByText('Warren Buffett Wisdom')).toBeInTheDocument();
+    expect(within(mobileCarousel).getByText('Warren Buffett Wisdom')).toBeInTheDocument();
   });
 });

@@ -322,8 +322,11 @@ describe('OptimizedImage', () => {
       // Simulate image load
       fireEvent.load(img);
 
+      // jest-dom's toHaveStyle mismatches the 'transparent' color keyword against
+      // jsdom's computed style here, even though the inline style is already correct
+      // (visible in the DOM dump on failure) — assert the raw style value instead.
       await waitFor(() => {
-        expect(containerDiv).toHaveStyle({ backgroundColor: 'transparent' });
+        expect(containerDiv.style.backgroundColor).toBe('transparent');
       });
     });
   });

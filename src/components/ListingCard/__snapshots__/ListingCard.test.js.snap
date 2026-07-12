@@ -604,17 +604,17 @@ exports[`ListingCard variant pill matches snapshot with variant pill 1`] = `
         </span>
       </div>
       <div
-        class="variantPill"
-      >
-        4 variants
-      </div>
-      <div
         class="mainInfo"
       >
         <div
           class="title"
         >
           listing1 title
+        </div>
+        <div
+          class="variantPill"
+        >
+          4 variants
         </div>
         <div
           class="authorInfo"

@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import { IntlProvider } from 'react-intl';
 import { MemoryRouter } from 'react-router-dom';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
-import thunk from 'redux-thunk';
+import { thunk } from 'redux-thunk';
 import loadable from '@loadable/component';
 
 import { types as sdkTypes } from '../../util/sdkLoader';

@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import { screen } from '@testing-library/react';
 import { renderWithProviders } from '../../util/testHelpers';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
-import thunk from 'redux-thunk';
+import { thunk } from 'redux-thunk';
 
 import { types as sdkTypes } from '../../util/sdkLoader';
 import { createListing, createUser } from '../../util/testData';
@@ -77,13 +77,26 @@ const renderWithStore = (component, store) => {
 };
 
 const createMockProduct = (sku, overrides = {}) => {
+  const { images, ...attributeOverrides } = overrides;
   return createListing(`listing-${sku}`, {
     title: `Product ${sku}`,
     description: `Description for product ${sku}`,
     price: new Money(2500, 'USD'),
-    images: [
+    publicData: {
+      sku: sku,
+      brand: 'TestBrand',
+      productUrl: `https://testbrand.com/product/${sku}`,
+      listingType: 'sell-products',
+      ...overrides.publicData,
+    },
+    ...attributeOverrides,
+  }, {
+    author: createUser(`user-${sku}`),
+    // ProductCarousel/ListingCard read images off the top-level entity (JSON:API
+    // relationship pattern), not attributes.images — see ProductCarousel.test.js.
+    images: images !== undefined ? images : [
       {
-        id: `image-${sku}`,
+        id: { uuid: `image-${sku}` },
         type: 'image',
         attributes: {
           variants: {
@@ -96,16 +109,6 @@ const createMockProduct = (sku, overrides = {}) => {
         },
       },
     ],
-    publicData: {
-      sku: sku,
-      brand: 'TestBrand',
-      productUrl: `https://testbrand.com/product/${sku}`,
-      listingType: 'sell-products',
-      ...overrides.publicData,
-    },
-    ...overrides,
-  }, {
-    author: createUser(`user-${sku}`),
   });
 };
 
@@ -124,7 +127,10 @@ jest.mock('../../ducks/recommendedProducts.duck', () => ({
         return state;
     }
   },
-  fetchRecommendedProducts: jest.fn(() => () => Promise.resolve()),
+  // No implementation here: package.json sets "resetMocks": true, which wipes any
+  // implementation passed to jest.fn() before every test (this factory only runs once
+  // when the module is first required). Re-applied in beforeEach below instead.
+  fetchRecommendedProducts: jest.fn(),
   FETCH_RECOMMENDED_PRODUCTS_REQUEST: 'FETCH_RECOMMENDED_PRODUCTS_REQUEST',
   FETCH_RECOMMENDED_PRODUCTS_SUCCESS: 'FETCH_RECOMMENDED_PRODUCTS_SUCCESS',
   FETCH_RECOMMENDED_PRODUCTS_ERROR: 'FETCH_RECOMMENDED_PRODUCTS_ERROR',
@@ -136,6 +142,10 @@ const mockFetchRecommendedProducts = require('../../ducks/recommendedProducts.du
 describe('RecommendedProducts', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // "resetMocks": true (package.json) wipes mockFetchRecommendedProducts's
+    // implementation before every test — reapply it here so dispatch() always
+    // receives a proper thunk function instead of undefined.
+    mockFetchRecommendedProducts.mockImplementation(() => () => Promise.resolve());
   });
 
   it('renders nothing when no recommended SKUs provided', () => {
@@ -236,14 +246,17 @@ describe('RecommendedProducts', () => {
       }
     };
 
-    renderWithProviders(
+    const { container } = renderWithProviders(
       <RecommendedProducts
         recommendedProductSKUs={['SKU001', 'SKU002']}
       />,
       { initialState }
     );
 
-    expect(screen.getByText('Loading recommended products...')).toBeInTheDocument();
+    // Commit 8d9a322a3 replaced the text-based loading message with ProductCarousel's
+    // shared skeleton-placeholder loading state (no text at all) — RecommendedProducts.loading
+    // is now a dead translation key.
+    expect(container.querySelectorAll('[class*="skeleton"]')).toHaveLength(4);
   });
 
   it('displays error state', () => {
@@ -266,7 +279,7 @@ describe('RecommendedProducts', () => {
       { initialState }
     );
 
-    expect(screen.getByText('Unable to load recommended products')).toBeInTheDocument();
+    expect(screen.getByText('RecommendedProducts.loadError')).toBeInTheDocument();
   });
 
   it('displays no products message when products array is empty', () => {
@@ -289,7 +302,7 @@ describe('RecommendedProducts', () => {
       { initialState }
     );
 
-    expect(screen.getByText('No recommended products available')).toBeInTheDocument();
+    expect(screen.getByText('RecommendedProducts.noProducts')).toBeInTheDocument();
   });
 
   it('renders recommended products correctly', () => {
@@ -321,7 +334,7 @@ describe('RecommendedProducts', () => {
       { initialState }
     );
 
-    expect(screen.getByText('You may also like')).toBeInTheDocument();
+    expect(screen.getByText('RecommendedProducts.title')).toBeInTheDocument();
     expect(screen.getByText('Product SKU001')).toBeInTheDocument();
     expect(screen.getByText('Product SKU002')).toBeInTheDocument();
     expect(screen.getByText('Product SKU003')).toBeInTheDocument();
@@ -352,13 +365,22 @@ describe('RecommendedProducts', () => {
       { initialState }
     );
 
-    expect(screen.getByText('$15.00')).toBeInTheDocument();
-    expect(screen.getByText('$30.00')).toBeInTheDocument();
+    // ListingCard wraps the formatted price in a FormattedMessage with a {price} value —
+    // the test harness stubs every message to its own id, discarding interpolated values,
+    // so the rendered text is literally "ListingCard.price". Check the title attribute
+    // (set directly to the formatted price string) instead. Currency formatting here omits
+    // trailing cents for whole-dollar amounts (see util/currency.js formatMoney) — same
+    // convention noted for EditListingPage's price fields.
+    expect(screen.getByTitle('$15')).toBeInTheDocument();
+    expect(screen.getByTitle('$30')).toBeInTheDocument();
   });
 
   it('renders product links to marketplace pages', () => {
+    // ProductCarousel's minItems defaults to 2 (see ProductCarousel.js) — a single
+    // product isn't enough to render the carousel at all, so add a second one.
     const mockProducts = [
       createMockProduct('SKU001'),
+      createMockProduct('SKU002'),
     ];
 
     const initialState = {
@@ -373,20 +395,29 @@ describe('RecommendedProducts', () => {
       }
     };
 
-    renderWithProviders(
+    const { container } = renderWithProviders(
       <RecommendedProducts
-        recommendedProductSKUs={['SKU001']}
+        recommendedProductSKUs={['SKU001', 'SKU002']}
       />,
       { initialState }
     );
 
-    const productLink = screen.getByRole('link');
-    expect(productLink).toHaveAttribute('href', '/l/listing-sku001');
+    // href is /l/{slug}/{id} (see routeConfiguration's ListingPage route), not just /l/{id}.
+    // Each card renders two links (image + info) to the same href, so query directly.
+    const productLink = container.querySelector('a[href="/l/product-sku001/listing-SKU001"]');
+    expect(productLink).toBeInTheDocument();
   });
 
-  it('displays fallback when product image is missing', () => {
+  it('omits products with missing images from the carousel', () => {
+    // ProductCarousel filters out any listing with no images entirely (see
+    // listingsWithImages in ProductCarousel.js) rather than showing a placeholder card —
+    // the old per-card "No image available" fallback no longer applies. Two additional
+    // valid products are included so the carousel still renders after filtering
+    // (minItems default is 2 *after* the imageless product is dropped).
     const mockProducts = [
       createMockProduct('SKU001', { images: [] }),
+      createMockProduct('SKU002'),
+      createMockProduct('SKU003'),
     ];
 
     const initialState = {
@@ -403,12 +434,14 @@ describe('RecommendedProducts', () => {
 
     renderWithProviders(
       <RecommendedProducts
-        recommendedProductSKUs={['SKU001']}
+        recommendedProductSKUs={['SKU001', 'SKU002', 'SKU003']}
       />,
       { initialState }
     );
 
-    expect(screen.getByText('No image available')).toBeInTheDocument();
+    expect(screen.queryByText('Product SKU001')).not.toBeInTheDocument();
+    expect(screen.getByText('Product SKU002')).toBeInTheDocument();
+    expect(screen.getByText('Product SKU003')).toBeInTheDocument();
   });
 
   it('calls onFetchProducts with correct SKUs on mount', () => {
@@ -467,10 +500,13 @@ describe('RecommendedProducts', () => {
   });
 
   it('handles products with missing brand information', () => {
+    // ProductCarousel's minItems defaults to 2 — add a second product alongside the
+    // one under test so the carousel actually renders.
     const mockProducts = [
       createMockProduct('SKU001', {
         publicData: { sku: 'SKU001', brand: undefined }
       }),
+      createMockProduct('SKU002'),
     ];
 
     const initialState = {
@@ -487,7 +523,7 @@ describe('RecommendedProducts', () => {
 
     renderWithProviders(
       <RecommendedProducts
-        recommendedProductSKUs={['SKU001']}
+        recommendedProductSKUs={['SKU001', 'SKU002']}
       />,
       { initialState }
     );

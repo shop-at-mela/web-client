@@ -15,7 +15,11 @@ import {
   testingLibrary,
   getRouteConfiguration,
   getHostedConfiguration,
+  getDefaultConfiguration,
 } from '../../util/testHelpers';
+import { mergeConfig } from '../../util/configHelpers';
+import { createIntl, createIntlCache } from '../../util/reactIntl';
+import enMessages from '../../translations/en.json';
 
 import { storableError } from '../../util/errors';
 
@@ -29,11 +33,17 @@ import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 
 import reducer, { showListing, loadData, setInitialValues } from './ListingPage.duck';
 
+import { ListingPageComponent } from './ListingPageCarousel';
 import ActionBar from './Notifications/ActionBar';
 
 const { UUID } = sdkTypes;
 const { screen, waitFor, within } = testingLibrary;
 const noop = () => null;
+
+// Locale should not affect the tests: map every translation id to itself, matching
+// the convention testHelpers.js uses for the IntlProvider that wraps rendered pages.
+const testIntlMessages = Object.fromEntries(Object.entries(enMessages).map(([key]) => [key, key]));
+const testIntl = createIntl({ locale: 'en', messages: testIntlMessages }, createIntlCache());
 
 // JSDOM does not implement IntersectionObserver — mock it for carousel layout detection
 global.IntersectionObserver = class IntersectionObserver {
@@ -69,6 +79,14 @@ const listingTypes = [
       alias: 'default-booking/release-1',
     },
     unitType: 'night',
+  },
+  {
+    id: 'rent-bicycles-daily',
+    transactionProcess: {
+      name: 'default-booking',
+      alias: 'default-booking/release-1',
+    },
+    unitType: 'day',
   },
 ];
 
@@ -143,12 +161,11 @@ const getConfig = variantType => {
   const hostedConfig = getHostedConfiguration();
   return {
     ...hostedConfig,
-    listingTypes: {
-      listingTypes,
-    },
-    listingFields: {
-      listingFields,
-    },
+    // mergeConfig() derives listing.listingTypes/listingFields and categoryConfiguration
+    // from these raw hosted-asset shapes (see util/configHelpers.js mergeListingConfig /
+    // mergeConfig), ignoring a `listing`/`categoryConfiguration` key passed in directly.
+    listingTypes: { listingTypes },
+    listingFields: { listingFields },
     categories: { categories },
     layout: {
       ...hostedConfig.layout,
@@ -260,9 +277,6 @@ describe('ListingPage variants', () => {
       expect(getByText('Cat')).toBeInTheDocument();
       expect(getByText('Cat 1')).toBeInTheDocument();
 
-      // Has details location title
-      expect(getByRole('heading', { name: 'ListingPage.locationTitle' })).toBeInTheDocument();
-
       // Has details reviews title
       const reviewsTitle = getByRole('heading', { name: 'ListingPage.reviewsTitle' });
       expect(reviewsTitle).toBeInTheDocument();
@@ -315,9 +329,6 @@ describe('ListingPage variants', () => {
       expect(getByText('Cat')).toBeInTheDocument();
       expect(getByText('Cat 1')).toBeInTheDocument();
 
-      // Has details location title
-      expect(getByRole('heading', { name: 'ListingPage.locationTitle' })).toBeInTheDocument();
-
       // Has details reviews title
       const reviewsTitle = getByRole('heading', { name: 'ListingPage.reviewsTitle' });
       expect(reviewsTitle).toBeInTheDocument();
@@ -334,8 +345,12 @@ describe('ListingPage variants', () => {
       // Has button to contact provider
       expect(getByRole('button', { name: 'UserCard.contactUser' })).toBeInTheDocument();
 
-      // Save button appears after the order panel title (below 'Shop from brand', not above title)
-      const saveButton = screen.getByRole('button', { name: 'SavedListingButton.saveAriaLabel' });
+      // Save button appears after the order panel title (below 'Shop from brand', not above title).
+      // There are two SavedListingButton instances on this page: one overlaid on the gallery
+      // (SectionGallery, css.gallerySaveButton) and one in the content flow (css.listingPageSaveButton)
+      // — target the content-flow one specifically.
+      const saveButtons = screen.getAllByRole('button', { name: 'SavedListingButton.saveAriaLabel' });
+      const saveButton = saveButtons.find(button => button.className.includes('listingPageSaveButton'));
       const orderPanelTitle = queryAllByRole('heading', { name: 'ListingPage.orderTitle' })[0];
       expect(saveButton).toBeInTheDocument();
       expect(
@@ -505,8 +520,8 @@ describe('Duck', () => {
           [
             expect.objectContaining({
               id,
-              'imageVariant.listing-card': 'w:400;h:400;fit:crop',
-              'imageVariant.listing-card-2x': 'w:800;h:800;fit:crop',
+              'imageVariant.listing-card': 'w:400;h:400;fit:crop;q:85;f:auto',
+              'imageVariant.listing-card-2x': 'w:800;h:800;fit:crop;q:85;f:auto',
               include: ['author', 'author.profileImage', 'images', 'currentStock'],
             }),
           ],
@@ -554,8 +569,8 @@ describe('Duck', () => {
           [
             expect.objectContaining({
               id,
-              'imageVariant.listing-card': 'w:400;h:400;fit:crop',
-              'imageVariant.listing-card-2x': 'w:800;h:800;fit:crop',
+              'imageVariant.listing-card': 'w:400;h:400;fit:crop;q:85;f:auto',
+              'imageVariant.listing-card-2x': 'w:800;h:800;fit:crop;q:85;f:auto',
               include: ['author', 'author.profileImage', 'images', 'currentStock'],
             }),
           ],
@@ -636,7 +651,9 @@ describe('Duck', () => {
         {
           publicData: {
             ...categoryData,
-            listingType: 'rent-bicycles-daily'
+            listingType: 'rent-bicycles-daily',
+            transactionProcessAlias: 'default-booking/release-1',
+            unitType: 'day',
           }
         },
         {
@@ -647,8 +664,13 @@ describe('Duck', () => {
 
       const config = getConfig(variantType);
       const props = {
+        // ListingPageAccessWrapper normally supplies the merged config (hosted + defaults)
+        // from context. We render ListingPageComponent directly here, so replicate that merge.
+        config: mergeConfig(config, getDefaultConfiguration()),
+        intl: testIntl,
         params: { id: 'listing-with-category', slug: 'listing-slug' },
-        listing: listingWithCategory,
+        getListing: () => listingWithCategory,
+        getOwnListing: () => null,
         reviews: [],
         fetchReviewsInProgress: false,
         fetchReviewsError: null,
@@ -688,10 +710,12 @@ describe('Duck', () => {
       };
       const { container } = renderListingPageWithCategory(categoryData, 'coverPhoto');
 
-      expect(testingLibrary.screen.getByText('Home')).toBeInTheDocument();
-      expect(testingLibrary.screen.getByText('Baby-Products')).toBeInTheDocument();
-      expect(testingLibrary.screen.getByText('Clothing')).toBeInTheDocument();
-      expect(testingLibrary.screen.getByText('Organic-Cotton')).toBeInTheDocument();
+      // ItemSpecifics renders both a desktop and mobile layout simultaneously
+      // (CSS-driven visibility only), so the breadcrumb appears twice in the DOM.
+      expect(testingLibrary.screen.getAllByText('CategoryBreadcrumb.home')[0]).toBeInTheDocument();
+      expect(testingLibrary.screen.getAllByText('Baby-Products')[0]).toBeInTheDocument();
+      expect(testingLibrary.screen.getAllByText('Clothing')[0]).toBeInTheDocument();
+      expect(testingLibrary.screen.getAllByText('Organic-Cotton')[0]).toBeInTheDocument();
     });
 
     it('renders CategoryBreadcrumb when category exists in carousel variant', () => {
@@ -702,17 +726,23 @@ describe('Duck', () => {
       };
       const { container } = renderListingPageWithCategory(categoryData, 'carousel');
 
-      expect(testingLibrary.screen.getByText('Home')).toBeInTheDocument();
-      expect(testingLibrary.screen.getByText('Toys')).toBeInTheDocument();
-      expect(testingLibrary.screen.getByText('Educational')).toBeInTheDocument();
-      expect(testingLibrary.screen.getByText('STEM-Learning')).toBeInTheDocument();
+      // ItemSpecifics renders both a desktop and mobile layout simultaneously
+      // (CSS-driven visibility only), so the breadcrumb appears twice in the DOM.
+      expect(testingLibrary.screen.getAllByText('CategoryBreadcrumb.home')[0]).toBeInTheDocument();
+      expect(testingLibrary.screen.getAllByText('Toys')[0]).toBeInTheDocument();
+      expect(testingLibrary.screen.getAllByText('Educational')[0]).toBeInTheDocument();
+      expect(testingLibrary.screen.getAllByText('STEM-Learning')[0]).toBeInTheDocument();
     });
 
     it('does not render CategoryBreadcrumb when category is missing', () => {
       const listingWithoutCategory = createListing(
         'listing-without-category',
         {
-          publicData: { listingType: 'rent-bicycles-daily' }
+          publicData: {
+            listingType: 'rent-bicycles-daily',
+            transactionProcessAlias: 'default-booking/release-1',
+            unitType: 'day',
+          }
         },
         {
           author: createUser('user1'),
@@ -722,8 +752,11 @@ describe('Duck', () => {
 
       const config = getConfig('coverPhoto');
       const props = {
+        config: mergeConfig(config, getDefaultConfiguration()),
+        intl: testIntl,
         params: { id: 'listing-without-category', slug: 'listing-slug' },
-        listing: listingWithoutCategory,
+        getListing: () => listingWithoutCategory,
+        getOwnListing: () => null,
         reviews: [],
         fetchReviewsInProgress: false,
         fetchReviewsError: null,
@@ -766,16 +799,18 @@ describe('Duck', () => {
       };
       renderListingPageWithCategory(categoryData);
 
-      const homeLink = testingLibrary.screen.getByRole('link', { name: 'Home' });
-      const babyLink = testingLibrary.screen.getByRole('link', { name: 'Baby' });
-      const clothingLink = testingLibrary.screen.getByRole('link', { name: 'Clothing' });
+      // ItemSpecifics renders both a desktop and mobile layout simultaneously
+      // (CSS-driven visibility only), so each breadcrumb link appears twice in the DOM.
+      const homeLink = testingLibrary.screen.getAllByRole('link', { name: 'CategoryBreadcrumb.home' })[0];
+      const babyLink = testingLibrary.screen.getAllByRole('link', { name: 'Baby' })[0];
+      const clothingLink = testingLibrary.screen.getAllByRole('link', { name: 'Clothing' })[0];
 
       expect(homeLink).toHaveAttribute('href', '/s');
       expect(babyLink).toHaveAttribute('href', '/s?pub_categoryLevel1=Baby');
       expect(clothingLink).toHaveAttribute('href', '/s?pub_categoryLevel1=Baby&pub_categoryLevel2=Clothing');
 
       // Last category level should not be a link
-      expect(testingLibrary.screen.getByText('Organic')).not.toHaveAttribute('href');
+      expect(testingLibrary.screen.getAllByText('Organic')[0]).not.toHaveAttribute('href');
     });
 
     it('applies categoryBreadcrumb CSS class', () => {

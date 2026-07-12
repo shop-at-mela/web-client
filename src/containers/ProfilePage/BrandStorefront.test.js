@@ -269,7 +269,10 @@ describe('BrandStorefront', () => {
     expect(screen.getAllByText(/Premium organic baby clothing from India/).length).toBeGreaterThanOrEqual(1);
   });
 
-  it('renders brand mission when provided', () => {
+  // Skipped: the brandMission section was intentionally removed in commit
+  // 51fd826fd ("brand story in the About tab now covers both story and
+  // ethos in a single field") - not a regression.
+  it.skip('renders brand mission when provided', () => {
     render(
       <TestWrapper>
         <BrandStorefront
@@ -484,7 +487,9 @@ describe('BrandStorefront', () => {
       expect(screen.getByText(/Create product listings to start selling/)).toBeInTheDocument();
     });
 
-    it('shows mission placeholder when owner views profile without mission', () => {
+    // Skipped: the mission placeholder was removed along with the
+    // brandMission section in commit 51fd826fd - not a regression.
+    it.skip('shows mission placeholder when owner views profile without mission', () => {
       render(
         <TestWrapper>
           <BrandStorefront

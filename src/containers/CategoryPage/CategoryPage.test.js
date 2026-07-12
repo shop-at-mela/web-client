@@ -64,6 +64,7 @@ const mockRoutes = [
   // path-to-regexp v8 incompatibility with React Router v5 optional param syntax.
   { path: '/categories/:level1', name: 'CategoryPage' },
   { path: '/categories', name: 'CategoriesPage' },
+  { path: '/s', name: 'SearchPage' },
 ];
 
 const mockMessages = {
