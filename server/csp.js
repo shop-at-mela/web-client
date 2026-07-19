@@ -150,9 +150,16 @@ exports.csp = (reportUri, reportOnly) => {
   // const { imgSrc = [self] } = defaultDirectives;
   // const exampleImgSrc = imgSrc.concat('my-custom-domain.example.com');
 
+  // Microsoft Clarity (cross-shop tracking — see
+  // mela-docs/product/prds/crossshop-tracking-prd.md). GTM/GA4 domains are already
+  // present in defaultDirectives above; only Clarity's domains are new.
+  const { connectSrc, scriptSrc, imgSrc } = defaultDirectives;
+  const clarityDomains = ['*.clarity.ms', 'clarity.ms'];
+
   const customDirectives = {
-    // Example: Add custom directive override
-    // imgSrc: exampleImgSrc,
+    connectSrc: connectSrc.concat(clarityDomains),
+    scriptSrc: scriptSrc.concat(clarityDomains),
+    imgSrc: imgSrc.concat(clarityDomains),
   };
 
   // ================ END CUSTOM CSP URLs ================ //

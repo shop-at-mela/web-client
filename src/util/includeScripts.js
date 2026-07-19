@@ -58,7 +58,7 @@ const canDeferStripeLibrary = (initialPathname, routeConfiguration) => {
  */
 export const IncludeScripts = props => {
   const { marketplaceRootURL: rootURL, maps, analytics, stripe } = props?.config || {};
-  const { googleAnalyticsId, plausibleDomains } = analytics;
+  const { googleAnalyticsId, plausibleDomains, gtmId, clarityId } = analytics;
 
   const routeConfiguration = useRouteConfiguration();
   // Note: Affects Mapbox only. Google Maps initialization is not yet ready to support asynchronous loading.
@@ -180,6 +180,51 @@ export const IncludeScripts = props => {
         crossOrigin="anonymous"
       ></script>
     );
+  }
+
+  // Google Tag Manager — single container for GA4 + any future tags.
+  // See mela-docs/product/prds/crossshop-tracking-prd.md and
+  // web-client/docs/analytics/crossshop-tracking.md for the event schema this feeds
+  // and why GTM is used here instead of (or alongside) the gtag.js path above.
+  if (gtmId) {
+    if (typeof window !== 'undefined') {
+      // Initialize dataLayer before the GTM script loads, so any brand_clickout
+      // events fired during first render aren't dropped (GTM replays existing
+      // dataLayer entries once it loads — this array does not need to be empty).
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+    }
+
+    analyticsLibraries.push(
+      <script
+        key="gtm.js"
+        async
+        src={`https://www.googletagmanager.com/gtm.js?id=${gtmId}`}
+        crossOrigin="anonymous"
+      ></script>
+    );
+  }
+
+  // Microsoft Clarity — session replay / heatmaps, loaded independently of GTM.
+  // Note: this runs as plain JS (like the gtag.js setup above), not as a rendered
+  // inline <script> tag — this app's CSP has no 'unsafe-inline' for scriptSrc
+  // (nonce-based instead), so an inline snippet with a JS body would be blocked.
+  // Creating the <script src="..."> element via DOM APIs matches the CSP's
+  // allowlisted-domain rule instead of needing a nonce.
+  if (clarityId && typeof window !== 'undefined' && !window.clarity) {
+    (function (c, l, a, r, i, t, y) {
+      c[a] =
+        c[a] ||
+        function () {
+          (c[a].q = c[a].q || []).push(arguments);
+        };
+      t = l.createElement(r);
+      t.async = 1;
+      t.crossOrigin = 'anonymous';
+      t.src = 'https://www.clarity.ms/tag/' + i;
+      y = l.getElementsByTagName(r)[0];
+      y.parentNode.insertBefore(t, y);
+    })(window, document, 'clarity', 'script', clarityId);
   }
 
   const isBrowser = typeof window !== 'undefined';

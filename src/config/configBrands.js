@@ -177,6 +177,24 @@ const brandConfigurationsByEnv = {
       category: 'baby_and_kids',
       featuredProductIds: [],
     },
+    '6a53dc15-d30a-4338-bdaf-b8bc718e54ef': {
+      // ISHARYA
+      slug: 'isharya',
+      category: 'jewelry_and_accessories',
+      featuredProductIds: [],
+    },
+    '6a30bcd4-e078-447d-9064-2cf773961ab9': {
+      // Nicobar
+      slug: 'nicobar',
+      category: 'fashion',
+      featuredProductIds: [],
+    },
+    '6a585154-a59e-4017-ba71-70732df51b71': {
+      // Tarinika
+      slug: 'tarinika',
+      category: 'jewelry_and_accessories',
+      featuredProductIds: [],
+    },
     '68d8a4e9-533c-4b9c-914d-8b21edb8ee2d': {
       // mela-admin (Test) — no public slug; admin account
       featuredProductIds: [],
@@ -211,6 +229,9 @@ const allBrandIdsByEnv = {
     '6a13c498-39f9-4b74-94fb-fc99a19f5a40', // vilvah-store
     '6a14a6f7-615b-4f52-8725-30c064efe210', // the-alternate-india
     '6a170717-31bf-4e1e-998f-f613e05fd9c1', // fizzy-goblet
+    '6a53dc15-d30a-4338-bdaf-b8bc718e54ef', // isharya
+    '6a30bcd4-e078-447d-9064-2cf773961ab9', // nicobar
+    '6a585154-a59e-4017-ba71-70732df51b71', // tarinika
   ],
   production: [
     // Add production brand UUIDs here
@@ -259,28 +280,52 @@ export const getRandomBrandIds = count => {
 };
 
 /**
- * Curated carousel order for the homepage hero — craft-legible brands first,
- * Western-styled/utility brands last, per `homepage-hero-prd.md` §12 (the hero
- * is a curation statement; leading with US-DTC-looking brands reinforces "how is
- * this different from Amazon?"). Brands not listed are appended in config order
- * so nothing is ever dropped. Nicobar (§12 rank 2) is intentionally absent until
- * it is ingested.
+ * Curated carousel *display* order for the homepage hero. Follows the canonical
+ * 55-brand onboarding ranking in `homepage-hero-prd.md` §12A (multi-designer panel,
+ * 2026-07-12), as refined by the 2026-07-13 first-principles critique in §12A.1
+ * (content-strategy + craft-legibility lens). Ordering rule: brands whose India-shout
+ * is self-evident in a *no-copy* thumbnail come first; brands whose India-ness is a
+ * story (not a visual) or that read as generic US-DTC come last (leading with them
+ * reinforces "how is this different from Amazon?"). Slugs are §12A/§12A.1 filtered to
+ * brands currently in this config, in refined rank order.
+ *
+ * First-fold refinements (§12A.1) reflected here:
+ *   - The Nesavu pulled UP into the fold (silk pattu pavadai = instant visual
+ *     India-shout) and placed ahead of Baby Forest.
+ *   - Baby Forest pushed OUT of the first fold (ayurveda heritage is a story a
+ *     no-copy carousel can't show); retained as the lead breadth-builder.
+ *   - Nicobar demoted below the craft brands so it is never the isolated lead slide
+ *     (it fails the India-shout test on its own).
+ *   - Open decisions #5 (§12A.1, Isharya-vs-Tarinika for the first-fold jewelry
+ *     slot) resolved 2026-07-15: Tarinika takes the slot — temple-inspired design
+ *     reads as a stronger traditional India-shout than Isharya's global-editorial
+ *     styling. Isharya demoted to the breadth-builder tier.
+ *
+ * NOTE: this is the *display* order among live brands, distinct from §12A's
+ * *onboarding/supply* order. Not-yet-ingested first-fold brands — Suta (#2),
+ * Kaunteya (#6), House of Chikankari (#8) — are absent until they land. Unlisted
+ * brands are appended in config order so nothing is ever dropped.
  */
 const CURATED_BRAND_SLUG_ORDER = [
-  'fizzy-goblet',
-  'baby-forest',
-  'banjaaran-studio',
-  'gullylabs',
-  'the-alternate-india',
-  'vilvah-store',
-  'aagghhoo',
-  'masilo',
-  'the-nesavu',
-  // demoted — visually indistinguishable from a US DTC brand
-  'polite-society',
-  'pluchi',
-  'choosekind',
-  'superbottoms',
+  // First fold — self-evident India-shout in a no-copy thumbnail (§12A.1)
+  'fizzy-goblet',        // §12A #1
+  'tarinika',            // resolves Open decisions #5 (2026-07-15): jewelry slot, temple-inspired India-shout
+  'the-nesavu',          // §12A.1 first-fold (replaces Baby Forest as the baby visual)
+  'nicobar',             // §12A.1 first-fold, demoted — never the isolated lead slide
+  'banjaaran-studio',    // §12A #7
+  // Breadth builders — craft-legible but not first-fold visual proof
+  'baby-forest',         // §12A #5, pulled from the fold (§12A.1); lead breadth-builder
+  'isharya',             // demoted from jewelry slot (Open decisions #5, 2026-07-15) — global-editorial styling reads generic without copy
+  'gullylabs',           // §12A #21
+  'vilvah-store',        // §12A #26
+  'aagghhoo',            // §12A #29
+  'masilo',              // §12A #33
+  'the-alternate-india', // §12A #34
+  // Tier 4 — Western-styled; featuring in the first fold reinforces F-002
+  'superbottoms',        // §12A #44
+  'pluchi',              // §12A #45
+  'choosekind',          // §12A #46
+  'polite-society',      // §12A #47
 ];
 
 /**
@@ -336,6 +381,161 @@ export const getFeaturedProductIds = brandIds => {
  */
 export const getBrandConfiguration = brandId => {
   return brandConfigurations[brandId] || { featuredProductIds: [] };
+};
+
+/**
+ * ================ /brands page section & ordering config ================
+ *
+ * Grounded in the homepage-hero-prd.md brand-order research/design/critique
+ * (2026-07-16): the hero's carousel rubric (no-copy, single-slide-in-
+ * isolation) doesn't transfer as-is to the full /brands catalog page, where
+ * BrandCardHome already shows tagline/certifications/location. This section
+ * adapts it: drops the "needs explanation" penalty entirely (copy is visible
+ * here), and uses the remaining axes to pick a small stable "anchor" lead per
+ * section instead of ranking every brand.
+ */
+
+/**
+ * A category needs at least this many *live* brands (with fetched products)
+ * to get its own /brands section header. Thinner categories are folded into
+ * MORE_TO_DISCOVER_CATEGORY so the page never renders a header over 2-3
+ * lonely cards — and a category graduates to its own section automatically
+ * as supply grows, with no config change required.
+ */
+export const MIN_BRANDS_FOR_OWN_SECTION = 5;
+
+/**
+ * Combined section for every category currently below MIN_BRANDS_FOR_OWN_SECTION.
+ */
+export const MORE_TO_DISCOVER_CATEGORY = {
+  id: 'more_to_discover',
+  label: 'More to Discover',
+};
+
+/** A section needs at least this many brands to earn a second anchor slot. */
+const MIN_BRANDS_FOR_TWO_ANCHORS = 3;
+const MIN_BRANDS_FOR_ONE_ANCHOR = 2;
+
+/**
+ * Per-brand scores (1-5) powering /brands anchor selection. Adapted from the
+ * hero's India-shout / aspiration / diaspora-pull rubric (homepage-hero-prd.md
+ * §12A/§12A.1) — the "needs-explanation" penalty is intentionally dropped
+ * here (see block comment above). Keyed by slug, same pattern as
+ * CURATED_BRAND_SLUG_ORDER.
+ *
+ * indiaShout   — how self-evidently "Indian craft" the brand reads at a glance
+ * aspiration   — modern/elevated taste appeal, independent of indiaShout.
+ *                E.g. ChooseKind scores low indiaShout but high aspiration:
+ *                distinctive, cute, contemporary design earns it an anchor
+ *                slot on its own merits, not as an India-shout signal.
+ * diasporaPull — identity/recognition pull for diaspora shoppers specifically
+ */
+const BRAND_SCORES = {
+  'fizzy-goblet':        { indiaShout: 5, aspiration: 4, diasporaPull: 3 },
+  'tarinika':            { indiaShout: 5, aspiration: 3, diasporaPull: 3 },
+  'the-nesavu':          { indiaShout: 5, aspiration: 3, diasporaPull: 4 },
+  'nicobar':             { indiaShout: 2, aspiration: 5, diasporaPull: 2 },
+  'banjaaran-studio':    { indiaShout: 4, aspiration: 4, diasporaPull: 3 },
+  'baby-forest':         { indiaShout: 3, aspiration: 3, diasporaPull: 3 },
+  'isharya':             { indiaShout: 3, aspiration: 4, diasporaPull: 2 },
+  'gullylabs':           { indiaShout: 3, aspiration: 3, diasporaPull: 2 },
+  'vilvah-store':        { indiaShout: 3, aspiration: 3, diasporaPull: 2 },
+  'aagghhoo':            { indiaShout: 2, aspiration: 3, diasporaPull: 1 },
+  'masilo':              { indiaShout: 2, aspiration: 3, diasporaPull: 1 },
+  'the-alternate-india': { indiaShout: 3, aspiration: 3, diasporaPull: 2 },
+  'superbottoms':        { indiaShout: 1, aspiration: 3, diasporaPull: 1 },
+  'pluchi':              { indiaShout: 1, aspiration: 3, diasporaPull: 1 },
+  'choosekind':          { indiaShout: 1, aspiration: 5, diasporaPull: 1 },
+  'polite-society':      { indiaShout: 1, aspiration: 3, diasporaPull: 1 },
+};
+
+// Neutral default for any brand not yet scored, so new/unscored brands render
+// (in the rotation tier, never as an anchor pick) instead of erroring.
+const DEFAULT_BRAND_SCORE = { indiaShout: 2, aspiration: 3, diasporaPull: 2 };
+
+/**
+ * Get a brand's anchor-selection score.
+ * @param {string} brandId - Brand user UUID
+ * @returns {{indiaShout: number, aspiration: number, diasporaPull: number}}
+ */
+export const getBrandScore = brandId => {
+  const slug = brandConfigurations[brandId]?.slug;
+  return (slug && BRAND_SCORES[slug]) || DEFAULT_BRAND_SCORE;
+};
+
+/** ISO week number (UTC) — used to seed the rotation tier so it's stable for
+ * everyone for a week, then changes, instead of reshuffling on every load. */
+const getISOWeek = (date = new Date()) => {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+};
+
+const hashString = str => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+};
+
+// Deterministic seeded shuffle (linear congruential generator) — same seed
+// always produces the same order, unlike Math.random().
+const seededShuffle = (arr, seed) => {
+  const a = [...arr];
+  let s = seed;
+  const nextRandom = () => {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(nextRandom() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+/**
+ * Order the brands within one /brands section: up to 2 stable "anchor" cards
+ * chosen from BRAND_SCORES — slot 1 = strongest indiaShout, slot 2 =
+ * strongest aspiration among the rest, so the lead row is never two
+ * craft-heavy picks in a row — followed by the remaining brands in a
+ * weekly-seeded (not per-load-random) rotation, seeded independently per
+ * section so categories don't all rotate in lockstep.
+ * @param {string} sectionId - category id or MORE_TO_DISCOVER_CATEGORY.id
+ * @param {Array<string>} brandIds - live brand IDs in this section
+ * @returns {Array<string>} ordered brand IDs
+ */
+export const getOrderedSectionBrandIds = (sectionId, brandIds) => {
+  if (brandIds.length === 0) return [];
+
+  const anchorCount =
+    brandIds.length >= MIN_BRANDS_FOR_TWO_ANCHORS
+      ? 2
+      : brandIds.length >= MIN_BRANDS_FOR_ONE_ANCHOR
+      ? 1
+      : 0;
+
+  const remaining = brandIds.map(id => ({ id, score: getBrandScore(id) }));
+  const anchors = [];
+
+  if (anchorCount >= 1) {
+    remaining.sort((a, b) => b.score.indiaShout - a.score.indiaShout);
+    anchors.push(remaining.shift());
+  }
+  if (anchorCount >= 2) {
+    remaining.sort((a, b) => b.score.aspiration - a.score.aspiration);
+    anchors.push(remaining.shift());
+  }
+
+  const weekSeed = hashString(`${sectionId}-${getISOWeek()}`);
+  const rotated = seededShuffle(
+    remaining.map(r => r.id),
+    weekSeed
+  );
+
+  return [...anchors.map(a => a.id), ...rotated];
 };
 
 /**

@@ -13,7 +13,7 @@
  *     brandName="Aagghhoo"
  *     productUrl="https://..."
  *     isVerified={true}
- *     onContinue={url => window.open(url, '_blank', 'noopener,noreferrer')}
+ *     onContinue={url => openBrandStorefront(url, trackingParams)}
  *     onClose={() => setRedirectSheetOpen(false)}
  *   />
  */

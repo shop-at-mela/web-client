@@ -7,6 +7,10 @@ import {
   getFeaturedProductIds,
   getBrandConfiguration,
   getBrandCategory,
+  getOrderedSectionBrandIds,
+  BRAND_CATEGORIES,
+  MIN_BRANDS_FOR_OWN_SECTION,
+  MORE_TO_DISCOVER_CATEGORY,
 } from '../../config/configBrands';
 import { denormalisedEntities } from '../../util/data';
 
@@ -774,6 +778,63 @@ export const getBrandsGroupedByCategory = state => {
     groups[cat].push({ brand, products });
   });
   return groups;
+};
+
+/**
+ * Get /brands page sections: categories with >= MIN_BRANDS_FOR_OWN_SECTION
+ * live brands get their own section (ordered biggest-first, so section order
+ * follows actual catalog depth rather than a hand-maintained list); every
+ * category below that threshold is folded into one MORE_TO_DISCOVER_CATEGORY
+ * section, so no section ever renders a header over 2-3 lonely cards. Within
+ * each section, brands are ordered via getOrderedSectionBrandIds (stable
+ * anchor picks + weekly-seeded rotation) instead of a per-render shuffle.
+ *
+ * See homepage-hero-prd.md brand-order research/design/critique (2026-07-16).
+ *
+ * @returns {Array<{id: string, label: string, brands: Array<{brand, products}>}>}
+ */
+export const getBrandsPageSections = state => {
+  const groups = getBrandsGroupedByCategory(state);
+
+  const bigCategories = [];
+  const thinCategoryEntries = [];
+
+  BRAND_CATEGORIES.forEach(({ id, label }) => {
+    const entries = groups[id] || [];
+    if (entries.length >= MIN_BRANDS_FOR_OWN_SECTION) {
+      bigCategories.push({ id, label, entries });
+    } else {
+      thinCategoryEntries.push(...entries);
+    }
+  });
+  // Categories not present in BRAND_CATEGORIES (defensive; shouldn't happen
+  // in practice) are treated the same as a thin category.
+  if (groups.uncategorized) {
+    thinCategoryEntries.push(...groups.uncategorized);
+  }
+
+  bigCategories.sort((a, b) => b.entries.length - a.entries.length);
+
+  const sections = [...bigCategories];
+  if (thinCategoryEntries.length > 0) {
+    sections.push({
+      id: MORE_TO_DISCOVER_CATEGORY.id,
+      label: MORE_TO_DISCOVER_CATEGORY.label,
+      entries: thinCategoryEntries,
+    });
+  }
+
+  return sections.map(({ id, label, entries }) => {
+    const entryById = {};
+    entries.forEach(entry => {
+      entryById[entry.brand.id.uuid] = entry;
+    });
+    const orderedIds = getOrderedSectionBrandIds(
+      id,
+      entries.map(entry => entry.brand.id.uuid)
+    );
+    return { id, label, brands: orderedIds.map(brandId => entryById[brandId]) };
+  });
 };
 
 export const getBrandsPagination = state => state.BrandsPage.pagination;

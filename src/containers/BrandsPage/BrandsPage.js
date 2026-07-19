@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
@@ -9,28 +9,18 @@ import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { createResourceLocatorString } from '../../util/routes';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 
-import { BRAND_CATEGORIES } from '../../config/configBrands';
 import { Page, LayoutSingleColumn, BrandCarousel, BrandCardHome } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
 import {
   loadData,
-  getBrandsGroupedByCategory,
+  getBrandsPageSections,
   getBrandsInProgress,
 } from './BrandsPage.duck';
 import css from './BrandsPage.module.css';
 
 const BRANDS_PER_ROW = 6;
-
-const shuffleArray = arr => {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-};
 
 // Splits brands into balanced rows of at most BRANDS_PER_ROW.
 // 7 brands → [4,3]; 13 → [5,5,3]
@@ -47,7 +37,7 @@ const chunkIntoRows = brands => {
 
 const BrandsPageComponent = props => {
   const {
-    brandsGroupedByCategory = {},
+    sections = [],
     brandsInProgress,
     scrollingDisabled,
   } = props;
@@ -58,33 +48,10 @@ const BrandsPageComponent = props => {
 
   const canonicalUrl = createResourceLocatorString('BrandsPage', routeConfiguration, {}, {});
 
-  const brandCount = Object.values(brandsGroupedByCategory).reduce(
-    (sum, brands) => sum + brands.length,
-    0
-  );
+  const brandCount = sections.reduce((sum, section) => sum + section.brands.length, 0);
 
   const schemaTitle = intl.formatMessage({ id: 'BrandsPage.title' }, { brandCount });
   const schemaDescription = intl.formatMessage({ id: 'BrandsPage.description' }, { brandCount });
-
-  // Stable key changes only when the data set changes (new API response)
-  const dataKey = Object.entries(brandsGroupedByCategory)
-    .map(([cat, brands]) => `${cat}:${brands.length}`)
-    .sort()
-    .join('|');
-
-  // Randomise brand order once per page load; stable within the session
-  const shuffledByCategory = useMemo(() => {
-    const result = {};
-    for (const [catId, brands] of Object.entries(brandsGroupedByCategory)) {
-      result[catId] = shuffleArray(brands);
-    }
-    return result;
-    // dataKey is a stable string digest of brandsGroupedByCategory — changes only
-    // when the API delivers new data, not on every re-render of the parent.
-    // Using it instead of the object reference prevents reshuffling the brand order
-    // on unrelated re-renders while still updating when brands actually change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataKey]);
 
   const heroSection = (
     <div className={css.heroSection}>
@@ -94,14 +61,12 @@ const BrandsPageComponent = props => {
     </div>
   );
 
-  const activeCategories = BRAND_CATEGORIES.filter(
-    ({ id }) => (brandsGroupedByCategory[id] || []).length > 0
-  );
+  const activeSections = sections.filter(section => section.brands.length > 0);
 
-  const categoryNav = activeCategories.length > 1 ? (
+  const categoryNav = activeSections.length > 1 ? (
     <nav className={css.categoryNav} aria-label="Browse by category">
       <div className={css.categoryPills}>
-        {activeCategories.map(({ id, label }) => (
+        {activeSections.map(({ id, label }) => (
           <a key={id} href={`#category-${id}`} className={css.categoryPill}>
             {label}
           </a>
@@ -135,9 +100,7 @@ const BrandsPageComponent = props => {
     ? emptyContent
     : (
       <>
-        {BRAND_CATEGORIES.map(({ id, label }) => {
-          const brands = shuffledByCategory[id] || brandsGroupedByCategory[id] || [];
-          if (brands.length === 0) return null;
+        {activeSections.map(({ id, label, brands }) => {
           const rows = chunkIntoRows(brands);
           return (
             <div key={id} id={`category-${id}`} className={css.categorySection}>
@@ -196,7 +159,7 @@ const BrandsPageComponent = props => {
 };
 
 const mapStateToProps = state => ({
-  brandsGroupedByCategory: getBrandsGroupedByCategory(state),
+  sections: getBrandsPageSections(state),
   brandsInProgress: getBrandsInProgress(state),
   scrollingDisabled: isScrollingDisabled(state),
 });

@@ -23,6 +23,7 @@ import {
   LISTING_STATE_PUBLISHED,
 } from '../../util/types';
 import { formatMoney, formatCurrencyMajorUnit } from '../../util/currency';
+import { openBrandStorefront } from '../../util/analytics/brandClickout';
 import { createSlug, parse, stringify } from '../../util/urlHelpers';
 import { userDisplayNameAsString } from '../../util/data';
 import {
@@ -325,6 +326,18 @@ const OrderPanel = React.forwardRef((props, ref) => {
   const { listingType, unitType, transactionProcessAlias = '', priceVariants, startTimeInterval, brand, productUrl } =
     publicData || {};
 
+  // brand_clickout tracking params (see mela-docs/product/prds/crossshop-tracking-prd.md).
+  // onShopNow (when passed by the parent container) already routes through the
+  // pre-redirect trust sheet with its own tracking params bound — this fallback only
+  // applies when a caller renders OrderPanel without passing onShopNow.
+  const brandTrackingParams = {
+    brandName: brand,
+    brandId: author?.id?.uuid,
+    category: publicData.categoryLevel3 || publicData.categoryLevel2 || publicData.categoryLevel1,
+    productId: listing?.id?.uuid,
+  };
+  const shopNow = onShopNow || (url => openBrandStorefront(url, brandTrackingParams));
+
   const processName = resolveLatestProcessName(transactionProcessAlias.split('/')[0]);
   const lineItemUnitType = lineItemUnitTypeMaybe || `line-item/${unitType}`;
 
@@ -545,6 +558,7 @@ const OrderPanel = React.forwardRef((props, ref) => {
             onContactUser={onContactUser}
             brand={brand}
             productUrl={productUrl}
+            onShopNow={shopNow}
             {...sharedProps}
           />
         ) : showInquiryForm ? (
@@ -553,6 +567,7 @@ const OrderPanel = React.forwardRef((props, ref) => {
             onSubmit={onSubmit}
             brand={brand}
             productUrl={productUrl}
+            onShopNow={shopNow}
             finePrintComponent={SubmitFinePrint}
             isOwnListing={isOwnListing}
           />
@@ -593,13 +608,7 @@ const OrderPanel = React.forwardRef((props, ref) => {
             <FormattedMessage id="OrderPanel.closedListingButtonText" />
           </div>
         ) : brand && productUrl ? (
-          <PrimaryButton
-            onClick={() =>
-              onShopNow
-                ? onShopNow(productUrl)
-                : window.open(productUrl, '_blank', 'noopener,noreferrer')
-            }
-          >
+          <PrimaryButton onClick={() => shopNow(productUrl)}>
             {isOutOfStock ? (
               <FormattedMessage id="OrderPanel.ctaButtonMessageViewOnBrand" values={{ brand }} />
             ) : (

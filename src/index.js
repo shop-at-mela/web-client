@@ -33,6 +33,7 @@ import { mergeConfig } from './util/configHelpers';
 import { matchPathname } from './util/routes';
 import * as apiUtils from './util/api';
 import * as log from './util/log';
+import { captureEntrySource } from './util/analytics/entrySource';
 
 // Import relevant global duck files
 import { authInfo } from './ducks/auth.duck';
@@ -125,6 +126,11 @@ const setupAnalyticsHandlers = googleAnalyticsId => {
 if (typeof window !== 'undefined') {
   // set up logger with Sentry DSN client key and environment
   log.setup();
+
+  // First-touch entry_source capture for cross-shop attribution (see
+  // src/util/analytics/entrySource.js). This module only runs on a full page
+  // load, so calling it here is naturally "once per session, first page only."
+  captureEntrySource();
 
   const baseUrl = appSettings.sdk.baseUrl ? { baseUrl: appSettings.sdk.baseUrl } : {};
   const assetCdnBaseUrl = appSettings.sdk.assetCdnBaseUrl

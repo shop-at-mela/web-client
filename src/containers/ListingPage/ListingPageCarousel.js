@@ -8,6 +8,7 @@ import { useDesktopLayoutManager } from './layoutUtils';
 // Utils
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { shouldShowRedirectTrust, markRedirectTrustShown } from '../../util/sentimentCapture';
+import { openBrandStorefront } from '../../util/analytics/brandClickout';
 import { isMelaVerified } from '../../util/certificationHelpers';
 import { LISTING_STATE_PENDING_APPROVAL, LISTING_STATE_CLOSED, propTypes } from '../../util/types';
 import { types as sdkTypes } from '../../util/sdkLoader';
@@ -118,6 +119,7 @@ export const ListingPageComponent = props => {
   const [mounted, setMounted] = useState(false);
   const [redirectSheetOpen, setRedirectSheetOpen] = useState(false);
   const [pendingRedirectUrl, setPendingRedirectUrl] = useState(null);
+  const [pendingTrackingParams, setPendingTrackingParams] = useState(null);
 
   // Desktop-only layout management (mobile-safe)
   const { registerOrderPanel, registerContentSection, layoutManager } = useDesktopLayoutManager();
@@ -320,12 +322,19 @@ export const ListingPageComponent = props => {
 
 
   const handleShopNow = url => {
+    const trackingParams = {
+      brandName: publicData.brand,
+      brandId: ensuredAuthor?.id?.uuid,
+      category: publicData.categoryLevel3 || publicData.categoryLevel2 || publicData.categoryLevel1,
+      productId: currentListing?.id?.uuid,
+    };
     if (shouldShowRedirectTrust()) {
       markRedirectTrustShown();
       setPendingRedirectUrl(url);
+      setPendingTrackingParams(trackingParams);
       setRedirectSheetOpen(true);
     } else {
-      window.open(url, '_blank', 'noopener,noreferrer');
+      openBrandStorefront(url, trackingParams);
     }
   };
 
@@ -614,7 +623,7 @@ export const ListingPageComponent = props => {
           brandName={brandName || authorDisplayName}
           productUrl={pendingRedirectUrl}
           isVerified={isMelaVerified(publicData)}
-          onContinue={url => window.open(url, '_blank', 'noopener,noreferrer')}
+          onContinue={url => openBrandStorefront(url, pendingTrackingParams)}
           onClose={() => setRedirectSheetOpen(false)}
         />
       )}

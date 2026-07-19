@@ -135,6 +135,7 @@ const renderForm = formRenderProps => {
     marketplaceName,
     brand,
     productUrl,
+    onShopNow,
     values,
   } = formRenderProps;
 
@@ -283,7 +284,11 @@ const renderForm = formRenderProps => {
         {brand && productUrl ? (
           <PrimaryButton
             type="button"
-            onClick={() => window.open(productUrl, '_blank', 'noopener,noreferrer')}
+            onClick={() =>
+              onShopNow
+                ? onShopNow(productUrl)
+                : window.open(productUrl, '_blank', 'noopener,noreferrer')
+            }
           >
             {hasStock ? (
               <FormattedMessage id="ProductOrderForm.ctaButtonShopFromBrand" values={{ brand }} />

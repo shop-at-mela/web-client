@@ -167,7 +167,12 @@ const mergeAnalyticsConfig = (hostedAnalyticsConfig, defaultAnalyticsConfig) => 
   const plausibleDomains = joinStrings(plausibleDomainsHosted, plausibleDomainsDefault);
   const plausibleDomainsMaybe = plausibleDomains ? { plausibleDomains } : {};
 
-  return { googleAnalyticsId, ...plausibleDomainsMaybe };
+  // GTM/GA4(-via-GTM)/Clarity are env-var only for now (see
+  // mela-docs/product/prds/crossshop-tracking-prd.md) — no hosted-asset override exists
+  // for these yet, so they pass through from defaultAnalyticsConfig untouched.
+  const { gtmId, ga4Id, clarityId } = defaultAnalyticsConfig;
+
+  return { googleAnalyticsId, ...plausibleDomainsMaybe, gtmId, ga4Id, clarityId };
 };
 
 ////////////////////
