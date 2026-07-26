@@ -30,7 +30,9 @@ const sdk = createInstance({
 // Only two validated occasions for Mela's US diaspora audience.
 // 'everyday' and 'new-baby' removed — covered by age-group filters.
 
-const OCCASIONS = [
+// Exported so other surfaces (e.g. BrandOccasionModule on the brand storefront)
+// reuse the same occasion copy/config instead of redefining it.
+export const OCCASIONS = [
   {
     option: 'diwali-festivals',
     label: 'Diwali & Festivals',
@@ -50,7 +52,7 @@ const OCCASIONS = [
 ];
 
 // Diwali season: Oct 1 – Nov 15
-const isDiwaliSeason = () => {
+export const isDiwaliSeason = () => {
   const now = new Date();
   const month = now.getMonth() + 1;
   const day = now.getDate();

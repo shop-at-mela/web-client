@@ -144,6 +144,7 @@ export { default as ListingCardMini } from './ListingCardMini/ListingCardMini';
 export { default as ListingImage } from './ListingImage/ListingImage';
 export { default as BrandCard } from './BrandCard/BrandCard';
 export { default as BrandCardHome } from './BrandCardHome/BrandCardHome';
+export { default as BrandHeroCard } from './BrandHeroCard/BrandHeroCard';
 export { default as PartnerCTACard } from './PartnerCTACard/PartnerCTACard';
 export { default as CertificationBadge } from './CertificationBadge/CertificationBadge';
 export { default as BrandCarousel } from './BrandCarousel/BrandCarousel';

@@ -195,6 +195,24 @@ const brandConfigurationsByEnv = {
       category: 'jewelry_and_accessories',
       featuredProductIds: [],
     },
+    '6a5cd41e-d645-4d56-9956-7ceafe8566b6': {
+      // Kaunteya
+      slug: 'kaunteya',
+      category: 'home_and_kitchen',
+      featuredProductIds: [],
+    },
+    '6a5f8047-d395-4673-87dd-895338cb10f8': {
+      // House of Chikankari
+      slug: 'house-of-chikankari',
+      category: 'fashion',
+      featuredProductIds: [],
+    },
+    '6a5f8100-30a0-4134-8869-2616a1669b56': {
+      // Ankid
+      slug: 'ankid',
+      category: 'baby_and_kids',
+      featuredProductIds: [],
+    },
     '68d8a4e9-533c-4b9c-914d-8b21edb8ee2d': {
       // mela-admin (Test) — no public slug; admin account
       featuredProductIds: [],
@@ -232,6 +250,9 @@ const allBrandIdsByEnv = {
     '6a53dc15-d30a-4338-bdaf-b8bc718e54ef', // isharya
     '6a30bcd4-e078-447d-9064-2cf773961ab9', // nicobar
     '6a585154-a59e-4017-ba71-70732df51b71', // tarinika
+    '6a5cd41e-d645-4d56-9956-7ceafe8566b6', // kaunteya
+    '6a5f8047-d395-4673-87dd-895338cb10f8', // house-of-chikankari
+    '6a5f8100-30a0-4134-8869-2616a1669b56', // ankid
   ],
   production: [
     // Add production brand UUIDs here
@@ -311,6 +332,7 @@ const CURATED_BRAND_SLUG_ORDER = [
   'fizzy-goblet',        // §12A #1
   'tarinika',            // resolves Open decisions #5 (2026-07-15): jewelry slot, temple-inspired India-shout
   'the-nesavu',          // §12A.1 first-fold (replaces Baby Forest as the baby visual)
+  'ankid',               // added 2026-07-21: indiaShout:5 (hand block-print, bandhgala/sharara sets) — same visual-craft logic as The Nesavu
   'nicobar',             // §12A.1 first-fold, demoted — never the isolated lead slide
   'banjaaran-studio',    // §12A #7
   // Breadth builders — craft-legible but not first-fold visual proof
@@ -447,6 +469,7 @@ const BRAND_SCORES = {
   'pluchi':              { indiaShout: 1, aspiration: 3, diasporaPull: 1 },
   'choosekind':          { indiaShout: 1, aspiration: 5, diasporaPull: 1 },
   'polite-society':      { indiaShout: 1, aspiration: 3, diasporaPull: 1 },
+  'ankid':               { indiaShout: 5, aspiration: 4, diasporaPull: 4 },
 };
 
 // Neutral default for any brand not yet scored, so new/unscored brands render

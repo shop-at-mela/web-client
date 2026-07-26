@@ -40,84 +40,153 @@
 }
 
 /* ===============================================
-   Brand Header
+   Brand Hero Band (P1.1)
+   Mobile-first: stacked banner + logo chip, content below.
+   See nimbalyst-local/mockups/brand-storefront-v2-fizzy-goblet-mobile.mockup.html
    =============================================== */
 .brandHeader {
   width: 100%;
-  padding: 20px 16px 20px 16px;
+  background: #fdfaf5;
   border-bottom: 1px solid var(--colorGrey100);
   margin-bottom: 32px;
 }
 
-.brandHeaderContent {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 20px;
+.heroMedia {
+  position: relative;
+  height: 235px;
+}
+
+.heroImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.heroImgFallback {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--colorAccentLight) 0%, #fdfaf5 100%);
+}
+
+.madeInIndia {
+  position: absolute;
+  z-index: 4;
+  right: 12px;
+  bottom: 12px;
+  background: rgba(26, 26, 78, 0.85);
+  color: var(--colorWhite);
+  font-size: 10px;
+  font-weight: var(--fontWeightBold);
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 4px;
 }
 
 .logoContainer {
+  position: absolute;
+  z-index: 5;
+  left: 16px;
+  bottom: -26px;
   flex-shrink: 0;
 }
 
 .brandLogo {
-  width: 80px;
-  height: 80px;
-  border-radius: 10px;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
   object-fit: cover;
-  border: 2px solid var(--colorGrey100);
+  border: 2px solid var(--colorWhite);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
 }
 
 .logoPlaceholder {
-  width: 80px;
-  height: 80px;
-  border-radius: 10px;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
   background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorGrey100) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--colorGrey100);
+  border: 2px solid var(--colorWhite);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
 }
 
 .logoInitial {
-  font-size: 32px;
+  font-size: 26px;
   font-weight: var(--fontWeightBold);
   color: var(--colorGrey300);
+}
+
+.brandHeaderContent {
+  padding: 38px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 12px;
+}
+
+.vettedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  background: var(--marketplaceColor);
+  color: var(--colorWhite);
+  font-size: 11px;
+  font-weight: var(--fontWeightSemiBold);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 4px 11px;
+  border-radius: 20px;
+}
+
+.vettedBadge svg {
+  width: 12px;
+  height: 12px;
 }
 
 .brandInfo {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   max-width: 100%;
 }
 
 .brandName {
+  font-family: var(--fontFamilyDisplay);
   font-size: 28px;
-  font-weight: var(--fontWeightBold);
-  color: var(--colorGrey700);
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--marketplaceColorDark);
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .tagline {
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.5;
-  color: var(--colorGrey500);
+  color: var(--colorGrey600);
   margin: 0;
   max-width: 600px;
 }
 
-.brandMeta {
+.brandMeta,
+.heroMetaStatic {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  color: var(--colorGrey300);
+  font-size: 12.5px;
+  color: var(--colorGrey500);
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
+}
+
+.brandMeta {
+  color: var(--colorGrey300);
 }
 
 .origin,
@@ -135,8 +204,95 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  justify-content: center;
+  justify-content: flex-start;
   margin-top: 4px;
+}
+
+.heroStory {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--colorGrey700);
+  border-left: 3px solid var(--colorAccent);
+  padding-left: 12px;
+  margin: 0;
+  max-width: 600px;
+}
+
+.readFullStoryLink {
+  color: var(--marketplaceColor);
+  font-weight: var(--fontWeightSemiBold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.readFullStoryLink:hover {
+  text-decoration: underline;
+}
+
+.craftChip {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 7px;
+  background: var(--colorAccentLight);
+  color: #9a6410;
+  font-size: 12px;
+  font-weight: var(--fontWeightSemiBold);
+  line-height: 1.45;
+  padding: 7px 11px;
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.ctaCol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+  width: 100%;
+}
+
+.btnPrimary,
+.btnSecondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: var(--fontWeightSemiBold);
+  min-height: 48px;
+  padding: 13px 22px;
+  border-radius: 8px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+
+.btnPrimary {
+  background: var(--marketplaceColor);
+  color: var(--colorWhite);
+  box-shadow: 0 2px 6px rgba(38, 34, 97, 0.25);
+}
+
+.btnPrimary:hover {
+  background: var(--marketplaceColorDark);
+}
+
+.btnSecondary {
+  background: var(--colorWhite);
+  color: var(--marketplaceColorDark);
+  border: 1.5px solid var(--marketplaceColor);
+  padding: 11.5px 22px;
+}
+
+.redirectMicrocopy {
+  font-size: 12px;
+  color: var(--colorGrey500);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.redirectMicrocopy strong {
+  color: var(--colorGrey600);
 }
 
 /* ===============================================
@@ -239,11 +395,23 @@
   margin-top: 32px;
 }
 
+.allProductsHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 24px 0;
+}
+
 .allProductsTitle {
   font-size: 20px;
   font-weight: var(--fontWeightBold);
   color: var(--colorGrey700);
-  margin: 0 0 24px 0;
+  margin: 0;
+}
+
+.curatedOrderNote {
+  font-size: 12px;
+  color: var(--colorGrey500);
 }
 
 /* ===============================================
@@ -589,63 +757,16 @@
   margin-bottom: 8px;
 }
 
-/* Empty logo placeholder for owner */
-.logoPlaceholderEmpty {
-  background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorWhite) 100%);
-  border: 2px dashed var(--colorGrey200);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.logoPlaceholderEmpty:hover {
-  border-color: var(--marketplaceColor);
-  background: linear-gradient(135deg, #f8fffe 0%, var(--colorWhite) 100%);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.logoPlaceholderEmpty .placeholder {
-  border: none;
-  background: transparent;
-  padding: 16px;
-  margin: 0;
-  flex-direction: column;
-  text-align: center;
-}
-
-.logoPlaceholderEmpty .placeholderIcon {
-  font-size: 40px;
-  margin-bottom: 8px;
-}
-
-.logoPlaceholderEmpty .placeholderTitle {
-  font-size: 13px;
-}
-
-.logoPlaceholderEmpty .placeholderDescription {
-  display: none;
-}
-
-.logoPlaceholderEmpty .placeholderCta {
-  font-size: 12px;
-  padding: 6px 12px;
-}
-
 /* ===============================================
    Responsive - Tablet
    =============================================== */
 @media (--viewportMedium) {
-  .brandHeader {
-    padding: 32px 24px 24px 24px;
+  .heroMedia {
+    height: 320px;
   }
 
   .brandHeaderContent {
-    flex-direction: row;
-    align-items: flex-start;
-    text-align: left;
-    gap: 24px;
+    padding: 24px;
   }
 
   /* Increase padding on tablet */
@@ -660,39 +781,13 @@
     padding-right: 24px;
   }
 
-  .brandLogo {
-    width: 120px;
-    height: 120px;
-  }
-
-  .logoPlaceholder {
-    width: 120px;
-    height: 120px;
-  }
-
-  .logoInitial {
-    font-size: 48px;
-  }
-
-  .brandInfo {
-    align-items: flex-start;
-    flex: 1;
-  }
-
   .brandName {
-    font-size: 32px;
+    font-size: 34px;
   }
 
   .tagline {
     font-size: 17px;
-  }
-
-  .brandMeta {
-    justify-content: flex-start;
-  }
-
-  .certifications {
-    justify-content: flex-start;
+    max-width: 560px;
   }
 
   /* Featured products - Show 2 full cards + 20% of 3rd */
@@ -734,8 +829,30 @@
    Responsive - Desktop
    =============================================== */
 @media (min-width: 1024px) {
+  /* Desktop: 2-column hero — media left, content right.
+     See nimbalyst-local/mockups/brand-storefront-v2-fizzy-goblet.mockup.html */
   .brandHeader {
-    padding: 40px 32px 32px 32px;
+    display: grid;
+    grid-template-columns: minmax(420px, 50%) 1fr;
+    align-items: stretch;
+  }
+
+  .heroMedia {
+    height: auto;
+  }
+
+  /* Logo stays a corner badge on the image rather than straddling the grid
+     boundary — the desktop mockup moves it into the content column, but that
+     needs a DOM split this component doesn't have; this keeps the same markup
+     while avoiding the overlap looking broken at the two-column seam. */
+  .logoContainer {
+    left: 20px;
+    bottom: 20px;
+  }
+
+  .brandHeaderContent {
+    padding: 48px 48px 40px;
+    justify-content: center;
   }
 
   /* Desktop padding */
@@ -745,28 +862,23 @@
     padding: 0 32px;
   }
 
-  .brandLogo {
-    width: 140px;
-    height: 140px;
-    border-radius: 12px;
-  }
-
-  .logoPlaceholder {
-    width: 140px;
-    height: 140px;
-    border-radius: 12px;
-  }
-
-  .logoInitial {
-    font-size: 56px;
-  }
-
   .brandName {
-    font-size: 36px;
+    font-size: 42px;
   }
 
   .tagline {
     font-size: 18px;
+  }
+
+  .ctaCol {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: auto;
+  }
+
+  .btnPrimary,
+  .btnSecondary {
+    width: auto;
   }
 
   /* Featured products - Show 3 full cards + 20% of 4th */

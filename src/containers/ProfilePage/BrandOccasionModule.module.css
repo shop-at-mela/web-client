@@ -1,0 +1,132 @@
+.occasionModule {
+  margin: 32px 0 40px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey700);
+  margin: 0 0 20px;
+}
+
+.occasionPanels {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+
+  @media (--viewportMedium) {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+}
+
+/* Soft color tint, no border or border-radius — reads as a shaded section of
+   the page rather than a bordered card. ListingCard is already its own
+   bordered/rounded card; adding border + radius here on top of that is what
+   created the box-in-a-box feeling, not the tint itself. */
+.occasionPanel {
+  display: flex;
+  flex-direction: column;
+  /* Mobile: flush left, aligns with the section title above it.
+     Tablet+: panels sit side-by-side, so symmetric padding keeps each one
+     visually centered in its own tinted block. */
+  padding: 1.25rem 1.25rem 1.25rem 0;
+
+  @media (--viewportMedium) {
+    padding: 1.25rem;
+  }
+}
+
+.occasionPanelFestive {
+  background: rgba(38, 34, 97, 0.05);
+}
+
+.occasionPanelGifting {
+  background: rgba(240, 160, 48, 0.06);
+}
+
+.occasionPanelHeader {
+  margin-bottom: 1.25rem;
+}
+
+.occasionPanelTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--colorGrey700);
+  margin: 0;
+
+  @media (--viewportMedium) {
+    font-size: 1.25rem;
+  }
+}
+
+.productCarousel {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: 0.5rem;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.carouselCard {
+  flex: 0 0 calc(50% - 0.5rem);
+  scroll-snap-align: start;
+
+  @media (min-width: 640px) {
+    flex: 0 0 calc(33.333% - 0.75rem);
+  }
+}
+
+.occasionCtaRow {
+  margin-top: 1.25rem;
+}
+
+.occasionCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  min-height: 44px;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.occasionCtaFestive {
+  background: var(--marketplaceColor);
+  color: #fff;
+
+  &:hover {
+    background: var(--marketplaceColorDark);
+    box-shadow: 0 4px 12px rgba(38, 34, 97, 0.3);
+  }
+}
+
+.occasionCtaGifting {
+  background: #fff;
+  color: var(--colorPrimaryButtonDark);
+  border: 1.5px solid var(--colorPrimaryButton);
+
+  &:hover {
+    background: var(--colorPrimaryButton);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(240, 160, 48, 0.35);
+  }
+}
+
+.arrow {
+  display: inline-block;
+}

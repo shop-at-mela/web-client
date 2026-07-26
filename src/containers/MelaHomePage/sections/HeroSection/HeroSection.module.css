@@ -248,12 +248,38 @@
   }
 }
 
-/* One BrandCardHome at a time */
-.brandSlide {
+/* Scroll-snap track for BrandHeroCard slides.
+   Mobile-first: 88%-wide slides, snap-centered, so the next card peeks in
+   from the edge (advertises "there are more brands" without dots doing all
+   the work). Desktop: single 340px slide; arrows/autoplay drive scrollTo. */
+.brandTrack {
+  display: flex;
+  gap: 10px;
   width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* breathing room so card hover shadow/lift isn't clipped */
+  padding: 4px 0 8px;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   @media (min-width: 768px) {
     max-width: 340px;
+    gap: 16px;
+  }
+}
+
+.trackSlide {
+  flex: 0 0 88%;
+  min-width: 0;
+  scroll-snap-align: center;
+
+  @media (min-width: 768px) {
+    flex: 0 0 100%;
   }
 }
 

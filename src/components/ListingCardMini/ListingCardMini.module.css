@@ -28,7 +28,7 @@
 .imageWrapper {
   position: relative;
   width: 100%;
-  /* Off-white background shows as letterbox when image doesn't fill the container */
+  /* Off-white background shows briefly while the image lazy-loads */
   background: #f7f5f2;
   aspect-ratio: 1 / 1;
   overflow: hidden;
@@ -38,8 +38,9 @@
 .image {
   width: 100%;
   height: 100%;
-  /* Preserve original photo proportions — letterbox with container background */
-  object-fit: contain;
+  /* Crop-to-fill and center — compact grid tile, unlike ListingCard's letterboxed contain */
+  object-fit: cover;
+  object-position: center;
 }
 
 /* Heart save button — bottom-right of the image area */

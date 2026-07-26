@@ -18,6 +18,30 @@ jest.mock('../../components/ListingCard/ListingCard', () => {
   };
 });
 
+jest.mock('../../components/RedirectTrustSheet/RedirectTrustSheet', () => {
+  return function MockRedirectTrustSheet({ isOpen, brandName, onContinue, productUrl }) {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="redirect-trust-sheet">
+        {brandName}
+        <button onClick={() => onContinue(productUrl)}>Continue</button>
+      </div>
+    );
+  };
+});
+
+jest.mock('../../util/analytics/brandClickout', () => ({
+  openBrandStorefront: jest.fn(),
+}));
+
+jest.mock('../../util/sentimentCapture', () => ({
+  shouldShowRedirectTrust: jest.fn(() => true),
+  markRedirectTrustShown: jest.fn(),
+}));
+
+import { openBrandStorefront } from '../../util/analytics/brandClickout';
+import { shouldShowRedirectTrust } from '../../util/sentimentCapture';
+
 const mockBrand = {
   id: { uuid: '68ebd6d5-ffce-4cb9-9605-3b69f2b67152' },
   type: 'user',
@@ -96,7 +120,19 @@ const mockRoutes = [
 
 const mockMessages = {
   'BrandStorefront.productsTab': 'Products ({count})',
-  'BrandStorefront.aboutTab': 'About',
+  'BrandStorefront.aboutTab': 'About & Story',
+  'BrandStorefront.curatedOrderNote': 'Curated order — hero products first, basics follow',
+  'BrandStorefront.vettedBadge': 'Vetted by Mela',
+  'BrandStorefront.madeInIndia': 'Made in India',
+  'BrandStorefront.productsCount': '{count} products',
+  'BrandStorefront.metaShipping': 'Ships to all 50 US states',
+  'BrandStorefront.metaCards': 'US cards accepted',
+  'BrandStorefront.readFullStory': 'Read the full story →',
+  'BrandStorefront.craftLabel': 'The craft:',
+  'BrandStorefront.visitStore': "Visit {brand}'s Store ↗",
+  'BrandStorefront.browseProducts': 'Browse {count} Products ↓',
+  'BrandStorefront.howMelaWorksLabel': 'How Mela works:',
+  'BrandStorefront.redirectMicrocopy': "discover here, check out on the brand's own store.",
   'BrandStorefront.productsTitle': 'Products ({count})',
   'BrandStorefront.aboutTitle': 'About {name}',
   'BrandStorefront.ourStory': 'Our Story',
@@ -219,7 +255,7 @@ describe('BrandStorefront', () => {
       );
 
       expect(screen.getAllByText(/Products/).length).toBeGreaterThanOrEqual(1);
-      expect(screen.getByText('About')).toBeInTheDocument();
+      expect(screen.getByText('About & Story')).toBeInTheDocument();
       expect(screen.queryByText(/Reviews/)).not.toBeInTheDocument();
     });
   });
@@ -562,6 +598,169 @@ describe('BrandStorefront', () => {
 
       expect(screen.getByText('No products available yet. Check back soon!')).toBeInTheDocument();
       expect(screen.queryByText('Add Your First Product')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Hero band (P1.1)', () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    const flagshipBrand = {
+      id: { uuid: '6a170717-31bf-4e1e-998f-f613e05fd9c1' },
+      type: 'user',
+      attributes: {
+        profile: {
+          displayName: 'Fizzy Goblet',
+          bio: 'Handcrafted juttis, kolhapuris, and mules for the modern wardrobe.',
+          publicData: {
+            certifications: ['gots_certified'],
+            brandLogoUrl: 'https://example.com/fizzy-goblet-logo.jpg',
+            brandCity: 'Mumbai',
+            brandCountry: 'India',
+            brandStoreUrl: 'https://global.fizzygoblet.com',
+            brandHeroImages: ['https://example.com/fizzy-goblet-hero.jpg'],
+            brandStory:
+              'Fizzy Goblet brings handcrafted footwear to the modern wardrobe.\n\nEvery pair is stitched by hand.',
+            brandCraft: 'juttis and kolhapuris stitched by hand in Mumbai',
+            melaVetted: true,
+          },
+        },
+      },
+      profileImage: null,
+    };
+
+    // 14 of 19 brands have only a logo + one-liner today — the hero band must
+    // still render without any broken/empty modules for them.
+    const sparseBrand = {
+      id: { uuid: 'sparse-brand-id' },
+      type: 'user',
+      attributes: {
+        profile: {
+          displayName: 'Sparse Brand',
+          bio: 'A brand with only the basics filled in.',
+          publicData: {},
+        },
+      },
+      profileImage: null,
+    };
+
+    it('renders full hero band for a flagship brand with complete data', () => {
+      render(
+        <TestWrapper>
+          <BrandStorefront user={flagshipBrand} listings={mockListings} />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText('Vetted by Mela')).toBeInTheDocument();
+      expect(screen.getByText(/The craft:/)).toBeInTheDocument();
+      expect(screen.getByText(/juttis and kolhapuris/)).toBeInTheDocument();
+      expect(screen.getByText(/Visit Fizzy Goblet's Store/)).toBeInTheDocument();
+      expect(screen.getByText(/Read the full story/)).toBeInTheDocument();
+      // Both the banner and the logo chip use the brand name as alt text.
+      const brandImages = screen.getAllByAltText('Fizzy Goblet');
+      expect(brandImages.some(img => img.getAttribute('src') === 'https://example.com/fizzy-goblet-hero.jpg')).toBe(
+        true
+      );
+    });
+
+    it('degrades gracefully for a sparse brand (logo + one-liner only)', () => {
+      const { container } = render(
+        <TestWrapper>
+          <BrandStorefront user={sparseBrand} listings={[]} />
+        </TestWrapper>
+      );
+
+      // No broken <img> for the missing hero image — falls back to a gradient div.
+      expect(container.querySelector('.heroImg')).not.toBeInTheDocument();
+      expect(screen.queryByText('Vetted by Mela')).not.toBeInTheDocument();
+      expect(screen.queryByText(/The craft:/)).not.toBeInTheDocument();
+      // No store URL means no primary CTA at all — not a dead/disabled button.
+      expect(screen.queryByText(/Visit .*'s Store/)).not.toBeInTheDocument();
+    });
+
+    it('does not show the vetted pill when melaVetted is not explicitly true', () => {
+      const unvettedBrand = {
+        ...flagshipBrand,
+        attributes: {
+          ...flagshipBrand.attributes,
+          profile: {
+            ...flagshipBrand.attributes.profile,
+            publicData: { ...flagshipBrand.attributes.profile.publicData, melaVetted: false },
+          },
+        },
+      };
+
+      render(
+        <TestWrapper>
+          <BrandStorefront user={unvettedBrand} listings={mockListings} />
+        </TestWrapper>
+      );
+
+      expect(screen.queryByText('Vetted by Mela')).not.toBeInTheDocument();
+    });
+
+    it('opens the redirect trust sheet on primary CTA click and forwards the click to openBrandStorefront', () => {
+      shouldShowRedirectTrust.mockReturnValue(true);
+
+      render(
+        <TestWrapper>
+          <BrandStorefront user={flagshipBrand} listings={mockListings} />
+        </TestWrapper>
+      );
+
+      fireEvent.click(screen.getByText(/Visit Fizzy Goblet's Store/));
+
+      expect(screen.getByTestId('redirect-trust-sheet')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('Continue'));
+
+      expect(openBrandStorefront).toHaveBeenCalledWith(
+        'https://global.fizzygoblet.com',
+        expect.objectContaining({ brandName: 'Fizzy Goblet' })
+      );
+    });
+
+    it('redirects immediately without the trust sheet on repeat-session clicks', () => {
+      shouldShowRedirectTrust.mockReturnValue(false);
+
+      render(
+        <TestWrapper>
+          <BrandStorefront user={flagshipBrand} listings={mockListings} />
+        </TestWrapper>
+      );
+
+      fireEvent.click(screen.getByText(/Visit Fizzy Goblet's Store/));
+
+      expect(screen.queryByTestId('redirect-trust-sheet')).not.toBeInTheDocument();
+      expect(openBrandStorefront).toHaveBeenCalledWith(
+        'https://global.fizzygoblet.com',
+        expect.objectContaining({ brandName: 'Fizzy Goblet' })
+      );
+    });
+
+    it('excludes $0 promo SKUs from the grid and product counts', () => {
+      const listingsWithFreeSku = [
+        ...mockListings,
+        {
+          id: { uuid: 'free-promo-sku' },
+          type: 'listing',
+          attributes: {
+            title: 'Limited Edition FREE Bag',
+            price: { amount: 0, currency: 'INR' },
+          },
+          images: [],
+        },
+      ];
+
+      render(
+        <TestWrapper>
+          <BrandStorefront user={mockBrand} listings={listingsWithFreeSku} />
+        </TestWrapper>
+      );
+
+      expect(screen.queryByText('Limited Edition FREE Bag')).not.toBeInTheDocument();
+      expect(screen.getByText('Products (2)')).toBeInTheDocument();
     });
   });
 });

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import classNames from 'classnames';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { richText } from '../../util/richText';
 import {
@@ -10,11 +9,15 @@ import {
   ListingCard,
   LinkTabNavHorizontal,
   NamedLink,
+  RedirectTrustSheet,
 } from '../../components';
 import CertificationBadge from '../../components/CertificationBadge/CertificationBadge';
 import BrandStorySection from './BrandStorySection';
+import BrandOccasionModule from './BrandOccasionModule';
 import { getCertification } from '../../config/certifications';
 import { getBrandSlugById } from '../../config/configBrands';
+import { openBrandStorefront } from '../../util/analytics/brandClickout';
+import { shouldShowRedirectTrust, markRedirectTrustShown } from '../../util/sentimentCapture';
 
 import css from './BrandStorefront.module.css';
 
@@ -199,6 +202,8 @@ const BrandStorefront = props => {
 
   const [mounted, setMounted] = useState(false);
   const [visibleProducts, setVisibleProducts] = useState(12);
+  const [redirectSheetOpen, setRedirectSheetOpen] = useState(false);
+  const [pendingRedirectUrl, setPendingRedirectUrl] = useState(null);
   const observerRef = React.useRef(null);
 
   // Determine active tab from route variant (default to 'products')
@@ -242,10 +247,15 @@ const BrandStorefront = props => {
     brandCountry,
     establishedYear,
     foundedYear,
+    brandStoreUrl,
+    brandHeroImages,
+    brandCraft,
+    melaVetted,
   } = publicData;
 
   const profileImage = user?.profileImage;
   const logoSrc = brandLogoUrl || profileImage?.attributes?.variants?.['square-small']?.url;
+  const heroImageUrl = Array.isArray(brandHeroImages) && brandHeroImages.length > 0 ? brandHeroImages[0] : null;
 
   // Format brand origin
   const origin =
@@ -261,7 +271,18 @@ const BrandStorefront = props => {
   // Story: Use brandStory if available, fallback to bio (legacy support)
   const story = brandStory || bio;
 
-  const hasListings = listings.length > 0;
+  // Hero band shows only the opening of the story (~2 paragraphs); the full text
+  // stays in the About tab via BrandStorySection, unchanged. Only shown when a
+  // dedicated brandStory exists — falling back to `bio` here would just repeat
+  // the tagline (also bio-derived) as a second, redundant block of copy.
+  const heroStorySummary = brandStory
+    ? brandStory
+        .split(/\n\s*\n/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .join(' ')
+    : null;
+
   const hasCertifications = certifications.length > 0;
   const hasMatchMedia = typeof window !== 'undefined' && window?.matchMedia;
   const isMobileLayout =
@@ -272,14 +293,26 @@ const BrandStorefront = props => {
   // Check if current user is viewing their own profile
   const isOwnProfile = currentUser?.id?.uuid === user?.id?.uuid;
 
+  // P0.2: exclude $0 promo SKUs from every public grid on this page.
+  const sellableListings = listings.filter(listing => (listing.attributes?.price?.amount ?? 0) > 0);
+  const hasListings = sellableListings.length > 0;
+
   // Featured products (first 3-4 products for horizontal scroll)
-  const featuredProducts = listings.slice(0, isMobileLayout ? 3 : 4);
+  const featuredProducts = sellableListings.slice(0, isMobileLayout ? 3 : 4);
   const hasFeaturedProducts = featuredProducts.length > 0;
 
-  // Remove featured products from main grid to avoid duplication
-  const nonFeaturedProducts = listings.filter(
-    listing => !featuredProducts.some(fp => fp.id.uuid === listing.id.uuid)
-  );
+  // Remove featured products from main grid to avoid duplication, then curate:
+  // bestsellers first (existing isBestseller signal), original order otherwise.
+  // There is no data flag for "utility/basic" items yet, so we only surface the
+  // positive "hero product" signal — see PRD storefront-validation-readiness §8.
+  const nonFeaturedProducts = sellableListings
+    .filter(listing => !featuredProducts.some(fp => fp.id.uuid === listing.id.uuid))
+    .slice()
+    .sort((a, b) => {
+      const aBest = a.attributes?.publicData?.isBestseller ? 1 : 0;
+      const bBest = b.attributes?.publicData?.isBestseller ? 1 : 0;
+      return bBest - aBest;
+    });
   const hasNonFeaturedProducts = nonFeaturedProducts.length > 0;
 
   // Lazy loading: Only show visible products
@@ -290,18 +323,23 @@ const BrandStorefront = props => {
   const userId = user?.id?.uuid;
   const brandSlug = userId ? getBrandSlugById(userId) : null;
 
+  const productsLinkProps = brandSlug
+    ? { name: 'BrandPage', params: { brandSlug } }
+    : { name: 'ProfilePage', params: { id: userId } };
+  const aboutLinkProps = brandSlug
+    ? { name: 'BrandPageVariant', params: { brandSlug, variant: 'about' } }
+    : { name: 'ProfilePageVariant', params: { id: userId, variant: 'about' } };
+
   // Tab configuration - using routes instead of scroll anchors
   const tabs = [
     {
       text: (
         <span className={css.tabLabel}>
-          <FormattedMessage id="BrandStorefront.productsTab" values={{ count: listings.length }} />
+          <FormattedMessage id="BrandStorefront.productsTab" values={{ count: sellableListings.length }} />
         </span>
       ),
       selected: activeTab === 'products',
-      linkProps: brandSlug
-        ? { name: 'BrandPage', params: { brandSlug } }
-        : { name: 'ProfilePage', params: { id: userId } },
+      linkProps: productsLinkProps,
     },
     {
       text: (
@@ -310,11 +348,21 @@ const BrandStorefront = props => {
         </span>
       ),
       selected: activeTab === 'about',
-      linkProps: brandSlug
-        ? { name: 'BrandPageVariant', params: { brandSlug, variant: 'about' } }
-        : { name: 'ProfilePageVariant', params: { id: userId, variant: 'about' } },
+      linkProps: aboutLinkProps,
     },
   ];
+
+  const handleVisitStoreClick = () => {
+    if (!brandStoreUrl) return;
+    const trackingParams = { brandName: displayName, brandId: userId };
+    if (shouldShowRedirectTrust()) {
+      markRedirectTrustShown();
+      setPendingRedirectUrl(brandStoreUrl);
+      setRedirectSheetOpen(true);
+    } else {
+      openBrandStorefront(brandStoreUrl, trackingParams);
+    }
+  };
 
   return (
     <div className={css.root}>
@@ -328,23 +376,45 @@ const BrandStorefront = props => {
         </div>
       )}
 
-      {/* Brand Header */}
+      {/* Brand Hero Band (P1.1) */}
       <div className={css.brandHeader}>
-        <div className={css.brandHeaderContent}>
+        <div className={css.heroMedia}>
+          {heroImageUrl ? (
+            <img src={heroImageUrl} alt={displayName} className={css.heroImg} />
+          ) : (
+            <div className={css.heroImgFallback} aria-hidden="true" />
+          )}
+          <span className={css.madeInIndia}>
+            <FormattedMessage id="BrandStorefront.madeInIndia" />
+          </span>
+
           {/* Brand Logo */}
           <div className={css.logoContainer}>
             {logoSrc ? (
               <img src={logoSrc} alt={displayName} className={css.brandLogo} />
-            ) : isOwnProfile ? (
-              <div className={classNames(css.logoPlaceholder, css.logoPlaceholderEmpty)}>
-                <BrandDataPlaceholder type="logo" isOwner={isOwnProfile} />
-              </div>
             ) : (
               <div className={css.logoPlaceholder}>
                 <span className={css.logoInitial}>{displayName?.charAt(0) || 'B'}</span>
               </div>
             )}
           </div>
+        </div>
+
+        <div className={css.brandHeaderContent}>
+          {!logoSrc && isOwnProfile && (
+            <div className={css.inlinePlaceholder}>
+              <BrandDataPlaceholder type="logo" isOwner={isOwnProfile} />
+            </div>
+          )}
+
+          {melaVetted === true && (
+            <span className={css.vettedBadge}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
+                <path d="M4 12l5 5L20 6" />
+              </svg>
+              <FormattedMessage id="BrandStorefront.vettedBadge" />
+            </span>
+          )}
 
           {/* Brand Info */}
           <div className={css.brandInfo}>
@@ -380,6 +450,24 @@ const BrandStorefront = props => {
               </div>
             ) : null}
 
+            {/* Marketplace-wide trust facts — always shown, not brand data */}
+            <div className={css.heroMetaStatic}>
+              <span>
+                <FormattedMessage
+                  id="BrandStorefront.productsCount"
+                  values={{ count: sellableListings.length }}
+                />
+              </span>
+              <span className={css.separator}>•</span>
+              <span>
+                <FormattedMessage id="BrandStorefront.metaShipping" />
+              </span>
+              <span className={css.separator}>•</span>
+              <span>
+                <FormattedMessage id="BrandStorefront.metaCards" />
+              </span>
+            </div>
+
             {/* Certification Badges */}
             {hasCertifications ? (
               <div className={css.certifications}>
@@ -398,9 +486,71 @@ const BrandStorefront = props => {
                 <BrandDataPlaceholder type="certifications" isOwner={isOwnProfile} />
               </div>
             ) : null}
+
+            {heroStorySummary && (
+              <p className={css.heroStory}>
+                {heroStorySummary}{' '}
+                <NamedLink {...aboutLinkProps} className={css.readFullStoryLink}>
+                  <FormattedMessage id="BrandStorefront.readFullStory" />
+                </NamedLink>
+              </p>
+            )}
+
+            {brandCraft && (
+              <span className={css.craftChip}>
+                ✦ <FormattedMessage id="BrandStorefront.craftLabel" /> {brandCraft}
+              </span>
+            )}
+
+            <div className={css.ctaCol}>
+              {brandStoreUrl && (
+                <button type="button" className={css.btnPrimary} onClick={handleVisitStoreClick}>
+                  <FormattedMessage id="BrandStorefront.visitStore" values={{ brand: displayName }} />
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                    <path d="M7 17L17 7M9 7h8v8" />
+                  </svg>
+                </button>
+              )}
+              {hasListings &&
+                (activeTab === 'products' ? (
+                  <a className={css.btnSecondary} href="#brand-products-grid">
+                    <FormattedMessage
+                      id="BrandStorefront.browseProducts"
+                      values={{ count: sellableListings.length }}
+                    />
+                  </a>
+                ) : (
+                  <NamedLink {...productsLinkProps} className={css.btnSecondary}>
+                    <FormattedMessage
+                      id="BrandStorefront.browseProducts"
+                      values={{ count: sellableListings.length }}
+                    />
+                  </NamedLink>
+                ))}
+            </div>
+
+            {brandStoreUrl && (
+              <p className={css.redirectMicrocopy}>
+                <strong>
+                  <FormattedMessage id="BrandStorefront.howMelaWorksLabel" />
+                </strong>{' '}
+                <FormattedMessage id="BrandStorefront.redirectMicrocopy" />
+              </p>
+            )}
           </div>
         </div>
       </div>
+
+      {redirectSheetOpen && pendingRedirectUrl && (
+        <RedirectTrustSheet
+          isOpen={redirectSheetOpen}
+          brandName={displayName}
+          productUrl={pendingRedirectUrl}
+          isVerified={hasCertifications}
+          onContinue={url => openBrandStorefront(url, { brandName: displayName, brandId: userId })}
+          onClose={() => setRedirectSheetOpen(false)}
+        />
+      )}
 
       {/* Tab Navigation */}
       <div className={css.tabNavigation}>
@@ -411,7 +561,7 @@ const BrandStorefront = props => {
       <div className={css.tabContent}>
         {/* Products Tab */}
         {activeTab === 'products' && (
-          <div className={css.productsSection}>
+          <div id="brand-products-grid" className={css.productsSection}>
             {/* Featured Products - Horizontal Scroll (Products tab only) */}
             {hasFeaturedProducts && (
               <div className={css.featuredSection}>
@@ -423,23 +573,45 @@ const BrandStorefront = props => {
                 <div className={css.featuredScroll}>
                   {featuredProducts.map(listing => (
                     <div className={css.featuredItem} key={listing.id.uuid}>
-                      <ListingCard listing={listing} showAuthorInfo={false} />
+                      <ListingCard
+                        listing={listing}
+                        showAuthorInfo={false}
+                        showTrustBadges={true}
+                        showConversionBadges={true}
+                        isBestseller={listing.attributes?.publicData?.isBestseller || false}
+                        renderSizes="(max-width: 767px) 85vw, (max-width: 1279px) 48vw, 23vw"
+                      />
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
+            {/* Shop by Occasion - this brand's Diwali & Festivals / Gifting picks */}
+            <BrandOccasionModule listings={sellableListings} brandUserId={userId} />
+
             {/* All Products Grid */}
             {hasNonFeaturedProducts && (
               <div className={css.allProductsSection}>
-                <H3 className={css.allProductsTitle}>
-                  <FormattedMessage id="BrandStorefront.allProducts" />
-                </H3>
+                <div className={css.allProductsHeader}>
+                  <H3 className={css.allProductsTitle}>
+                    <FormattedMessage id="BrandStorefront.allProducts" />
+                  </H3>
+                  <span className={css.curatedOrderNote}>
+                    <FormattedMessage id="BrandStorefront.curatedOrderNote" />
+                  </span>
+                </div>
                 <ul className={css.productGrid}>
                   {displayedProducts.map(listing => (
                     <li className={css.productItem} key={listing.id.uuid}>
-                      <ListingCard listing={listing} showAuthorInfo={false} />
+                      <ListingCard
+                        listing={listing}
+                        showAuthorInfo={false}
+                        showTrustBadges={true}
+                        showConversionBadges={true}
+                        isBestseller={listing.attributes?.publicData?.isBestseller || false}
+                        renderSizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 25vw"
+                      />
                     </li>
                   ))}
                 </ul>

@@ -16,6 +16,72 @@ import { denormalisedEntities } from '../../util/data';
 
 // ================ Utility Functions ================ //
 
+/**
+ * Does this brand user carry at least one hero-image source?
+ * (`publicData.brandHeroImageIds` — Sharetribe UUIDs — OR `brandHeroImages` —
+ * Shopify URLs — is a non-empty array.) Used to filter the hero carousel so
+ * BrandHeroCard's skip-if-empty contract never yields an empty slide or a dead
+ * dot (brand-hero-card-webclient-prd.md §5).
+ */
+export const hasHeroImageSource = brand => {
+  const publicData = brand?.attributes?.profile?.publicData || {};
+  const { brandHeroImageIds, brandHeroImages } = publicData;
+  return (
+    (Array.isArray(brandHeroImageIds) && brandHeroImageIds.filter(Boolean).length > 0) ||
+    (Array.isArray(brandHeroImages) && brandHeroImages.filter(Boolean).length > 0)
+  );
+};
+
+/**
+ * Batch-fetch the Sharetribe listings referenced by the brands'
+ * `publicData.brandHeroImageListingIds` so their image entities (and variant
+ * URLs) land in marketplaceData for BrandHeroCard to resolve against.
+ * Requests the square hero variants PLUS the square-small variants already
+ * used app-wide: entity merge is shallow on `attributes`, so a response
+ * carrying only hero variants would clobber square-small for images shared
+ * with the bestseller grids.
+ */
+const fetchHeroListings = (sdk, brandUsers) => {
+  const heroListingIds = [
+    ...new Set(
+      brandUsers
+        .flatMap(u => u?.attributes?.profile?.publicData?.brandHeroImageListingIds || [])
+        .filter(Boolean)
+    ),
+  ];
+
+  if (heroListingIds.length === 0) {
+    return Promise.resolve({ data: [], included: [] });
+  }
+
+  return sdk.listings
+    .query({
+      ids: heroListingIds,
+      include: ['images'],
+      'fields.listing': ['title'],
+      'fields.image': [
+        'variants.square-hero',
+        'variants.square-hero2x',
+        'variants.square-small',
+        'variants.square-small2x',
+      ],
+      'imageVariant.square-hero': 'w:600;h:600;fit:crop',
+      'imageVariant.square-hero2x': 'w:1200;h:1200;fit:crop',
+      'imageVariant.square-small': 'w:400;h:300;fit:crop',
+      'imageVariant.square-small2x': 'w:800;h:600;fit:crop',
+      perPage: 100,
+    })
+    .then(response => {
+      const { data = [], included = [] } = response.data || {};
+      return { data, included };
+    })
+    .catch(error => {
+      // Non-fatal: BrandHeroCard falls back to the Shopify URL at the same index.
+      console.warn('Failed to fetch hero listings:', error);
+      return { data: [], included: [] };
+    });
+};
+
 const fetchBestsellerListingsForBrand = (sdk, brandId) => {
   return sdk.listings
     .query({
@@ -48,6 +114,10 @@ export const FETCH_FEATURED_BRANDS_REQUEST = 'app/BrandsPage/FETCH_FEATURED_BRAN
 export const FETCH_FEATURED_BRANDS_SUCCESS = 'app/BrandsPage/FETCH_FEATURED_BRANDS_SUCCESS';
 export const FETCH_FEATURED_BRANDS_ERROR = 'app/BrandsPage/FETCH_FEATURED_BRANDS_ERROR';
 
+export const FETCH_HERO_BRANDS_REQUEST = 'app/BrandsPage/FETCH_HERO_BRANDS_REQUEST';
+export const FETCH_HERO_BRANDS_SUCCESS = 'app/BrandsPage/FETCH_HERO_BRANDS_SUCCESS';
+export const FETCH_HERO_BRANDS_ERROR = 'app/BrandsPage/FETCH_HERO_BRANDS_ERROR';
+
 export const SET_BESTSELLER_PRODUCTS = 'app/BrandsPage/SET_BESTSELLER_PRODUCTS';
 
 // ================ Reducer ================ //
@@ -55,11 +125,14 @@ export const SET_BESTSELLER_PRODUCTS = 'app/BrandsPage/SET_BESTSELLER_PRODUCTS';
 const initialState = {
   brandIds: [],
   featuredBrandIds: [],
+  heroBrandIds: [],
   pagination: null,
   fetchBrandsInProgress: false,
   fetchBrandsError: null,
   fetchFeaturedBrandsInProgress: false,
   fetchFeaturedBrandsError: null,
+  fetchHeroBrandsInProgress: false,
+  fetchHeroBrandsError: null,
   bestsellerProductsByBrand: {}, // Map of brandId -> { data: [...], included: [...] }
 };
 
@@ -113,6 +186,27 @@ export default function brandsPageReducer(state = initialState, action = {}) {
         fetchFeaturedBrandsError: payload,
       };
 
+    case FETCH_HERO_BRANDS_REQUEST:
+      return {
+        ...state,
+        fetchHeroBrandsInProgress: true,
+        fetchHeroBrandsError: null,
+      };
+
+    case FETCH_HERO_BRANDS_SUCCESS:
+      return {
+        ...state,
+        heroBrandIds: payload.brandIds,
+        fetchHeroBrandsInProgress: false,
+      };
+
+    case FETCH_HERO_BRANDS_ERROR:
+      return {
+        ...state,
+        fetchHeroBrandsInProgress: false,
+        fetchHeroBrandsError: payload,
+      };
+
     case SET_BESTSELLER_PRODUCTS:
       return {
         ...state,
@@ -152,6 +246,21 @@ export const fetchFeaturedBrandsSuccess = brandIds => ({
 
 export const fetchFeaturedBrandsError = error => ({
   type: FETCH_FEATURED_BRANDS_ERROR,
+  payload: error,
+  error: true,
+});
+
+export const fetchHeroBrandsRequest = () => ({
+  type: FETCH_HERO_BRANDS_REQUEST,
+});
+
+export const fetchHeroBrandsSuccess = brandIds => ({
+  type: FETCH_HERO_BRANDS_SUCCESS,
+  payload: { brandIds },
+});
+
+export const fetchHeroBrandsError = error => ({
+  type: FETCH_HERO_BRANDS_ERROR,
   payload: error,
   error: true,
 });
@@ -631,6 +740,150 @@ export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
 };
 
 /**
+ * Fetch hero-carousel brand data: a dedicated, lean fetch independent of
+ * fetchFeaturedBrands. Two reasons it's separate rather than sharing that
+ * thunk/state:
+ * 1. BrandHeroCard renders no products at all, so this never runs the
+ *    per-brand bestseller-listing queries fetchFeaturedBrands needs for
+ *    BrandCardHome's 2x2 grid — cheaper, and it means a brand with a hero
+ *    image but zero bestseller/configured products still qualifies (the old
+ *    getHeroBrandsWithProducts incorrectly inherited a products-required
+ *    filter from getFeaturedBrandsWithProducts).
+ * 2. It evaluates ALL curated brand candidates (not just the first 10 used
+ *    by fetchFeaturedBrands for FeaturedBrandPartners/BrandCardHome), so hero
+ *    coverage isn't capped at whatever fraction of the top 10 happen to have
+ *    brandHeroImageIds/brandHeroImages set. Bumping the shared 10-brand fetch
+ *    instead would also grow FeaturedBrandPartners' carousel — a different
+ *    section this work must not touch.
+ */
+export const fetchHeroBrands = () => (dispatch, getState, sdk) => {
+  dispatch(fetchHeroBrandsRequest());
+
+  const candidateIds = getCuratedBrandIds();
+
+  if (candidateIds.length === 0) {
+    dispatch(fetchHeroBrandsSuccess([]));
+    return Promise.resolve();
+  }
+
+  const brandPromises = candidateIds.map(brandId =>
+    sdk.users
+      .show({
+        id: brandId,
+        include: ['profileImage'],
+        'fields.image': ['variants.square-small', 'variants.square-small2x'],
+        'fields.user': ['profile', 'metadata'],
+      })
+      .then(response => (response && response.data ? response.data : null))
+      .catch(error => {
+        console.error(`Failed to fetch hero-candidate brand ${brandId}:`, error);
+        return null;
+      })
+  );
+
+  return Promise.all(brandPromises)
+    .then(brandResponses => {
+      // Each brandResponses[i] is { data: user, included: [...] } — profile
+      // Image (requested via include:['profileImage']) lands in `included`,
+      // NOT on the user object itself. Dropping it here (as an earlier
+      // version of this thunk did) leaves a dangling relationship: the user
+      // entity's relationships.profileImage still points at an image id that
+      // was never added to marketplaceData.entities.image, and
+      // denormalisedEntities throws synchronously on that dangling reference
+      // — crashing mapStateToProps and silently freezing HeroSection's last
+      // committed render (no error boundary catches it). Must collect
+      // `included` per-brand, same as fetchBrands/fetchFeaturedBrands.
+      const brandUsers = brandResponses
+        .map(r => r?.data)
+        .filter(
+          user =>
+            user &&
+            typeof user === 'object' &&
+            user.id &&
+            user.id.uuid &&
+            user.type === 'user' &&
+            user.attributes
+        );
+
+      const profileImages = brandResponses
+        .flatMap(r => r?.included || [])
+        .filter(
+          entity =>
+            entity &&
+            typeof entity === 'object' &&
+            entity.id &&
+            entity.id.uuid &&
+            entity.type === 'image'
+        );
+
+      return fetchHeroListings(sdk, brandUsers).then(heroListingsResponse => ({
+        brandUsers,
+        profileImages,
+        heroListingsResponse,
+      }));
+    })
+    .then(({ brandUsers, profileImages, heroListingsResponse }) => {
+      // Clean copies (mirrors fetchBrands/fetchFeaturedBrands) — only valid,
+      // non-null relationships, no stray SDK response properties.
+      const validUsers = brandUsers.map(user => {
+        const cleanUser = { id: user.id, type: user.type, attributes: user.attributes };
+        if (user.relationships) {
+          const cleanRelationships = {};
+          Object.keys(user.relationships).forEach(key => {
+            const rel = user.relationships[key];
+            if (rel && rel.data && rel.data !== null) {
+              cleanRelationships[key] = rel;
+            }
+          });
+          if (Object.keys(cleanRelationships).length > 0) {
+            cleanUser.relationships = cleanRelationships;
+          }
+        }
+        return cleanUser;
+      });
+
+      const heroListings = (heroListingsResponse.data || []).filter(
+        listing =>
+          listing &&
+          typeof listing === 'object' &&
+          listing.id &&
+          listing.id.uuid &&
+          listing.type === 'listing'
+      );
+      const heroImages = (heroListingsResponse.included || []).filter(
+        entity =>
+          entity &&
+          typeof entity === 'object' &&
+          entity.id &&
+          entity.id.uuid &&
+          entity.type === 'image'
+      );
+
+      const allEntities = [...validUsers, ...heroListings];
+      const allIncluded = [...profileImages, ...heroImages];
+
+      if (allEntities.length > 0 || allIncluded.length > 0) {
+        const entityPayload = { data: allEntities };
+        if (allIncluded.length > 0) {
+          entityPayload.included = allIncluded;
+        }
+        dispatch(addMarketplaceEntities({ data: entityPayload }));
+      }
+
+      // Eligibility gate lives here (fetch time), not in the selector: only
+      // brands with a real hero source become part of heroBrandIds.
+      const heroEligibleIds = validUsers.filter(hasHeroImageSource).map(user => user.id.uuid);
+      dispatch(fetchHeroBrandsSuccess(heroEligibleIds));
+
+      return { data: validUsers };
+    })
+    .catch(e => {
+      dispatch(fetchHeroBrandsError(storableError(e)));
+      throw e;
+    });
+};
+
+/**
  * Load data for server-side rendering
  */
 export const loadData = (params, search) => dispatch => {
@@ -766,6 +1019,50 @@ export const getFeaturedBrandsWithProducts = state => {
 };
 
 /**
+ * Hero-carousel slide list (brand-hero-card-webclient-prd.md §5). Built from
+ * `heroBrandIds` (fetchHeroBrands' own state, already gated on
+ * hasHeroImageSource at fetch time) — deliberately NOT layered on top of
+ * getFeaturedBrandsWithProducts, which requires bestseller/configured
+ * products to be non-empty. BrandHeroCard renders no products at all, so a
+ * brand with a real hero image but zero fetched products must still qualify;
+ * gating on products here would silently drop it. Curated order is preserved
+ * (heroBrandIds is written from fetchHeroBrands' candidate order, filter-only
+ * here, no re-sort). Each entry is augmented with `heroImageUrlById` —
+ * Sharetribe image UUID → square hero variant URL. BrandHeroCard falls back
+ * to the Shopify URL at the same index for any id missing from the map.
+ */
+export const getHeroBrands = state => {
+  const { heroBrandIds } = state.BrandsPage;
+  const { entities } = state.marketplaceData;
+  const imageEntities = entities?.image || {};
+
+  const brands = denormalisedEntities(
+    entities,
+    heroBrandIds.map(id => ({ id: { uuid: id }, type: 'user' })),
+    false
+  );
+
+  return brands
+    .filter(hasHeroImageSource)
+    .map(brand => {
+      const { brandHeroImageIds = [] } = brand.attributes?.profile?.publicData || {};
+      const heroImageUrlById = {};
+      (Array.isArray(brandHeroImageIds) ? brandHeroImageIds : []).forEach(imageId => {
+        const variants = imageEntities[imageId]?.attributes?.variants || {};
+        const url =
+          variants['square-hero2x']?.url ||
+          variants['square-hero']?.url ||
+          variants['square-small2x']?.url ||
+          null;
+        if (url) {
+          heroImageUrlById[imageId] = url;
+        }
+      });
+      return { brand, heroImageUrlById };
+    });
+};
+
+/**
  * Get all brands grouped by category
  * Returns an object keyed by category id, each value is an array of { brand, products }
  */
@@ -843,3 +1140,5 @@ export const getBrandsError = state => state.BrandsPage.fetchBrandsError;
 export const getFeaturedBrandsInProgress = state =>
   state.BrandsPage.fetchFeaturedBrandsInProgress;
 export const getFeaturedBrandsError = state => state.BrandsPage.fetchFeaturedBrandsError;
+export const getHeroBrandsInProgress = state => state.BrandsPage.fetchHeroBrandsInProgress;
+export const getHeroBrandsError = state => state.BrandsPage.fetchHeroBrandsError;

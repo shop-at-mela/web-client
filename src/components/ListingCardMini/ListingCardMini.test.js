@@ -1,5 +1,6 @@
 import React from 'react';
 import '@testing-library/jest-dom';
+import { waitFor } from '@testing-library/react';
 
 import { renderWithProviders as render } from '../../util/testHelpers';
 import { createUser, createListing } from '../../util/testData';
@@ -8,6 +9,27 @@ import { ListingCardMini } from './ListingCardMini';
 
 // Base listing — no INR data
 const listing = createListing('listing1', {}, { author: createUser('user1') });
+
+// Listing with an actual image, for tests that need the <img> to render.
+// (createListing's default has no `images`, so ListingImage returns null.)
+const listingWithImage = createListing(
+  'listing6',
+  {},
+  {
+    author: createUser('user1'),
+    images: [
+      {
+        id: { uuid: 'image-1' },
+        type: 'image',
+        attributes: {
+          variants: {
+            'square-small': { url: 'https://example.com/image-small.jpg', width: 240, height: 240 },
+          },
+        },
+      },
+    ],
+  }
+);
 
 // Listing with INR equivalent price in publicData
 const listingWithINR = createListing(
@@ -60,6 +82,36 @@ describe('ListingCardMini', () => {
       <ListingCardMini listing={listing} className="custom-class" />
     );
     expect(container.firstChild).toHaveClass('custom-class');
+  });
+
+  it('applies the fit/crop class directly to the img element (not just its wrapper)', async () => {
+    // Regression test: css.image must reach the <img> itself via rootClassName,
+    // otherwise object-fit/object-position never apply and mismatched-aspect
+    // photos show grey letterbox padding instead of a centered, cropped fill.
+    // ListingImage's lazy path only renders once its wrapper reports a nonzero
+    // clientWidth/clientHeight (see util/uiHelpers.js) — jsdom has no layout
+    // engine, so stub those like ListingImage.test.js does.
+    Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+      configurable: true,
+      value: 240,
+    });
+    Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+      configurable: true,
+      value: 240,
+    });
+
+    try {
+      const { container } = render(<ListingCardMini listing={listingWithImage} />);
+      const img = await waitFor(() => {
+        const el = container.querySelector('img');
+        expect(el).toBeInTheDocument();
+        return el;
+      });
+      expect(img).toHaveClass('image');
+    } finally {
+      delete HTMLElement.prototype.clientWidth;
+      delete HTMLElement.prototype.clientHeight;
+    }
   });
 
   it('renders without price gracefully', () => {

@@ -55,7 +55,7 @@ export const ListingCardMini = props => {
             sizes="145px"
             aspectWidth={1}
             aspectHeight={1}
-            className={css.image}
+            rootClassName={css.image}
           />
         </div>
         {showPrice && formattedPrice && (
