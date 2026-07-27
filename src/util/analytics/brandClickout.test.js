@@ -27,18 +27,19 @@ describe('pushBrandClickout(params)', () => {
       entry_source: 'pinterest',
       destination: 'https://superbottoms.com/products/foo',
     });
-    // session_id is generated (not caller-supplied) — assert it's present and non-empty
-    // rather than exact-matching an unpredictable UUID. See PRD §13.0 for why this
-    // field exists (GA4 blocks registering its own ga_session_id as a custom dimension).
-    expect(typeof window.dataLayer[0].session_id).toBe('string');
-    expect(window.dataLayer[0].session_id.length).toBeGreaterThan(0);
+    // mela_session_id is generated (not caller-supplied) — assert it's present and
+    // non-empty rather than exact-matching an unpredictable UUID. See PRD §13.0 for
+    // why this field exists and why it's prefixed (GA4 silently drops both its own
+    // ga_session_id AND a plain session_id — both are reserved/protected names).
+    expect(typeof window.dataLayer[0].mela_session_id).toBe('string');
+    expect(window.dataLayer[0].mela_session_id.length).toBeGreaterThan(0);
   });
 
-  it('reuses the same session_id across multiple pushes in the same session', () => {
+  it('reuses the same mela_session_id across multiple pushes in the same session', () => {
     pushBrandClickout({ brandName: 'Nicobar' });
     pushBrandClickout({ brandName: 'SuperBottoms' });
 
-    expect(window.dataLayer[0].session_id).toEqual(window.dataLayer[1].session_id);
+    expect(window.dataLayer[0].mela_session_id).toEqual(window.dataLayer[1].mela_session_id);
   });
 
   it('fills missing params with null rather than omitting the key', () => {

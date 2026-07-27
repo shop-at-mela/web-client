@@ -37,12 +37,14 @@ export const pushBrandClickout = (params = {}) => {
     product_id: productId || null,
     entry_source: getEntrySource(),
     destination: destination || null,
-    // GA4 blocks registering its auto-collected `ga_session_id` as a custom
-    // dimension (reserved parameter name) — this reuses the app's own session
-    // ID (already used for sentiment capture) under a non-reserved key so the
-    // multi-brand-clickout/entry-vs-exit reports can group by session in GA4.
-    // See crossshop-tracking-prd.md §13.0.
-    session_id: getOrCreateSessionId(),
+    // GA4 silently drops both its auto-collected `ga_session_id` AND a plain
+    // `session_id` parameter (reserved names — the former blocks custom
+    // dimension registration outright with an error, the latter is dropped
+    // from incoming events with no error at all). `mela_session_id` reuses
+    // the app's own session ID (already used for sentiment capture) under an
+    // unambiguously non-reserved key so the multi-brand-clickout/entry-vs-exit
+    // reports can group by session in GA4. See crossshop-tracking-prd.md §13.0.
+    mela_session_id: getOrCreateSessionId(),
   });
 };
 
