@@ -59,7 +59,7 @@ export const markSentimentShown = () => {
 /**
  * Returns a persistent anonymous session ID for this browser session.
  */
-const getOrCreateSessionId = () => {
+export const getOrCreateSessionId = () => {
   try {
     let id = sessionStorage.getItem(SESSION_ID_KEY);
     if (!id) {
