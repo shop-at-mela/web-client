@@ -86,6 +86,7 @@ const mockMessages = {
   'CategoryPage.loadingProducts': 'Loading products…',
   'CategoryPage.noProducts': 'No products in {categoryName} yet.',
   'CategoryPage.browseBrands': 'Browse all brands',
+  'CategoryPage.brandCarouselTitle': 'Shop {categoryName} Brands',
   'CategoryPage.browseCategory': 'Browse →',
   'CategoryPage.allCategories': 'All Categories',
   'Page.schemaTitle': '{marketplaceName}',
@@ -423,6 +424,62 @@ describe('CategoryPage', () => {
       const { container } = renderAt('/categories/baby-clothing', store);
       expect(screen.queryByTestId('brand-tile')).not.toBeInTheDocument();
       expect(gridOrder(container)).toHaveLength(6);
+    });
+  });
+
+  describe('"Shop {L1} Brands" carousel', () => {
+    const userEntity = (id, displayName) => ({
+      id: { uuid: id },
+      type: 'user',
+      attributes: { profile: { displayName, publicData: {} } },
+    });
+
+    const listingEntity = id => ({
+      id: { uuid: id },
+      type: 'listing',
+      attributes: { title: `Product ${id}`, price: { amount: 2500, currency: 'USD' } },
+    });
+
+    it('renders a tile per carousel entry, titled after the L1 category', () => {
+      const store = createStore(() => ({
+        ...mockState,
+        marketplaceData: {
+          entities: {
+            user: { brandA: userEntity('brandA', 'Brand A') },
+            listing: { l1: listingEntity('l1') },
+          },
+        },
+        CategoryPage: {
+          brandCarouselEntries: [{ brandId: 'brandA', productIds: ['l1'] }],
+        },
+      }));
+
+      renderAt('/categories/Baby-Kids', store);
+      expect(screen.getByText('Shop Baby & Kids Brands')).toBeInTheDocument();
+      expect(screen.getByTestId('brand-tile')).toHaveTextContent('Brand A');
+    });
+
+    it('renders nothing when the carousel has no entries', () => {
+      renderAt('/categories/Baby-Kids');
+      expect(screen.queryByText(/Shop .* Brands/)).not.toBeInTheDocument();
+    });
+
+    it('shows the L1 title even on an L2 sub-page', () => {
+      const store = createStore(() => ({
+        ...mockState,
+        marketplaceData: {
+          entities: {
+            user: { brandA: userEntity('brandA', 'Brand A') },
+            listing: { l1: listingEntity('l1') },
+          },
+        },
+        CategoryPage: {
+          brandCarouselEntries: [{ brandId: 'brandA', productIds: ['l1'] }],
+        },
+      }));
+
+      renderAt('/categories/Baby-Kids/Clothing', store);
+      expect(screen.getByText('Shop Baby & Kids Brands')).toBeInTheDocument();
     });
   });
 });

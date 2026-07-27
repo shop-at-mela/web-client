@@ -9,15 +9,12 @@ import {
   ListingCard,
   LinkTabNavHorizontal,
   NamedLink,
-  RedirectTrustSheet,
 } from '../../components';
 import CertificationBadge from '../../components/CertificationBadge/CertificationBadge';
 import BrandStorySection from './BrandStorySection';
 import BrandOccasionModule from './BrandOccasionModule';
 import { getCertification } from '../../config/certifications';
 import { getBrandSlugById } from '../../config/configBrands';
-import { openBrandStorefront } from '../../util/analytics/brandClickout';
-import { shouldShowRedirectTrust, markRedirectTrustShown } from '../../util/sentimentCapture';
 
 import css from './BrandStorefront.module.css';
 
@@ -202,8 +199,6 @@ const BrandStorefront = props => {
 
   const [mounted, setMounted] = useState(false);
   const [visibleProducts, setVisibleProducts] = useState(12);
-  const [redirectSheetOpen, setRedirectSheetOpen] = useState(false);
-  const [pendingRedirectUrl, setPendingRedirectUrl] = useState(null);
   const observerRef = React.useRef(null);
 
   // Determine active tab from route variant (default to 'products')
@@ -247,7 +242,6 @@ const BrandStorefront = props => {
     brandCountry,
     establishedYear,
     foundedYear,
-    brandStoreUrl,
     brandHeroImages,
     brandCraft,
     melaVetted,
@@ -365,18 +359,6 @@ const BrandStorefront = props => {
       linkProps: aboutLinkProps,
     },
   ];
-
-  const handleVisitStoreClick = () => {
-    if (!brandStoreUrl) return;
-    const trackingParams = { brandName: displayName, brandId: userId };
-    if (shouldShowRedirectTrust()) {
-      markRedirectTrustShown();
-      setPendingRedirectUrl(brandStoreUrl);
-      setRedirectSheetOpen(true);
-    } else {
-      openBrandStorefront(brandStoreUrl, trackingParams);
-    }
-  };
 
   return (
     <div className={css.root}>
@@ -516,11 +498,13 @@ const BrandStorefront = props => {
               </span>
             )}
 
-            {/* Single on-Mela CTA (decision 2026-07-26, storefront-validation-readiness-prd.md P1.1):
-                no outbound store link above the grid — an exit door here trains shoppers to bypass
-                Mela entirely, and with no affiliate tracking that's a pure loss. Outbound now lives
-                only as a plain link in the About & Story tab (see below); the only purchase-path
-                outbound remains the existing listing-level redirect flow. */}
+            {/* No outbound Shopify link anywhere on this page (decision 2026-07-26,
+                storefront-validation-readiness-prd.md P1.1): a prior pass put it above
+                the grid, then a follow-up moved it to a plain About-tab link — both are
+                now removed entirely, since it's a pure loss with no affiliate tracking to
+                show for it. Sole CTA is the on-Mela "Browse Products" anchor/link. The
+                only outbound path anywhere in the app is the existing listing-level
+                redirect flow on individual product pages. */}
             <div className={css.ctaCol}>
               {hasListings &&
                 (activeTab === 'products' ? (
@@ -539,27 +523,9 @@ const BrandStorefront = props => {
                   </NamedLink>
                 ))}
             </div>
-
-            <p className={css.redirectMicrocopy}>
-              <strong>
-                <FormattedMessage id="BrandStorefront.howMelaWorksLabel" />
-              </strong>{' '}
-              <FormattedMessage id="BrandStorefront.redirectMicrocopy" />
-            </p>
           </div>
         </div>
       </div>
-
-      {redirectSheetOpen && pendingRedirectUrl && (
-        <RedirectTrustSheet
-          isOpen={redirectSheetOpen}
-          brandName={displayName}
-          productUrl={pendingRedirectUrl}
-          isVerified={hasCertifications}
-          onContinue={url => openBrandStorefront(url, { brandName: displayName, brandId: userId })}
-          onClose={() => setRedirectSheetOpen(false)}
-        />
-      )}
 
       {/* Tab Navigation */}
       <div className={css.tabNavigation}>
@@ -673,26 +639,14 @@ const BrandStorefront = props => {
               <BrandDataPlaceholder type="certifications" isOwner={isOwnProfile} />
             ) : null}
 
-            {/* Brand website + social — the only outbound link on the brand page (decision
-                2026-07-26, storefront-validation-readiness-prd.md P1.1). Plain link, no
-                trust-sheet ceremony: a curious click from someone reading the full story,
-                not a purchase-intent redirect. Still routes through openBrandStorefront so
-                the existing brand_clickout event (category=null/product_id=null, i.e.
-                brand-level not product-level) fires — see docs/analytics/crossshop-tracking.md. */}
-            {(brandStoreUrl || (brandSocial && Object.keys(brandSocial).length > 0)) && (
+            {/* Social links only — no Shopify storefront link anywhere on the brand page
+                (decision 2026-07-26, storefront-validation-readiness-prd.md P1.1). */}
+            {brandSocial && Object.keys(brandSocial).length > 0 && (
               <div className={css.aboutLinksSection}>
                 <H4 className={css.sectionSubtitle}>
                   <FormattedMessage id="BrandStorefront.elsewhereTitle" />
                 </H4>
                 <div className={css.aboutLinksList}>
-                  {brandStoreUrl && (
-                    <button type="button" className={css.aboutLink} onClick={handleVisitStoreClick}>
-                      <FormattedMessage id="BrandStorefront.brandWebsite" />
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-                        <path d="M7 17L17 7M9 7h8v8" />
-                      </svg>
-                    </button>
-                  )}
                   {brandSocial?.instagram && (
                     <a className={css.aboutLink} href={brandSocial.instagram} target="_blank" rel="noopener noreferrer">
                       Instagram

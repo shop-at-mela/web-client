@@ -1,5 +1,6 @@
 import { storableError } from '../util/errors';
-import { pickRandom, attachImagesToListings } from '../util/listings';
+import { attachImagesToListings } from '../util/listings';
+import { pickBrandDiverse } from '../util/data';
 import { fetchBestsellerCarousel } from '../util/bestsellerCarousel';
 
 // ================ Action types ================ //
@@ -112,9 +113,15 @@ export const fetchCategoryProducts = (categoryLevel, categoryName, config, exclu
 
   return fetchBestsellerCarousel(sdk, queryParams, DISPLAY_COUNT)
     .then(({ pool, allIncluded }) => {
-      // Attach images and randomize
-      const listingsWithImages = attachImagesToListings(pool, allIncluded);
-      let finalListings = pickRandom(listingsWithImages, DISPLAY_COUNT);
+      // Pick brand-diverse listings first so a seller who just bulk-uploaded
+      // new listings can't flood the newest-first pool and crowd out other
+      // brands, then attach images to the selected subset. Mirrors the
+      // pickBrandDiverse usage in CategoryShowcase's homepage carousels.
+      const byId = new Map(pool.map(listing => [listing.id.uuid, listing]));
+      const diverseListings = pickBrandDiverse(pool, DISPLAY_COUNT)
+        .map(id => byId.get(id.uuid))
+        .filter(Boolean);
+      let finalListings = attachImagesToListings(diverseListings, allIncluded);
 
       // Filter out the current listing if excludeListingId is provided
       if (excludeListingId) {

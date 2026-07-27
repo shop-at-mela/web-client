@@ -11,11 +11,18 @@ import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { applyCategoryMerchandising } from '../../util/categoryMerchandising';
 
-import { Page, LayoutSingleColumn, NamedLink, ListingCard, BrandCardHome } from '../../components';
+import {
+  Page,
+  LayoutSingleColumn,
+  NamedLink,
+  ListingCard,
+  BrandCardHome,
+  BrandCarousel,
+} from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 import { OccasionStrip, AgeNavigation } from '../MelaHomePage/sections/CategoryShowcase/CategoryShowcase';
-import { getCategoryBrandTiles } from './CategoryPage.duck';
+import { getCategoryBrandTiles, getCategoryBrandCarousel } from './CategoryPage.duck';
 
 import css from './CategoryPage.module.css';
 
@@ -290,7 +297,7 @@ const RootCategoriesPage = ({ categories, scrollingDisabled, config, routeConfig
 // ── Component ──────────────────────────────────────────────────────────────
 
 const CategoryPageComponent = props => {
-  const { listings, brandTiles = [], scrollingDisabled, searchInProgress } = props;
+  const { listings, brandTiles = [], brandCarousel = [], scrollingDisabled, searchInProgress } = props;
 
   // P1.2: brand-diversity cap + utility-item demotion, then interleaved brand tiles.
   const mergedListings = applyCategoryMerchandising(listings);
@@ -435,6 +442,29 @@ const CategoryPageComponent = props => {
             <OccasionStrip config={config} additionalQueryParams={occasionCategoryParams} />
           </div>
 
+          {/* "Shop {L1} Brands" carousel — always the full L1 brand roster (e.g. every
+              Fashion brand on a Women's Ethnic L2 page), each tile's products scoped to
+              the current page's deepest category level. Brands with no listings at that
+              depth are dropped by the duck before this ever renders. */}
+          {brandCarousel.length > 0 && (
+            <div className={css.brandCarouselSection}>
+              <h2 className={css.brandCarouselTitle}>
+                <FormattedMessage
+                  id="CategoryPage.brandCarouselTitle"
+                  defaultMessage="Shop {categoryName} Brands"
+                  values={{ categoryName: breadcrumbs[0]?.name || currentCategory.name }}
+                />
+              </h2>
+              <BrandCarousel
+                items={brandCarousel}
+                getKey={({ brand }) => brand.id.uuid}
+                renderItem={({ brand, products }) => (
+                  <BrandCardHome brand={brand} products={products} showCertifications={false} />
+                )}
+              />
+            </div>
+          )}
+
           {/* P1.3: "Shop Baby by Age" relocated here from the homepage — Baby & Kids
               L0 page only, not sub-pages (the age filter doesn't map cleanly onto
               Clothing/Footwear/etc. sub-categories). */}
@@ -500,6 +530,7 @@ const mapStateToProps = state => {
   return {
     listings: getListingsById(state, currentPageResultIds),
     brandTiles: getCategoryBrandTiles(state),
+    brandCarousel: getCategoryBrandCarousel(state),
     searchInProgress,
     scrollingDisabled: isScrollingDisabled(state),
   };

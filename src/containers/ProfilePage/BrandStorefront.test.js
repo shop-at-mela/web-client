@@ -18,30 +18,6 @@ jest.mock('../../components/ListingCard/ListingCard', () => {
   };
 });
 
-jest.mock('../../components/RedirectTrustSheet/RedirectTrustSheet', () => {
-  return function MockRedirectTrustSheet({ isOpen, brandName, onContinue, productUrl }) {
-    if (!isOpen) return null;
-    return (
-      <div data-testid="redirect-trust-sheet">
-        {brandName}
-        <button onClick={() => onContinue(productUrl)}>Continue</button>
-      </div>
-    );
-  };
-});
-
-jest.mock('../../util/analytics/brandClickout', () => ({
-  openBrandStorefront: jest.fn(),
-}));
-
-jest.mock('../../util/sentimentCapture', () => ({
-  shouldShowRedirectTrust: jest.fn(() => true),
-  markRedirectTrustShown: jest.fn(),
-}));
-
-import { openBrandStorefront } from '../../util/analytics/brandClickout';
-import { shouldShowRedirectTrust } from '../../util/sentimentCapture';
-
 const mockBrand = {
   id: { uuid: '68ebd6d5-ffce-4cb9-9605-3b69f2b67152' },
   type: 'user',
@@ -130,10 +106,7 @@ const mockMessages = {
   'BrandStorefront.readFullStory': 'Read the full story →',
   'BrandStorefront.craftLabel': 'The craft:',
   'BrandStorefront.browseProducts': 'Browse {count} Products ↓',
-  'BrandStorefront.howMelaWorksLabel': 'How Mela works:',
-  'BrandStorefront.redirectMicrocopy': "browse and save here. When you buy, checkout happens securely on the brand's own store.",
   'BrandStorefront.elsewhereTitle': 'Elsewhere',
-  'BrandStorefront.brandWebsite': 'Brand website',
   'BrandStorefront.productsTitle': 'Products ({count})',
   'BrandStorefront.aboutTitle': 'About {name}',
   'BrandStorefront.ourStory': 'Our Story',
@@ -705,46 +678,51 @@ describe('BrandStorefront', () => {
       expect(screen.queryByText('Vetted by Mela')).not.toBeInTheDocument();
     });
 
-    // The outbound trigger now lives only in the About & Story tab (decision
-    // 2026-07-26) — a plain "Brand website" link, not a hero-band CTA. It still
-    // routes through the same shouldShowRedirectTrust/RedirectTrustSheet/
-    // openBrandStorefront flow as before; only its location in the page changed.
-    it('opens the redirect trust sheet on the About-tab brand-website click and forwards the click to openBrandStorefront', () => {
-      shouldShowRedirectTrust.mockReturnValue(true);
+    // No Shopify storefront link anywhere on the page (decision 2026-07-26): a
+    // prior pass put it above the grid, a follow-up moved it to a plain
+    // About-tab link, and it has since been removed entirely — with no
+    // affiliate tracking, an outbound exit door is a pure loss.
+    it('never renders a Shopify storefront/brand-website link, in the hero band or the About tab, even when brandStoreUrl is present', () => {
+      render(
+        <TestWrapper>
+          <BrandStorefront user={flagshipBrand} listings={mockListings} />
+        </TestWrapper>
+      );
+      expect(screen.queryByText(/Visit .*'s Store/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Brand website/)).not.toBeInTheDocument();
 
       render(
         <TestWrapper>
           <BrandStorefront user={flagshipBrand} listings={mockListings} variant="about" />
         </TestWrapper>
       );
-
-      fireEvent.click(screen.getByText('Brand website'));
-
-      expect(screen.getByTestId('redirect-trust-sheet')).toBeInTheDocument();
-
-      fireEvent.click(screen.getByText('Continue'));
-
-      expect(openBrandStorefront).toHaveBeenCalledWith(
-        'https://global.fizzygoblet.com',
-        expect.objectContaining({ brandName: 'Fizzy Goblet' })
-      );
+      expect(screen.queryByText(/Brand website/)).not.toBeInTheDocument();
     });
 
-    it('redirects immediately without the trust sheet on repeat-session clicks', () => {
-      shouldShowRedirectTrust.mockReturnValue(false);
+    it('still shows social links in the About tab "Elsewhere" section when present', () => {
+      const brandWithSocial = {
+        ...flagshipBrand,
+        attributes: {
+          ...flagshipBrand.attributes,
+          profile: {
+            ...flagshipBrand.attributes.profile,
+            publicData: {
+              ...flagshipBrand.attributes.profile.publicData,
+              brandSocial: { instagram: 'https://instagram.com/fizzygoblet' },
+            },
+          },
+        },
+      };
 
       render(
         <TestWrapper>
-          <BrandStorefront user={flagshipBrand} listings={mockListings} variant="about" />
+          <BrandStorefront user={brandWithSocial} listings={mockListings} variant="about" />
         </TestWrapper>
       );
 
-      fireEvent.click(screen.getByText('Brand website'));
-
-      expect(screen.queryByTestId('redirect-trust-sheet')).not.toBeInTheDocument();
-      expect(openBrandStorefront).toHaveBeenCalledWith(
-        'https://global.fizzygoblet.com',
-        expect.objectContaining({ brandName: 'Fizzy Goblet' })
+      expect(screen.getByText('Instagram')).toHaveAttribute(
+        'href',
+        'https://instagram.com/fizzygoblet'
       );
     });
 

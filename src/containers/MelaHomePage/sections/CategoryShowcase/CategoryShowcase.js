@@ -153,8 +153,30 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
                 DISPLAY_COUNT
               );
 
-              // Pick diverse brands from the pool
-              const listingIds = pickBrandDiverse(pool, DISPLAY_COUNT);
+              // Client-side guard: only keep raw listings that actually carry this
+              // occasion value in publicData. Protects against the pub_occasion search
+              // index not being set up in Sharetribe Console (filter silently ignored →
+              // all listings returned). Must run BEFORE pickBrandDiverse — diversifying
+              // first and filtering after would diversify across the whole unfiltered
+              // pool, then collapse back down to whichever single brand happens to have
+              // the most occasion-tagged listings once the irrelevant picks are dropped.
+              const occasionTagged = pool.filter(listing => {
+                const occasions = listing.attributes?.publicData?.occasion;
+                // Handle both storage formats:
+                // - array ['gifting'] when ingested with schema-aware parsing
+                // - string 'gifting' when ingested before schema config was loaded
+                return Array.isArray(occasions)
+                  ? occasions.includes(option)
+                  : occasions === option;
+              });
+              if (process.env.NODE_ENV !== 'production') {
+                console.debug(
+                  `[OccasionStrip] ${option}: ${pool.length} from API → ${occasionTagged.length} with occasion tag`
+                );
+              }
+
+              // Pick diverse brands from the occasion-tagged listings only
+              const listingIds = pickBrandDiverse(occasionTagged, DISPLAY_COUNT);
               return { option, listingIds, responseData: { data: pool, included: allIncluded } };
             } catch {
               return { option, listingIds: [], responseData: null };
@@ -172,24 +194,16 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
         const productsMap = results.reduce((acc, { option, listingIds }) => {
           const refs = listingIds.map(id => ({ id, type: 'listing' }));
           const all = denormalisedEntities(allEntities, refs, false);
-          // Client-side guard: only keep listings that actually carry this occasion
-          // value in publicData. Protects against the pub_occasion search index not
-          // being set up in Sharetribe Console (filter silently ignored → all
-          // listings returned). Panel auto-hides when fewer than 2 pass this check.
+          // Defense-in-depth: listingIds were already picked from occasion-tagged,
+          // brand-diverse listings above, so this should be a no-op in practice —
+          // but re-check here too in case denormalisedEntities resolves a listing
+          // whose entity data doesn't match what was in the filtered pool.
           const filtered = all.filter(listing => {
             const occasions = listing.attributes?.publicData?.occasion;
-            // Handle both storage formats:
-            // - array ['gifting'] when ingested with schema-aware parsing
-            // - string 'gifting' when ingested before schema config was loaded
             return Array.isArray(occasions)
               ? occasions.includes(option)
               : occasions === option;
           });
-          if (process.env.NODE_ENV !== 'production') {
-            console.debug(
-              `[OccasionStrip] ${option}: ${all.length} from API → ${filtered.length} with occasion tag`
-            );
-          }
           acc[option] = filtered;
           return acc;
         }, {});

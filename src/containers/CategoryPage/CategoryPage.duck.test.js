@@ -8,16 +8,24 @@ jest.mock('../../ducks/marketplaceData.duck', () => ({
   getListingsById: jest.fn(() => []),
 }));
 
+jest.mock('../../config/configBrands', () => ({
+  getBrandIdsByCategory: jest.fn(() => []),
+}));
+
 import { loadData as searchPageLoadData } from '../SearchPage/SearchPage.duck';
 import {
   getListingsById,
   addMarketplaceEntities,
+  getMarketplaceEntities,
 } from '../../ducks/marketplaceData.duck';
+import { getBrandIdsByCategory } from '../../config/configBrands';
 import categoryPageReducer, {
   loadData,
   fetchCategoryBrandTiles,
   getCategoryBrandTiles,
   MAX_CATEGORY_BRAND_TILES,
+  fetchCategoryBrandCarousel,
+  getCategoryBrandCarousel,
 } from './CategoryPage.duck';
 
 describe('CategoryPage.duck reducer', () => {
@@ -25,6 +33,8 @@ describe('CategoryPage.duck reducer', () => {
     expect(categoryPageReducer(undefined, { type: '@@INIT' })).toEqual({
       brandTileIds: [],
       brandTilesInProgress: false,
+      brandCarouselEntries: [],
+      brandCarouselInProgress: false,
     });
   });
 
@@ -124,6 +134,111 @@ describe('getCategoryBrandTiles', () => {
   });
 });
 
+describe('fetchCategoryBrandCarousel', () => {
+  const mockDispatch = jest.fn(action => {
+    if (typeof action === 'function') return action(mockDispatch, mockGetState, mockSdk);
+    return action;
+  });
+  const mockGetState = jest.fn(() => ({}));
+  let mockSdk;
+
+  const makeListing = id => ({ id: { uuid: id }, type: 'listing' });
+  const makeUser = id => ({ id: { uuid: id }, type: 'user', attributes: {} });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSdk = {
+      listings: { query: jest.fn() },
+      users: { show: jest.fn() },
+    };
+  });
+
+  it('resolves with an empty payload and skips the SDK when the L1 has no mapped brand roster', async () => {
+    getBrandIdsByCategory.mockReturnValue([]);
+
+    await fetchCategoryBrandCarousel({ level1: 'Food-Gourmet' })(mockDispatch, mockGetState, mockSdk);
+
+    expect(mockSdk.listings.query).not.toHaveBeenCalled();
+    const successCall = mockDispatch.mock.calls.find(
+      ([action]) => action?.type === 'app/CategoryPage/CATEGORY_BRAND_CAROUSEL_SUCCESS'
+    );
+    expect(successCall[0].payload).toEqual([]);
+  });
+
+  it('queries each roster brand scoped to the current category depth, dropping brands with zero matches', async () => {
+    getBrandIdsByCategory.mockReturnValue(['brand-a', 'brand-b']);
+    mockSdk.listings.query = jest.fn(({ author_id }) =>
+      Promise.resolve(
+        author_id === 'brand-a'
+          ? { data: { data: [makeListing('l1')], included: [] } }
+          : { data: { data: [], included: [] } } // brand-b has no matching listings
+      )
+    );
+    mockSdk.users.show = jest.fn(({ id }) =>
+      Promise.resolve({ data: { data: makeUser(id), included: [] } })
+    );
+
+    await fetchCategoryBrandCarousel({ level1: 'Fashion', level2: 'Womens-Ethnic' })(
+      mockDispatch,
+      mockGetState,
+      mockSdk
+    );
+
+    expect(mockSdk.listings.query).toHaveBeenCalledWith(
+      expect.objectContaining({
+        author_id: 'brand-a',
+        pub_categoryLevel1: 'Fashion',
+        pub_categoryLevel2: 'Womens-Ethnic',
+      })
+    );
+    // brand-b's zero-match query means it's never even fetched as a profile.
+    expect(mockSdk.users.show).toHaveBeenCalledTimes(1);
+    expect(mockSdk.users.show).toHaveBeenCalledWith(expect.objectContaining({ id: 'brand-a' }));
+
+    const successCall = mockDispatch.mock.calls.find(
+      ([action]) => action?.type === 'app/CategoryPage/CATEGORY_BRAND_CAROUSEL_SUCCESS'
+    );
+    expect(successCall[0].payload).toEqual([{ brandId: 'brand-a', productIds: ['l1'] }]);
+  });
+
+  it('resolves with an empty payload when no roster brand has matching listings', async () => {
+    getBrandIdsByCategory.mockReturnValue(['brand-a']);
+    mockSdk.listings.query = jest.fn(() => Promise.resolve({ data: { data: [], included: [] } }));
+
+    await fetchCategoryBrandCarousel({ level1: 'Fashion' })(mockDispatch, mockGetState, mockSdk);
+
+    expect(mockSdk.users.show).not.toHaveBeenCalled();
+    const successCall = mockDispatch.mock.calls.find(
+      ([action]) => action?.type === 'app/CategoryPage/CATEGORY_BRAND_CAROUSEL_SUCCESS'
+    );
+    expect(successCall[0].payload).toEqual([]);
+  });
+});
+
+describe('getCategoryBrandCarousel', () => {
+  it('returns an empty array when no entries are stored', () => {
+    expect(getCategoryBrandCarousel({ CategoryPage: { brandCarouselEntries: [] } })).toEqual([]);
+  });
+
+  it('pairs each entry with its denormalised brand and product entities', () => {
+    const brand = { id: { uuid: 'brand-a' }, type: 'user' };
+    const product = { id: { uuid: 'l1' }, type: 'listing' };
+    getMarketplaceEntities.mockImplementation((state, refs) =>
+      refs
+        .map(ref => (ref.type === 'user' ? brand : ref.type === 'listing' ? product : null))
+        .filter(Boolean)
+    );
+
+    const state = {
+      CategoryPage: {
+        brandCarouselEntries: [{ brandId: 'brand-a', productIds: ['l1'] }],
+      },
+    };
+
+    expect(getCategoryBrandCarousel(state)).toEqual([{ brand, products: [product] }]);
+  });
+});
+
 describe('loadData', () => {
   // `resetMocks: true` (package.json jest config) wipes jest.fn(impl) custom
   // implementations before every test, so mockDispatch's recursive-thunk behavior
@@ -139,12 +254,16 @@ describe('loadData', () => {
           Promise.resolve({ data: { data: { id: { uuid: id }, type: 'user', attributes: {} }, included: [] } })
         ),
       },
+      listings: {
+        query: jest.fn(() => Promise.resolve({ data: { data: [], included: [] } })),
+      },
     };
     mockDispatch = jest.fn(action => {
       if (typeof action === 'function') return action(mockDispatch, mockGetState, mockSdk);
       return action;
     });
     searchPageLoadData.mockReturnValue(() => Promise.resolve('search-result'));
+    getBrandIdsByCategory.mockReturnValue([]);
   });
 
   it('extracts distinct brand ids from the resolved listings and fetches their tiles', async () => {

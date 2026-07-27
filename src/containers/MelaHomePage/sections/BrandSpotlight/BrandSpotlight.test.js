@@ -11,7 +11,6 @@ jest.mock('../../../../routing/routeConfiguration', () => []);
 jest.mock('../../../../config/configBrands', () => ({
   getWeeklyFlagshipBrandId: jest.fn(),
   getBrandSlugById: jest.fn(() => 'fizzy-goblet'),
-  getFeaturedProductIds: jest.fn(() => []),
 }));
 
 jest.mock('../../../../util/homepageSdk', () => ({
@@ -19,45 +18,37 @@ jest.mock('../../../../util/homepageSdk', () => ({
   listings: { query: jest.fn() },
 }));
 
-jest.mock('../../../../components/RedirectTrustSheet/RedirectTrustSheet', () => {
-  return function MockRedirectTrustSheet({ isOpen, brandName, onContinue, productUrl }) {
-    if (!isOpen) return null;
+jest.mock('../../../../util/analytics/homepageEditorial', () => ({
+  pushSpotlightView: jest.fn(),
+  pushSpotlightBrandClick: jest.fn(),
+}));
+
+// Real ListingCard/Money rendering isn't the point of these tests — stub the shared
+// carousel so assertions can read the props BrandSpotlight passed it directly.
+jest.mock('../../../../components/ProductCarousel/ProductCarousel', () => {
+  return function MockProductCarousel({ title, listings, viewAllLinkName, viewAllLinkParams }) {
     return (
-      <div data-testid="redirect-trust-sheet">
-        {brandName}
-        <button onClick={() => onContinue(productUrl)}>Continue</button>
-      </div>
+      <div
+        data-testid="product-carousel"
+        data-title={title}
+        data-count={listings?.length ?? 0}
+        data-view-all-name={viewAllLinkName}
+        data-view-all-params={JSON.stringify(viewAllLinkParams || {})}
+      />
     );
   };
 });
 
-jest.mock('../../../../util/analytics/brandClickout', () => ({ openBrandStorefront: jest.fn() }));
-jest.mock('../../../../util/sentimentCapture', () => ({
-  shouldShowRedirectTrust: jest.fn(() => true),
-  markRedirectTrustShown: jest.fn(),
-}));
-jest.mock('../../../../util/analytics/homepageEditorial', () => ({
-  pushSpotlightView: jest.fn(),
-  pushSpotlightBrandClick: jest.fn(),
-  pushSpotlightStoreClick: jest.fn(),
-}));
-
 import BrandSpotlight from './BrandSpotlight';
-import {
-  getWeeklyFlagshipBrandId,
-  getBrandSlugById,
-  getFeaturedProductIds,
-} from '../../../../config/configBrands';
+import { getWeeklyFlagshipBrandId, getBrandSlugById } from '../../../../config/configBrands';
 import sdk from '../../../../util/homepageSdk';
-import { openBrandStorefront } from '../../../../util/analytics/brandClickout';
-import { shouldShowRedirectTrust } from '../../../../util/sentimentCapture';
-import { pushSpotlightStoreClick, pushSpotlightBrandClick } from '../../../../util/analytics/homepageEditorial';
+import { pushSpotlightBrandClick } from '../../../../util/analytics/homepageEditorial';
 
 const mockMessages = {
   'BrandSpotlight.overline': 'Our Brands, Worth Knowing',
   'BrandSpotlight.madeInIndia': 'Made in India',
   'BrandSpotlight.seeOnMela': 'See {brand} on Mela',
-  'BrandSpotlight.visitStore': "Visit {brand}'s Store",
+  'BrandSpotlight.bestsellersTitle': 'Bestsellers from {brand}',
   'BrandSpotlight.rotationNote': 'A different vetted brand is featured each week',
 };
 
@@ -73,6 +64,9 @@ const TestWrapper = ({ children }) => (
   </MemoryRouter>
 );
 
+// brandStoreUrl is still accepted in the fixture (real seeded data carries it) even
+// though the component no longer reads it — the point of several tests below is to
+// confirm it has zero effect on rendering (no Shopify link, decision 2026-07-26).
 const brandResponse = ({ brandCraft, brandStoreUrl, brandHeroImages } = {}) => ({
   data: {
     data: {
@@ -89,6 +83,12 @@ const brandResponse = ({ brandCraft, brandStoreUrl, brandHeroImages } = {}) => (
   },
 });
 
+const makeListing = (id, title) => ({
+  id: { uuid: id },
+  type: 'listing',
+  attributes: { title, price: { amount: 2500, currency: 'USD' }, publicData: {} },
+});
+
 describe('BrandSpotlight', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -97,8 +97,6 @@ describe('BrandSpotlight', () => {
     // time — so every mock implementation must be (re-)installed here, not just once.
     getWeeklyFlagshipBrandId.mockReturnValue('brand-1');
     getBrandSlugById.mockReturnValue('fizzy-goblet');
-    getFeaturedProductIds.mockReturnValue([]);
-    shouldShowRedirectTrust.mockReturnValue(true);
     sdk.listings.query.mockResolvedValue({ data: { data: [], included: [] } });
   });
 
@@ -130,8 +128,33 @@ describe('BrandSpotlight', () => {
     expect(screen.queryByText(/Handcrafted juttis for the modern wardrobe\./)).not.toBeInTheDocument();
   });
 
-  it('omits the "Visit Store" CTA when brandStoreUrl is absent', async () => {
+  it('renders a ProductCarousel of the brand\'s own bestsellers', async () => {
     sdk.users.show.mockResolvedValue(brandResponse({}));
+    sdk.listings.query.mockResolvedValue({
+      data: { data: [makeListing('p1', 'Jutti One'), makeListing('p2', 'Jutti Two')], included: [] },
+    });
+
+    render(
+      <TestWrapper>
+        <BrandSpotlight />
+      </TestWrapper>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('product-carousel')).toBeInTheDocument());
+    expect(sdk.listings.query).toHaveBeenCalledWith(
+      expect.objectContaining({ author_id: 'brand-1', pub_isBestseller: true })
+    );
+    const carousel = screen.getByTestId('product-carousel');
+    expect(carousel).toHaveAttribute('data-count', '2');
+    expect(carousel).toHaveAttribute('data-title', 'Bestsellers from Fizzy Goblet');
+    expect(carousel).toHaveAttribute('data-view-all-name', 'BrandPage');
+    expect(JSON.parse(carousel.getAttribute('data-view-all-params'))).toEqual({
+      brandSlug: 'fizzy-goblet',
+    });
+  });
+
+  it('never renders a Shopify storefront link, even when brandStoreUrl is present', async () => {
+    sdk.users.show.mockResolvedValue(brandResponse({ brandStoreUrl: 'https://fizzygoblet.com' }));
 
     render(
       <TestWrapper>
@@ -142,28 +165,6 @@ describe('BrandSpotlight', () => {
     await waitFor(() => expect(screen.getByText('Fizzy Goblet')).toBeInTheDocument());
     expect(screen.queryByText(/Visit Fizzy Goblet's Store/)).not.toBeInTheDocument();
     expect(screen.getByText(/See Fizzy Goblet on Mela/)).toBeInTheDocument();
-  });
-
-  it('opens the redirect trust sheet and fires spotlight_store_click on Visit Store', async () => {
-    sdk.users.show.mockResolvedValue(brandResponse({ brandStoreUrl: 'https://fizzygoblet.com' }));
-
-    render(
-      <TestWrapper>
-        <BrandSpotlight />
-      </TestWrapper>
-    );
-
-    await waitFor(() => expect(screen.getByText('Fizzy Goblet')).toBeInTheDocument());
-    fireEvent.click(screen.getByText(/Visit Fizzy Goblet's Store/));
-
-    expect(pushSpotlightStoreClick).toHaveBeenCalledWith('brand-1');
-    expect(screen.getByTestId('redirect-trust-sheet')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByText('Continue'));
-    expect(openBrandStorefront).toHaveBeenCalledWith(
-      'https://fizzygoblet.com',
-      expect.objectContaining({ brandName: 'Fizzy Goblet' })
-    );
   });
 
   it('fires spotlight_brand_click when the "See on Mela" link is clicked', async () => {

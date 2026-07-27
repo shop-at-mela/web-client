@@ -571,6 +571,18 @@ export const getBrandCategory = brandId => {
 };
 
 /**
+ * All brand UUIDs configured under a given BRAND_CATEGORIES id (e.g. 'fashion'),
+ * in allBrandIds order. Used by CategoryPage's "Shop {L1} Brands" carousel to build
+ * the full brand roster for an L1 category regardless of how deep the current page is.
+ * @param {string} categoryId - a BRAND_CATEGORIES id
+ * @returns {Array<string>}
+ */
+export const getBrandIdsByCategory = categoryId => {
+  if (!categoryId) return [];
+  return allBrandIds.filter(id => brandConfigurations[id]?.category === categoryId);
+};
+
+/**
  * Get brand UUID by slug
  * Used by /brands/:brandSlug route to resolve ProfilePage loadData
  * @param {string} slug - Brand slug (e.g. 'masilo')
