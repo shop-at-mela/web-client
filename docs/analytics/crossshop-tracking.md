@@ -89,9 +89,22 @@ All three ultimately call `onShopNow`, which is `handleShopNow` defined in `List
 
 This means the event fires exactly once per actual outbound redirect, regardless of which of the three CTA surfaces was clicked, and regardless of whether the trust sheet was shown.
 
+**A fourth surface was added 2026-07-26** (`storefront-validation-readiness-prd.md` P1.1/P0.6): a **"Brand website" link** in the brand page's About & Story tab, `src/containers/ProfilePage/BrandStorefront.js` (`handleVisitStoreClick`). Same `shouldShowRedirectTrust`/`RedirectTrustSheet`/`openBrandStorefront` pattern as the three listing-page surfaces above, but the tracking params are brand-level, not listing-level: `category` and `product_id` are always pushed as `null` here (there is no single listing in play on a brand page) — only `brand_name`/`brand_id`/`destination`/`entry_source` are populated. This `category === null && product_id === null` shape is what distinguishes brand-level clickout from the product-level (listing) clickout above for OCTR reporting (§5c) — no separate "surface" tag was added, since after the 2026-07-26 rework there is exactly one brand-level outbound trigger to disambiguate.
+
+**Revision 2026-07-26 (same day, later pass):** the CTA originally shipped as a primary button in the hero band, above the product grid. That was reworked before this doc's first commit — a brand-page exit door above the grid trains shoppers to bypass Mela entirely, which is fatal with no affiliate tracking. The hero band's only CTA is now the on-Mela "Browse {N} Products" anchor; the outbound link moved to the About tab as a plain, secondary-weight link (no icon-button styling, no trust-sheet ceremony implied by its visual weight) — a curious click from someone reading the full story, not a purchase-intent action. The event shape above is unchanged by the relocation. Live-verified on `/brands/fizzy-goblet` against fully-seeded dev data: clicking "Brand website" in the About tab fires
+```js
+{ event: 'brand_clickout', brand_name: 'Fizzy Goblet', brand_id: '6a170717-...', category: null, product_id: null, entry_source: 'direct', destination: 'https://global.fizzygoblet.com' }
+```
+
+**"Brand card CTAs" (P0.6 wording) does not correspond to a real surface.** `BrandCard.js`, `BrandCardHome.js`, and `BrandHeroCard.js` (the homepage hero carousel, `/brands` directory grid, and featured-partners row) all link to the brand's **Mela** page via `NamedLink` — none of them has an outbound Shopify link today, so none fires (or should fire) `brand_clickout`. The only outbound-capable brand-level surface is the brand page's own CTA (above). If a future design adds an outbound "shop now" action directly on a brand card, it should route through the same `openBrandStorefront` helper.
+
 ### `brand_id` caveat
 
 No stable `brand_id` field exists in the listing schema today — brand is a free-text name only (`publicData.brand`). This implementation uses the listing **author's Sharetribe user UUID** (`ensuredAuthor.id.uuid` / `listing.author.id.uuid`) as `brand_id`, because that UUID is already the canonical brand key used internally in `src/config/configBrands.js` (`getBrandConfiguration(brandId)` etc.). **This is a working proposal, not a confirmed schema field** — if it's rejected, cross-brand analysis falls back to `brand_name` string matching, which works but isn't collision-proof against near-duplicate brand names.
+
+### `vetting_strip_view` / `vetting_strip_click` (added 2026-07-26, P0.1)
+
+No-parameter events (`{ event: 'vetting_strip_view' }` / `{ event: 'vetting_strip_click' }`), fired from `src/util/analytics/vettingStrip.js`, consumed by `src/containers/MelaHomePage/sections/VettingStrip/VettingStrip.js`. `view` fires once per mount via an `IntersectionObserver` (threshold 0.5, disconnects after first fire — never double-counts within a page view); `click` fires on the "How we vet →" link, which also `scrollIntoView({ behavior: 'smooth' })`s to the `#how-we-vet` anchor on `TrustAssurance`. Secondary metric target (PRD §7): ≥15% of homepage sessions view, ≥4% click. Live-verified 2026-07-26: both events fire correctly against the running dev homepage. **Not independently verified in this session**: whether the smooth-scroll animation actually plays (the browser-automation tooling used to verify this couldn't drive `requestAnimationFrame`-based scroll in this pass — same limitation noted for viewport resizing elsewhere; the click firing and `preventDefault`-blocking-the-native-hash-jump were both confirmed, just not the animation itself).
 
 ---
 
@@ -139,6 +152,14 @@ Both are GA4 **Explore** reports (Explore → Blank), not standard reports, beca
 
 This report only becomes meaningful once paid, brand-specific campaigns exist (see §2 rule 1's caveat) — until then, use it in the softer form from step 3.
 
+### 5c. OCTR (primary metric) and flagship brand-page outbound rate
+
+**Question**: what share of sessions click out to a brand store at all (OCTR), and do the 5 flagship brand pages convert at 2× the non-flagship average (Success Metrics table, `storefront-validation-readiness-prd.md` §7)?
+
+1. **OCTR**: Explore → Free form. Metric: **Count distinct** of Session ID, filtered to `Event name = brand_clickout`, divided by total sessions (a second, unfiltered Session ID count over the same date range). This is the PRD's primary success metric — the 2-week post-P0.6 baseline must be captured before any P1 work ships (sequencing risk, PRD §8), so pull this number now, before treating any post-P1 change as signal.
+2. **Flagship brand-page outbound rate**: same base report, add `Brand Name` as a dimension (or `Brand ID` once accepted, see §3 caveat), segment session count by the 5 flagship slugs (`fizzy-goblet`, `house-of-chikankari`, `ankid`, `vilvah-store`, `kaunteya`) vs. the other 14. Rate = `sessions with brand_clickout for that brand` / `sessions that viewed that brand's page` — the denominator requires a GA4 `page_view` filtered to `/brands/{slug}` (standard GA4 page-path dimension, no custom event needed) joined against the `brand_clickout` numerator for the same brand.
+3. This report is brand-page-specific — it will only show non-zero data once brand pages actually get traffic; combine with GA4's standard Pages report (`/brands/:slug` path) to sanity-check traffic volume before reading the rate as meaningful.
+
 ---
 
 ## 6. Verification checklist
@@ -150,6 +171,8 @@ Confirm end-to-end before trusting any number from this system:
 - [ ] **`brand_clickout` fires with all params**: on a listing page, open GTM Preview + GA4 DebugView side by side, click "Shop from Brand." Confirm in DebugView: the event named `brand_clickout` appears with non-null `brand_name`, `category`, `product_id`, `entry_source`, `destination` (and `brand_id` if the author-UUID proposal is accepted).
 - [ ] **Event survives the outbound click** (the brief's original concern): because the actual redirect mechanism is `window.open(url, '_blank', 'noopener,noreferrer')` — a **new tab**, not a same-tab navigation — the original Mela tab is never unloaded, so there is no "killed mid-flight" risk to verify against in the first place. Confirm this is still true (check the Network/Application tab stays on the Mela origin) before relying on this simplification; if the redirect mechanism is ever changed to same-tab (`window.location.href = url`), this entire verification step must be redone and `transport_type: 'beacon'` (or a short delay) becomes load-bearing again, not optional.
 - [ ] **All three CTA surfaces fire the event**: test on (a) a normal in-stock purchase-type listing (main CTA), (b) a listing where the quantity/delivery form renders, (c) an inquiry-only listing. Confirm `brand_clickout` fires from all three, and confirm `RedirectTrustSheet` now also appears on the first click for (b) and (c) (previously it didn't — see PRD §5d).
+- [x] **Brand page store link fires the event**: verified 2026-07-26 on `/brands/fizzy-goblet` against fully-seeded dev data — `brand_clickout` fires with `brand_name`, `brand_id`, `destination` populated and `category`/`product_id` correctly `null`; `RedirectTrustSheet` opens on first click, `window.open` called with the seeded `brandStoreUrl`.
+- [x] **`vetting_strip_view`/`vetting_strip_click` fire**: verified 2026-07-26 on the homepage — view fires once on scroll-into-view, click fires on "How we vet →". Scroll-animation itself not independently verified (tooling limitation, see §3 note).
 - [ ] **Clarity records a session**: open the Clarity project dashboard, confirm a new recording appears within a few minutes of a test visit.
 - [ ] **CSP does not block anything**: with `REACT_APP_CSP=report`, check the browser console / CSP report endpoint for any `clarity.ms` or `googletagmanager.com` violations after install — there should be none, given the allowlist changes in `server/csp.js`.
 

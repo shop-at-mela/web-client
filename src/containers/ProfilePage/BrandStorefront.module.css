@@ -524,6 +524,36 @@
   /* Container */
 }
 
+.aboutLinksSection {
+  margin-top: 8px;
+}
+
+.aboutLinksList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.aboutLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 20px;
+  background: var(--colorWhite);
+  color: var(--colorGrey700);
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.aboutLink:hover {
+  border-color: var(--marketplaceColor);
+  color: var(--marketplaceColor);
+}
+
 .certificationsList {
   display: flex;
   flex-direction: column;

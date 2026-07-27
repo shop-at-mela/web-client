@@ -21,6 +21,17 @@
   }
 }
 
+/* Occasion Section — moved up from inside CategoryShowcase (P1.3) */
+.occasionSection {
+  width: 100%;
+  padding: 1.5rem 0;
+  background: #ffffff;
+
+  @media (min-width: 768px) {
+    padding: 2rem 0;
+  }
+}
+
 /* Category Section */
 .categorySection {
   width: 100%;

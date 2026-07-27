@@ -6,21 +6,28 @@ import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
 import HeroSection from './sections/HeroSection/HeroSection';
+import VettingStrip from './sections/VettingStrip/VettingStrip';
+import BrandSpotlight from './sections/BrandSpotlight/BrandSpotlight';
+import { OccasionStrip } from './sections/CategoryShowcase/CategoryShowcase';
 import CategoryShowcase from './sections/CategoryShowcase/CategoryShowcase';
+import NewFromIndia from './sections/NewFromIndia/NewFromIndia';
+import CraftStories from './sections/CraftStories/CraftStories';
 import FeaturedBrandPartnersContainer from './sections/FeaturedBrandPartners/FeaturedBrandPartnersContainer';
 import TrustAssurance from './sections/TrustAssurance/TrustAssurance';
 import SavedItemsModule from './sections/SavedItems/SavedItemsModule';
+import { useConfiguration } from '../../context/configurationContext';
 
 import css from './MelaHomePage.module.css';
 
 const MelaHomePage = props => {
   const { currentPage } = props;
+  const config = useConfiguration();
 
   // SEO-optimized meta title targeting primary keywords
-  const pageTitle = 'Sustainable Indian Design for Families | Baby, Fashion & More | Mela';
+  const pageTitle = "Discover India's Most Loved Brands | Fashion, Home, Beauty & Kids | Mela";
 
   // SEO-optimized meta description with target keywords
-  const pageDescription = 'Mela curates the best Indian baby, fashion, and home brands for families in the US. Discover quality-verified brands, explore products, and shop directly on brand stores.';
+  const pageDescription = "Mela is a curated home for proven Indian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store. Ships to all 50 states.";
 
   // Social media sharing images
   const socialImage = 'https://sharetribe-assets.imgix.net/68ab648b-6d39-4b2b-bd2c-f99295eeb366/raw/06/5ce7d29d9cfbdfb391af7bc0a744511b9fc1c4?auto=format&fit=clip&h=800&w=800&s=f0fae1b6a833c943e3af463df9cbb484';
@@ -135,13 +142,31 @@ const MelaHomePage = props => {
           <HeroSection />
         </section>
 
+        {/* Vetting Strip - P0.1 compressed trust band, above the first carousel */}
+        <VettingStrip vettingSectionId="how-we-vet" />
+
         {/* Saved Items Module — shows only for authenticated users with saves */}
         <SavedItemsModule />
 
-        {/* Category Showcase - Clear Product Navigation */}
+        {/* Module A: Brand Spotlight — P1.3 revised order, position 3 */}
+        <BrandSpotlight />
+
+        {/* Shop by Occasion — moved up from inside CategoryShowcase (P1.3): the
+            strongest existing curation, previously buried mid-page */}
+        <div className={css.occasionSection}>
+          <OccasionStrip config={config} />
+        </div>
+
+        {/* Category Showcase - now just the 2 surviving carousels (Fashion, Baby & Kids) */}
         <section className={css.categorySection}>
           <CategoryShowcase />
         </section>
+
+        {/* Module B: New from India — recency as curation */}
+        <NewFromIndia />
+
+        {/* Module C: Craft Stories — the craft chips as a discovery surface */}
+        <CraftStories />
 
         {/* Featured Brand Partners */}
         <section className={css.brandsSection}>
@@ -149,7 +174,7 @@ const MelaHomePage = props => {
         </section>
 
         {/* Trust & Quality Assurance - Certifications */}
-        <section className={css.trustSection}>
+        <section id="how-we-vet" className={css.trustSection}>
           <TrustAssurance />
         </section>
       </div>

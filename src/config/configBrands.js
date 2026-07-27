@@ -593,3 +593,31 @@ export const getBrandIdBySlug = slug => {
 export const getBrandSlugById = brandId => {
   return brandConfigurations[brandId]?.slug || null;
 };
+
+/**
+ * ================ Homepage editorial modules (P1.3) ================
+ * homepage-editorial-modules.md Module A: Brand Spotlight — deterministic weekly
+ * rotation through the 5 flagship brands (P1.1's fully-populated brands, so the
+ * spotlight always has story/craft/hero-image content to show).
+ */
+export const FLAGSHIP_BRAND_SLUGS = [
+  'fizzy-goblet',
+  'house-of-chikankari',
+  'ankid',
+  'vilvah-store',
+  'kaunteya',
+];
+
+/**
+ * Deterministic weekly rotation (ISO week number modulo 5) through the flagship
+ * brands — stable for everyone for a week, then moves on, same rotation
+ * mechanism as getOrderedSectionBrandIds's weekSeed above.
+ * @returns {string|null} Flagship brand UUID for the current week, or null if
+ *   none of the flagship slugs resolve in the current environment's config.
+ */
+export const getWeeklyFlagshipBrandId = () => {
+  const resolvableSlugs = FLAGSHIP_BRAND_SLUGS.filter(slug => getBrandIdBySlug(slug));
+  if (resolvableSlugs.length === 0) return null;
+  const index = getISOWeek() % resolvableSlugs.length;
+  return getBrandIdBySlug(resolvableSlugs[index]);
+};

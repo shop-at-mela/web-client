@@ -308,6 +308,14 @@ export const ListingCard = props => {
 
   const id = listing?.id?.uuid;
   const { title = '', price, publicData } = listing?.attributes || {};
+
+  // P0.2: $0 promo SKUs (e.g. "Limited Edition FREE Bag") are excluded from every
+  // public grid. A missing price (inquiry/negotiation listings) is a different,
+  // legitimate case and is left alone — only an explicit $0 amount is hidden.
+  if (price && price.amount === 0) {
+    return null;
+  }
+
   const slug = createSlug(title);
 
   const currentListing = ensureListing(listing);

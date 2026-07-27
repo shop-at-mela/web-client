@@ -53,7 +53,13 @@ const BrandCardHome = props => {
     return null;
   }
 
-  if (!products || products.length === 0) {
+  // P0.2: $0 promo SKUs are excluded from every public grid. A missing price
+  // (inquiry/negotiation listings) is a different, legitimate case and is kept.
+  const sellableProducts = (products || []).filter(
+    p => !(p?.attributes?.price && p.attributes.price.amount === 0)
+  );
+
+  if (sellableProducts.length === 0) {
     return null;
   }
 
@@ -104,7 +110,7 @@ const BrandCardHome = props => {
     : { name: 'ProfilePage', params: { id: brand.id.uuid } };
 
   // Limit products shown; fill remainder with placeholders
-  const featuredProducts = products.slice(0, maxProducts);
+  const featuredProducts = sellableProducts.slice(0, maxProducts);
   const gridProducts = [...featuredProducts];
   while (gridProducts.length < maxProducts) {
     gridProducts.push(null);
@@ -170,11 +176,11 @@ const BrandCardHome = props => {
             />
           ))}
         </div>
-      ) : (
+      ) : showPlaceholders ? (
         <div className={css.certPlaceholder}>
           <FormattedMessage id="BrandCardHome.addCertifications" />
         </div>
-      ))}
+      ) : null)}
 
       {/* Product Grid (2x2) */}
       <div className={css.productGrid}>

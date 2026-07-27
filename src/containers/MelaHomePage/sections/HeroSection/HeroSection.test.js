@@ -114,7 +114,7 @@ describe('HeroSection', () => {
     it('renders the headline', () => {
       renderHeroSection();
       expect(
-        screen.getByText('Independent Indian Brands, Curated for Your Family')
+        screen.getByText("Discover India's Most Loved Brands")
       ).toBeInTheDocument();
     });
 
@@ -150,7 +150,7 @@ describe('HeroSection', () => {
     it('still shows headline during loading', () => {
       renderHeroSection({ fetchInProgress: true });
       expect(
-        screen.getByText('Independent Indian Brands, Curated for Your Family')
+        screen.getByText("Discover India's Most Loved Brands")
       ).toBeInTheDocument();
     });
   });
@@ -159,7 +159,7 @@ describe('HeroSection', () => {
     it('shows headline and CTA with no brand card or carousel', () => {
       renderHeroSection({ heroBrands: [] });
       expect(
-        screen.getByText('Independent Indian Brands, Curated for Your Family')
+        screen.getByText("Discover India's Most Loved Brands")
       ).toBeInTheDocument();
       expect(screen.getByTestId('link-BrandsPage')).toBeInTheDocument();
       expect(screen.queryByTestId('brand-hero-card')).not.toBeInTheDocument();

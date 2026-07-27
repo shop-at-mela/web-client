@@ -17,6 +17,18 @@ import CategoryPage from './CategoryPage';
 jest.mock('../TopbarContainer/TopbarContainer', () => () => <div data-testid="topbar" />);
 jest.mock('../FooterContainer/FooterContainer', () => () => <div data-testid="footer" />);
 
+jest.mock('../../components/ListingCard/ListingCard', () => {
+  return function MockListingCard({ listing }) {
+    return <div data-testid="listing-card">{listing.attributes.title}</div>;
+  };
+});
+
+jest.mock('../../components/BrandCardHome/BrandCardHome', () => {
+  return function MockBrandCardHome({ brand }) {
+    return <div data-testid="brand-tile">{brand.attributes.profile.displayName}</div>;
+  };
+});
+
 // ── Mock data ─────────────────────────────────────────────────────────────
 
 const mockCategories = [
@@ -219,6 +231,23 @@ describe('CategoryPage', () => {
     });
   });
 
+  describe('P1.3: relocated "Shop Baby by Age" block', () => {
+    it('renders on the Baby-Kids L0 page', () => {
+      renderAt('/categories/Baby-Kids');
+      expect(screen.getByText('Shop Baby by Age')).toBeInTheDocument();
+    });
+
+    it('does not render on other L0 categories', () => {
+      renderAt('/categories/baby-clothing');
+      expect(screen.queryByText('Shop Baby by Age')).not.toBeInTheDocument();
+    });
+
+    it('does not render on a Baby-Kids sub-category page', () => {
+      renderAt('/categories/Baby-Kids/Clothing');
+      expect(screen.queryByText('Shop Baby by Age')).not.toBeInTheDocument();
+    });
+  });
+
   describe('L1 category page', () => {
     it('renders the L1 category name as H1', () => {
       renderAt('/categories/baby-clothing/rompers');
@@ -261,6 +290,139 @@ describe('CategoryPage', () => {
     it('renders nothing for an unknown category slug', () => {
       const { container } = renderAt('/categories/not-a-real-category');
       expect(container.firstChild).toBeNull();
+    });
+  });
+
+  describe('P1.2 category merchandising', () => {
+    const listingEntity = (id, { title, price, author }) => ({
+      id: { uuid: id },
+      type: 'listing',
+      attributes: { title, price: { amount: price, currency: 'USD' } },
+      relationships: { author: { data: { id: { uuid: author }, type: 'user' } } },
+    });
+
+    const userEntity = (id, displayName) => ({
+      id: { uuid: id },
+      type: 'user',
+      attributes: { profile: { displayName, publicData: {} } },
+    });
+
+    const gridOrder = container =>
+      Array.from(container.querySelectorAll('[data-testid="listing-card"], [data-testid="brand-tile"]')).map(
+        el => ({ testid: el.getAttribute('data-testid'), text: el.textContent })
+      );
+
+    it('demotes a utility-priced item below a full-priced item from a different brand', () => {
+      const listings = [
+        listingEntity('cheap', { title: 'Cheap Utility Item', price: 300, author: 'brandA' }),
+        listingEntity('hero', { title: 'Hero Product', price: 8000, author: 'brandB' }),
+      ];
+      const store = createStore(() => ({
+        ...mockState,
+        SearchPage: {
+          currentPageResultIds: [{ uuid: 'cheap' }, { uuid: 'hero' }],
+          searchInProgress: false,
+        },
+        marketplaceData: {
+          entities: {
+            listing: { cheap: listings[0], hero: listings[1] },
+            user: { brandA: userEntity('brandA', 'Brand A'), brandB: userEntity('brandB', 'Brand B') },
+          },
+        },
+      }));
+
+      const { container } = renderAt('/categories/baby-clothing', store);
+      const order = gridOrder(container).filter(e => e.testid === 'listing-card');
+      expect(order.map(e => e.text)).toEqual(['Hero Product', 'Cheap Utility Item']);
+    });
+
+    it('caps consecutive same-brand cards at 4, interleaving the other brand', () => {
+      const listings = [
+        ...Array.from({ length: 6 }, (_, i) =>
+          listingEntity(`a${i}`, { title: `A${i}`, price: 8000, author: 'brandA' })
+        ),
+        listingEntity('b0', { title: 'B0', price: 8000, author: 'brandB' }),
+        listingEntity('b1', { title: 'B1', price: 8000, author: 'brandB' }),
+      ];
+      const entityMap = Object.fromEntries(listings.map(l => [l.id.uuid, l]));
+      const store = createStore(() => ({
+        ...mockState,
+        SearchPage: {
+          currentPageResultIds: listings.map(l => l.id),
+          searchInProgress: false,
+        },
+        marketplaceData: {
+          entities: {
+            listing: entityMap,
+            user: { brandA: userEntity('brandA', 'Brand A'), brandB: userEntity('brandB', 'Brand B') },
+          },
+        },
+      }));
+
+      const { container } = renderAt('/categories/baby-clothing', store);
+      const titles = gridOrder(container)
+        .filter(e => e.testid === 'listing-card')
+        .map(e => e.text);
+
+      let maxRun = 0;
+      let currentRun = 0;
+      let lastBrand = null;
+      titles.forEach(title => {
+        const brand = title[0]; // 'A' or 'B'
+        currentRun = brand === lastBrand ? currentRun + 1 : 1;
+        lastBrand = brand;
+        maxRun = Math.max(maxRun, currentRun);
+      });
+      expect(maxRun).toBeLessThanOrEqual(4);
+      expect(titles).toHaveLength(8);
+    });
+
+    it('interleaves a fetched brand tile after every 6th product', () => {
+      const listings = Array.from({ length: 6 }, (_, i) =>
+        listingEntity(`l${i}`, { title: `Product ${i}`, price: 8000, author: 'brandA' })
+      );
+      const entityMap = Object.fromEntries(listings.map(l => [l.id.uuid, l]));
+      const store = createStore(() => ({
+        ...mockState,
+        SearchPage: {
+          currentPageResultIds: listings.map(l => l.id),
+          searchInProgress: false,
+        },
+        marketplaceData: {
+          entities: {
+            listing: entityMap,
+            user: { brandA: userEntity('brandA', 'Brand A') },
+          },
+        },
+        CategoryPage: { brandTileIds: ['brandA'], brandTilesInProgress: false },
+      }));
+
+      const { container } = renderAt('/categories/baby-clothing', store);
+      const order = gridOrder(container);
+      expect(order).toHaveLength(7); // 6 products + 1 tile
+      expect(order[6]).toEqual({ testid: 'brand-tile', text: 'Brand A' });
+    });
+
+    it('does not render a brand tile when none have been fetched', () => {
+      const listings = Array.from({ length: 6 }, (_, i) =>
+        listingEntity(`l${i}`, { title: `Product ${i}`, price: 8000, author: 'brandA' })
+      );
+      const entityMap = Object.fromEntries(listings.map(l => [l.id.uuid, l]));
+      const store = createStore(() => ({
+        ...mockState,
+        SearchPage: {
+          currentPageResultIds: listings.map(l => l.id),
+          searchInProgress: false,
+        },
+        marketplaceData: {
+          entities: { listing: entityMap, user: { brandA: userEntity('brandA', 'Brand A') } },
+        },
+        CategoryPage: { brandTileIds: [], brandTilesInProgress: false },
+      }));
+
+      const { container } = renderAt('/categories/baby-clothing', store);
+      expect(screen.queryByTestId('brand-tile')).not.toBeInTheDocument();
+      expect(gridOrder(container)).toHaveLength(6);
     });
   });
 });

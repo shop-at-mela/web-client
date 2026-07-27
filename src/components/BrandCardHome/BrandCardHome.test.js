@@ -236,6 +236,73 @@ describe('BrandCardHome', () => {
     expect(screen.getByText('🏆 Add certifications')).toBeInTheDocument();
   });
 
+  it('hides the certifications placeholder when showPlaceholders is false (P0.2: /brands directory)', () => {
+    const brandNoCerts = {
+      ...mockBrand,
+      attributes: {
+        ...mockBrand.attributes,
+        profile: {
+          displayName: 'TestBrand',
+          publicData: {},
+        },
+      },
+    };
+
+    render(
+      <TestWrapper>
+        <BrandCardHome brand={brandNoCerts} products={mockProducts} showPlaceholders={false} />
+      </TestWrapper>
+    );
+
+    expect(screen.queryByText('🏆 Add certifications')).not.toBeInTheDocument();
+  });
+
+  it('excludes $0 promo SKUs from the product grid (P0.2 trust-debris sweep)', () => {
+    const productsWithFreeSku = [
+      ...mockProducts,
+      {
+        id: { uuid: 'free-promo-sku' },
+        type: 'listing',
+        attributes: {
+          title: 'Limited Edition FREE Bag',
+          price: { amount: 0, currency: 'INR' },
+        },
+        images: [],
+      },
+    ];
+
+    render(
+      <TestWrapper>
+        <BrandCardHome brand={mockBrand} products={productsWithFreeSku} />
+      </TestWrapper>
+    );
+
+    expect(screen.queryByText('Limited Edition FREE Bag')).not.toBeInTheDocument();
+    expect(screen.getByText('Product 1')).toBeInTheDocument();
+  });
+
+  it('renders nothing when every product is a $0 promo SKU', () => {
+    const onlyFreeSkus = [
+      {
+        id: { uuid: 'free-promo-sku' },
+        type: 'listing',
+        attributes: {
+          title: 'Limited Edition FREE Bag',
+          price: { amount: 0, currency: 'INR' },
+        },
+        images: [],
+      },
+    ];
+
+    const { container } = render(
+      <TestWrapper>
+        <BrandCardHome brand={mockBrand} products={onlyFreeSkus} />
+      </TestWrapper>
+    );
+
+    expect(container.firstChild).toBeNull();
+  });
+
   it('renders all certification badges with icons', () => {
     const brandWithMultipleCerts = {
       ...mockBrand,

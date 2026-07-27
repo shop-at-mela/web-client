@@ -5,7 +5,7 @@ import { IntlProvider } from 'react-intl';
 import '@testing-library/jest-dom';
 
 import { ConfigurationProvider } from '../../../../context/configurationContext';
-import CategoryShowcase, { OccasionStrip } from './CategoryShowcase';
+import CategoryShowcase, { OccasionStrip, AgeNavigation } from './CategoryShowcase';
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
@@ -136,14 +136,19 @@ describe('CategoryShowcase', () => {
     expect(screen.getByText(/Browse All Categories/i)).toBeInTheDocument();
   });
 
-  it('renders the Shop Baby by Age heading', () => {
+  // P1.3: "Shop Baby by Age" moved to the Baby & Kids category page (CategoryPage.js)
+  // and "Shop by Occasion" moved up to its own top-level homepage section
+  // (MelaHomePage.js) — neither renders as part of CategoryShowcase anymore, though
+  // both components are still exported from this file for reuse (see their own
+  // describe blocks below).
+  it('does not render Shop Baby by Age (relocated to the category page)', () => {
     renderInContext(<CategoryShowcase />);
-    expect(screen.getByText('Shop Baby by Age')).toBeInTheDocument();
+    expect(screen.queryByText('Shop Baby by Age')).not.toBeInTheDocument();
   });
 
-  it('renders the Shop by Occasion heading', () => {
+  it('does not render Shop by Occasion (relocated to its own homepage section)', () => {
     renderInContext(<CategoryShowcase />);
-    expect(screen.getByText('Shop by Occasion')).toBeInTheDocument();
+    expect(screen.queryByText('Shop by Occasion')).not.toBeInTheDocument();
   });
 });
 
@@ -165,12 +170,15 @@ const renderAndWaitForLoad = async (ui, config = {}) => {
 };
 
 // ── AllCategoryCarousels ──────────────────────────────────────────────────────
-// 6 top-level categories fetched by a single carousel component using ALL_CATEGORIES.
-// Each category goes through fetchBestsellerCarousel's two-step fetch (bestseller-first,
-// then a fallback query padding out the pool) — see util/bestsellerCarousel.js. With the
-// mocked empty response below, the fallback always triggers, so every category yields
-// 2 queries: perPage 20 (Math.max(DISPLAY_COUNT(8) * 2, 20)) for the bestseller step,
-// then perPage 50 for the fallback.
+// P1.3: only 2 surviving top-level categories (Fashion, Baby & Kids) fetched by a
+// single carousel component using ALL_CATEGORIES (down from 6 — Home & Kitchen,
+// Jewelry & Accessories, Beauty & Wellness, and Art & Craft are cut from the
+// homepage, still reachable via /categories). Each category goes through
+// fetchBestsellerCarousel's two-step fetch (bestseller-first, then a fallback query
+// padding out the pool) — see util/bestsellerCarousel.js. With the mocked empty
+// response below, the fallback always triggers, so every category yields 2 queries:
+// perPage 20 (Math.max(DISPLAY_COUNT(8) * 2, 20)) for the bestseller step, then
+// perPage 50 for the fallback.
 
 describe('AllCategoryCarousels', () => {
   beforeEach(() => {
@@ -179,28 +187,19 @@ describe('AllCategoryCarousels', () => {
     denormalisedEntities.mockReturnValue([]);
   });
 
-  it('queries all 6 categories using the bestseller-first pagination strategy', async () => {
+  it('queries both surviving categories using the bestseller-first pagination strategy', async () => {
     const calls = await renderAndWaitForLoad(<CategoryShowcase />);
     const catCalls = calls.filter(([p]) => p.pub_categoryLevel1);
-    expect(catCalls).toHaveLength(12); // 6 categories × 2 queries each
+    expect(catCalls).toHaveLength(4); // 2 categories × 2 queries each
     catCalls.forEach(([params]) => {
       expect([20, 50]).toContain(params.perPage);
     });
   });
 
-  it('queries Baby-Kids, Fashion, Home-Kitchen, Jewelry-Accessories, Beauty-Wellness, Art-Craft', async () => {
+  it('queries only Fashion and Baby-Kids', async () => {
     const calls = await renderAndWaitForLoad(<CategoryShowcase />);
     const categories = calls.filter(([p]) => p.pub_categoryLevel1).map(([p]) => p.pub_categoryLevel1);
-    expect(new Set(categories)).toEqual(
-      new Set([
-        'Baby-Kids',
-        'Fashion',
-        'Home-Kitchen',
-        'Jewelry-Accessories',
-        'Beauty-Wellness',
-        'Art-Craft',
-      ])
-    );
+    expect(new Set(categories)).toEqual(new Set(['Fashion', 'Baby-Kids']));
   });
 
   it('includes images and currentStock in all category queries', async () => {
@@ -215,27 +214,20 @@ describe('AllCategoryCarousels', () => {
   it('shows loading carousels while fetching', () => {
     mockQuery.mockReturnValue(new Promise(() => {}));
     renderInContext(<CategoryShowcase />);
-    // AllCategories(6) + AgeNavigation(3) = at least 6 loading carousels
-    expect(screen.getAllByTestId('carousel-loading').length).toBeGreaterThanOrEqual(6);
+    expect(screen.getAllByTestId('carousel-loading').length).toBeGreaterThanOrEqual(2);
   });
 
-  it('renders all 6 category carousels with correct titles after load', async () => {
+  it('renders both category carousels with correct titles after load', async () => {
     await renderAndWaitForLoad(<CategoryShowcase />);
     const titles = screen.getAllByTestId('product-carousel').map(el => el.getAttribute('data-title'));
-    expect(titles).toEqual(
-      expect.arrayContaining([
-        'Baby & Kids',
-        'Indian Fashion',
-        'Home & Kitchen',
-        'Jewelry & Accessories',
-        'Beauty & Wellness',
-        'Art & Craft',
-      ])
-    );
+    expect(titles).toEqual(expect.arrayContaining(['Indian Fashion', 'Baby & Kids']));
+    expect(titles).toHaveLength(2);
   });
 });
 
 // ── AgeNavigation ─────────────────────────────────────────────────────────────
+// P1.3: no longer rendered by CategoryShowcase (relocated to the Baby & Kids
+// category page) — render it directly here instead.
 
 describe('AgeNavigation', () => {
   beforeEach(() => {
@@ -245,22 +237,25 @@ describe('AgeNavigation', () => {
   });
 
   it('queries each age group using the bestseller-first pagination strategy', async () => {
-    const calls = await renderAndWaitForLoad(<CategoryShowcase />);
-    const ageCalls = calls.filter(([p]) => p.pub_age_group);
+    renderInContext(<AgeNavigation config={{}} />);
+    await screen.findAllByTestId('product-carousel');
+    const ageCalls = mockQuery.mock.calls.filter(([p]) => p.pub_age_group);
     expect(ageCalls).toHaveLength(6); // 3 age groups × 2 queries each (see AllCategoryCarousels note above)
     ageCalls.forEach(([params]) => expect([20, 50]).toContain(params.perPage));
   });
 
   it('queries newborn, 0_6_months, 6_12_months', async () => {
-    const calls = await renderAndWaitForLoad(<CategoryShowcase />);
-    const groups = calls.filter(([p]) => p.pub_age_group).map(([p]) => p.pub_age_group);
+    renderInContext(<AgeNavigation config={{}} />);
+    await screen.findAllByTestId('product-carousel');
+    const groups = mockQuery.mock.calls.filter(([p]) => p.pub_age_group).map(([p]) => p.pub_age_group);
     expect(groups).toEqual(
       expect.arrayContaining(['newborn', '0_6_months', '6_12_months'])
     );
   });
 
   it('renders age group carousels with correct titles after load', async () => {
-    await renderAndWaitForLoad(<CategoryShowcase />);
+    renderInContext(<AgeNavigation config={{}} />);
+    await screen.findAllByTestId('product-carousel');
     const titles = screen.getAllByTestId('product-carousel').map(el => el.getAttribute('data-title'));
     expect(titles).toEqual(
       expect.arrayContaining(['Newborn', '0-6 Months', '6-12 Months'])

@@ -129,10 +129,11 @@ const mockMessages = {
   'BrandStorefront.metaCards': 'US cards accepted',
   'BrandStorefront.readFullStory': 'Read the full story →',
   'BrandStorefront.craftLabel': 'The craft:',
-  'BrandStorefront.visitStore': "Visit {brand}'s Store ↗",
   'BrandStorefront.browseProducts': 'Browse {count} Products ↓',
   'BrandStorefront.howMelaWorksLabel': 'How Mela works:',
-  'BrandStorefront.redirectMicrocopy': "discover here, check out on the brand's own store.",
+  'BrandStorefront.redirectMicrocopy': "browse and save here. When you buy, checkout happens securely on the brand's own store.",
+  'BrandStorefront.elsewhereTitle': 'Elsewhere',
+  'BrandStorefront.brandWebsite': 'Brand website',
   'BrandStorefront.productsTitle': 'Products ({count})',
   'BrandStorefront.aboutTitle': 'About {name}',
   'BrandStorefront.ourStory': 'Our Story',
@@ -655,8 +656,11 @@ describe('BrandStorefront', () => {
       expect(screen.getByText('Vetted by Mela')).toBeInTheDocument();
       expect(screen.getByText(/The craft:/)).toBeInTheDocument();
       expect(screen.getByText(/juttis and kolhapuris/)).toBeInTheDocument();
-      expect(screen.getByText(/Visit Fizzy Goblet's Store/)).toBeInTheDocument();
       expect(screen.getByText(/Read the full story/)).toBeInTheDocument();
+      // No outbound store link above the grid (decision 2026-07-26) — only an
+      // on-Mela "Browse Products" CTA lives in the hero band.
+      expect(screen.queryByText(/Visit .*'s Store/)).not.toBeInTheDocument();
+      expect(screen.getByText(/Browse \d+ Products/)).toBeInTheDocument();
       // Both the banner and the logo chip use the brand name as alt text.
       const brandImages = screen.getAllByAltText('Fizzy Goblet');
       expect(brandImages.some(img => img.getAttribute('src') === 'https://example.com/fizzy-goblet-hero.jpg')).toBe(
@@ -675,8 +679,9 @@ describe('BrandStorefront', () => {
       expect(container.querySelector('.heroImg')).not.toBeInTheDocument();
       expect(screen.queryByText('Vetted by Mela')).not.toBeInTheDocument();
       expect(screen.queryByText(/The craft:/)).not.toBeInTheDocument();
-      // No store URL means no primary CTA at all — not a dead/disabled button.
+      // No listings and no store URL — no dead/disabled outbound link anywhere.
       expect(screen.queryByText(/Visit .*'s Store/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Brand website/)).not.toBeInTheDocument();
     });
 
     it('does not show the vetted pill when melaVetted is not explicitly true', () => {
@@ -700,16 +705,20 @@ describe('BrandStorefront', () => {
       expect(screen.queryByText('Vetted by Mela')).not.toBeInTheDocument();
     });
 
-    it('opens the redirect trust sheet on primary CTA click and forwards the click to openBrandStorefront', () => {
+    // The outbound trigger now lives only in the About & Story tab (decision
+    // 2026-07-26) — a plain "Brand website" link, not a hero-band CTA. It still
+    // routes through the same shouldShowRedirectTrust/RedirectTrustSheet/
+    // openBrandStorefront flow as before; only its location in the page changed.
+    it('opens the redirect trust sheet on the About-tab brand-website click and forwards the click to openBrandStorefront', () => {
       shouldShowRedirectTrust.mockReturnValue(true);
 
       render(
         <TestWrapper>
-          <BrandStorefront user={flagshipBrand} listings={mockListings} />
+          <BrandStorefront user={flagshipBrand} listings={mockListings} variant="about" />
         </TestWrapper>
       );
 
-      fireEvent.click(screen.getByText(/Visit Fizzy Goblet's Store/));
+      fireEvent.click(screen.getByText('Brand website'));
 
       expect(screen.getByTestId('redirect-trust-sheet')).toBeInTheDocument();
 
@@ -726,17 +735,30 @@ describe('BrandStorefront', () => {
 
       render(
         <TestWrapper>
-          <BrandStorefront user={flagshipBrand} listings={mockListings} />
+          <BrandStorefront user={flagshipBrand} listings={mockListings} variant="about" />
         </TestWrapper>
       );
 
-      fireEvent.click(screen.getByText(/Visit Fizzy Goblet's Store/));
+      fireEvent.click(screen.getByText('Brand website'));
 
       expect(screen.queryByTestId('redirect-trust-sheet')).not.toBeInTheDocument();
       expect(openBrandStorefront).toHaveBeenCalledWith(
         'https://global.fizzygoblet.com',
         expect.objectContaining({ brandName: 'Fizzy Goblet' })
       );
+    });
+
+    it('does not render a primary CTA in the hero band even when brandStoreUrl is present', () => {
+      render(
+        <TestWrapper>
+          <BrandStorefront user={flagshipBrand} listings={mockListings} />
+        </TestWrapper>
+      );
+
+      // hasListings is true here, so Browse Products renders — but as the sole
+      // hero CTA, never alongside an outbound button.
+      expect(screen.getByText(/Browse \d+ Products/)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Visit/ })).not.toBeInTheDocument();
     });
 
     it('excludes $0 promo SKUs from the grid and product counts', () => {

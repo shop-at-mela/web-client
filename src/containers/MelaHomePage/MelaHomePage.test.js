@@ -12,8 +12,33 @@ jest.mock('./sections/HeroSection/HeroSection', () => {
 });
 
 jest.mock('./sections/CategoryShowcase/CategoryShowcase', () => {
-  return function CategoryShowcase() {
+  const CategoryShowcase = function CategoryShowcase() {
     return <div data-testid="category-showcase">Category Showcase</div>;
+  };
+  const OccasionStrip = function OccasionStrip() {
+    return <div data-testid="occasion-strip">Occasion Strip</div>;
+  };
+  const AgeNavigation = function AgeNavigation() {
+    return <div data-testid="age-navigation">Age Navigation</div>;
+  };
+  return { __esModule: true, default: CategoryShowcase, OccasionStrip, AgeNavigation };
+});
+
+jest.mock('./sections/BrandSpotlight/BrandSpotlight', () => {
+  return function BrandSpotlight() {
+    return <div data-testid="brand-spotlight">Brand Spotlight</div>;
+  };
+});
+
+jest.mock('./sections/NewFromIndia/NewFromIndia', () => {
+  return function NewFromIndia() {
+    return <div data-testid="new-from-india">New from India</div>;
+  };
+});
+
+jest.mock('./sections/CraftStories/CraftStories', () => {
+  return function CraftStories() {
+    return <div data-testid="craft-stories">Craft Stories</div>;
   };
 });
 
@@ -91,7 +116,7 @@ describe('MelaHomePage', () => {
     );
 
     expect(getByTestId('page-title').textContent).toBe(
-      'Sustainable Indian Design for Families | Baby, Fashion & More | Mela'
+      "Discover India's Most Loved Brands | Fashion, Home, Beauty & Kids | Mela"
     );
   });
 
@@ -103,7 +128,7 @@ describe('MelaHomePage', () => {
     );
 
     expect(getByTestId('page-description').textContent).toBe(
-      'Mela curates the best Indian baby, fashion, and home brands for families in the US. Discover quality-verified brands, explore products, and shop directly on brand stores.'
+      "Mela is a curated home for proven Indian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store. Ships to all 50 states."
     );
   });
 

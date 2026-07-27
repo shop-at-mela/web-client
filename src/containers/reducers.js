@@ -4,6 +4,7 @@
  * https://github.com/erikras/ducks-modular-redux
  */
 import BrandsPage from './BrandsPage/BrandsPage.duck';
+import CategoryPage from './CategoryPage/CategoryPage.duck';
 import CheckoutPage from './CheckoutPage/CheckoutPage.duck';
 import ContactDetailsPage from './ContactDetailsPage/ContactDetailsPage.duck';
 import EditListingPage from './EditListingPage/EditListingPage.duck';
@@ -25,6 +26,7 @@ import TransactionPage from './TransactionPage/TransactionPage.duck';
 
 export {
   BrandsPage,
+  CategoryPage,
   CheckoutPage,
   ContactDetailsPage,
   EditListingPage,

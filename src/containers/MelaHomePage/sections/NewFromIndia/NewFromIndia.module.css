@@ -1,0 +1,63 @@
+@import '../../../../styles/customMediaQueries.css';
+
+.root {
+  position: relative;
+  padding: 22px 0 8px;
+}
+
+.title {
+  font-family: var(--fontFamilyDisplay);
+  font-size: 20px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey700);
+  padding: 0 16px;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--colorGrey500);
+  padding: 2px 16px 14px;
+  margin: 0;
+}
+
+.scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 0 16px 16px;
+  scrollbar-width: none;
+}
+
+.scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.card {
+  flex: 0 0 150px;
+  cursor: pointer;
+}
+
+.skeleton {
+  aspect-ratio: 4 / 5;
+  background: var(--colorGrey50);
+  border-radius: 4px;
+}
+
+@media (--viewportMedium) {
+  .title {
+    padding: 0 24px;
+  }
+
+  .subtitle {
+    padding: 2px 24px 14px;
+  }
+
+  .scroll {
+    padding: 0 24px 16px;
+  }
+
+  .card {
+    flex: 0 0 200px;
+  }
+}

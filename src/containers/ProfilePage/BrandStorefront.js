@@ -251,6 +251,7 @@ const BrandStorefront = props => {
     brandHeroImages,
     brandCraft,
     melaVetted,
+    brandSocial,
   } = publicData;
 
   const profileImage = user?.profileImage;
@@ -272,11 +273,24 @@ const BrandStorefront = props => {
   const story = brandStory || bio;
 
   // Hero band shows only the opening of the story (~2 paragraphs); the full text
-  // stays in the About tab via BrandStorySection, unchanged. Only shown when a
-  // dedicated brandStory exists — falling back to `bio` here would just repeat
-  // the tagline (also bio-derived) as a second, redundant block of copy.
-  const heroStorySummary = brandStory
-    ? brandStory
+  // stays in the About tab via BrandStorySection, unchanged.
+  //
+  // The seeder concatenates brand_tagline + brand_story into the single native
+  // `bio` field (see P1.1b data contract) — it does not populate a separate
+  // publicData.brandStory for most brands. So when brandStory is absent, the
+  // story summary comes from `bio` with the leading tagline sentence stripped
+  // off (tagline is already shown right above), not from the whole `bio` again.
+  const bioAfterTagline =
+    !brandTagline && bio && tagline
+      ? bio
+          .slice(bio.indexOf(tagline) + tagline.length)
+          .replace(/^[.\s]+/, '')
+          .trim()
+      : null;
+
+  const storySource = brandStory || bioAfterTagline;
+  const heroStorySummary = storySource
+    ? storySource
         .split(/\n\s*\n/)
         .filter(Boolean)
         .slice(0, 2)
@@ -502,25 +516,22 @@ const BrandStorefront = props => {
               </span>
             )}
 
+            {/* Single on-Mela CTA (decision 2026-07-26, storefront-validation-readiness-prd.md P1.1):
+                no outbound store link above the grid — an exit door here trains shoppers to bypass
+                Mela entirely, and with no affiliate tracking that's a pure loss. Outbound now lives
+                only as a plain link in the About & Story tab (see below); the only purchase-path
+                outbound remains the existing listing-level redirect flow. */}
             <div className={css.ctaCol}>
-              {brandStoreUrl && (
-                <button type="button" className={css.btnPrimary} onClick={handleVisitStoreClick}>
-                  <FormattedMessage id="BrandStorefront.visitStore" values={{ brand: displayName }} />
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-                    <path d="M7 17L17 7M9 7h8v8" />
-                  </svg>
-                </button>
-              )}
               {hasListings &&
                 (activeTab === 'products' ? (
-                  <a className={css.btnSecondary} href="#brand-products-grid">
+                  <a className={css.btnPrimary} href="#brand-products-grid">
                     <FormattedMessage
                       id="BrandStorefront.browseProducts"
                       values={{ count: sellableListings.length }}
                     />
                   </a>
                 ) : (
-                  <NamedLink {...productsLinkProps} className={css.btnSecondary}>
+                  <NamedLink {...productsLinkProps} className={css.btnPrimary}>
                     <FormattedMessage
                       id="BrandStorefront.browseProducts"
                       values={{ count: sellableListings.length }}
@@ -529,14 +540,12 @@ const BrandStorefront = props => {
                 ))}
             </div>
 
-            {brandStoreUrl && (
-              <p className={css.redirectMicrocopy}>
-                <strong>
-                  <FormattedMessage id="BrandStorefront.howMelaWorksLabel" />
-                </strong>{' '}
-                <FormattedMessage id="BrandStorefront.redirectMicrocopy" />
-              </p>
-            )}
+            <p className={css.redirectMicrocopy}>
+              <strong>
+                <FormattedMessage id="BrandStorefront.howMelaWorksLabel" />
+              </strong>{' '}
+              <FormattedMessage id="BrandStorefront.redirectMicrocopy" />
+            </p>
           </div>
         </div>
       </div>
@@ -663,6 +672,40 @@ const BrandStorefront = props => {
             ) : isOwnProfile ? (
               <BrandDataPlaceholder type="certifications" isOwner={isOwnProfile} />
             ) : null}
+
+            {/* Brand website + social — the only outbound link on the brand page (decision
+                2026-07-26, storefront-validation-readiness-prd.md P1.1). Plain link, no
+                trust-sheet ceremony: a curious click from someone reading the full story,
+                not a purchase-intent redirect. Still routes through openBrandStorefront so
+                the existing brand_clickout event (category=null/product_id=null, i.e.
+                brand-level not product-level) fires — see docs/analytics/crossshop-tracking.md. */}
+            {(brandStoreUrl || (brandSocial && Object.keys(brandSocial).length > 0)) && (
+              <div className={css.aboutLinksSection}>
+                <H4 className={css.sectionSubtitle}>
+                  <FormattedMessage id="BrandStorefront.elsewhereTitle" />
+                </H4>
+                <div className={css.aboutLinksList}>
+                  {brandStoreUrl && (
+                    <button type="button" className={css.aboutLink} onClick={handleVisitStoreClick}>
+                      <FormattedMessage id="BrandStorefront.brandWebsite" />
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                        <path d="M7 17L17 7M9 7h8v8" />
+                      </svg>
+                    </button>
+                  )}
+                  {brandSocial?.instagram && (
+                    <a className={css.aboutLink} href={brandSocial.instagram} target="_blank" rel="noopener noreferrer">
+                      Instagram
+                    </a>
+                  )}
+                  {brandSocial?.facebook && (
+                    <a className={css.aboutLink} href={brandSocial.facebook} target="_blank" rel="noopener noreferrer">
+                      Facebook
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

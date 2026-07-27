@@ -3,28 +3,11 @@ import { Link } from 'react-router-dom';
 import { FormattedMessage } from '../../../../util/reactIntl';
 import { NamedLink, ListingCard, ProductCarousel } from '../../../../components';
 import { useConfiguration } from '../../../../context/configurationContext';
-import { createInstance } from '../../../../util/sdkLoader';
 import { denormalisedEntities, updatedEntities, pickBrandDiverse } from '../../../../util/data';
 import { fetchBestsellerCarousel } from '../../../../util/bestsellerCarousel';
-import appSettings from '../../../../config/settings';
-import * as apiUtils from '../../../../util/api';
+import sdk from '../../../../util/homepageSdk';
 
 import css from './CategoryShowcase.module.css';
-
-// Create SDK instance for fetching listings (matches pattern from index.js)
-const baseUrl = appSettings.sdk.baseUrl ? { baseUrl: appSettings.sdk.baseUrl } : {};
-const assetCdnBaseUrl = appSettings.sdk.assetCdnBaseUrl
-  ? { assetCdnBaseUrl: appSettings.sdk.assetCdnBaseUrl }
-  : {};
-
-const sdk = createInstance({
-  transitVerbose: appSettings.sdk.transitVerbose,
-  clientId: appSettings.sdk.clientId,
-  secure: appSettings.usingSSL,
-  typeHandlers: apiUtils.typeHandlers,
-  ...baseUrl,
-  ...assetCdnBaseUrl,
-});
 
 // ── Occasion config ────────────────────────────────────────────────────────
 // Only two validated occasions for Mela's US diaspora audience.
@@ -65,13 +48,15 @@ const TOP_AGE_GROUPS = [
   { option: '6_12_months', label: '6-12 Months' },
 ];
 
+// P1.3: homepage-editorial-modules.md's revised section order keeps only Fashion and
+// Baby & Kids as standalone product carousels here — Home & Kitchen, Jewelry &
+// Accessories, Beauty & Wellness, and Art & Craft are still fully reachable via the
+// hero's category chips and /categories, just no longer duplicated as homepage rows
+// ("eight product carousels become two"). Order matches the spec's row 5→6 (Fashion,
+// then Baby & Kids).
 const ALL_CATEGORIES = [
-  { id: 'Baby-Kids',           label: 'Baby & Kids',          viewAllSearch: '?pub_categoryLevel1=Baby-Kids' },
-  { id: 'Fashion',             label: 'Indian Fashion',        viewAllSearch: '?pub_categoryLevel1=Fashion' },
-  { id: 'Home-Kitchen',        label: 'Home & Kitchen',        viewAllSearch: '?pub_categoryLevel1=Home-Kitchen' },
-  { id: 'Jewelry-Accessories', label: 'Jewelry & Accessories', viewAllSearch: '?pub_categoryLevel1=Jewelry-Accessories' },
-  { id: 'Beauty-Wellness',     label: 'Beauty & Wellness',     viewAllSearch: '?pub_categoryLevel1=Beauty-Wellness' },
-  { id: 'Art-Craft',           label: 'Art & Craft',           viewAllSearch: '?pub_categoryLevel1=Art-Craft' },
+  { id: 'Fashion',   label: 'Indian Fashion', viewAllSearch: '?pub_categoryLevel1=Fashion' },
+  { id: 'Baby-Kids', label: 'Baby & Kids',    viewAllSearch: '?pub_categoryLevel1=Baby-Kids' },
 ];
 
 // ── Get categories for showcase ────────────────────────────────────────────
@@ -308,7 +293,10 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
 // Age-based product carousels (top 3 groups).
 // Uses the shared ProductCarousel component (same pattern as listing page modules).
 
-const AgeNavigation = ({ config }) => {
+// Exported (P1.3): the "Shop Baby by Age" block moved off the homepage to the Baby &
+// Kids category page (a family-era relic that contradicted the resolved "all categories
+// equal" positioning on the homepage) — CategoryPage.js renders it directly now.
+export const AgeNavigation = ({ config }) => {
   const [ageProducts, setAgeProducts] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -471,11 +459,15 @@ const makeCategoryCarousels = (categories) => {
   return CategoryCarousels;
 };
 
-// All 6 categories in a single instance so their skeleton loading states render
-// simultaneously — prevents the "Baby & Kids only" perception during initial load.
+// Both surviving categories in a single instance so their skeleton loading states
+// render simultaneously.
 const AllCategoryCarousels = makeCategoryCarousels(ALL_CATEGORIES);
 
 // ── CategoryShowcase ───────────────────────────────────────────────────────
+// P1.3: now just the two surviving category carousels (Fashion, Baby & Kids).
+// AgeNavigation moved to the Baby & Kids category page; OccasionStrip moved up to
+// its own top-level homepage section (MelaHomePage.js) — both still exported from
+// here, just no longer rendered as part of this component.
 
 const CategoryShowcase = () => {
   const config = useConfiguration();
@@ -493,14 +485,8 @@ const CategoryShowcase = () => {
           </h2>
         </div>
 
-        {/* All 6 category carousels — single instance so all skeletons render simultaneously */}
+        {/* Fashion + Baby & Kids carousels — single instance so both skeletons render simultaneously */}
         <AllCategoryCarousels config={config} />
-
-        {/* Age-Based Navigation — directly after category carousels */}
-        <AgeNavigation config={config} />
-
-        {/* Occasion Strip */}
-        <OccasionStrip config={config} />
 
         {/* View All Categories CTA */}
         <div className={css.viewAll}>

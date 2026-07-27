@@ -9,13 +9,42 @@ import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { createResourceLocatorString } from '../../util/routes';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
+import { applyCategoryMerchandising } from '../../util/categoryMerchandising';
 
-import { Page, LayoutSingleColumn, NamedLink, ListingCard } from '../../components';
+import { Page, LayoutSingleColumn, NamedLink, ListingCard, BrandCardHome } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
-import { OccasionStrip } from '../MelaHomePage/sections/CategoryShowcase/CategoryShowcase';
+import { OccasionStrip, AgeNavigation } from '../MelaHomePage/sections/CategoryShowcase/CategoryShowcase';
+import { getCategoryBrandTiles } from './CategoryPage.duck';
 
 import css from './CategoryPage.module.css';
+
+// P1.2: interleave a brand tile roughly every 2 grid rows. The grid's column count is
+// responsive (2/3/4 — see CategoryPage.module.css), so a fixed item-count interval is an
+// approximation across breakpoints rather than a literal "2 rows" at every width.
+const BRAND_TILE_INTERLEAVE_EVERY = 6;
+
+/**
+ * Builds the grid render list: listing entries with brand tiles spliced in every
+ * BRAND_TILE_INTERLEAVE_EVERY items, cycling through the fetched brand tiles until
+ * they're exhausted (never repeating a brand within one page).
+ */
+const buildCategoryGridItems = (mergedListings, brandTiles) => {
+  const items = [];
+  let tileCursor = 0;
+
+  mergedListings.forEach((listing, index) => {
+    items.push({ type: 'listing', listing });
+
+    const isInsertionPoint = (index + 1) % BRAND_TILE_INTERLEAVE_EVERY === 0;
+    if (isInsertionPoint && tileCursor < brandTiles.length) {
+      items.push({ type: 'brandTile', brand: brandTiles[tileCursor] });
+      tileCursor += 1;
+    }
+  });
+
+  return items;
+};
 
 // ── Per-category editorial descriptions ───────────────────────────────────────
 // Keyed by L0 category ID. Used for <meta description> and visible page copy.
@@ -178,7 +207,7 @@ const getBrandsPagePath = routeConfiguration => {
 const RootCategoriesPage = ({ categories, scrollingDisabled, config, routeConfiguration, intl }) => {
   const marketplaceName = config.marketplaceName;
   const rootDescription =
-    'Discover authentic Indian baby products, handloom fashion, artisanal home décor, Ayurvedic beauty, gourmet foods, and handcrafted jewelry — curated from independent Indian brands shipping to the US.';
+    'Discover authentic Indian baby products, handloom fashion, artisanal home décor, Ayurvedic beauty, gourmet foods, and handcrafted jewelry, curated from independent Indian brands shipping to the US.';
   const pageTitle = intl.formatMessage(
     { id: 'CategoryPage.title' },
     {
@@ -261,7 +290,11 @@ const RootCategoriesPage = ({ categories, scrollingDisabled, config, routeConfig
 // ── Component ──────────────────────────────────────────────────────────────
 
 const CategoryPageComponent = props => {
-  const { listings, scrollingDisabled, searchInProgress } = props;
+  const { listings, brandTiles = [], scrollingDisabled, searchInProgress } = props;
+
+  // P1.2: brand-diversity cap + utility-item demotion, then interleaved brand tiles.
+  const mergedListings = applyCategoryMerchandising(listings);
+  const gridItems = buildCategoryGridItems(mergedListings, brandTiles);
 
   const config = useConfiguration();
   const routeConfiguration = useRouteConfiguration();
@@ -402,6 +435,15 @@ const CategoryPageComponent = props => {
             <OccasionStrip config={config} additionalQueryParams={occasionCategoryParams} />
           </div>
 
+          {/* P1.3: "Shop Baby by Age" relocated here from the homepage — Baby & Kids
+              L0 page only, not sub-pages (the age filter doesn't map cleanly onto
+              Clothing/Footwear/etc. sub-categories). */}
+          {level1 === 'Baby-Kids' && !level2 && (
+            <div className={css.occasionSection}>
+              <AgeNavigation config={config} />
+            </div>
+          )}
+
           {/* Product grid */}
           <section className={css.productsSection}>
             {searchInProgress ? (
@@ -422,11 +464,28 @@ const CategoryPageComponent = props => {
               </div>
             ) : (
               <ul className={css.productGrid}>
-                {listings.map(l => (
-                  <li key={l.id.uuid} className={css.productItem}>
-                    <ListingCard listing={l} />
-                  </li>
-                ))}
+                {gridItems.map(entry =>
+                  entry.type === 'listing' ? (
+                    <li key={entry.listing.id.uuid} className={css.productItem}>
+                      <ListingCard listing={entry.listing} />
+                    </li>
+                  ) : (
+                    <li
+                      key={`brand-tile-${entry.brand.id.uuid}`}
+                      className={`${css.productItem} ${css.brandTileItem}`}
+                    >
+                      <BrandCardHome
+                        brand={entry.brand}
+                        products={mergedListings
+                          .filter(l => l.author?.id?.uuid === entry.brand.id.uuid)
+                          .slice(0, 2)}
+                        maxProducts={2}
+                        showCertifications={false}
+                        showPlaceholders={false}
+                      />
+                    </li>
+                  )
+                )}
               </ul>
             )}
           </section>
@@ -440,6 +499,7 @@ const mapStateToProps = state => {
   const { currentPageResultIds, searchInProgress } = state.SearchPage;
   return {
     listings: getListingsById(state, currentPageResultIds),
+    brandTiles: getCategoryBrandTiles(state),
     searchInProgress,
     scrollingDisabled: isScrollingDisabled(state),
   };

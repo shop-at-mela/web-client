@@ -3,8 +3,11 @@ import '@testing-library/jest-dom';
 
 import { getHostedConfiguration, renderWithProviders as render } from '../../util/testHelpers';
 import { createUser, createListing, fakeIntl } from '../../util/testData';
+import { types as sdkTypes } from '../../util/sdkLoader';
 
 import { ListingCard } from './ListingCard';
+
+const { Money } = sdkTypes;
 
 const getConfig = () => {
   const hostedConfig = getHostedConfiguration();
@@ -35,6 +38,16 @@ describe('ListingCard', () => {
     const listing = createListing('listing1', {}, { author: createUser('user1') });
     const tree = render(<ListingCard listing={listing} intl={fakeIntl} />);
     expect(tree.asFragment().firstChild).toMatchSnapshot();
+  });
+
+  it('renders nothing for a $0 promo SKU (P0.2 trust-debris sweep)', () => {
+    const listing = createListing(
+      'free-promo',
+      { price: new Money(0, 'USD') },
+      { author: createUser('user1') }
+    );
+    const { container } = render(<ListingCard listing={listing} intl={fakeIntl} />);
+    expect(container.firstChild).toBeNull();
   });
 
   it('matches snapshot without price', () => {
