@@ -4,7 +4,8 @@ import { FormattedMessage } from '../../../../util/reactIntl';
 import { NamedLink, ListingCard, ProductCarousel } from '../../../../components';
 import { useConfiguration } from '../../../../context/configurationContext';
 import { denormalisedEntities, updatedEntities, pickBrandDiverse } from '../../../../util/data';
-import { fetchBestsellerCarousel } from '../../../../util/bestsellerCarousel';
+import { fetchListingsAcrossBrands } from '../../../../util/bestsellerCarousel';
+import { allBrandIds, getBrandSlugById } from '../../../../config/configBrands';
 import sdk from '../../../../util/homepageSdk';
 
 import css from './CategoryShowcase.module.css';
@@ -41,6 +42,23 @@ export const isDiwaliSeason = () => {
   const day = now.getDate();
   return month === 10 || (month === 11 && day <= 15);
 };
+
+// Max listings fetched per brand for the fetchListingsAcrossBrands query-time
+// diversity strategy (see util/bestsellerCarousel.js) — shared across all three
+// carousels below. With ~18 configured brands this yields plenty of buffer over
+// each carousel's DISPLAY_COUNT even after client-side filtering/misses.
+const PER_BRAND_COUNT = 2;
+
+// Brands to leave out of the homepage discovery carousels (OccasionStrip,
+// AgeNavigation, AllCategoryCarousels) specifically — their listings still show
+// up everywhere else (search, category pages, their own /brands/:slug storefront).
+// Keyed by slug rather than UUID so this stays readable/editable without looking
+// up IDs in configBrands.js. Exported so a test can assert against configBrands.js's
+// real slugs and catch a typo here silently no-opping the exclusion.
+export const EXCLUDED_DISCOVERY_BRAND_SLUGS = ['superbottoms', 'isharya'];
+const DISCOVERY_BRAND_IDS = allBrandIds.filter(
+  id => !EXCLUDED_DISCOVERY_BRAND_SLUGS.includes(getBrandSlugById(id))
+);
 
 const TOP_AGE_GROUPS = [
   { option: 'newborn',     label: 'Newborn' },
@@ -124,7 +142,12 @@ const generateStructuredData = (categories, categoryProducts) => {
 
 export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
   const [occasionProducts, setOccasionProducts] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
+  // Loading is tracked per occasion (not one shared flag) so a slow occasion's
+  // fetch never delays a faster sibling's panel from rendering — see the
+  // per-occasion effect below.
+  const [loadingByOccasion, setLoadingByOccasion] = useState(() =>
+    OCCASIONS.reduce((acc, { option }) => ({ ...acc, [option]: true }), {})
+  );
 
   const inSeason = isDiwaliSeason();
   // Show Diwali first during season, Gifting first off-season
@@ -137,63 +160,58 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
     const listingFields = config?.listing?.listingFields;
     const sanitizeConfig = { listingFields };
 
-    const fetchOccasionProducts = async () => {
-      setIsLoading(true);
-      try {
-        const results = await Promise.all(
-          OCCASIONS.map(async ({ option }) => {
-            try {
-              const { pool, allIncluded } = await fetchBestsellerCarousel(
-                sdk,
-                {
-                  pub_occasion: option,
-                  include: ['images', 'currentStock'],
-                  ...additionalQueryParams,
-                },
-                DISPLAY_COUNT
-              );
+    setLoadingByOccasion(OCCASIONS.reduce((acc, { option }) => ({ ...acc, [option]: true }), {}));
 
-              // Client-side guard: only keep raw listings that actually carry this
-              // occasion value in publicData. Protects against the pub_occasion search
-              // index not being set up in Sharetribe Console (filter silently ignored →
-              // all listings returned). Must run BEFORE pickBrandDiverse — diversifying
-              // first and filtering after would diversify across the whole unfiltered
-              // pool, then collapse back down to whichever single brand happens to have
-              // the most occasion-tagged listings once the irrelevant picks are dropped.
-              const occasionTagged = pool.filter(listing => {
-                const occasions = listing.attributes?.publicData?.occasion;
-                // Handle both storage formats:
-                // - array ['gifting'] when ingested with schema-aware parsing
-                // - string 'gifting' when ingested before schema config was loaded
-                return Array.isArray(occasions)
-                  ? occasions.includes(option)
-                  : occasions === option;
-              });
-              if (process.env.NODE_ENV !== 'production') {
-                console.debug(
-                  `[OccasionStrip] ${option}: ${pool.length} from API → ${occasionTagged.length} with occasion tag`
-                );
-              }
+    // Fire each occasion's fetch independently (not inside a shared Promise.all)
+    // and update only that occasion's slice of state on completion, so whichever
+    // occasion responds first renders first instead of both waiting on the
+    // slower of the two. fetchListingsAcrossBrands additionally bounds each
+    // per-brand request within a single occasion's fetch (see PER_BRAND_TIMEOUT_MS
+    // in util/bestsellerCarousel.js).
+    OCCASIONS.forEach(({ option }) => {
+      (async () => {
+        try {
+          // Query-time diversity: fetch a couple of listings from every configured
+          // brand rather than one marketplace-wide query, so one brand's inventory
+          // can't monopolize the pool before diversification even gets a chance.
+          const { pool, allIncluded } = await fetchListingsAcrossBrands(
+            sdk,
+            DISCOVERY_BRAND_IDS,
+            {
+              pub_occasion: option,
+              include: ['author', 'images', 'currentStock'],
+              ...additionalQueryParams,
+            },
+            PER_BRAND_COUNT
+          );
 
-              // Pick diverse brands from the occasion-tagged listings only
-              const listingIds = pickBrandDiverse(occasionTagged, DISPLAY_COUNT);
-              return { option, listingIds, responseData: { data: pool, included: allIncluded } };
-            } catch {
-              return { option, listingIds: [], responseData: null };
-            }
-          })
-        );
-
-        let allEntities = {};
-        results.forEach(r => {
-          if (r.responseData) {
-            allEntities = updatedEntities(allEntities, r.responseData, sanitizeConfig);
+          // Client-side guard: only keep raw listings that actually carry this
+          // occasion value in publicData. Protects against the pub_occasion search
+          // index not being set up in Sharetribe Console (filter silently ignored →
+          // all listings returned). Must run BEFORE pickBrandDiverse — diversifying
+          // first and filtering after would diversify across the whole unfiltered
+          // pool, then collapse back down to whichever single brand happens to have
+          // the most occasion-tagged listings once the irrelevant picks are dropped.
+          const occasionTagged = pool.filter(listing => {
+            const occasions = listing.attributes?.publicData?.occasion;
+            // Handle both storage formats:
+            // - array ['gifting'] when ingested with schema-aware parsing
+            // - string 'gifting' when ingested before schema config was loaded
+            return Array.isArray(occasions)
+              ? occasions.includes(option)
+              : occasions === option;
+          });
+          if (process.env.NODE_ENV !== 'production') {
+            console.debug(
+              `[OccasionStrip] ${option}: ${pool.length} from API → ${occasionTagged.length} with occasion tag`
+            );
           }
-        });
 
-        const productsMap = results.reduce((acc, { option, listingIds }) => {
+          // Pick diverse brands from the occasion-tagged listings only
+          const listingIds = pickBrandDiverse(occasionTagged, DISPLAY_COUNT);
+          const entities = updatedEntities({}, { data: pool, included: allIncluded }, sanitizeConfig);
           const refs = listingIds.map(id => ({ id, type: 'listing' }));
-          const all = denormalisedEntities(allEntities, refs, false);
+          const all = denormalisedEntities(entities, refs, false);
           // Defense-in-depth: listingIds were already picked from occasion-tagged,
           // brand-diverse listings above, so this should be a no-op in practice —
           // but re-check here too in case denormalisedEntities resolves a listing
@@ -204,30 +222,30 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
               ? occasions.includes(option)
               : occasions === option;
           });
-          acc[option] = filtered;
-          return acc;
-        }, {});
 
-        setOccasionProducts(productsMap);
-      } catch {
-        // Leave empty — panels with < 2 products won't render
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchOccasionProducts();
+          setOccasionProducts(prev => ({ ...prev, [option]: filtered }));
+        } catch {
+          setOccasionProducts(prev => ({ ...prev, [option]: [] }));
+        } finally {
+          setLoadingByOccasion(prev => ({ ...prev, [option]: false }));
+        }
+      })();
+    });
   }, [additionalParamsKey]); // eslint-disable-line
 
-  // Determine which panels have enough products to show
+  const anyLoading = Object.values(loadingByOccasion).some(Boolean);
+
+  // Determine which panels have enough products to show — a still-loading
+  // occasion always stays visible (showing its own skeleton) regardless of
+  // whether a sibling occasion has already finished.
   const visibleOccasions = orderedOccasions.filter(
-    o => isLoading || (occasionProducts[o.option] || []).length >= 2
+    o => loadingByOccasion[o.option] || (occasionProducts[o.option] || []).length >= 2
   );
 
-  // Hide the entire strip if no occasion has enough products
-  if (!isLoading && visibleOccasions.length === 0) return null;
-
-  const occasionsToRender = isLoading ? orderedOccasions : visibleOccasions;
+  // Hide the entire strip only once every occasion has finished loading and
+  // none qualifies — never hide while a sibling might still turn out to have
+  // enough products.
+  if (!anyLoading && visibleOccasions.length === 0) return null;
 
   return (
     <div className={css.occasionStrip}>
@@ -236,11 +254,9 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
       </h3>
 
       <div className={css.occasionPanels}>
-        {occasionsToRender.map(occasion => {
+        {visibleOccasions.map(occasion => {
+          const stillLoading = loadingByOccasion[occasion.option];
           const products = occasionProducts[occasion.option] || [];
-          const hasEnough = products.length >= 2;
-
-          if (!isLoading && !hasEnough) return null;
 
           const ctaLabel = inSeason && occasion.ctaSeasonal ? occasion.ctaSeasonal : occasion.cta;
 
@@ -262,7 +278,7 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
               </div>
 
               {/* Product carousel — same HTML/CSS pattern as AgeNavigation */}
-              {isLoading ? (
+              {stillLoading ? (
                 <div className={css.productCarousel}>
                   {[1, 2, 3, 4].map(i => (
                     <div key={i} className={`${css.productSkeleton} ${css.carouselCard}`} />
@@ -312,7 +328,11 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
 // equal" positioning on the homepage) — CategoryPage.js renders it directly now.
 export const AgeNavigation = ({ config }) => {
   const [ageProducts, setAgeProducts] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
+  // Loading tracked per age group so a slow group never delays a faster
+  // sibling's carousel from rendering (ProductCarousel takes isLoading per instance).
+  const [loadingByAgeGroup, setLoadingByAgeGroup] = useState(() =>
+    TOP_AGE_GROUPS.reduce((acc, { option }) => ({ ...acc, [option]: true }), {})
+  );
 
   const DISPLAY_COUNT = 8;
 
@@ -320,52 +340,36 @@ export const AgeNavigation = ({ config }) => {
     const listingFields = config?.listing?.listingFields;
     const sanitizeConfig = { listingFields };
 
-    const fetchAgeProducts = async () => {
-      try {
-        const results = await Promise.all(
-          TOP_AGE_GROUPS.map(async ({ option }) => {
-            try {
-              const { pool, allIncluded } = await fetchBestsellerCarousel(
-                sdk,
-                {
-                  pub_age_group: option,
-                  include: ['images', 'currentStock'],
-                },
-                DISPLAY_COUNT
-              );
+    // Fire each age group's fetch independently and update only its own slice
+    // of state on completion — see the matching pattern/rationale in OccasionStrip.
+    TOP_AGE_GROUPS.forEach(({ option }) => {
+      (async () => {
+        try {
+          const { pool, allIncluded } = await fetchListingsAcrossBrands(
+            sdk,
+            DISCOVERY_BRAND_IDS,
+            {
+              pub_age_group: option,
+              include: ['author', 'images', 'currentStock'],
+            },
+            PER_BRAND_COUNT
+          );
 
-              // Pick diverse brands from the pool
-              const listingIds = pickBrandDiverse(pool, DISPLAY_COUNT);
-              return { option, listingIds, responseData: { data: pool, included: allIncluded } };
-            } catch {
-              return { option, listingIds: [], responseData: null };
-            }
-          })
-        );
-
-        let allEntities = {};
-        results.forEach(r => {
-          if (r.responseData) {
-            allEntities = updatedEntities(allEntities, r.responseData, sanitizeConfig);
-          }
-        });
-
-        const productsMap = results.reduce((acc, { option, listingIds }) => {
+          // Pick diverse brands from the pool
+          const listingIds = pickBrandDiverse(pool, DISPLAY_COUNT);
+          const entities = updatedEntities({}, { data: pool, included: allIncluded }, sanitizeConfig);
           const refs = listingIds.map(id => ({ id, type: 'listing' }));
-          acc[option] = denormalisedEntities(allEntities, refs, false);
-          return acc;
-        }, {});
+          const listings = denormalisedEntities(entities, refs, false);
 
-        setAgeProducts(productsMap);
-      } catch {
-        // leave empty
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAgeProducts();
-  }, []);
+          setAgeProducts(prev => ({ ...prev, [option]: listings }));
+        } catch {
+          setAgeProducts(prev => ({ ...prev, [option]: [] }));
+        } finally {
+          setLoadingByAgeGroup(prev => ({ ...prev, [option]: false }));
+        }
+      })();
+    });
+  }, []); // eslint-disable-line
 
   return (
     <div className={css.ageNavigation}>
@@ -380,7 +384,7 @@ export const AgeNavigation = ({ config }) => {
             viewAllLinkName="SearchPage"
             viewAllLinkSearch={`?pub_categoryLevel1=Baby-Clothes-Accessories&pub_age_group=${option}`}
             listings={ageProducts[option] || []}
-            isLoading={isLoading}
+            isLoading={loadingByAgeGroup[option]}
           />
         ))}
       </div>
@@ -400,7 +404,11 @@ export const AgeNavigation = ({ config }) => {
 const makeCategoryCarousels = (categories) => {
   const CategoryCarousels = ({ config }) => {
     const [categoryProducts, setCategoryProducts] = useState({});
-    const [isLoading, setIsLoading] = useState(true);
+    // Loading tracked per category so a slow category never delays a faster
+    // sibling's carousel from rendering (ProductCarousel takes isLoading per instance).
+    const [loadingByCategory, setLoadingByCategory] = useState(() =>
+      categories.reduce((acc, { id }) => ({ ...acc, [id]: true }), {})
+    );
 
     const DISPLAY_COUNT = 8;
 
@@ -408,51 +416,35 @@ const makeCategoryCarousels = (categories) => {
       const listingFields = config?.listing?.listingFields;
       const sanitizeConfig = { listingFields };
 
-      const fetchProducts = async () => {
-        try {
-          const results = await Promise.all(
-            categories.map(async ({ id }) => {
-              try {
-                const { pool, allIncluded } = await fetchBestsellerCarousel(
-                  sdk,
-                  {
-                    pub_categoryLevel1: id,
-                    include: ['images', 'currentStock'],
-                  },
-                  DISPLAY_COUNT
-                );
+      // Fire each category's fetch independently and update only its own slice
+      // of state on completion — see the matching pattern/rationale in OccasionStrip.
+      categories.forEach(({ id }) => {
+        (async () => {
+          try {
+            const { pool, allIncluded } = await fetchListingsAcrossBrands(
+              sdk,
+              DISCOVERY_BRAND_IDS,
+              {
+                pub_categoryLevel1: id,
+                include: ['author', 'images', 'currentStock'],
+              },
+              PER_BRAND_COUNT
+            );
 
-                // Pick diverse brands from the pool
-                const listingIds = pickBrandDiverse(pool, DISPLAY_COUNT);
-                return { id, listingIds, responseData: { data: pool, included: allIncluded } };
-              } catch {
-                return { id, listingIds: [], responseData: null };
-              }
-            })
-          );
-
-          let allEntities = {};
-          results.forEach(r => {
-            if (r.responseData) {
-              allEntities = updatedEntities(allEntities, r.responseData, sanitizeConfig);
-            }
-          });
-
-          const productsMap = results.reduce((acc, { id, listingIds }) => {
+            // Pick diverse brands from the pool
+            const listingIds = pickBrandDiverse(pool, DISPLAY_COUNT);
+            const entities = updatedEntities({}, { data: pool, included: allIncluded }, sanitizeConfig);
             const refs = listingIds.map(lid => ({ id: lid, type: 'listing' }));
-            acc[id] = denormalisedEntities(allEntities, refs, false);
-            return acc;
-          }, {});
+            const listings = denormalisedEntities(entities, refs, false);
 
-          setCategoryProducts(productsMap);
-        } catch {
-          // leave empty
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      fetchProducts();
+            setCategoryProducts(prev => ({ ...prev, [id]: listings }));
+          } catch {
+            setCategoryProducts(prev => ({ ...prev, [id]: [] }));
+          } finally {
+            setLoadingByCategory(prev => ({ ...prev, [id]: false }));
+          }
+        })();
+      });
     }, []); // eslint-disable-line
 
     return (
@@ -464,7 +456,7 @@ const makeCategoryCarousels = (categories) => {
             viewAllLinkName="SearchPage"
             viewAllLinkSearch={viewAllSearch}
             listings={categoryProducts[id] || []}
-            isLoading={isLoading}
+            isLoading={loadingByCategory[id]}
           />
         ))}
       </div>

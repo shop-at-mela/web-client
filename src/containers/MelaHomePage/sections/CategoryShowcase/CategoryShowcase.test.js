@@ -5,7 +5,7 @@ import { IntlProvider } from 'react-intl';
 import '@testing-library/jest-dom';
 
 import { ConfigurationProvider } from '../../../../context/configurationContext';
-import CategoryShowcase, { OccasionStrip, AgeNavigation } from './CategoryShowcase';
+import CategoryShowcase, { OccasionStrip, AgeNavigation, EXCLUDED_DISCOVERY_BRAND_SLUGS } from './CategoryShowcase';
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
@@ -71,6 +71,17 @@ jest.mock('../../../../config/settings', () => ({
 
 jest.mock('../../../../util/api', () => ({ typeHandlers: [] }));
 
+// Fixed, small brand list so per-brand query-count assertions below are simple
+// and don't depend on configBrands.js's env-specific (and possibly empty, in
+// the test env's 'production' branch) allBrandIds. None map to an excluded
+// slug, so CategoryShowcase.js's discovery-carousel exclusion filter is a
+// no-op here — none of these 3 test IDs get filtered out.
+const TEST_BRAND_IDS = ['brand-1', 'brand-2', 'brand-3'];
+jest.mock('../../../../config/configBrands', () => ({
+  allBrandIds: ['brand-1', 'brand-2', 'brand-3'],
+  getBrandSlugById: id => ({ 'brand-1': 'slug-1', 'brand-2': 'slug-2', 'brand-3': 'slug-3' }[id]),
+}));
+
 // ── References to the mocked functions ───────────────────────────────────────
 
 // createInstance() is called at CategoryShowcase.js module-load time (during the
@@ -116,6 +127,33 @@ const renderInContext = (ui, config = {}) =>
       </IntlProvider>
     </MemoryRouter>
   );
+
+// ── EXCLUDED_DISCOVERY_BRAND_SLUGS ─────────────────────────────────────────────
+// Guards against a typo in the exclusion list silently no-opping it: each slug
+// must resolve to a real, currently-configured brand UUID via the *real*
+// configBrands.js (bypassing the file-level jest.mock above via requireActual),
+// not the fixed 3-brand test mock used everywhere else in this file.
+
+describe('EXCLUDED_DISCOVERY_BRAND_SLUGS', () => {
+  it('every excluded slug resolves to a real brand UUID in configBrands.js', () => {
+    // configBrands.js resolves brandConfigurations off REACT_APP_ENV at require
+    // time; the test runner's .env sets REACT_APP_ENV=production, whose brand
+    // bucket is intentionally empty (live brand data lives under .development —
+    // see configBrands.js's brandConfigurationsByEnv). Force 'development' via
+    // isolateModules so this checks against the actual populated brand list.
+    const originalEnv = process.env.REACT_APP_ENV;
+    process.env.REACT_APP_ENV = 'development';
+    let getBrandIdBySlug;
+    jest.isolateModules(() => {
+      ({ getBrandIdBySlug } = jest.requireActual('../../../../config/configBrands'));
+    });
+    process.env.REACT_APP_ENV = originalEnv;
+
+    EXCLUDED_DISCOVERY_BRAND_SLUGS.forEach(slug => {
+      expect(getBrandIdBySlug(slug)).toEqual(expect.any(String));
+    });
+  });
+});
 
 // ── CategoryShowcase (default export) ─────────────────────────────────────────
 
@@ -173,12 +211,10 @@ const renderAndWaitForLoad = async (ui, config = {}) => {
 // P1.3: only 2 surviving top-level categories (Fashion, Baby & Kids) fetched by a
 // single carousel component using ALL_CATEGORIES (down from 6 — Home & Kitchen,
 // Jewelry & Accessories, Beauty & Wellness, and Art & Craft are cut from the
-// homepage, still reachable via /categories). Each category goes through
-// fetchBestsellerCarousel's two-step fetch (bestseller-first, then a fallback query
-// padding out the pool) — see util/bestsellerCarousel.js. With the mocked empty
-// response below, the fallback always triggers, so every category yields 2 queries:
-// perPage 20 (Math.max(DISPLAY_COUNT(8) * 2, 20)) for the bestseller step, then
-// perPage 50 for the fallback.
+// homepage, still reachable via /categories). Each category is fetched via
+// fetchListingsAcrossBrands — one small query per configured brand (author_id +
+// perPage: PER_BRAND_COUNT), merged client-side — see util/bestsellerCarousel.js.
+// TEST_BRAND_IDS has 3 brands, so every category yields 3 queries.
 
 describe('AllCategoryCarousels', () => {
   beforeEach(() => {
@@ -187,12 +223,13 @@ describe('AllCategoryCarousels', () => {
     denormalisedEntities.mockReturnValue([]);
   });
 
-  it('queries both surviving categories using the bestseller-first pagination strategy', async () => {
+  it('queries every configured brand for both surviving categories', async () => {
     const calls = await renderAndWaitForLoad(<CategoryShowcase />);
     const catCalls = calls.filter(([p]) => p.pub_categoryLevel1);
-    expect(catCalls).toHaveLength(4); // 2 categories × 2 queries each
+    expect(catCalls).toHaveLength(TEST_BRAND_IDS.length * 2); // 3 brands × 2 categories
     catCalls.forEach(([params]) => {
-      expect([20, 50]).toContain(params.perPage);
+      expect(TEST_BRAND_IDS).toContain(params.author_id);
+      expect(params.perPage).toBe(2);
     });
   });
 
@@ -236,12 +273,15 @@ describe('AgeNavigation', () => {
     denormalisedEntities.mockReturnValue([]);
   });
 
-  it('queries each age group using the bestseller-first pagination strategy', async () => {
+  it('queries every configured brand for each age group', async () => {
     renderInContext(<AgeNavigation config={{}} />);
     await screen.findAllByTestId('product-carousel');
     const ageCalls = mockQuery.mock.calls.filter(([p]) => p.pub_age_group);
-    expect(ageCalls).toHaveLength(6); // 3 age groups × 2 queries each (see AllCategoryCarousels note above)
-    ageCalls.forEach(([params]) => expect([20, 50]).toContain(params.perPage));
+    expect(ageCalls).toHaveLength(TEST_BRAND_IDS.length * 3); // 3 brands × 3 age groups
+    ageCalls.forEach(([params]) => {
+      expect(TEST_BRAND_IDS).toContain(params.author_id);
+      expect(params.perPage).toBe(2);
+    });
   });
 
   it('queries newborn, 0_6_months, 6_12_months', async () => {
@@ -272,17 +312,15 @@ describe('OccasionStrip', () => {
     denormalisedEntities.mockReturnValue([]);
   });
 
-  it('queries each occasion using the bestseller-first pagination strategy', async () => {
+  it('queries every configured brand for each occasion', async () => {
     renderInContext(<OccasionStrip />);
 
     await waitFor(() => {
       const calls = mockQuery.mock.calls.filter(([p]) => p.pub_occasion);
-      // 2 occasions × 2 queries each (see AllCategoryCarousels note above); occasion's
-      // DISPLAY_COUNT is 6, so the bestseller step here also lands on perPage 20
-      // (Math.max(6 * 2, 20)).
-      expect(calls).toHaveLength(4);
+      expect(calls).toHaveLength(TEST_BRAND_IDS.length * 2); // 3 brands × 2 occasions
       calls.forEach(([params]) => {
-        expect([20, 50]).toContain(params.perPage);
+        expect(TEST_BRAND_IDS).toContain(params.author_id);
+        expect(params.perPage).toBe(2);
       });
     });
   });
