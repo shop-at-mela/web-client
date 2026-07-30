@@ -184,7 +184,7 @@ export const IncludeScripts = props => {
 
   // Google Tag Manager — single container for GA4 + any future tags.
   // See mela-docs/product/prds/crossshop-tracking-prd.md and
-  // web-client/docs/analytics/crossshop-tracking.md for the event schema this feeds
+  // mela-docs/technical/analytics/crossshop-tracking.md for the event schema this feeds
   // and why GTM is used here instead of (or alongside) the gtag.js path above.
   if (gtmId) {
     if (typeof window !== 'undefined') {

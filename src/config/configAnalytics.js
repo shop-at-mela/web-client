@@ -21,7 +21,7 @@ export const plausibleDomains = process.env.REACT_APP_PLAUSIBLE_DOMAINS;
 // Optional — cross-shop tracking (see mela-docs/product/prds/crossshop-tracking-prd.md)
 // GTM container ID, e.g. 'GTM-XXXXXXX'. GA4 is loaded THROUGH this GTM container
 // (configured in the GTM UI, not here) rather than via the googleAnalyticsId/gtag.js
-// path above — see web-client/docs/analytics/crossshop-tracking.md "Template residuals"
+// path above — see mela-docs/technical/analytics/crossshop-tracking.md "Template residuals"
 // for why both paths exist and which one is actually active.
 export const gtmId = process.env.REACT_APP_GTM_ID;
 

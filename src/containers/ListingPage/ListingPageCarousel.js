@@ -341,12 +341,17 @@ export const ListingPageComponent = props => {
   const marketplaceName = config.marketplaceName;
   const brandName = publicData.brand;
   const brandPart = brandName ? ` by ${brandName}` : '';
-  const schemaTitle = `${title}${brandPart} - Authentic Indian Baby Products | ${marketplaceName}`;
+  // Category-aware, not hardcoded — Mela spans fashion, home & kitchen, jewelry, and baby/kids,
+  // so metadata must match whichever category this specific listing is actually in.
+  const listingCategoryId = publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3;
+  const categoryDisplayName =
+    findCategoryById(config.categoryConfiguration?.categories, listingCategoryId)?.name || 'Lifestyle Products';
+  const schemaTitle = `${title}${brandPart} - Authentic Indian ${categoryDisplayName} | ${marketplaceName}`;
 
   const generateSEODescription = (titleArg, brandNameArg, descriptionArg) => {
     const bPart = brandNameArg ? `${brandNameArg} ` : '';
     const truncatedDesc = descriptionArg ? descriptionArg.substring(0, 100) : '';
-    return `Shop authentic ${bPart}${titleArg} for Indian diaspora families. ${truncatedDesc} Trusted Indian baby products delivered to USA. Cultural heritage meets modern parenting.`.substring(0, 160);
+    return `Shop authentic ${bPart}${titleArg} for Indian diaspora families. ${truncatedDesc} Trusted Indian brands delivered to USA. Cultural heritage meets modern living.`.substring(0, 160);
   };
 
   const seoDescription = publicData.metaDescription
@@ -386,14 +391,14 @@ export const ListingPageComponent = props => {
           seller: {
             '@type': 'Organization',
             name: marketplaceName,
-            description: 'Authentic Indian Baby Products Marketplace for US Indian Diaspora'
+            description: `Authentic Indian ${categoryDisplayName} Marketplace for US Indian Diaspora`
           },
           ...priceForSchemaMaybe(price),
           availability: schemaAvailability,
         },
         audience: {
           '@type': 'Audience',
-          name: 'Indian Diaspora Parents in USA'
+          name: 'Indian Diaspora Shoppers in USA'
         },
         // Consumer search synonyms — machine-readable for AI answer engines (AEO)
         ...(publicData.searchSynonyms?.length > 0 && {

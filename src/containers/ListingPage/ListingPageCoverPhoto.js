@@ -342,12 +342,17 @@ export const ListingPageComponent = props => {
   const marketplaceName = config.marketplaceName;
   const brandName = publicData.brand;
   const brandPart = brandName ? ` by ${brandName}` : '';
-  const schemaTitle = `${title}${brandPart} - Authentic Indian Baby Products | ${marketplaceName}`;
+  // Category-aware, not hardcoded — Mela spans fashion, home & kitchen, jewelry, and baby/kids,
+  // so metadata must match whichever category this specific listing is actually in.
+  const listingCategoryId = publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3;
+  const categoryDisplayName =
+    findCategoryById(config.categoryConfiguration?.categories, listingCategoryId)?.name || 'Lifestyle Products';
+  const schemaTitle = `${title}${brandPart} - Authentic Indian ${categoryDisplayName} | ${marketplaceName}`;
 
   const generateSEODescription = (titleArg, brandNameArg, descriptionArg) => {
     const bPart = brandNameArg ? `${brandNameArg} ` : '';
     const truncatedDesc = descriptionArg ? descriptionArg.substring(0, 100) : '';
-    return `Shop authentic ${bPart}${titleArg} for Indian diaspora families. ${truncatedDesc} Trusted Indian baby products delivered to USA. Cultural heritage meets modern parenting.`.substring(0, 160);
+    return `Shop authentic ${bPart}${titleArg} for Indian diaspora families. ${truncatedDesc} Trusted Indian brands delivered to USA. Cultural heritage meets modern living.`.substring(0, 160);
   };
 
   const seoDescription = publicData.metaDescription
@@ -435,15 +440,16 @@ export const ListingPageComponent = props => {
           seller: {
             '@type': 'Organization',
             name: brandName || marketplaceName,
-            description: `Authentic Indian baby products brand${brandName ? ' available on Mela marketplace' : ''}`
+            description: `Authentic Indian ${categoryDisplayName} brand${brandName ? ' available on Mela marketplace' : ''}`
           }
         },
 
         // FIX #3: Fixed audience structure with audienceType and proper geographicArea
+        // Generic across categories — "Parents" doesn't fit fashion/jewelry/home shoppers
         audience: {
           '@type': 'Audience',
-          audienceType: 'Parents',
-          name: 'Indian Diaspora Parents in United States',
+          audienceType: 'Shoppers',
+          name: 'Indian Diaspora Shoppers in United States',
           geographicArea: {
             '@type': 'AdministrativeArea',
             name: 'United States'

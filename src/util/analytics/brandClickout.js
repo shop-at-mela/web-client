@@ -4,7 +4,7 @@
  * Fires the `brand_clickout` dataLayer event used for the cross-shop /
  * entry-vs-exit mutualization analysis (see
  * mela-docs/product/prds/crossshop-tracking-prd.md and
- * web-client/docs/analytics/crossshop-tracking.md for the schema).
+ * mela-docs/technical/analytics/crossshop-tracking.md for the schema).
  *
  * All three "Shop from Brand" CTA surfaces (OrderPanel, ProductOrderForm,
  * InquiryWithoutPaymentForm) and RedirectTrustSheet's onContinue call

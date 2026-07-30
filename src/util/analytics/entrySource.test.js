@@ -70,6 +70,76 @@ describe('normalizeEntrySource(params)', () => {
     ).toEqual('seo');
   });
 
+  it('classifies a Yahoo search referrer as seo, even though it comes from the search. subdomain', () => {
+    // Regression guard: an earlier proposed fix (switching to host.startsWith()) would have
+    // broken this, since Yahoo's real search-results referrer is search.yahoo.com, not bare
+    // yahoo.com. See crossshop-tracking-prd.md §13 for the dev-lead review that caught this.
+    expect(
+      normalizeEntrySource({
+        utmSource: null,
+        utmMedium: null,
+        utmCampaign: null,
+        referrer: 'https://search.yahoo.com/search?p=indian+baby+brands',
+      })
+    ).toEqual('seo');
+  });
+
+  it('does not classify Google Tag Manager\'s own debugging tool as seo', () => {
+    // The actual bug this exclusion list fixes: found via our own GTM Preview testing traffic.
+    expect(
+      normalizeEntrySource({
+        utmSource: null,
+        utmMedium: null,
+        utmCampaign: null,
+        referrer: 'https://tagassistant.google.com/some-debug-path',
+      })
+    ).toEqual('tagassistant.google.com');
+  });
+
+  it('does not classify other known Google product subdomains as seo', () => {
+    expect(
+      normalizeEntrySource({
+        utmSource: null,
+        utmMedium: null,
+        utmCampaign: null,
+        referrer: 'https://accounts.google.com/signin',
+      })
+    ).toEqual('accounts.google.com');
+  });
+
+  it('classifies Perplexity as ai_search, distinct from seo', () => {
+    expect(
+      normalizeEntrySource({
+        utmSource: null,
+        utmMedium: null,
+        utmCampaign: null,
+        referrer: 'https://www.perplexity.ai/search?q=indian+baby+brands',
+      })
+    ).toEqual('ai_search');
+  });
+
+  it('classifies Google Bard/Gemini as ai_search, not seo, even though the hostname contains google.', () => {
+    expect(
+      normalizeEntrySource({
+        utmSource: null,
+        utmMedium: null,
+        utmCampaign: null,
+        referrer: 'https://bard.google.com/chat/abc123',
+      })
+    ).toEqual('ai_search');
+  });
+
+  it('classifies a Bing referrer as seo, not ai_search, since ChatGPT citations are indistinguishable from real Bing search at the hostname level', () => {
+    expect(
+      normalizeEntrySource({
+        utmSource: null,
+        utmMedium: null,
+        utmCampaign: null,
+        referrer: 'https://www.bing.com/search?q=indian+baby+brands',
+      })
+    ).toEqual('seo');
+  });
+
   it('passes through an unrecognized referrer host rather than dropping the signal', () => {
     expect(
       normalizeEntrySource({
