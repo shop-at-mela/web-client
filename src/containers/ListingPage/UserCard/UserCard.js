@@ -98,7 +98,7 @@ const UserCard = props => {
   const ensuredCurrentUser = ensureCurrentUser(currentUser);
   const isCurrentUser =
     ensuredUser.id && ensuredCurrentUser.id && ensuredUser.id.uuid === ensuredCurrentUser.id.uuid;
-  const { displayName, bio } = ensuredUser.attributes.profile;
+  const { displayName, bio, publicData } = ensuredUser.attributes.profile;
 
   const handleContactUserClick = () => {
     onContactUser(user);
@@ -147,6 +147,27 @@ const UserCard = props => {
   const brandLinkParams = brandSlug ? { brandSlug } : { id: ensuredUser.id?.uuid };
   const brandLinkMessageId = brandSlug ? 'UserCard.viewBrandStoreLink' : 'UserCard.viewProfileLink';
 
+  // publicData.brandLogoUrl takes priority over the native Sharetribe profile image —
+  // same precedence as BrandCard/BrandCardHome/BrandStorefront, so a brand's logo is
+  // consistent everywhere it appears. If neither is set, fall back to a single clean
+  // brand initial rather than Avatar's default two-letter abbreviatedName (e.g. "SS"),
+  // which reads as a person's monogram.
+  const hasProfileImage = ensuredUser.profileImage && ensuredUser.profileImage.id;
+  const brandLogoUrl = publicData?.brandLogoUrl;
+  const brandInitial = displayName?.charAt(0) || 'B';
+
+  const avatar = brandLogoUrl ? (
+    <NamedLink className={css.avatar} name={brandLinkName} params={brandLinkParams}>
+      <img src={brandLogoUrl} alt={displayName} className={css.brandLogoImage} />
+    </NamedLink>
+  ) : hasProfileImage ? (
+    <AvatarLarge className={css.avatar} user={user} />
+  ) : (
+    <NamedLink className={css.avatar} name={brandLinkName} params={brandLinkParams}>
+      <span className={css.brandInitial}>{brandInitial}</span>
+    </NamedLink>
+  );
+
   const links = ensuredUser.id ? (
     <p className={linkClasses}>
       <NamedLink className={css.link} name={brandLinkName} params={brandLinkParams}>
@@ -160,10 +181,10 @@ const UserCard = props => {
   return (
     <div className={classes}>
       <div className={css.content}>
-        <AvatarLarge className={css.avatar} user={user} />
+        {avatar}
         <div className={css.info}>
           <div className={css.headingRow}>
-            <FormattedMessage id="UserCard.heading" values={{ name: displayName }} />
+            <span className={css.brandName}>{displayName}</span>
             {editProfileDesktop}
           </div>
           {hasBio ? <ExpandableBio className={css.desktopBio} bio={bio} /> : null}

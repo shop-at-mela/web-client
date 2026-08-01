@@ -279,6 +279,17 @@ const categoryPath = (level1, level2, level3) => {
 - **Timing**: Rendered via `<Helmet>` into `document.head` (outside RTL's `container`), committed asynchronously via `requestAnimationFrame` — absent immediately after `render()`/`act()`.
 - **Test pattern**: `await waitFor(() => { const script = document.querySelector('script[type="application/ld+json"]'); const parsed = script && JSON.parse(script.textContent); /* find entry in parsed['@graph'] */ })`. Query `document`, not the RTL `container`.
 
+### Extracting a Reusable Component Can Break a Parent's Barrel Mock
+- **Issue**: A container test mocks the components barrel (`jest.mock('../../../../components', ...)`) to stub `NamedLink`/`ListingCard`. When you extract inline JSX into a new reusable component that imports those leaves **directly** (`../NamedLink/NamedLink`, to avoid the barrel's known circular-dep chain), the parent's barrel mock no longer intercepts them — the real `NamedLink` → `routes.js` → `sdkLoader` loads and fails (`Cannot destructure 'LatLng' of types`) because the test also mocked `sdkLoader` without `types`.
+- **Fix**: In the parent's test, `jest.mock` the **extracted component** with a lightweight stand-in that still emits whatever the parent's assertions check (headings, `listing-card` testids, `data-*` attrs). Don't try to satisfy the deep import chain.
+- **Applies to**: OccasionStrip → OccasionCard extraction (CategoryShowcase.test.js).
+
+### Reusable Presentational Components: Direct Leaf Imports + jest-dom
+- **Import leaves directly** (`../CategoryIcon/CategoryIcon`, `../NamedLink/NamedLink`, `../ListingImage/ListingImage`) in new `src/components/*` rather than the barrel — matches the CategoryIcon precedent and dodges the barrel's sdkLoader circular chain.
+- **Every test must `import '@testing-library/jest-dom'`** — `setupFilesAfterEnv` is empty, so `toBeInTheDocument`/`toHaveAttribute` are otherwise undefined.
+- **CSS Modules map via identity-obj-proxy** → assert on literal class names (`container.querySelector('.thumbActive')`).
+- **Hover/tap swap without gesture conflict**: thumbnail `onMouseEnter`(desktop) + `onClick`(mobile/tap) + `onFocus`(a11y) driving local `useState` index — no swipe, so it never fights a horizontally-scrolling parent row (BrandPhotoCard).
+
 ## Session Log
 2024-10-10: Fixed CategoryProducts to display proper category names + product filtering improvements
 2025-10-10: Implemented HeroProducts with real API integration, randomization, and comprehensive testing
@@ -287,3 +298,4 @@ const categoryPath = (level1, level2, level3) => {
 2025-11-29: Fixed addMarketplaceEntities payload format issue in Brands page implementation
 2025-12-15: Brand storefront UX - scroll affordance, mobile-first CSS, lazy loading, tab navigation component fix
 2026-04-19: Sharetribe upstream merge v8.8.0→v10.7.0 — incremental tag-by-tag strategy, Redux Toolkit migration fixes, Mela brand color/nav preservation patterns
+2026-07-31: Homepage redesign build — hero copy (story-led + global shipping); new reusable components CategoryTiles, OccasionCard (extracted from OccasionStrip), BrandPhotoCard (hover/tap photo swap); EarnedItsPlace section reusing FeaturedBrandPartners data path; TrustAssurance retitled "Shop with Confidence". 4 new test suites, 115 homepage-tree tests passing.

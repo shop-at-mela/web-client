@@ -42,9 +42,9 @@ jest.mock('./sections/CraftStories/CraftStories', () => {
   };
 });
 
-jest.mock('./sections/FeaturedBrandPartners/FeaturedBrandPartnersContainer', () => {
-  return function FeaturedBrandPartnersContainer() {
-    return <div data-testid="featured-brand-partners">Featured Brand Partners</div>;
+jest.mock('./sections/EarnedItsPlace/EarnedItsPlaceContainer', () => {
+  return function EarnedItsPlaceContainer() {
+    return <div data-testid="earned-its-place">Every Brand Earned Its Place</div>;
   };
 });
 
@@ -60,6 +60,12 @@ jest.mock('./sections/TrustAssurance/TrustAssurance', () => {
 jest.mock('./sections/SavedItems/SavedItemsModule', () => {
   return function SavedItemsModule() {
     return <div data-testid="saved-items-module">Saved Items</div>;
+  };
+});
+
+jest.mock('../../components/CategoryTiles/CategoryTiles', () => {
+  return function CategoryTiles() {
+    return <div data-testid="category-tiles">Category Tiles</div>;
   };
 });
 
@@ -158,8 +164,8 @@ describe('MelaHomePage', () => {
 
     expect(getByTestId('hero-section')).toBeTruthy();
     expect(getByTestId('saved-items-module')).toBeTruthy();
-    expect(getByTestId('category-showcase')).toBeTruthy();
-    expect(getByTestId('featured-brand-partners')).toBeTruthy();
+    expect(getByTestId('category-tiles')).toBeTruthy();
+    expect(getByTestId('earned-its-place')).toBeTruthy();
     expect(getByTestId('trust-assurance')).toBeTruthy();
   });
 

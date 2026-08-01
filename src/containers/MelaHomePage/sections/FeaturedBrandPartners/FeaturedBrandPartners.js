@@ -110,6 +110,7 @@ const FeaturedBrandPartners = props => {
               brand={brand}
               products={products}
               showCertifications={false}
+              showPlaceholders={false}
             />
           )}
         />

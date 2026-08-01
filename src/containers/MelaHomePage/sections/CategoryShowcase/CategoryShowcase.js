@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FormattedMessage } from '../../../../util/reactIntl';
-import { NamedLink, ListingCard, ProductCarousel } from '../../../../components';
+import { ProductCarousel } from '../../../../components';
+import OccasionCard from '../../../../components/OccasionCard/OccasionCard';
 import { useConfiguration } from '../../../../context/configurationContext';
 import { denormalisedEntities, updatedEntities, pickBrandDiverse } from '../../../../util/data';
 import { fetchListingsAcrossBrands } from '../../../../util/bestsellerCarousel';
@@ -265,53 +266,17 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
           const queryParts = { pub_occasion: `has_any:${occasion.option}`, ...additionalQueryParams };
           const viewAllSearch = '?' + new URLSearchParams(queryParts).toString();
 
-          const panelColorClass =
-            occasion.colorTheme === 'festive' ? css.occasionPanelFestive : css.occasionPanelGifting;
-          const ctaColorClass =
-            occasion.colorTheme === 'festive' ? css.occasionCtaFestive : css.occasionCtaGifting;
-
           return (
-            <div key={occasion.option} className={`${css.occasionPanel} ${panelColorClass}`}>
-              {/* Panel header: title only */}
-              <div className={css.occasionPanelHeader}>
-                <h4 className={css.occasionPanelTitle}>{occasion.label}</h4>
-              </div>
-
-              {/* Product carousel — same HTML/CSS pattern as AgeNavigation */}
-              {stillLoading ? (
-                <div className={css.productCarousel}>
-                  {[1, 2, 3, 4].map(i => (
-                    <div key={i} className={`${css.productSkeleton} ${css.carouselCard}`} />
-                  ))}
-                </div>
-              ) : (
-                <div className={css.productCarousel}>
-                  {products.map((listing) => (
-                    <div key={listing.id.uuid} className={css.carouselCard}>
-                      <ListingCard
-                        listing={listing}
-                        showAuthorInfo={false}
-                        showTrustBadges={true}
-                        showConversionBadges={true}
-                        isBestseller={listing.attributes?.publicData?.isBestseller || false}
-                        renderSizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* CTA button */}
-              <div className={css.occasionCtaRow}>
-                <NamedLink
-                  name="SearchPage"
-                  to={{ search: viewAllSearch }}
-                  className={`${css.occasionCta} ${ctaColorClass}`}
-                >
-                  {ctaLabel} <span className={css.arrow}>→</span>
-                </NamedLink>
-              </div>
-            </div>
+            <OccasionCard
+              key={occasion.option}
+              label={occasion.label}
+              description={occasion.description}
+              colorTheme={occasion.colorTheme}
+              products={products}
+              isLoading={stillLoading}
+              ctaLabel={ctaLabel}
+              viewAllSearch={viewAllSearch}
+            />
           );
         })}
       </div>

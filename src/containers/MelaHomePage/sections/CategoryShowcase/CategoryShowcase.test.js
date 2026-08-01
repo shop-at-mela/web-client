@@ -71,6 +71,28 @@ jest.mock('../../../../config/settings', () => ({
 
 jest.mock('../../../../util/api', () => ({ typeHandlers: [] }));
 
+// OccasionStrip now delegates each panel to the reusable OccasionCard, which imports
+// NamedLink/ListingCard directly (bypassing the barrel mock above). Stub it with a
+// lightweight stand-in that still emits the panel heading and one listing-card per
+// product, so the OccasionStrip assertions (headings, listing-card counts) hold.
+jest.mock('../../../../components/OccasionCard/OccasionCard', () => ({ label, isLoading, products = [] }) => (
+  <div data-testid="occasion-card">
+    <h4>{label}</h4>
+    {isLoading
+      ? [1, 2, 3, 4].map(i => <div key={i} className="productSkeleton" />)
+      : products.map(p => (
+          <div
+            key={p.id.uuid}
+            data-testid="listing-card"
+            data-id={p.id.uuid}
+            data-is-bestseller={String(!!p?.attributes?.publicData?.isBestseller)}
+          >
+            {p?.attributes?.title}
+          </div>
+        ))}
+  </div>
+));
+
 // Fixed, small brand list so per-brand query-count assertions below are simple
 // and don't depend on configBrands.js's env-specific (and possibly empty, in
 // the test env's 'production' branch) allBrandIds. None map to an excluded

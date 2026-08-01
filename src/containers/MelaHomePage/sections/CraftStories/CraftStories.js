@@ -130,7 +130,10 @@ const CraftStories = () => {
       </div>
 
       <p className={css.rotationNote}>
-        <FormattedMessage id="CraftStories.rotationNote" />
+        <FormattedMessage
+          id="CraftStories.rotationNote"
+          values={{ count: getAllBrandIds().length }}
+        />
       </p>
     </section>
   );

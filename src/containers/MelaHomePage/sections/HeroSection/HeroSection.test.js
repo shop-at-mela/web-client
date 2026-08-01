@@ -114,7 +114,7 @@ describe('HeroSection', () => {
     it('renders the headline', () => {
       renderHeroSection();
       expect(
-        screen.getByText("Discover India's Most Loved Brands")
+        screen.getByText("The makers and stories behind India's best brands.")
       ).toBeInTheDocument();
     });
 
@@ -127,8 +127,8 @@ describe('HeroSection', () => {
 
     it('renders trust badges', () => {
       renderHeroSection();
-      expect(screen.getByText('Ships to All 50 States')).toBeInTheDocument();
-      expect(screen.getByText('US Cards Accepted')).toBeInTheDocument();
+      expect(screen.getByText('Ships Worldwide')).toBeInTheDocument();
+      expect(screen.getByText('Secure Checkout')).toBeInTheDocument();
     });
 
     it('renders category pills', () => {
@@ -150,7 +150,7 @@ describe('HeroSection', () => {
     it('still shows headline during loading', () => {
       renderHeroSection({ fetchInProgress: true });
       expect(
-        screen.getByText("Discover India's Most Loved Brands")
+        screen.getByText("The makers and stories behind India's best brands.")
       ).toBeInTheDocument();
     });
   });
@@ -159,7 +159,7 @@ describe('HeroSection', () => {
     it('shows headline and CTA with no brand card or carousel', () => {
       renderHeroSection({ heroBrands: [] });
       expect(
-        screen.getByText("Discover India's Most Loved Brands")
+        screen.getByText("The makers and stories behind India's best brands.")
       ).toBeInTheDocument();
       expect(screen.getByTestId('link-BrandsPage')).toBeInTheDocument();
       expect(screen.queryByTestId('brand-hero-card')).not.toBeInTheDocument();

@@ -1,0 +1,97 @@
+/* BrandPhotoCard — image-forward brand card. Mobile-first. */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  background: var(--colorWhite, #fff);
+  border: 1px solid var(--colorGrey100, #eae6dd);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 14px rgba(38, 34, 97, 0.07);
+}
+
+.stage {
+  position: relative;
+}
+
+.chip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--marketplaceColor);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fontFamilyDisplay);
+  font-weight: var(--fontWeightSemiBold, 600);
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.mainLink {
+  display: block;
+}
+
+.mainPhoto {
+  display: block;
+  width: 100%;
+}
+
+/* Thumbnail filmstrip */
+.filmstrip {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  background: var(--colorGrey50, #f7f5f0);
+}
+
+.thumb {
+  flex: 1;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  background: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.thumb:hover,
+.thumb:focus-visible {
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.thumbActive {
+  border-color: var(--colorAccent, #f0a030);
+}
+
+.info {
+  padding: 12px 14px 14px;
+}
+
+.nameLink {
+  text-decoration: none;
+}
+
+.brandName {
+  font-family: var(--fontFamilyDisplay);
+  font-weight: var(--fontWeightSemiBold, 600);
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--colorGrey900, #23233f);
+  margin: 0;
+}
+
+.why {
+  font-family: var(--fontFamilyBody);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--colorGrey500, #6a6a80);
+  margin: 4px 0 0;
+}

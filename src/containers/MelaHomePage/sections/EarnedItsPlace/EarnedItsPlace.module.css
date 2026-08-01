@@ -1,0 +1,92 @@
+@import '../../../../styles/customMediaQueries.css';
+
+.root {
+  width: 100%;
+  padding: 24px 0;
+  background: var(--colorGrey50);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+
+  @media (min-width: 640px) {
+    padding: 0 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    padding: 0 2rem;
+  }
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+
+  @media (min-width: 768px) {
+    margin-bottom: 32px;
+  }
+}
+
+.title {
+  font-family: var(--fontFamilyDisplay);
+  font-size: 22px;
+  font-weight: var(--fontWeightSemiBold, 600);
+  color: var(--marketplaceColor);
+  letter-spacing: -0.01em;
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+
+  @media (min-width: 768px) {
+    font-size: 28px;
+  }
+}
+
+.subtitle {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--colorGrey500, #6a6a80);
+  margin: 0 auto;
+  max-width: 600px;
+
+  @media (min-width: 768px) {
+    font-size: 16px;
+  }
+}
+
+.viewAllBrands {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.viewAllButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: transparent;
+  border: 2px solid var(--marketplaceColor);
+  border-radius: 8px;
+  color: var(--marketplaceColor);
+  font-size: 16px;
+  font-weight: var(--fontWeightSemiBold);
+  text-decoration: none;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: var(--marketplaceColor);
+    color: var(--colorWhite);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.ctaArrow {
+  font-size: 18px;
+  transition: transform 0.2s ease;
+}
+
+.viewAllButton:hover .ctaArrow {
+  transform: translateX(4px);
+}

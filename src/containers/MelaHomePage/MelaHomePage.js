@@ -9,10 +9,10 @@ import HeroSection from './sections/HeroSection/HeroSection';
 import VettingStrip from './sections/VettingStrip/VettingStrip';
 import BrandSpotlight from './sections/BrandSpotlight/BrandSpotlight';
 import { OccasionStrip } from './sections/CategoryShowcase/CategoryShowcase';
-import CategoryShowcase from './sections/CategoryShowcase/CategoryShowcase';
+import CategoryTiles from '../../components/CategoryTiles/CategoryTiles';
 import NewFromIndia from './sections/NewFromIndia/NewFromIndia';
 import CraftStories from './sections/CraftStories/CraftStories';
-import FeaturedBrandPartnersContainer from './sections/FeaturedBrandPartners/FeaturedBrandPartnersContainer';
+import EarnedItsPlaceContainer from './sections/EarnedItsPlace/EarnedItsPlaceContainer';
 import TrustAssurance from './sections/TrustAssurance/TrustAssurance';
 import SavedItemsModule from './sections/SavedItems/SavedItemsModule';
 import { useConfiguration } from '../../context/configurationContext';
@@ -96,7 +96,7 @@ const MelaHomePage = props => {
               name: 'Do Indian brands on Mela ship to the United States?',
               acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'Yes. Every brand featured on Mela ships directly to US addresses. Most brands offer standard and express international shipping to all 50 states. Delivery typically takes 7–14 business days for standard shipping.',
+                text: 'Yes. Every brand featured on Mela ships directly to US addresses. Most brands offer standard and express international shipping to all 50 states. Delivery typically takes 7–10 working days for standard shipping.',
               },
             },
             {
@@ -128,7 +128,7 @@ const MelaHomePage = props => {
               name: 'How long does shipping from India to the US take?',
               acceptedAnswer: {
                 '@type': 'Answer',
-                text: "Standard international shipping from India to the US takes 7–14 business days. Many brands also offer expedited options (3–7 business days). Exact timelines and costs are shown at checkout on each brand's store.",
+                text: "Standard international shipping from India to the US takes 7–10 working days. Many brands also offer expedited options (3–7 business days). Exact timelines and costs are shown at checkout on each brand's store.",
               },
             },
           ],
@@ -157,9 +157,10 @@ const MelaHomePage = props => {
           <OccasionStrip config={config} />
         </div>
 
-        {/* Category Showcase - now just the 2 surviving carousels (Fashion, Baby & Kids) */}
+        {/* Shop by Category — compact category tiles (tightened from the Fashion/Baby
+            product carousels to six tap-in entry points; homepage-redesign 2026-07-31) */}
         <section className={css.categorySection}>
-          <CategoryShowcase />
+          <CategoryTiles />
         </section>
 
         {/* Module B: New from India — recency as curation */}
@@ -168,9 +169,10 @@ const MelaHomePage = props => {
         {/* Module C: Craft Stories — the craft chips as a discovery surface */}
         <CraftStories />
 
-        {/* Featured Brand Partners */}
+        {/* Every Brand Here Earned Its Place — image-forward brand proof cards
+            (replaces the "Trusted by Parents" FeaturedBrandPartners grid; 2026-07-31) */}
         <section className={css.brandsSection}>
-          <FeaturedBrandPartnersContainer />
+          <EarnedItsPlaceContainer />
         </section>
 
         {/* Trust & Quality Assurance - Certifications */}

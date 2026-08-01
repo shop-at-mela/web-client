@@ -459,7 +459,12 @@ const CategoryPageComponent = props => {
                 items={brandCarousel}
                 getKey={({ brand }) => brand.id.uuid}
                 renderItem={({ brand, products }) => (
-                  <BrandCardHome brand={brand} products={products} showCertifications={false} />
+                  <BrandCardHome
+                    brand={brand}
+                    products={products}
+                    showCertifications={false}
+                    showPlaceholders={false}
+                  />
                 )}
               />
             </div>

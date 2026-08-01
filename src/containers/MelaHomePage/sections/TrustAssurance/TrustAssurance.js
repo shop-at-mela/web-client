@@ -36,7 +36,7 @@ const SECURITY_FEATURES = [
 const US_SHOPPER_FAQS = [
   {
     question: 'Do Indian brands on Mela ship to the United States?',
-    answer: 'Yes. Every brand on Mela ships directly to US addresses. Standard delivery is 7–14 business days; express options are available.',
+    answer: 'Yes. Every brand on Mela ships directly to US addresses. Standard delivery is 7–10 working days; express options are available.',
   },
   {
     question: 'Can I use my US credit card to shop?',
@@ -67,7 +67,7 @@ const TrustAssurance = () => {
           <h2 className={css.title}>
             <FormattedMessage
               id="MelaHomePage.trustTitle"
-              defaultMessage="Every Brand Here Earned Its Place"
+              defaultMessage="Shop with Confidence"
             />
           </h2>
         </div>

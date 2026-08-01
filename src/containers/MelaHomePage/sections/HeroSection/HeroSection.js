@@ -20,8 +20,8 @@ import { getAllBrandIds, getPopulatedCategoryCount } from '../../../../config/co
 import css from './HeroSection.module.css';
 
 const TRUST_BADGES = [
-  { icon: '🇺🇸', text: 'Ships to All 50 States' },
-  { icon: '💳', text: 'US Cards Accepted' },
+  { icon: '🌍', text: 'Ships Worldwide' },
+  { icon: '💳', text: 'Secure Checkout' },
 ];
 
 // Category ids map 1:1 to CategoryIcon glyphs (custom India-resonant line icons).
@@ -229,13 +229,13 @@ const HeroSectionComponent = ({
       <h1 className={css.headline}>
         <FormattedMessage
           id="SectionMelaHero.heroHeadline"
-          defaultMessage="Discover India's Most Loved Brands"
+          defaultMessage="The makers and stories behind India's best brands."
         />
       </h1>
       <p className={css.subheadline}>
         <FormattedMessage
           id="SectionMelaHero.heroSubheadline"
-          defaultMessage="The brands India already loves rarely reach US shelves. We vet the ones with real export experience, then point you to each brand's own store."
+          defaultMessage="Independent Indian brands worth knowing. Meet the craft, the makers, and why each piece lasts, shipped to your door worldwide."
         />
       </p>
     </div>

@@ -1,0 +1,133 @@
+/* OccasionCard — bold editorial occasion card (homepage-redesign mockup).
+   Gradient header + story, curated 2-product peek, themed CTA. Mobile-first. */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--colorWhite, #fff);
+  border: 1px solid var(--colorGrey100, #eae6dd);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 2px 14px rgba(38, 34, 97, 0.07);
+}
+
+/* ── Editorial gradient header ─────────────────────────────────────────── */
+.editorial {
+  position: relative;
+  min-height: 128px;
+  display: flex;
+  align-items: flex-end;
+  padding: 16px;
+
+  @media (min-width: 768px) {
+    min-height: 148px;
+  }
+}
+
+.bg {
+  position: absolute;
+  inset: 0;
+}
+
+/* Gifting → indigo gradient */
+.gifting .bg {
+  background: linear-gradient(150deg, var(--marketplaceColorLight, #3d3485), var(--marketplaceColor, #262261));
+}
+
+/* Festive → marigold gradient */
+.festive .bg {
+  background: linear-gradient(150deg, #f0a030, #d98e22);
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.02) 65%);
+}
+
+.etext {
+  position: relative;
+  color: #fff;
+}
+
+.title {
+  font-family: var(--fontFamilyDisplay);
+  font-weight: var(--fontWeightSemiBold, 600);
+  font-size: 20px;
+  line-height: 1.15;
+  margin: 0 0 4px;
+
+  @media (min-width: 768px) {
+    font-size: 22px;
+  }
+}
+
+.story {
+  font-size: 12.5px;
+  line-height: 1.4;
+  opacity: 0.95;
+  margin: 0;
+  max-width: 34ch;
+}
+
+/* ── Curated product peek ──────────────────────────────────────────────── */
+.peekRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px 14px 0;
+}
+
+.peek {
+  min-width: 0;
+}
+
+.peekSkeleton {
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f0f0f0 0%, #f8f8f8 50%, #f0f0f0 100%);
+  background-size: 200% 100%;
+  animation: occasionLoading 1.5s ease-in-out infinite;
+}
+
+@keyframes occasionLoading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ── CTA ───────────────────────────────────────────────────────────────── */
+.ctaRow {
+  padding: 12px 14px 16px;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: var(--fontWeightBold, 700);
+  text-decoration: none;
+  min-height: 44px;
+}
+
+.gifting .cta {
+  color: var(--marketplaceColor, #262261);
+}
+
+/* Dark marigold for readable contrast on the white CTA row */
+.festive .cta {
+  color: #9a6410;
+}
+
+.arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.cta:hover .arrow {
+  transform: translateX(4px);
+}

@@ -8,6 +8,7 @@ import { useRouteConfiguration } from '../../context/routeConfigurationContext';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { createResourceLocatorString } from '../../util/routes';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
+import { getAllBrandIds } from '../../config/configBrands';
 
 import { Page, LayoutSingleColumn, BrandCarousel, BrandCardHome } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
@@ -50,8 +51,17 @@ const BrandsPageComponent = props => {
 
   const brandCount = sections.reduce((sum, section) => sum + section.brands.length, 0);
 
-  const schemaTitle = intl.formatMessage({ id: 'BrandsPage.title' }, { brandCount });
-  const schemaDescription = intl.formatMessage({ id: 'BrandsPage.description' }, { brandCount });
+  // Marketing copy (title/description) always reflects the full curated roster from
+  // configBrands.js — the same single source of truth FeaturedBrandPartners and
+  // CraftStories use on the homepage — rather than the live, listings-filtered
+  // `brandCount` above, which only gates the loading/empty-state UI.
+  const totalBrandCount = getAllBrandIds().length;
+
+  const schemaTitle = intl.formatMessage({ id: 'BrandsPage.title' }, { brandCount: totalBrandCount });
+  const schemaDescription = intl.formatMessage(
+    { id: 'BrandsPage.description' },
+    { brandCount: totalBrandCount }
+  );
 
   const heroSection = (
     <div className={css.heroSection}>

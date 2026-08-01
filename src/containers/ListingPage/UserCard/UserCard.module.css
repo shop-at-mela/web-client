@@ -13,6 +13,30 @@
   margin-right: 36px;
 }
 
+.brandLogoImage {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.brandInitial {
+  composes: h3 from global;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  padding: 0;
+  border-radius: 50%;
+  background-image: linear-gradient(
+    -180deg,
+    var(--marketplaceColorLight) 0%,
+    var(--marketplaceColor) 100%
+  );
+  color: var(--colorWhite);
+}
+
 .info {
   flex: 1;
 }
