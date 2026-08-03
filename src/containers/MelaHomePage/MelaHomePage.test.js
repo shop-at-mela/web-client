@@ -138,21 +138,18 @@ describe('MelaHomePage', () => {
     );
   });
 
-  it('configures social media sharing images correctly', () => {
+  it('does not set a per-page social image (falls back to the Console branding default)', () => {
+    // The homepage intentionally omits facebookImages/twitterImages so the root URL
+    // uses the marketplace-wide "Default social media image" from Sharetribe Console
+    // (config.branding.facebookImage/twitterImage, 1.91:1) instead of a pinned asset.
     const { getByTestId } = render(
       <TestWrapper>
         <MelaHomePage {...defaultProps} />
       </TestWrapper>
     );
 
-    const expectedSocialImage =
-      'https://sharetribe-assets.imgix.net/68ab648b-6d39-4b2b-bd2c-f99295eeb366/raw/06/5ce7d29d9cfbdfb391af7bc0a744511b9fc1c4?auto=format&fit=clip&h=800&w=800&s=f0fae1b6a833c943e3af463df9cbb484';
-
-    const facebookImages = JSON.parse(getByTestId('facebook-images').textContent);
-    const twitterImages = JSON.parse(getByTestId('twitter-images').textContent);
-
-    expect(facebookImages).toEqual([{ url: expectedSocialImage, width: 800, height: 800 }]);
-    expect(twitterImages).toEqual([{ url: expectedSocialImage, width: 800, height: 800 }]);
+    expect(getByTestId('facebook-images').textContent).toBe('');
+    expect(getByTestId('twitter-images').textContent).toBe('');
   });
 
   it('renders all homepage sections', () => {

@@ -29,17 +29,15 @@ const MelaHomePage = props => {
   // SEO-optimized meta description with target keywords
   const pageDescription = "Mela is a curated home for proven Indian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store. Ships to all 50 states.";
 
-  // Social media sharing images
-  const socialImage = 'https://sharetribe-assets.imgix.net/68ab648b-6d39-4b2b-bd2c-f99295eeb366/raw/06/5ce7d29d9cfbdfb391af7bc0a744511b9fc1c4?auto=format&fit=clip&h=800&w=800&s=f0fae1b6a833c943e3af463df9cbb484';
-  const facebookImages = [{ url: socialImage, width: 800, height: 800 }];
-  const twitterImages = [{ url: socialImage, width: 800, height: 800 }];
+  // Social sharing image: falls back to the marketplace-wide "Default social media
+  // image" set in Sharetribe Console (config.branding.facebookImage / twitterImage,
+  // 1.91:1). No per-page override here — the previous one pinned a dev-environment
+  // asset URL and a square 800x800 image that rendered poorly in link previews.
 
   return (
     <Page
       title={pageTitle}
       description={pageDescription}
-      facebookImages={facebookImages}
-      twitterImages={twitterImages}
       schema={[
         {
           '@context': 'http://schema.org',
