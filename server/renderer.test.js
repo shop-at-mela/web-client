@@ -53,7 +53,22 @@ describe('server renderer CSP nonce functionality', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    // The global Jest config sets `resetMocks: true`, which wipes mock
+    // implementations (not just call history) before each test — including
+    // the describe-scoped `mockRenderApp` above. Re-establish it here so
+    // tests that rely on it get a real Promise back instead of undefined.
+    mockRenderApp.mockImplementation((url, context, state, translations, config, collectChunks) => {
+      return Promise.resolve({
+        head: {
+          htmlAttributes: { toString: () => 'lang="en"' },
+          title: { toString: () => '<title>Test Title</title>' },
+          link: { toString: () => '<link rel="canonical" href="test.com">' },
+          meta: { toString: () => '<meta name="description" content="test">' },
+          script: { toString: () => '<script src="head-script.js"></script>' },
+        },
+        body: '<div id="root">Test App Content</div>',
+      });
+    });
   });
 
   describe('CSP nonce support', () => {

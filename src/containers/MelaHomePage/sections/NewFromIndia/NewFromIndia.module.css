@@ -61,3 +61,11 @@
     flex: 0 0 200px;
   }
 }
+
+@media (--viewportLarge) {
+  .card {
+    /* Percentage-based like ProductCarousel: fills the row on wide screens
+       instead of leaving fixed-width cards stranded with trailing white space. */
+    flex: 0 0 calc(25% - 18px);
+  }
+}

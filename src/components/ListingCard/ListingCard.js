@@ -11,7 +11,8 @@ import {
   isPriceVariationsEnabled,
   requireListingImage,
 } from '../../util/configHelpers';
-import { formatMoney, formatCurrencyMajorUnit } from '../../util/currency';
+import { formatMoney } from '../../util/currency';
+import { useDisplayPrice } from '../../util/liveInrRate';
 import { ensureListing, ensureUser } from '../../util/data';
 import { richText } from '../../util/richText';
 import { createSlug } from '../../util/urlHelpers';
@@ -124,6 +125,15 @@ const priceData = (price, currency, intl) => {
 
 const PriceMaybe = props => {
   const { price, publicData, config, intl, listingTypeConfig } = props;
+  // Hook must run unconditionally (before the early return below) per Rules of Hooks.
+  // Renamed on destructure — `displayPrice` (imported from configHelpers, called below) would
+  // otherwise be shadowed by the Money value this hook returns.
+  const { displayPrice: computedDisplayPrice, formattedINRPrice: inrPriceForDisplay } = useDisplayPrice(
+    price,
+    publicData,
+    intl
+  );
+
   const showPrice = displayPrice(listingTypeConfig);
   if (!showPrice && price) {
     return null;
@@ -133,7 +143,7 @@ const PriceMaybe = props => {
   const hasMultiplePriceVariants = isPriceVariationsInUse && publicData?.priceVariants?.length > 1;
 
   const isBookable = isBookingProcessAlias(publicData?.transactionProcessAlias);
-  const { formattedPrice, priceTitle } = priceData(price, config.currency, intl);
+  const { formattedPrice, priceTitle } = priceData(computedDisplayPrice, config.currency, intl);
 
   const priceValue = <span className={css.priceValue}>{formattedPrice}</span>;
   const pricePerUnit = isBookable ? (
@@ -144,9 +154,7 @@ const PriceMaybe = props => {
     ''
   );
 
-  const inrPrice = publicData?.priceInINR;
-  const formattedINRPrice =
-    inrPrice && formattedPrice ? formatCurrencyMajorUnit(intl, 'INR', inrPrice) : null;
+  const formattedINRPrice = formattedPrice ? inrPriceForDisplay : null;
 
   return (
     <div className={css.price} title={priceTitle}>

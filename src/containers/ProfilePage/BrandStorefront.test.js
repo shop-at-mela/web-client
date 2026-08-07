@@ -9,6 +9,21 @@ import { RouteConfigurationProvider } from '../../context/routeConfigurationCont
 // Break the import chain: components/index.js → UserNav → routeConfiguration → pageDataLoadingAPI → ducks
 jest.mock('../../routing/routeConfiguration', () => []);
 
+// BrandStorefront pulls in BrandOccasionModule → CategoryShowcase → homepageSdk.js,
+// which calls createInstance() at module load time. That crashes with "clientId
+// must be provided" in the test env (no REACT_APP_SHARETRIBE_SDK_CLIENT_ID). Stub
+// only createInstance; keep the rest of sdkLoader real since other modules in this
+// import tree (e.g. BrandHeroCard) rely on real `types`/`createImageVariantConfig`.
+jest.mock('../../util/sdkLoader', () => {
+  const actual = jest.requireActual('../../util/sdkLoader');
+  return {
+    ...actual,
+    createInstance: jest.fn(() => ({
+      listings: { query: jest.fn() },
+    })),
+  };
+});
+
 import BrandStorefront from './BrandStorefront';
 
 // Mock specific components to avoid complex configuration dependencies

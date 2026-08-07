@@ -1,6 +1,22 @@
 import React, { act } from 'react';
 import '@testing-library/jest-dom';
 
+// ProfilePage pulls in BrandStorefront → BrandOccasionModule → CategoryShowcase →
+// homepageSdk.js, which calls createInstance() at module load time. That crashes
+// with "clientId must be provided" in the test env (no
+// REACT_APP_SHARETRIBE_SDK_CLIENT_ID). Stub only createInstance; keep the rest of
+// sdkLoader real since this file (and BrandHeroCard, ProfilePage.duck) rely on real
+// `types`/`createImageVariantConfig`.
+jest.mock('../../util/sdkLoader', () => {
+  const actual = jest.requireActual('../../util/sdkLoader');
+  return {
+    ...actual,
+    createInstance: jest.fn(() => ({
+      listings: { query: jest.fn() },
+    })),
+  };
+});
+
 import configureStore from '../../store';
 import { types as sdkTypes } from '../../util/sdkLoader';
 import {

@@ -51,8 +51,14 @@ describe('ListingCardMini', () => {
     expect(container.firstChild).toBeInTheDocument();
   });
 
-  it('renders the USD price', () => {
+  it('hides price by default', () => {
     const { container } = render(<ListingCardMini listing={listing} />);
+    const priceWrapper = container.querySelector('[class*="priceWrapper"]');
+    expect(priceWrapper).not.toBeInTheDocument();
+  });
+
+  it('renders the USD price when showPrice=true', () => {
+    const { container } = render(<ListingCardMini listing={listing} showPrice />);
     // Price wrapper should be present (listing has default Money(5500, 'USD'))
     const priceWrapper = container.querySelector('[class*="priceWrapper"]');
     expect(priceWrapper).toBeInTheDocument();
@@ -124,26 +130,26 @@ describe('ListingCardMini', () => {
     expect(container.firstChild).toBeInTheDocument();
   });
 
-  describe('INR equivalent price', () => {
+  describe('INR equivalent price (with showPrice=true)', () => {
     it('shows INR price line when priceInINR is in publicData', () => {
-      const { getByText } = render(<ListingCardMini listing={listingWithINR} />);
+      const { getByText } = render(<ListingCardMini listing={listingWithINR} showPrice />);
       // The INR span renders ~{formattedINRPrice} inline (no FormattedMessage)
       expect(getByText(/~/)).toBeInTheDocument();
     });
 
     it('INR price line contains the formatted amount', () => {
-      const { getByText } = render(<ListingCardMini listing={listingWithINR} />);
+      const { getByText } = render(<ListingCardMini listing={listingWithINR} showPrice />);
       // 2499 formatted — digits should appear regardless of currency symbol
       expect(getByText(/~/).textContent).toMatch(/2[,.]?499/);
     });
 
     it('does not show INR price line when priceInINR is absent', () => {
-      const { queryByText } = render(<ListingCardMini listing={listing} />);
+      const { queryByText } = render(<ListingCardMini listing={listing} showPrice />);
       expect(queryByText(/~/)).not.toBeInTheDocument();
     });
 
     it('does not show INR price line when priceInINR is zero', () => {
-      const { queryByText } = render(<ListingCardMini listing={listingWithZeroINR} />);
+      const { queryByText } = render(<ListingCardMini listing={listingWithZeroINR} showPrice />);
       expect(queryByText(/~/)).not.toBeInTheDocument();
     });
 
@@ -153,7 +159,7 @@ describe('ListingCardMini', () => {
         { publicData: {} },
         { author: createUser('user1') }
       );
-      const { queryByText } = render(<ListingCardMini listing={noPublicData} />);
+      const { queryByText } = render(<ListingCardMini listing={noPublicData} showPrice />);
       expect(queryByText(/~/)).not.toBeInTheDocument();
     });
   });

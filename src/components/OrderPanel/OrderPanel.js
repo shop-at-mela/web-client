@@ -22,7 +22,8 @@ import {
   STOCK_INFINITE_MULTIPLE_ITEMS,
   LISTING_STATE_PUBLISHED,
 } from '../../util/types';
-import { formatMoney, formatCurrencyMajorUnit } from '../../util/currency';
+import { formatMoney } from '../../util/currency';
+import { useDisplayPrice } from '../../util/liveInrRate';
 import { openBrandStorefront } from '../../util/analytics/brandClickout';
 import { createSlug, parse, stringify } from '../../util/urlHelpers';
 import { userDisplayNameAsString } from '../../util/data';
@@ -147,6 +148,15 @@ const PriceMaybe = props => {
   } = props;
   const { listingType, unitType } = publicData || {};
 
+  // Hook must run unconditionally (before the early return below) per Rules of Hooks.
+  // Renamed on destructure — `displayPrice` (imported from configHelpers, called below) would
+  // otherwise be shadowed by the Money value this hook returns.
+  const { displayPrice: computedDisplayPrice, formattedINRPrice } = useDisplayPrice(
+    price,
+    publicData,
+    intl
+  );
+
   const foundListingTypeConfig = validListingTypes.find(conf => conf.listingType === listingType);
   const showPrice = displayPrice(foundListingTypeConfig);
   const isPriceVariationsInUse = !!publicData?.priceVariationsEnabled;
@@ -157,18 +167,15 @@ const PriceMaybe = props => {
   }
 
   // Get formatted price or currency code if the currency does not match with marketplace currency
-  const { formattedPrice, priceTitle } = priceData(price, marketplaceCurrency, intl);
+  const { formattedPrice, priceTitle } = priceData(computedDisplayPrice, marketplaceCurrency, intl);
   const priceValue = (
-    <span className={css.priceValue}>{formatMoneyIfSupportedCurrency(price, intl)}</span>
+    <span className={css.priceValue}>{formatMoneyIfSupportedCurrency(computedDisplayPrice, intl)}</span>
   );
   const pricePerUnit = (
     <span className={css.perUnit}>
       <FormattedMessage id="OrderPanel.perUnit" values={{ unitType }} />
     </span>
   );
-
-  const inrPrice = publicData?.priceInINR;
-  const formattedINRPrice = inrPrice ? formatCurrencyMajorUnit(intl, 'INR', inrPrice) : null;
 
   // TODO: In CTA, we don't have space to show proper error message for a mismatch of marketplace currency
   //       Instead, we show the currency code in place of the price

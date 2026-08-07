@@ -191,7 +191,6 @@ const BrandCardHome = props => {
               listing={product}
               onFavorite={onFavorite}
               showSave={showProductMeta}
-              showPrice={showProductMeta}
             />
           ) : (
             <div key={`placeholder-${index}`} className={css.productPlaceholder}>

@@ -156,8 +156,13 @@ exports.csp = (reportUri, reportOnly) => {
   const { connectSrc, scriptSrc, imgSrc } = defaultDirectives;
   const clarityDomains = ['*.clarity.ms', 'clarity.ms'];
 
+  // Frankfurter (live INR→USD display rate — src/util/liveInrRate.js, see
+  // mela-docs/product/TODO.md 2026-08-06). Without this, the browser silently blocks the
+  // fetch and every price display permanently falls back to the static ingestion-time rate.
+  const liveRateDomains = ['api.frankfurter.dev'];
+
   const customDirectives = {
-    connectSrc: connectSrc.concat(clarityDomains),
+    connectSrc: connectSrc.concat(clarityDomains, liveRateDomains),
     scriptSrc: scriptSrc.concat(clarityDomains),
     imgSrc: imgSrc.concat(clarityDomains),
   };

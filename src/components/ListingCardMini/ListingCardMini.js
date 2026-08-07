@@ -3,7 +3,8 @@ import { string, bool, object } from 'prop-types';
 import classNames from 'classnames';
 
 import { useIntl } from '../../util/reactIntl';
-import { formatMoney, formatCurrencyMajorUnit } from '../../util/currency';
+import { formatMoney } from '../../util/currency';
+import { useDisplayPrice } from '../../util/liveInrRate';
 import { ensureListing } from '../../util/data';
 import { createSlug } from '../../util/urlHelpers';
 import { NamedLink } from '../../components';
@@ -19,13 +20,13 @@ import css from './ListingCardMini.module.css';
  * @param {Object} props
  * @param {Object} props.listing - Listing entity
  * @param {boolean} props.showSave - Whether to show save button (default: true)
- * @param {boolean} props.showPrice - Whether to show the price row (default: true).
- *                                    Set false in contexts (e.g. the homepage hero)
- *                                    where price chrome would read "store".
+ * @param {boolean} props.showPrice - Whether to show the price row (default: false).
+ *                                    Opt in explicitly where price chrome is wanted;
+ *                                    these compact grids default to price-free.
  * @param {string} props.className - Additional CSS class
  */
 export const ListingCardMini = props => {
-  const { listing, showSave = true, showPrice = true, className = null } = props;
+  const { listing, showSave = true, showPrice = false, className = null } = props;
 
   const intl = useIntl();
   const currentListing = ensureListing(listing);
@@ -36,10 +37,8 @@ export const ListingCardMini = props => {
   const classes = classNames(css.root, className);
 
   // Format price
-  const formattedPrice = price ? formatMoney(intl, price) : null;
-  const inrPrice = publicData?.priceInINR;
-  const formattedINRPrice =
-    inrPrice && price ? formatCurrencyMajorUnit(intl, 'INR', inrPrice) : null;
+  const { displayPrice, formattedINRPrice } = useDisplayPrice(price, publicData, intl);
+  const formattedPrice = displayPrice ? formatMoney(intl, displayPrice) : null;
 
   const firstImage = currentListing.images?.[0];
   const imageUrl = firstImage?.attributes?.variants?.['square-small']?.url || '';

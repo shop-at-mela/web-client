@@ -134,3 +134,15 @@
     max-width: 420px;
   }
 }
+
+@media (--viewportLarge) {
+  .body {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .body {
+    max-width: 1200px;
+  }
+}
