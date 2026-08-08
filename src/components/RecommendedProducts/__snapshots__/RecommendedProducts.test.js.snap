@@ -10,11 +10,15 @@ exports[`RecommendedProducts matches snapshot with recommended products 1`] = `
     <div
       class="header"
     >
-      <h3
-        class="title"
+      <div
+        class="headerText"
       >
-        RecommendedProducts.title
-      </h3>
+        <h3
+          class="title"
+        >
+          RecommendedProducts.title
+        </h3>
+      </div>
     </div>
     <div
       class="carousel"

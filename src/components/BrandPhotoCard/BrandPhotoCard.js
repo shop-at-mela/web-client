@@ -80,6 +80,7 @@ const BrandPhotoCard = props => {
             aspectHeight={3}
             lazy={false}
             className={css.mainPhoto}
+            rootClassName={css.photoImg}
             alt={displayName}
             sizes="(max-width: 767px) 90vw, 360px"
           />
@@ -107,6 +108,7 @@ const BrandPhotoCard = props => {
                 aspectWidth={1}
                 aspectHeight={1}
                 lazy={false}
+                rootClassName={css.photoImg}
                 alt=""
                 sizes="72px"
               />

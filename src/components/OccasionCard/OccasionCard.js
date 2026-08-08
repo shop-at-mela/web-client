@@ -77,6 +77,7 @@ const OccasionCard = props => {
                   showConversionBadges={true}
                   isBestseller={listing.attributes?.publicData?.isBestseller || false}
                   renderSizes="(max-width: 767px) 45vw, 200px"
+                  showInrPrice={false}
                 />
               </div>
             ))}

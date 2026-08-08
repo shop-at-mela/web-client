@@ -15,10 +15,15 @@
  *     listings={recommendedProducts}
  *     isLoading={fetchInProgress}
  *   />
+ *
+ * `showAuthorInfo`/`showTrustBadges`/`showConversionBadges` default to the trust-badge
+ * presentation used by the catalog carousels (CategoryShowcase, BrandSpotlight) — pass
+ * overrides for editorial modules that want a different ListingCard content mix (e.g.
+ * NewFromIndia shows the brand name instead of badges).
  */
 
 import React from 'react';
-import { arrayOf, bool, number, object, string } from 'prop-types';
+import { arrayOf, bool, func, number, object, string } from 'prop-types';
 import { FormattedMessage } from '../../util/reactIntl';
 import { propTypes } from '../../util/types';
 import { NamedLink, ListingCard } from '../../components';
@@ -26,6 +31,7 @@ import css from './ProductCarousel.module.css';
 
 const ProductCarousel = ({
   title,
+  subtitle,
   viewAllLinkName,
   viewAllLinkParams,
   viewAllLinkSearch,
@@ -33,6 +39,11 @@ const ProductCarousel = ({
   isLoading = false,
   minItems = 2,
   className,
+  showInrPrice = true,
+  showAuthorInfo = false,
+  showTrustBadges = true,
+  showConversionBadges = true,
+  onItemClick,
 }) => {
   const listingsWithImages = listings.filter(l => l.images && l.images.length > 0);
 
@@ -41,7 +52,10 @@ const ProductCarousel = ({
   return (
     <div className={className || css.root}>
       <div className={css.header}>
-        <h3 className={css.title}>{title}</h3>
+        <div className={css.headerText}>
+          <h3 className={css.title}>{title}</h3>
+          {subtitle && <p className={css.subtitle}>{subtitle}</p>}
+        </div>
         {viewAllLinkName && (
           <NamedLink
             name={viewAllLinkName}
@@ -61,14 +75,19 @@ const ProductCarousel = ({
               <div key={i} className={`${css.card} ${css.skeleton}`} />
             ))
           : listingsWithImages.map((listing) => (
-              <div key={listing.id.uuid} className={css.card}>
+              <div
+                key={listing.id.uuid}
+                className={css.card}
+                onClick={onItemClick ? () => onItemClick(listing) : undefined}
+              >
                 <ListingCard
                   listing={listing}
-                  showAuthorInfo={false}
-                  showTrustBadges={true}
-                  showConversionBadges={true}
+                  showAuthorInfo={showAuthorInfo}
+                  showTrustBadges={showTrustBadges}
+                  showConversionBadges={showConversionBadges}
                   isBestseller={listing.attributes?.publicData?.isBestseller || false}
                   renderSizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw"
+                  showInrPrice={showInrPrice}
                 />
               </div>
             ))}
@@ -79,6 +98,7 @@ const ProductCarousel = ({
 
 ProductCarousel.propTypes = {
   title: string.isRequired,
+  subtitle: string,
   viewAllLinkName: string,
   viewAllLinkParams: object,
   viewAllLinkSearch: string,
@@ -86,6 +106,11 @@ ProductCarousel.propTypes = {
   isLoading: bool,
   minItems: number,
   className: string,
+  showInrPrice: bool,
+  showAuthorInfo: bool,
+  showTrustBadges: bool,
+  showConversionBadges: bool,
+  onItemClick: func,
 };
 
 export default ProductCarousel;

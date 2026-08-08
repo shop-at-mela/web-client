@@ -124,7 +124,7 @@ const priceData = (price, currency, intl) => {
 };
 
 const PriceMaybe = props => {
-  const { price, publicData, config, intl, listingTypeConfig } = props;
+  const { price, publicData, config, intl, listingTypeConfig, showInrPrice = true } = props;
   // Hook must run unconditionally (before the early return below) per Rules of Hooks.
   // Renamed on destructure — `displayPrice` (imported from configHelpers, called below) would
   // otherwise be shadowed by the Money value this hook returns.
@@ -154,7 +154,7 @@ const PriceMaybe = props => {
     ''
   );
 
-  const formattedINRPrice = formattedPrice ? inrPriceForDisplay : null;
+  const formattedINRPrice = formattedPrice && showInrPrice ? inrPriceForDisplay : null;
 
   return (
     <div className={css.price} title={priceTitle}>
@@ -278,6 +278,7 @@ const ListingCardImage = props => {
  * @param {boolean?} props.isBestseller whether product is a bestseller (default: false)
  * @param {number?} props.stockCount remaining stock for urgency display (default: null)
  * @param {boolean?} props.isNew whether product is newly listed (default: false)
+ * @param {boolean?} props.showInrPrice whether to show the "~₹" INR equivalent under the price (default: true)
  * @returns {JSX.Element} listing card to be used in search result panel etc.
  */
 export const ListingCard = props => {
@@ -299,6 +300,7 @@ export const ListingCard = props => {
     stockCount = null,
     isNew = false,
     lazyLoadImage = true,
+    showInrPrice = true,
   } = props;
 
   const translations = getListingCardTranslations(listing, config, intl);
@@ -406,6 +408,7 @@ export const ListingCard = props => {
             config={config}
             intl={intl}
             listingTypeConfig={foundListingTypeConfig}
+            showInrPrice={showInrPrice}
           />
           <div className={css.mainInfo}>
             {showListingImage && (

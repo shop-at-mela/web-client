@@ -8,8 +8,20 @@ jest.mock('../../../../util/homepageSdk', () => ({
 }));
 
 jest.mock('../../../../components', () => ({
-  ListingCard: ({ listing }) => (
-    <div data-testid="listing-card">{listing.attributes.title}</div>
+  ProductCarousel: ({ title, subtitle, listings, onItemClick }) => (
+    <div>
+      <h3>{title}</h3>
+      {subtitle && <p>{subtitle}</p>}
+      {listings.map(listing => (
+        <div
+          key={listing.id.uuid}
+          data-testid="listing-card"
+          onClick={() => onItemClick && onItemClick(listing)}
+        >
+          {listing.attributes.title}
+        </div>
+      ))}
+    </div>
   ),
 }));
 

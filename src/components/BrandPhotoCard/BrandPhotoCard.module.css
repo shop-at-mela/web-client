@@ -42,6 +42,17 @@
   width: 100%;
 }
 
+/* Applied as ListingImage's `rootClassName` — targets the actual <img>, not the
+   AspectRatioWrapper box. Without height:100%/object-fit, an image whose native
+   ratio doesn't match the requested crop renders short and sticks to the top,
+   leaving the box's background exposed only at the bottom. `contain` + the
+   default centered object-position letterboxes evenly instead. */
+.photoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 /* Thumbnail filmstrip */
 .filmstrip {
   display: flex;

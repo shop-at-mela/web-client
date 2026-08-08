@@ -422,6 +422,7 @@ const makeCategoryCarousels = (categories) => {
             viewAllLinkSearch={viewAllSearch}
             listings={categoryProducts[id] || []}
             isLoading={loadingByCategory[id]}
+            showInrPrice={false}
           />
         ))}
       </div>

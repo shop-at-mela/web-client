@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { FormattedMessage } from '../../../../util/reactIntl';
-import { ListingCard } from '../../../../components';
+import { useIntl } from '../../../../util/reactIntl';
+import { ProductCarousel } from '../../../../components';
 import { denormalisedEntities, updatedEntities } from '../../../../util/data';
 import { pushNewFromIndiaClick } from '../../../../util/analytics/homepageEditorial';
 import sdk from '../../../../util/homepageSdk';
-
-import css from './NewFromIndia.module.css';
 
 const DISPLAY_COUNT = 8;
 const MAX_PER_BRAND = 2;
@@ -36,6 +34,7 @@ const capPerBrand = (sortedListings, maxPerBrand, limit) => {
  * 2 per brand so one ingestion run can't flood the row. Entirely automatic: no CMS.
  */
 const NewFromIndia = () => {
+  const intl = useIntl();
   const [listings, setListings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -78,34 +77,18 @@ const NewFromIndia = () => {
   if (!isLoading && listings.length === 0) return null;
 
   return (
-    <section className={css.root}>
-      <h2 className={css.title}>
-        <FormattedMessage id="NewFromIndia.title" />
-      </h2>
-      <p className={css.subtitle}>
-        <FormattedMessage id="NewFromIndia.subtitle" />
-      </p>
-
-      <div className={css.scroll}>
-        {isLoading
-          ? [1, 2, 3, 4].map(i => <div key={i} className={`${css.card} ${css.skeleton}`} />)
-          : listings.map(listing => (
-              <div
-                key={listing.id.uuid}
-                className={css.card}
-                onClick={() =>
-                  pushNewFromIndiaClick(listing.author?.id?.uuid, listing.id.uuid)
-                }
-              >
-                <ListingCard
-                  listing={listing}
-                  showAuthorInfo={true}
-                  renderSizes="(max-width: 639px) 45vw, 200px"
-                />
-              </div>
-            ))}
-      </div>
-    </section>
+    <ProductCarousel
+      title={intl.formatMessage({ id: 'NewFromIndia.title' })}
+      subtitle={intl.formatMessage({ id: 'NewFromIndia.subtitle' })}
+      listings={listings}
+      isLoading={isLoading}
+      minItems={1}
+      showAuthorInfo={true}
+      showTrustBadges={false}
+      showConversionBadges={false}
+      showInrPrice={false}
+      onItemClick={listing => pushNewFromIndiaClick(listing.author?.id?.uuid, listing.id.uuid)}
+    />
   );
 };
 

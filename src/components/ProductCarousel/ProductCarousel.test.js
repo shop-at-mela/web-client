@@ -8,11 +8,14 @@ jest.mock('../../routing/routeConfiguration', () => []);
 
 jest.mock('../../components', () => ({
   NamedLink: ({ children, className }) => <a className={className}>{children}</a>,
-  ListingCard: ({ listing, isBestseller }) => (
+  ListingCard: ({ listing, isBestseller, showAuthorInfo, showTrustBadges, showConversionBadges }) => (
     <div
       data-testid="listing-card"
       data-id={listing?.id?.uuid}
       data-is-bestseller={String(!!isBestseller)}
+      data-show-author-info={String(!!showAuthorInfo)}
+      data-show-trust-badges={String(!!showTrustBadges)}
+      data-show-conversion-badges={String(!!showConversionBadges)}
     />
   ),
 }));
@@ -144,6 +147,64 @@ describe('ProductCarousel', () => {
     it('omits the View All link when viewAllLinkName is not provided', () => {
       renderCarousel({ listings: [makeListing('a'), makeListing('b')] });
       expect(screen.queryByText(/View All/i)).not.toBeInTheDocument();
+    });
+
+    it('renders the subtitle when provided', () => {
+      renderCarousel({
+        listings: [makeListing('a'), makeListing('b')],
+        subtitle: 'Test subtitle',
+      });
+      expect(screen.getByText('Test subtitle')).toBeInTheDocument();
+    });
+
+    it('omits the subtitle when not provided', () => {
+      const { container } = renderCarousel({ listings: [makeListing('a'), makeListing('b')] });
+      expect(container.querySelector('p')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('content flags', () => {
+    it('defaults to badges-on, author-off for the catalog carousel presentation', () => {
+      renderCarousel({ listings: [makeListing('a'), makeListing('b')] });
+
+      const card = screen.getAllByTestId('listing-card')[0];
+      expect(card).toHaveAttribute('data-show-author-info', 'false');
+      expect(card).toHaveAttribute('data-show-trust-badges', 'true');
+      expect(card).toHaveAttribute('data-show-conversion-badges', 'true');
+    });
+
+    it('allows callers to opt into author-on, badges-off (e.g. editorial modules)', () => {
+      renderCarousel({
+        listings: [makeListing('a'), makeListing('b')],
+        showAuthorInfo: true,
+        showTrustBadges: false,
+        showConversionBadges: false,
+      });
+
+      const card = screen.getAllByTestId('listing-card')[0];
+      expect(card).toHaveAttribute('data-show-author-info', 'true');
+      expect(card).toHaveAttribute('data-show-trust-badges', 'false');
+      expect(card).toHaveAttribute('data-show-conversion-badges', 'false');
+    });
+  });
+
+  describe('onItemClick', () => {
+    it('fires onItemClick with the listing when a card is clicked', () => {
+      const onItemClick = jest.fn();
+      const listings = [makeListing('a'), makeListing('b')];
+      renderCarousel({ listings, onItemClick });
+
+      // Click bubbles from the ListingCard mock up to the .card wrapper's onClick.
+      screen.getAllByTestId('listing-card')[1].click();
+
+      expect(onItemClick).toHaveBeenCalledWith(listings[1]);
+    });
+
+    it('does not error when no onItemClick is provided and a card is clicked', () => {
+      const listings = [makeListing('a'), makeListing('b')];
+      renderCarousel({ listings });
+
+      expect(() => screen.getAllByTestId('listing-card')[0].click()).not.toThrow();
     });
   });
 });

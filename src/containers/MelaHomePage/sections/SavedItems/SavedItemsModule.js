@@ -72,6 +72,7 @@ const SavedItemsModuleComponent = props => {
             listing={listing}
             renderSizes={renderSizes}
             showAuthorInfo
+            showInrPrice={false}
           />
         ))}
       </div>

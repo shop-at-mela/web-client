@@ -148,6 +148,7 @@ const BrandSpotlight = () => {
           minItems={1}
           viewAllLinkName={brandLinkProps.name}
           viewAllLinkParams={brandLinkProps.params}
+          showInrPrice={false}
         />
 
         <div className={css.ctas}>

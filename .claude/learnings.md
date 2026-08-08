@@ -290,6 +290,12 @@ const categoryPath = (level1, level2, level3) => {
 - **CSS Modules map via identity-obj-proxy** → assert on literal class names (`container.querySelector('.thumbActive')`).
 - **Hover/tap swap without gesture conflict**: thumbnail `onMouseEnter`(desktop) + `onClick`(mobile/tap) + `onFocus`(a11y) driving local `useState` index — no swipe, so it never fights a horizontally-scrolling parent row (BrandPhotoCard).
 
+### ProductCarousel: Configurable ListingCard Content Mix
+- **Issue**: `ProductCarousel` hardcoded `showAuthorInfo={false}`/`showTrustBadges={true}`/`showConversionBadges={true}` — fine for catalog carousels (CategoryShowcase, BrandSpotlight) but wrong for editorial modules like NewFromIndia that show the brand name instead of badges.
+- **Fix**: Made these three props (plus `subtitle`, `onItemClick`) configurable on `ProductCarousel`, defaulted to the existing catalog-carousel behavior so current callers are unaffected. `NewFromIndia` now passes `showAuthorInfo={true} showTrustBadges={false} showConversionBadges={false}`.
+- **CSS caveat**: Before merging a page-specific carousel into `ProductCarousel`, diff the CSS Modules directly — `ProductCarousel.module.css` uses hardcoded hex/rem values (not `--color*`/`--font*` custom properties), so a component using the design-system tokens will visually shift (card width strategy, gap, title font) even though "it's the same carousel pattern." Confirm the visual delta with the user before adopting.
+- **Test pitfall**: Mocking the shared `../../components` barrel in the parent's test to stub `ProductCarousel` (not `ListingCard`) is required once the parent imports `ProductCarousel` instead of `ListingCard` directly — same pattern as the OccasionCard extraction below (deep import chain otherwise breaks via the barrel's `sdkLoader`).
+
 ## Session Log
 2024-10-10: Fixed CategoryProducts to display proper category names + product filtering improvements
 2025-10-10: Implemented HeroProducts with real API integration, randomization, and comprehensive testing
