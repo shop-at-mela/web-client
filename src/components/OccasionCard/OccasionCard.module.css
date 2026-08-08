@@ -71,11 +71,27 @@
 }
 
 /* ── Curated product peek ──────────────────────────────────────────────── */
-.peekRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+
+/* Mobile: swipeable ProductCarousel. Hidden at desktop widths. */
+.mobilePeek {
   padding: 12px 14px 0;
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+}
+
+/* Desktop: static 2-up grid. Hidden at mobile widths.
+   Deferred from the ProductCarousel swap — see OccasionCard.js comment. */
+.desktopPeek {
+  display: none;
+
+  @media (min-width: 768px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 12px 14px 0;
+  }
 }
 
 .peek {

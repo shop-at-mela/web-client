@@ -1,4 +1,4 @@
-import { loadData } from './SearchPage.duck';
+import reducer, { loadData, searchListings } from './SearchPage.duck';
 
 // Mock SDK
 const mockQuery = jest.fn();
@@ -167,5 +167,71 @@ describe('SearchPage.duck', () => {
       expect(queryParams.page).toBe(2);
       expect(queryParams.perPage).toBe(24);
     });
+
+    it('retries the main query on a 429 rate-limit response and then succeeds', async () => {
+      const config = createTestConfig();
+      const rateLimited = Object.assign(new Error('Too Many Requests'), { status: 429 });
+      mockQuery
+        .mockRejectedValueOnce(rateLimited)
+        .mockResolvedValueOnce({ data: { data: [], meta: {} } });
+
+      const thunk = loadData({}, '?page=1', config);
+      await thunk(mockDispatch, mockGetState, mockSdk);
+
+      // First call 429s, the retry succeeds — so the query is issued twice.
+      expect(mockQuery.mock.calls.length).toBe(2);
+    });
+  });
+});
+
+// Regression tests for the category-page cross-contamination bug: rapid navigation
+// between two category pages left the previous category's listings on screen because
+// (a) a superseded response could overwrite the current one, and (b) a failed search
+// (e.g. a 429 from the request burst) left stale results in place.
+describe('SearchPage reducer — stale / superseded search handling', () => {
+  const listingResponse = ids => ({
+    data: {
+      data: ids.map(id => ({ id: { uuid: id }, attributes: { deleted: false, state: 'published' } })),
+      meta: { totalItems: ids.length, totalPages: 1 },
+    },
+  });
+  const arg = { searchParams: {} };
+  const init = () => reducer(undefined, { type: '@@INIT' });
+
+  it('ignores a superseded fulfilled response and applies only the latest search', () => {
+    let state = init();
+    state = reducer(state, searchListings.pending('req-A', arg));
+    state = reducer(state, searchListings.pending('req-B', arg)); // supersedes A
+    // A resolves late — must be ignored
+    state = reducer(state, searchListings.fulfilled(listingResponse(['a1']), 'req-A', arg));
+    expect(state.currentPageResultIds).toEqual([]);
+    // B resolves — applied
+    state = reducer(state, searchListings.fulfilled(listingResponse(['b1']), 'req-B', arg));
+    expect(state.currentPageResultIds.map(r => r.uuid)).toEqual(['b1']);
+  });
+
+  it('clears stale results when the latest search fails (e.g. 429)', () => {
+    let state = init();
+    state = reducer(state, searchListings.pending('req-A', arg));
+    state = reducer(state, searchListings.fulfilled(listingResponse(['a1', 'a2']), 'req-A', arg));
+    expect(state.currentPageResultIds.length).toBe(2);
+
+    // User navigates to another category; that search starts then fails.
+    state = reducer(state, searchListings.pending('req-B', arg));
+    const rateLimited = Object.assign(new Error('429'), { status: 429 });
+    state = reducer(state, searchListings.rejected(rateLimited, 'req-B', arg, { status: 429 }));
+
+    expect(state.currentPageResultIds).toEqual([]);
+    expect(state.pagination).toBeNull();
+  });
+
+  it('does not clear current results when a superseded search fails', () => {
+    let state = init();
+    state = reducer(state, searchListings.pending('req-A', arg));
+    state = reducer(state, searchListings.pending('req-B', arg));
+    state = reducer(state, searchListings.fulfilled(listingResponse(['b1']), 'req-B', arg));
+    // A fails late — must NOT wipe B's results
+    state = reducer(state, searchListings.rejected(new Error('boom'), 'req-A', arg));
+    expect(state.currentPageResultIds.map(r => r.uuid)).toEqual(['b1']);
   });
 });

@@ -8,7 +8,14 @@ jest.mock('../../routing/routeConfiguration', () => []);
 
 jest.mock('../../components', () => ({
   NamedLink: ({ children, className }) => <a className={className}>{children}</a>,
-  ListingCard: ({ listing, isBestseller, showAuthorInfo, showTrustBadges, showConversionBadges }) => (
+  ListingCard: ({
+    listing,
+    isBestseller,
+    showAuthorInfo,
+    showTrustBadges,
+    showConversionBadges,
+    renderSizes,
+  }) => (
     <div
       data-testid="listing-card"
       data-id={listing?.id?.uuid}
@@ -16,6 +23,7 @@ jest.mock('../../components', () => ({
       data-show-author-info={String(!!showAuthorInfo)}
       data-show-trust-badges={String(!!showTrustBadges)}
       data-show-conversion-badges={String(!!showConversionBadges)}
+      data-render-sizes={renderSizes}
     />
   ),
 }));
@@ -160,6 +168,47 @@ describe('ProductCarousel', () => {
     it('omits the subtitle when not provided', () => {
       const { container } = renderCarousel({ listings: [makeListing('a'), makeListing('b')] });
       expect(container.querySelector('p')).not.toBeInTheDocument();
+    });
+
+    it('omits the header entirely when neither title nor viewAllLinkName is provided', () => {
+      const { container } = renderCarousel({
+        title: undefined,
+        listings: [makeListing('a'), makeListing('b')],
+      });
+      expect(container.querySelector('h3')).not.toBeInTheDocument();
+      // No stray empty heading — the header wrapper itself is skipped, not just its text.
+      expect(screen.queryByText('Test Carousel')).not.toBeInTheDocument();
+    });
+
+    it('still renders just the View All link when title is omitted but viewAllLinkName is set', () => {
+      renderCarousel({
+        title: undefined,
+        listings: [makeListing('a'), makeListing('b')],
+        viewAllLinkName: 'SearchPage',
+        viewAllLinkSearch: '?foo=bar',
+      });
+      expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+      expect(screen.getByText(/View All/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('renderSizes', () => {
+    it('defaults to the full-width carousel image size hint', () => {
+      renderCarousel({ listings: [makeListing('a'), makeListing('b')] });
+      const card = screen.getAllByTestId('listing-card')[0];
+      expect(card).toHaveAttribute(
+        'data-render-sizes',
+        '(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw'
+      );
+    });
+
+    it('forwards a custom renderSizes hint for narrower host containers', () => {
+      renderCarousel({
+        listings: [makeListing('a'), makeListing('b')],
+        renderSizes: '(max-width: 767px) 45vw, 200px',
+      });
+      const card = screen.getAllByTestId('listing-card')[0];
+      expect(card).toHaveAttribute('data-render-sizes', '(max-width: 767px) 45vw, 200px');
     });
   });
 

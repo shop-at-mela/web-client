@@ -3,6 +3,7 @@ import { arrayOf, bool, oneOf, shape, string } from 'prop-types';
 
 import NamedLink from '../NamedLink/NamedLink';
 import ListingCard from '../ListingCard/ListingCard';
+import ProductCarousel from '../ProductCarousel/ProductCarousel';
 
 import css from './OccasionCard.module.css';
 
@@ -12,8 +13,21 @@ import css from './OccasionCard.module.css';
  * Inspiration + engagement, per the homepage-redesign mockup:
  *   1. a colored gradient editorial header (occasion title + one-line story) —
  *      leads with the moment, not the aisle;
- *   2. a curated peek of two products — the engagement hook;
+ *   2. a curated peek of products — the engagement hook;
  *   3. a themed CTA into the full occasion search.
+ *
+ * The peek renders two different treatments depending on viewport, toggled purely
+ * via CSS (both blocks are always in the DOM — same SSR-safe pattern as UserCard's
+ * .mobileBio/.desktopBio split):
+ *   - Mobile (<768px): a swipeable ProductCarousel showing all fetched products (up
+ *     to 6). OccasionStrip's mobile layout stacks cards full-width, so the card's
+ *     width ≈ viewport width — ProductCarousel's viewport-relative breakpoints fit
+ *     as designed here.
+ *   - Desktop (≥768px): the original static 2-up grid. OccasionStrip's desktop
+ *     layout puts two OccasionCards side by side (each ~half the viewport), so
+ *     ProductCarousel's breakpoints (tuned for near-full-width carousels elsewhere
+ *     on the page) would render cards too small here — deferred until ProductCarousel
+ *     gets a container-width-aware sizing option.
  *
  * Color themes map to Mela's brand palette:
  *   - 'gifting'  → indigo gradient  (calm, gift-y)
@@ -64,8 +78,22 @@ const OccasionCard = props => {
         </div>
       </div>
 
-      {/* Curated product peek — two items. */}
-      <div className={css.peekRow}>
+      {/* Mobile: swipeable peek of all fetched products. */}
+      <div className={css.mobilePeek}>
+        <ProductCarousel
+          listings={products}
+          isLoading={isLoading}
+          minItems={PEEK_COUNT}
+          showAuthorInfo={false}
+          showTrustBadges={false}
+          showConversionBadges={true}
+          showInrPrice={false}
+          renderSizes="(max-width: 767px) 45vw, 200px"
+        />
+      </div>
+
+      {/* Desktop: static 2-up grid. */}
+      <div className={css.desktopPeek}>
         {isLoading
           ? SKELETON_CARDS.map(i => <div key={i} className={css.peekSkeleton} />)
           : peekProducts.map(listing => (

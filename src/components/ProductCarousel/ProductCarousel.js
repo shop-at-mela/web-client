@@ -20,6 +20,12 @@
  * presentation used by the catalog carousels (CategoryShowcase, BrandSpotlight) — pass
  * overrides for editorial modules that want a different ListingCard content mix (e.g.
  * NewFromIndia shows the brand name instead of badges).
+ *
+ * `title` is optional — omit it (and `viewAllLinkName`) to render just the scrollable
+ * row with no header, for hosts that already render their own heading (e.g. OccasionCard's
+ * gradient editorial header). Pass `renderSizes` when the carousel is nested in a
+ * container narrower than the full page width, since the default hint assumes a
+ * near-full-width carousel.
  */
 
 import React from 'react';
@@ -43,31 +49,36 @@ const ProductCarousel = ({
   showAuthorInfo = false,
   showTrustBadges = true,
   showConversionBadges = true,
+  renderSizes = '(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw',
   onItemClick,
 }) => {
   const listingsWithImages = listings.filter(l => l.images && l.images.length > 0);
 
   if (!isLoading && listingsWithImages.length < minItems) return null;
 
+  const hasHeader = Boolean(title || viewAllLinkName);
+
   return (
     <div className={className || css.root}>
-      <div className={css.header}>
-        <div className={css.headerText}>
-          <h3 className={css.title}>{title}</h3>
-          {subtitle && <p className={css.subtitle}>{subtitle}</p>}
+      {hasHeader && (
+        <div className={css.header}>
+          <div className={css.headerText}>
+            {title && <h3 className={css.title}>{title}</h3>}
+            {subtitle && <p className={css.subtitle}>{subtitle}</p>}
+          </div>
+          {viewAllLinkName && (
+            <NamedLink
+              name={viewAllLinkName}
+              params={viewAllLinkParams}
+              to={viewAllLinkSearch ? { search: viewAllLinkSearch } : undefined}
+              className={css.viewAllLink}
+            >
+              <FormattedMessage id="ProductCarousel.viewAll" defaultMessage="View All" />
+              <span className={css.arrow}>→</span>
+            </NamedLink>
+          )}
         </div>
-        {viewAllLinkName && (
-          <NamedLink
-            name={viewAllLinkName}
-            params={viewAllLinkParams}
-            to={viewAllLinkSearch ? { search: viewAllLinkSearch } : undefined}
-            className={css.viewAllLink}
-          >
-            <FormattedMessage id="ProductCarousel.viewAll" defaultMessage="View All" />
-            <span className={css.arrow}>→</span>
-          </NamedLink>
-        )}
-      </div>
+      )}
 
       <div className={css.carousel}>
         {isLoading
@@ -86,7 +97,7 @@ const ProductCarousel = ({
                   showTrustBadges={showTrustBadges}
                   showConversionBadges={showConversionBadges}
                   isBestseller={listing.attributes?.publicData?.isBestseller || false}
-                  renderSizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw"
+                  renderSizes={renderSizes}
                   showInrPrice={showInrPrice}
                 />
               </div>
@@ -97,7 +108,7 @@ const ProductCarousel = ({
 };
 
 ProductCarousel.propTypes = {
-  title: string.isRequired,
+  title: string,
   subtitle: string,
   viewAllLinkName: string,
   viewAllLinkParams: object,
@@ -110,6 +121,7 @@ ProductCarousel.propTypes = {
   showAuthorInfo: bool,
   showTrustBadges: bool,
   showConversionBadges: bool,
+  renderSizes: string,
   onItemClick: func,
 };
 

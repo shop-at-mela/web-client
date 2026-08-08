@@ -15,6 +15,20 @@ jest.mock('../NamedLink/NamedLink', () => ({ name, to, className, children }) =>
   </a>
 ));
 
+// OccasionCard's mobile peek renders the real ProductCarousel — stub it out and
+// capture the props OccasionCard passes in, since ProductCarousel's own behavior
+// is covered by ProductCarousel.test.js.
+jest.mock('../ProductCarousel/ProductCarousel', () => props => (
+  <div
+    data-testid="product-carousel"
+    data-listings-count={props.listings?.length ?? 0}
+    data-loading={String(!!props.isLoading)}
+    data-min-items={props.minItems}
+    data-show-trust-badges={String(!!props.showTrustBadges)}
+    data-show-inr-price={String(!!props.showInrPrice)}
+  />
+));
+
 const listing = uuid => ({ id: { uuid }, attributes: { publicData: {} } });
 
 const baseProps = {
@@ -37,15 +51,43 @@ describe('OccasionCard', () => {
     expect(screen.getByTestId('named-link')).toHaveTextContent('Shop Gifts');
   });
 
-  it('shows a curated peek of at most two products', () => {
-    renderCard({ products: [listing('a'), listing('b'), listing('c'), listing('d')] });
-    expect(screen.getAllByTestId('listing-card')).toHaveLength(2);
+  describe('desktop peek (static grid)', () => {
+    it('shows a curated peek of at most two products', () => {
+      renderCard({ products: [listing('a'), listing('b'), listing('c'), listing('d')] });
+      expect(screen.getAllByTestId('listing-card')).toHaveLength(2);
+    });
+
+    it('renders two skeletons (not products) when loading', () => {
+      const { container } = renderCard({
+        isLoading: true,
+        products: [listing('a'), listing('b')],
+      });
+      expect(container.querySelectorAll('.peekSkeleton')).toHaveLength(2);
+      expect(screen.queryByTestId('listing-card')).not.toBeInTheDocument();
+    });
   });
 
-  it('renders two skeletons (not products) when loading', () => {
-    const { container } = renderCard({ isLoading: true, products: [listing('a'), listing('b')] });
-    expect(container.querySelectorAll('.peekSkeleton')).toHaveLength(2);
-    expect(screen.queryByTestId('listing-card')).not.toBeInTheDocument();
+  describe('mobile peek (ProductCarousel)', () => {
+    it('passes all fetched products through, not just the desktop 2-item peek', () => {
+      renderCard({ products: [listing('a'), listing('b'), listing('c'), listing('d')] });
+      expect(screen.getByTestId('product-carousel')).toHaveAttribute(
+        'data-listings-count',
+        '4'
+      );
+    });
+
+    it('forwards isLoading to the carousel', () => {
+      renderCard({ isLoading: true, products: [listing('a'), listing('b')] });
+      expect(screen.getByTestId('product-carousel')).toHaveAttribute('data-loading', 'true');
+    });
+
+    it('uses the compact, badge-free editorial presentation (no trust badges, no INR price)', () => {
+      renderCard({ products: [listing('a'), listing('b')] });
+      const carousel = screen.getByTestId('product-carousel');
+      expect(carousel).toHaveAttribute('data-show-trust-badges', 'false');
+      expect(carousel).toHaveAttribute('data-show-inr-price', 'false');
+      expect(carousel).toHaveAttribute('data-min-items', '2');
+    });
   });
 
   it('points the CTA at SearchPage with the occasion query', () => {

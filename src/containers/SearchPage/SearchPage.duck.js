@@ -324,8 +324,25 @@ const searchListingsPayloadCreator = ({ searchParams, config }, thunkAPI) => {
     perPage,
   };
 
-  return sdk.listings
-    .query(params)
+  // The main results query is retried on rate-limit (429) responses. Category pages
+  // fire a burst of secondary queries on load (occasion strips, age nav, brand
+  // carousel), which can transiently saturate the shared Sharetribe rate limit;
+  // without a retry, a rapid second navigation gets its main search 429'd and shows
+  // no (or stale) results. Secondary queries are intentionally not retried here.
+  const MAX_RETRIES = 3;
+  const queryWithRetry = (attempt = 0) =>
+    sdk.listings.query(params).catch(e => {
+      const status = e?.status || e?.statusCode || e?.response?.status;
+      if (status === 429 && attempt < MAX_RETRIES) {
+        const backoffMs = 400 * 2 ** attempt; // 400ms, 800ms, 1600ms
+        return new Promise(resolve => setTimeout(resolve, backoffMs)).then(() =>
+          queryWithRetry(attempt + 1)
+        );
+      }
+      throw e;
+    });
+
+  return queryWithRetry()
     .then(response => {
       const listingFields = config?.listing?.listingFields;
       const sanitizeConfig = { listingFields };
@@ -358,6 +375,9 @@ const searchPageSlice = createSlice({
     searchListingsError: null,
     currentPageResultIds: [],
     activeListingId: null,
+    // requestId of the most recently dispatched search. Used to ignore responses
+    // from a superseded search so out-of-order resolution can't overwrite results.
+    currentSearchRequestId: null,
   },
   reducers: {
     setActiveListing: (state, action) => {
@@ -371,16 +391,37 @@ const searchPageSlice = createSlice({
         state.searchParams = action.meta.arg.searchParams;
         state.searchInProgress = true;
         state.searchListingsError = null;
+        // Mark this as the latest in-flight search. Any earlier request that
+        // resolves after this one is now stale and must not apply its results.
+        state.currentSearchRequestId = action.meta.requestId;
       })
       .addCase(searchListings.fulfilled, (state, action) => {
+        // Drop responses from a search that has since been superseded (e.g. the
+        // user navigated to another category before this request resolved).
+        // Without this guard a slower earlier request overwrites the newer page's
+        // results — the URL/header update but the product grid shows the wrong
+        // category's listings.
+        if (action.meta.requestId !== state.currentSearchRequestId) {
+          return;
+        }
         state.currentPageResultIds = resultIds(action.payload.data);
         state.pagination = action.payload.data.meta;
         state.searchInProgress = false;
       })
       .addCase(searchListings.rejected, (state, action) => {
+        // Ignore errors from a superseded search for the same reason.
+        if (action.meta.requestId !== state.currentSearchRequestId) {
+          return;
+        }
         console.error(action.payload);
         state.searchInProgress = false;
         state.searchListingsError = action.payload;
+        // Clear stale results on failure. Otherwise a failed search (e.g. a 429
+        // when the previous page's request burst has saturated the API during
+        // rapid category navigation) leaves the prior search's listings on screen —
+        // the header/URL update but the grid keeps showing the wrong category.
+        state.currentPageResultIds = [];
+        state.pagination = null;
       });
   },
 });

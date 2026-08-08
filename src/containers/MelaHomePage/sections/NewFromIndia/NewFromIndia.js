@@ -49,7 +49,7 @@ const NewFromIndia = () => {
           include: ['images', 'author'],
           'fields.listing': ['title', 'price', 'publicData', 'createdAt'],
           'fields.image': ['variants.square-small', 'variants.square-small2x'],
-          'fields.user': ['profile.displayName'],
+          'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
         });
 
         if (response?.data) {
