@@ -5,6 +5,7 @@ import {
   getCuratedBrandIds,
   getPaginatedBrandIds,
   getFeaturedProductIds,
+  getBestsellerProductIds,
   getBrandConfiguration,
   getBrandCategory,
   getOrderedSectionBrandIds,
@@ -13,6 +14,24 @@ import {
   MORE_TO_DISCOVER_CATEGORY,
 } from '../../config/configBrands';
 import { denormalisedEntities } from '../../util/data';
+import { mapWithConcurrency } from '../../util/concurrencyLimit';
+import { showBrandProfileDoc } from '../../util/brandProfileCache';
+
+// Cap on brand-profile fetches (sdk.users.show) in flight at once. The
+// Marketplace API has no bulk users endpoint, so brand cards fan out one call
+// per brand; throttling keeps a cold /brands load (24 brands) under
+// Sharetribe's ~1 req/sec Dev rate limit. See util/concurrencyLimit.js.
+const BRAND_FETCH_CONCURRENCY = 5;
+
+// How many bestseller ids to pull from a brand's cached pool per load. We
+// over-fetch a small buffer beyond the 4 shown so closed/out-of-stock ids
+// (silently dropped by the ids query) don't leave the grid short, and so the
+// per-load random rotation stays varied.
+const BESTSELLER_FETCH_BUFFER = 8;
+
+// Sharetribe listings.query returns at most 100 results, and the `ids` filter
+// is bounded by that page size — chunk the batched id list accordingly.
+const LISTINGS_IDS_PER_QUERY = 100;
 
 // ================ Utility Functions ================ //
 
@@ -103,6 +122,122 @@ const fetchBestsellerListingsForBrand = (sdk, brandId) => {
       return { data: [], included: [] };
     });
 };
+
+const chunkArray = (arr, size) => {
+  const out = [];
+  for (let i = 0; i < arr.length; i += size) {
+    out.push(arr.slice(i, i + size));
+  }
+  return out;
+};
+
+/**
+ * Batch-fetch bestseller listings by explicit ids (the cached-pool path).
+ * Unlike the per-brand author_id query this drops the `pub_isBestseller` and
+ * stock filters — the cached pool is trusted to already be the bestseller set
+ * (harvested from a pub_isBestseller query), and closed/out-of-stock ids are
+ * silently dropped by the ids filter (hence the over-fetch buffer upstream).
+ */
+const queryBestsellersByIds = (sdk, ids) => {
+  return sdk.listings
+    .query({
+      ids,
+      include: ['author', 'images'],
+      'fields.listing': ['title', 'price', 'publicData', 'images'],
+      'fields.image': ['variants.square-small', 'variants.square-small2x'],
+      'imageVariant.square-small': 'w:400;h:300;fit:crop',
+      'imageVariant.square-small2x': 'w:800;h:600;fit:crop',
+      perPage: LISTINGS_IDS_PER_QUERY,
+    })
+    .then(response => {
+      const { data = [], included = [] } = response.data || {};
+      return { data, included };
+    })
+    .catch(error => {
+      console.warn('Failed to batch-fetch bestseller listings:', error);
+      return { data: [], included: [] };
+    });
+};
+
+/**
+ * Fetch bestseller listings for a set of brands, returning the same
+ * `[{ brandId, data, included }]` shape the per-brand loop used to produce, so
+ * the callers' downstream processing is unchanged.
+ *
+ * Brands WITH a cached `bestsellerProductIds` pool are served from ONE (chunked)
+ * batched `listings.query({ ids })` — collapsing what was one query per brand
+ * into ~1-2 total. Brands WITHOUT a pool fall back to the live per-brand
+ * `author_id + pub_isBestseller` query (the production path), throttled so the
+ * fallback fan-out can't spike the rate limit either.
+ */
+export const fetchBestsellersForBrands = (sdk, brandIds) => {
+  const cachedBrandIds = [];
+  const uncachedBrandIds = [];
+  brandIds.forEach(id => {
+    (getBestsellerProductIds(id).length > 0 ? cachedBrandIds : uncachedBrandIds).push(id);
+  });
+
+  // --- Cached path: pick a buffer from each pool, batch-query by ids. ---
+  const idToBrand = {};
+  const selectedIds = [];
+  cachedBrandIds.forEach(brandId => {
+    pickRandom(getBestsellerProductIds(brandId), BESTSELLER_FETCH_BUFFER).forEach(listingId => {
+      idToBrand[listingId] = brandId;
+      selectedIds.push(listingId);
+    });
+  });
+
+  const cachedPromise =
+    selectedIds.length === 0
+      ? Promise.resolve([])
+      : Promise.all(
+          chunkArray(selectedIds, LISTINGS_IDS_PER_QUERY).map(ids => queryBestsellersByIds(sdk, ids))
+        ).then(chunks => {
+          const allData = chunks.flatMap(c => c.data);
+          const allIncluded = chunks.flatMap(c => c.included);
+
+          const dataByBrand = {};
+          allData.forEach(listing => {
+            const brandId = idToBrand[listing?.id?.uuid];
+            if (!brandId) return;
+            if (!dataByBrand[brandId]) dataByBrand[brandId] = [];
+            dataByBrand[brandId].push(listing);
+          });
+
+          // Shared `included` (images + authors) is attached to every brand
+          // entry that has data; addMarketplaceEntities dedups by id downstream,
+          // so the duplication is harmless and every rendered brand's images
+          // still land in marketplaceData.
+          return cachedBrandIds.map(brandId => {
+            const data = dataByBrand[brandId] || [];
+            return { brandId, data, included: data.length > 0 ? allIncluded : [] };
+          });
+        });
+
+  // --- Uncached / production path: per-brand author_id query, throttled. ---
+  const uncachedPromise = mapWithConcurrency(uncachedBrandIds, BRAND_FETCH_CONCURRENCY, brandId =>
+    fetchBestsellerListingsForBrand(sdk, brandId).then(result => ({ brandId, ...result }))
+  );
+
+  return Promise.all([cachedPromise, uncachedPromise]).then(([cached, uncached]) => [
+    ...cached,
+    ...uncached,
+  ]);
+};
+
+/**
+ * Fetch brand-profile documents for a set of brand ids through the shared
+ * TTL cache and a concurrency cap. Returns `[{ data, included } | null]` in
+ * input order — the same shape the inline `sdk.users.show(...).then(...)` maps
+ * used to produce, so callers' downstream filtering is unchanged.
+ */
+export const fetchBrandProfiles = (sdk, brandIds) =>
+  mapWithConcurrency(brandIds, BRAND_FETCH_CONCURRENCY, brandId =>
+    showBrandProfileDoc(sdk, brandId).catch(error => {
+      console.error(`Failed to fetch brand ${brandId}:`, error);
+      return null;
+    })
+  );
 
 // ================ Action types ================ //
 
@@ -298,35 +433,10 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
     return Promise.resolve();
   }
 
-  // Fetch all brands in parallel using Marketplace API
-  const brandPromises = brandIds.map(brandId =>
-    sdk.users
-      .show({
-        id: brandId,
-        include: ['profileImage'],
-        'fields.image': ['variants.square-small', 'variants.square-small2x'],
-        'fields.user': ['profile', 'metadata'],
-      })
-      .then(response => {
-        // Ensure response and response.data exist
-        if (response && response.data) {
-          return response.data;
-        }
-        console.warn(`Invalid response for brand ${brandId}`);
-        return null;
-      })
-      .catch(error => {
-        // Log error but don't fail entire request
-        console.error(`Failed to fetch brand ${brandId}:`, error);
-        return null;
-      })
-  );
-
-  // Fetch bestseller products for each brand in parallel
-  const bestsellerPromises = brandIds.map(brandId =>
-    fetchBestsellerListingsForBrand(sdk, brandId)
-      .then(result => ({ brandId, ...result }))
-  );
+  // Fetch brand profiles (throttled + TTL-cached) and bestseller listings
+  // (batched by cached ids where available, else the live author_id query).
+  const brandsPromise = fetchBrandProfiles(sdk, brandIds);
+  const bestsellersPromise = fetchBestsellersForBrands(sdk, brandIds);
 
   // Batch fetch ALL featured products for these brands in ONE query (performance optimization)
   const allProductIds = getFeaturedProductIds(brandIds);
@@ -354,7 +464,7 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
       : Promise.resolve({ data: [], included: [] });
 
   // Wait for brands, bestsellers, and configured products to fetch in parallel
-  return Promise.all([Promise.all(brandPromises), Promise.all(bestsellerPromises), productsPromise])
+  return Promise.all([brandsPromise, bestsellersPromise, productsPromise])
     .then(([brandResponses, bestsellerResponses, configProductsResponse]) => {
       // Filter out failed brand requests
       const validResponses = brandResponses.filter(r => r !== null);
@@ -530,34 +640,10 @@ export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
     return Promise.resolve();
   }
 
-  // Fetch all featured brands in parallel
-  const brandPromises = featuredIds.map(brandId =>
-    sdk.users
-      .show({
-        id: brandId,
-        include: ['profileImage'],
-        'fields.image': ['variants.square-small', 'variants.square-small2x'],
-        'fields.user': ['profile', 'metadata'],
-      })
-      .then(response => {
-        // Ensure response and response.data exist
-        if (response && response.data) {
-          return response.data;
-        }
-        console.warn(`Invalid response for featured brand ${brandId}`);
-        return null;
-      })
-      .catch(error => {
-        console.error(`Failed to fetch featured brand ${brandId}:`, error);
-        return null;
-      })
-  );
-
-  // Fetch bestseller products for each featured brand in parallel
-  const bestsellerPromises = featuredIds.map(brandId =>
-    fetchBestsellerListingsForBrand(sdk, brandId)
-      .then(result => ({ brandId, ...result }))
-  );
+  // Fetch brand profiles (throttled + TTL-cached) and bestseller listings
+  // (batched by cached ids where available, else the live author_id query).
+  const brandsPromise = fetchBrandProfiles(sdk, featuredIds);
+  const bestsellersPromise = fetchBestsellersForBrands(sdk, featuredIds);
 
   // Batch fetch ALL featured products for these brands in ONE query (performance optimization)
   const allProductIds = getFeaturedProductIds(featuredIds);
@@ -585,7 +671,7 @@ export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
       : Promise.resolve({ data: [], included: [] });
 
   // Wait for brands, bestsellers, and configured products to fetch in parallel
-  return Promise.all([Promise.all(brandPromises), Promise.all(bestsellerPromises), productsPromise])
+  return Promise.all([brandsPromise, bestsellersPromise, productsPromise])
     .then(([brandResponses, bestsellerResponses, configProductsResponse]) => {
       const validResponses = brandResponses.filter(r => r !== null);
 
@@ -766,22 +852,7 @@ export const fetchHeroBrands = () => (dispatch, getState, sdk) => {
     return Promise.resolve();
   }
 
-  const brandPromises = candidateIds.map(brandId =>
-    sdk.users
-      .show({
-        id: brandId,
-        include: ['profileImage'],
-        'fields.image': ['variants.square-small', 'variants.square-small2x'],
-        'fields.user': ['profile', 'metadata'],
-      })
-      .then(response => (response && response.data ? response.data : null))
-      .catch(error => {
-        console.error(`Failed to fetch hero-candidate brand ${brandId}:`, error);
-        return null;
-      })
-  );
-
-  return Promise.all(brandPromises)
+  return fetchBrandProfiles(sdk, candidateIds)
     .then(brandResponses => {
       // Each brandResponses[i] is { data: user, included: [...] } — profile
       // Image (requested via include:['profileImage']) lands in `included`,

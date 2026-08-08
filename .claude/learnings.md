@@ -296,6 +296,16 @@ const categoryPath = (level1, level2, level3) => {
 - **CSS caveat**: Before merging a page-specific carousel into `ProductCarousel`, diff the CSS Modules directly — `ProductCarousel.module.css` uses hardcoded hex/rem values (not `--color*`/`--font*` custom properties), so a component using the design-system tokens will visually shift (card width strategy, gap, title font) even though "it's the same carousel pattern." Confirm the visual delta with the user before adopting.
 - **Test pitfall**: Mocking the shared `../../components` barrel in the parent's test to stub `ProductCarousel` (not `ListingCard`) is required once the parent imports `ProductCarousel` instead of `ListingCard` directly — same pattern as the OccasionCard extraction below (deep import chain otherwise breaks via the barrel's `sdkLoader`).
 
+### Sharetribe Dev Rate Limit (429) — brand fan-out
+- **Cause**: Dev/Test envs rate-limit at ~1 req/sec. Brand grids fanned out **one API call per brand** — `sdk.users.show` per brand AND `listings.query({ author_id, pub_isBestseller })` per brand — in `.map()` loops across `fetchBrands` / `fetchFeaturedBrands` / `fetchHeroBrands` (all in `BrandsPage.duck.js`). A cold `/brands` load = ~24 users.show + ~24 bestseller queries in one <2s burst → 429s. Sari (Sharetribe DevAdvocate) confirmed the top offenders: listings.query 847, users.show 428 over 7 days.
+- **Fix (data-presence gated, keeps prod path)**:
+  1. **Bestsellers** → cache a pool of listing UUIDs per brand in `configBrands.js` `bestsellerProductIds` (harvest via `scripts/harvest-bestseller-ids.js`). `fetchBestsellersForBrands` picks a small buffer from the pool and batch-fetches ALL brands' bestsellers in ONE `listings.query({ ids })` (chunked to ≤100). Brands with NO pool fall back to the live `author_id + pub_isBestseller` query — so production (empty pools) is unchanged. Over-fetch buffer (8→show 4) survives the *Listing ID Drift* closed-listing drop-out.
+  2. **Brand profiles** → `src/util/brandProfileCache.js`: TTL(15min) promise cache keyed by brandId, shared across sections/remounts/SSR (public data, safe). Failures never cached.
+  3. **Burst control** → `src/util/mapWithConcurrency` caps the users.show fan-out at 5 concurrent (the real cold-load fix; cache only helps warm loads).
+- **Batched `ids` query drops `pub_isBestseller`/stock filters** — the pool is trusted to already be the bestseller set, so it MUST be harvested from a `pub_isBestseller` query to stay identical to the fallback path.
+- **Test seam**: `fetchBestsellersForBrands`/`fetchBrandProfiles` exported; `jest.spyOn(configBrands, 'getBestsellerProductIds')` intercepts the named import (Babel CJS interop) to exercise cached vs fallback branches.
+- **Deferred (long tail)**: `CategoryPage.duck.js` carousel (category-scoped per-brand queries) and `BrandSpotlight`/`NewFromIndia` local-state re-fetchers — same cache/limiter utils apply.
+
 ## Session Log
 2024-10-10: Fixed CategoryProducts to display proper category names + product filtering improvements
 2025-10-10: Implemented HeroProducts with real API integration, randomization, and comprehensive testing
@@ -305,3 +315,4 @@ const categoryPath = (level1, level2, level3) => {
 2025-12-15: Brand storefront UX - scroll affordance, mobile-first CSS, lazy loading, tab navigation component fix
 2026-04-19: Sharetribe upstream merge v8.8.0→v10.7.0 — incremental tag-by-tag strategy, Redux Toolkit migration fixes, Mela brand color/nav preservation patterns
 2026-07-31: Homepage redesign build — hero copy (story-led + global shipping); new reusable components CategoryTiles, OccasionCard (extracted from OccasionStrip), BrandPhotoCard (hover/tap photo swap); EarnedItsPlace section reusing FeaturedBrandPartners data path; TrustAssurance retitled "Shop with Confidence". 4 new test suites, 115 homepage-tree tests passing.
+2026-08-08: Sharetribe Dev 429 rate-limit fix — batched bestsellers by cached config ids (BrandsPage.duck) + brandProfileCache (TTL) + mapWithConcurrency burst cap; keeps live author_id path for prod via data-presence gate; scripts/harvest-bestseller-ids.js to populate pools. 20 new tests (57 duck+util, 75 incl. component suites) passing.

@@ -406,6 +406,35 @@ export const getBrandConfiguration = brandId => {
 };
 
 /**
+ * Cached pool of bestseller listing IDs for a brand.
+ *
+ * Sharetribe Dev/Test environments rate-limit at ~1 req/sec, and the old
+ * bestseller flow fired one `listings.query({ author_id, pub_isBestseller })`
+ * per brand — 24 on the /brands page alone. To stay under the limit while the
+ * MVP runs on the Dev env, a pool of that brand's bestseller listing UUIDs is
+ * baked into config here (populate via scripts/harvest-bestseller-ids.js). The
+ * duck then picks a small buffer from the pool and batch-fetches them all in
+ * ONE `listings.query({ ids })` call.
+ *
+ * IMPORTANT: this is a Dev-env optimization. When a brand has NO
+ * `bestsellerProductIds` configured (e.g. the production env block, or a brand
+ * not yet harvested), the duck automatically falls back to the live
+ * `author_id + pub_isBestseller` query — so the production code path is never
+ * removed, it simply reactivates wherever the pool is empty.
+ *
+ * The pool must be harvested from a `pub_isBestseller: true` query so the two
+ * paths stay semantically identical, and should hold ~40-50 ids so the
+ * per-load random rotation stays varied and survives listing drift (closed /
+ * out-of-stock ids are silently dropped by the ids query).
+ *
+ * @param {string} brandId - Brand user UUID
+ * @returns {Array<string>} Array of listing UUIDs (empty if none configured)
+ */
+export const getBestsellerProductIds = brandId => {
+  return brandConfigurations[brandId]?.bestsellerProductIds || [];
+};
+
+/**
  * ================ /brands page section & ordering config ================
  *
  * Grounded in the homepage-hero-prd.md brand-order research/design/critique
