@@ -47,6 +47,36 @@
   }
 }
 
+/* New from India — bare ProductCarousel, no section wrapper of its own.
+   Vertical padding matches .occasionSection/.categorySection/.brandsSection's
+   double-sided rhythm (see history). Horizontal padding + centering max-width
+   matches this file's own .container / EarnedItsPlace's .container — ProductCarousel
+   itself has zero horizontal inset (unlike every other placement of it, which
+   wraps it in a padded parent: BrandSpotlight's .body, OccasionCard's .mobilePeek,
+   CategoryShowcase's .container), so without this it renders flush to the
+   viewport edge. */
+.newFromIndiaSection {
+  padding: 1.5rem 1rem;
+
+  @media (min-width: 640px) {
+    padding: 1.5rem 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    padding: 2rem 2rem;
+    max-width: 768px;
+    margin: 0 auto;
+  }
+
+  @media (min-width: 1024px) {
+    max-width: 1024px;
+  }
+
+  @media (min-width: 1280px) {
+    max-width: 1200px;
+  }
+}
+
 /* Featured Brands Section */
 .brandsSection {
   width: 100%;

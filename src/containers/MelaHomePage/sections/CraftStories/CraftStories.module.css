@@ -4,7 +4,10 @@
   position: relative;
   background: #fdfaf5;
   border-top: 1px solid var(--colorGrey100);
-  padding: 22px 0 24px;
+  /* Top padding matches the other bordered sections' rhythm (.comingSoonSection,
+     .trustSection in MelaHomePage.module.css) so the title doesn't sit flush
+     against the section above it. */
+  padding: 32px 0 24px;
 }
 
 .title {
@@ -94,15 +97,11 @@
   font-size: 16px;
 }
 
-.rotationNote {
-  font-size: 11px;
-  color: var(--colorGrey400);
-  text-align: center;
-  padding-top: 14px;
-  margin: 0;
-}
-
 @media (--viewportMedium) {
+  .root {
+    padding-top: 40px;
+  }
+
   .title {
     padding: 0 24px;
   }
@@ -119,5 +118,11 @@
   .tile {
     flex: 1;
     height: 220px;
+  }
+}
+
+@media (--viewportLarge) {
+  .root {
+    padding-top: 48px;
   }
 }

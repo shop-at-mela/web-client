@@ -29,7 +29,6 @@ import { pushCraftTileClick } from '../../../../util/analytics/homepageEditorial
 const mockMessages = {
   'CraftStories.title': 'The Crafts Behind the Brands',
   'CraftStories.subtitle': 'Techniques with centuries of practice, still made by hand',
-  'CraftStories.rotationNote': 'Three of nineteen crafts, rotating daily',
 };
 
 const mockRoutes = [{ path: '/brands/:brandSlug', name: 'BrandPage' }];

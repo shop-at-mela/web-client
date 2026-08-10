@@ -162,7 +162,9 @@ const MelaHomePage = props => {
         </section>
 
         {/* Module B: New from India — recency as curation */}
-        <NewFromIndia />
+        <div className={css.newFromIndiaSection}>
+          <NewFromIndia />
+        </div>
 
         {/* Module C: Craft Stories — the craft chips as a discovery surface */}
         <CraftStories />
