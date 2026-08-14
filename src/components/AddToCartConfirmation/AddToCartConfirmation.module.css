@@ -1,0 +1,28 @@
+.root {
+  composes: textSmall from global;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+
+  margin: 8px 0 0 0;
+  color: var(--colorGrey700);
+  text-align: center;
+}
+
+.checkmark {
+  color: var(--colorSuccess);
+  font-weight: var(--fontWeightSemiBold);
+}
+
+.link {
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--marketplaceColor);
+  text-decoration: underline;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: none;
+  }
+}

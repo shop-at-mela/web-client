@@ -73,20 +73,28 @@
   text-decoration: none;
 }
 
-/* ── Listings grid ───────────────────────────── */
+.signupPush {
+  margin-bottom: 32px;
+}
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+.itemCount {
+  composes: textSmall from global;
+  color: var(--colorGrey500);
+  margin: 0 0 16px;
+}
 
-  @media (--viewportMedium) {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-  }
+/* ── Brand groups (§14 — multi-brand cart) ──────── */
 
-  @media (--viewportLarge) {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-  }
+.groups {
+  margin-bottom: 8px;
+}
+
+.emptyRecs {
+  margin-top: 8px;
+}
+
+.bottomRecs {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--colorGrey100);
 }

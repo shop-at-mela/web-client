@@ -1,5 +1,6 @@
 import React from 'react';
 import '@testing-library/jest-dom';
+import { fireEvent, screen } from '@testing-library/react';
 
 import { getHostedConfiguration, renderWithProviders as render } from '../../util/testHelpers';
 import { createUser, createListing, fakeIntl } from '../../util/testData';
@@ -219,6 +220,25 @@ describe('ListingCard', () => {
       );
       const tree = render(<ListingCard listing={listing} intl={fakeIntl} />);
       expect(tree.asFragment().firstChild).toMatchSnapshot();
+    });
+  });
+
+  describe('onShopNow (SavedPage per-card CTA)', () => {
+    it('tags trackingParams with saved_surface: saved_item_card (insights/crossshop-tracking-prd.md §14)', () => {
+      const listing = createListing(
+        'listing1',
+        { publicData: { brand: 'Nicobar', productUrl: 'https://nicobar.example/p' } },
+        { author: createUser('user1') }
+      );
+      const onShopNow = jest.fn();
+      render(<ListingCard listing={listing} intl={fakeIntl} onShopNow={onShopNow} />);
+
+      fireEvent.click(screen.getByText('ListingCard.shopOnBrand'));
+
+      expect(onShopNow).toHaveBeenCalledTimes(1);
+      const call = onShopNow.mock.calls[0][0];
+      expect(call.url).toBe('https://nicobar.example/p');
+      expect(call.trackingParams).toMatchObject({ savedSurface: 'saved_item_card' });
     });
   });
 });

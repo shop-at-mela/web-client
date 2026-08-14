@@ -41,6 +41,7 @@ const RedirectTrustSheet = ({ isOpen, brandName, productUrl, isVerified, onConti
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
+  const [continueAnnouncement, setContinueAnnouncement] = useState('');
   const textareaRef = useRef(null);
 
   // Reset internal state each time the sheet opens
@@ -62,6 +63,28 @@ const RedirectTrustSheet = ({ isOpen, brandName, productUrl, isVerified, onConti
       return () => clearTimeout(timer);
     }
   }, [isOpen, isButtonDisabled]);
+
+  // Announces the Continue button's disabled→enabled transition via aria-live, so a
+  // screen-reader user isn't left with no indication the button will become interactive
+  // shortly (add-to-cart-restoration-prd.md §13.1 fix #8). The initial "delay" text is
+  // deferred one tick after mount so it lands as a genuine update to an already-mounted
+  // live region — screen readers don't announce content that's already present the
+  // moment a region first mounts. Once mounted, the disabled→enabled transition updates
+  // the same region directly (no further deferral needed).
+  useEffect(() => {
+    if (!isOpen) return;
+    if (isButtonDisabled) {
+      const timer = setTimeout(
+        () =>
+          setContinueAnnouncement(
+            intl.formatMessage({ id: 'RedirectTrustSheet.continueDelayAnnouncement' })
+          ),
+        50
+      );
+      return () => clearTimeout(timer);
+    }
+    setContinueAnnouncement(intl.formatMessage({ id: 'RedirectTrustSheet.continueReadyAnnouncement' }));
+  }, [isOpen, isButtonDisabled, intl]);
 
   // Focus textarea when expanded
   useEffect(() => {
@@ -217,6 +240,9 @@ const RedirectTrustSheet = ({ isOpen, brandName, productUrl, isVerified, onConti
         <div className={css.divider} />
 
         {/* ── Continue button — always visible ── */}
+        <div aria-live="polite" className={css.srOnly}>
+          {continueAnnouncement}
+        </div>
         <div className={css.ctaRow}>
           <button
             className={[css.continueBtn, isButtonDisabled ? css.continueBtnDisabled : ''].filter(Boolean).join(' ')}

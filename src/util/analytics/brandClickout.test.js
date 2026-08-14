@@ -52,6 +52,16 @@ describe('pushBrandClickout(params)', () => {
       category: null,
       product_id: null,
       destination: null,
+      saved_surface: null,
+    });
+  });
+
+  it('maps savedSurface to saved_surface (§14 — /saved group vs. per-card CTA disambiguation)', () => {
+    pushBrandClickout({ brandName: 'Nicobar', savedSurface: 'saved_brand_group' });
+
+    expect(window.dataLayer[0]).toMatchObject({
+      brand_name: 'Nicobar',
+      saved_surface: 'saved_brand_group',
     });
   });
 

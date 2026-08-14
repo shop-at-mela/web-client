@@ -273,10 +273,13 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       component: ProfileSettingsPage,
     },
     {
+      // Not auth-gated: SavedPage renders a distinct anonymous-shopper experience
+      // (anonSavedItems, SavedPageSignupPush) — the whole point of routing the
+      // Add-to-Cart confirmation and header badge here for anon shoppers (§12) breaks
+      // if the route itself bounces them to /login before SavedPage ever renders.
+      // Found via manual browser verification (add-to-cart-restoration-prd.md §12/§13).
       path: '/saved',
       name: 'SavedPage',
-      auth: true,
-      authPage: 'LoginPage',
       component: SavedPage,
     },
 

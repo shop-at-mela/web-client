@@ -23,9 +23,12 @@ import { getOrCreateSessionId } from '../sentimentCapture';
  * @param {string} [params.category]   - publicData.categoryLevel3 || categoryLevel2 || categoryLevel1
  * @param {string} [params.productId]  - listing.id.uuid
  * @param {string} [params.destination] - the outbound Shopify URL
+ * @param {string} [params.savedSurface] - 'saved_brand_group' | 'saved_item_card' — only
+ *   set for clicks from /saved, distinguishing the group-level CTA from a per-card CTA
+ *   (insights/crossshop-tracking-prd.md §14). null for every other surface.
  */
 export const pushBrandClickout = (params = {}) => {
-  const { brandName, brandId, category, productId, destination } = params || {};
+  const { brandName, brandId, category, productId, destination, savedSurface } = params || {};
   if (typeof window === 'undefined') return;
 
   window.dataLayer = window.dataLayer || [];
@@ -37,6 +40,7 @@ export const pushBrandClickout = (params = {}) => {
     product_id: productId || null,
     entry_source: getEntrySource(),
     destination: destination || null,
+    saved_surface: savedSurface || null,
     // GA4 silently drops both its auto-collected `ga_session_id` AND a plain
     // `session_id` parameter (reserved names — the former blocks custom
     // dimension registration outright with an error, the latter is dropped

@@ -625,13 +625,15 @@ describe('OrderPanel', () => {
     beforeEach(() => {
       // Mock window.open
       global.window.open = jest.fn();
+      window.localStorage.clear();
     });
 
     afterEach(() => {
       jest.restoreAllMocks();
+      window.localStorage.clear();
     });
 
-    it('renders "Shop from Brand" button when brand and productUrl exist', async () => {
+    it('renders "Add to Cart" button (not a brand redirect) when brand and productUrl exist and in stock', async () => {
       const listing = createListingWithBrand();
       const config = getConfig();
       const props = { ...commonProps, listing, isOwnListing: false, validListingTypes };
@@ -639,27 +641,32 @@ describe('OrderPanel', () => {
       render(<OrderPanel {...props} />, { config, routeConfiguration });
 
       await waitFor(() => {
-        expect(screen.getByText('OrderPanel.ctaButtonMessageShopFromBrand')).toBeInTheDocument();
+        // Rendered twice: once inside the ProductOrderForm modal, once in the
+        // OrderPanel mobile sticky bar — both call sites must stay in sync.
+        expect(screen.queryAllByText('SavedListingButton.addToCart')).toHaveLength(2);
+        expect(screen.queryByText('OrderPanel.ctaButtonMessageShopFromBrand')).not.toBeInTheDocument();
       });
     });
 
-    it('opens brand product URL when "Shop from Brand" button is clicked', async () => {
+    it('does not redirect to the brand site when "Add to Cart" is clicked — it saves the listing instead', async () => {
       const listing = createListingWithBrand();
       const config = getConfig();
       const props = { ...commonProps, listing, isOwnListing: false, validListingTypes };
 
       render(<OrderPanel {...props} />, { config, routeConfiguration });
 
-      await waitFor(() => {
-        const shopButton = screen.getByText('OrderPanel.ctaButtonMessageShopFromBrand');
-        shopButton.click();
+      const addToCartButtons = await waitFor(() => {
+        const buttons = screen.queryAllByText('SavedListingButton.addToCart');
+        expect(buttons).toHaveLength(2);
+        return buttons;
       });
+      addToCartButtons[0].click();
 
-      expect(global.window.open).toHaveBeenCalledWith(
-        'https://testbrand.com/product/123',
-        '_blank',
-        'noopener,noreferrer'
-      );
+      expect(global.window.open).not.toHaveBeenCalled();
+      await waitFor(() => {
+        const stored = JSON.parse(window.localStorage.getItem('melaUnsavedItems') || '[]');
+        expect(stored.some(item => item.id === listing.id.uuid)).toBe(true);
+      });
     });
 
     it('renders "View on Brand" button for out of stock items', async () => {
@@ -725,7 +732,7 @@ describe('OrderPanel', () => {
       render(<OrderPanel {...props} />, { config, routeConfiguration });
 
       await waitFor(() => {
-        expect(screen.queryByText(/Shop from TestBrand/i)).not.toBeInTheDocument();
+        expect(screen.queryByText('SavedListingButton.addToCart')).not.toBeInTheDocument();
       });
     });
 
@@ -737,7 +744,35 @@ describe('OrderPanel', () => {
       render(<OrderPanel {...props} />, { config, routeConfiguration });
 
       await waitFor(() => {
-        expect(screen.queryByText(/Shop from/i)).not.toBeInTheDocument();
+        expect(screen.queryByText('SavedListingButton.addToCart')).not.toBeInTheDocument();
+      });
+    });
+
+    it('shows an inline confirmation with a link to Saved after clicking "Add to Cart"', async () => {
+      const listing = createListingWithBrand();
+      const config = getConfig();
+      const props = { ...commonProps, listing, isOwnListing: false, validListingTypes };
+
+      render(<OrderPanel {...props} />, { config, routeConfiguration });
+
+      const addToCartButtons = await waitFor(() => {
+        const buttons = screen.queryAllByText('SavedListingButton.addToCart');
+        expect(buttons).toHaveLength(2);
+        return buttons;
+      });
+
+      // Confirmation is absent until a click.
+      expect(screen.queryByText('AddToCartConfirmation.added')).not.toBeInTheDocument();
+
+      addToCartButtons[0].click();
+
+      await waitFor(() => {
+        const confirmations = screen.getAllByText('AddToCartConfirmation.added');
+        expect(confirmations.length).toBeGreaterThan(0);
+        // aria-live="polite" is required so anonymous/authenticated shoppers alike get
+        // non-visual feedback (add-to-cart-restoration-prd.md §12.3, P0).
+        expect(confirmations[0].closest('[aria-live="polite"]')).toBeInTheDocument();
+        expect(screen.getAllByText(/AddToCartConfirmation\.viewSaved/).length).toBeGreaterThan(0);
       });
     });
 
@@ -750,7 +785,7 @@ describe('OrderPanel', () => {
       const { rerender } = render(<OrderPanel {...inStockProps} />, { config: inStockConfig, routeConfiguration });
 
       await waitFor(() => {
-        expect(screen.getByText('OrderPanel.ctaButtonMessageShopFromBrand')).toBeInTheDocument();
+        expect(screen.queryAllByText('SavedListingButton.addToCart')).toHaveLength(2);
       });
 
       // Test out-of-stock scenario
@@ -761,6 +796,7 @@ describe('OrderPanel', () => {
 
       await waitFor(() => {
         expect(screen.getByText('OrderPanel.ctaButtonMessageViewOnBrand')).toBeInTheDocument();
+        expect(screen.queryByText('SavedListingButton.addToCart')).not.toBeInTheDocument();
       });
     });
   });

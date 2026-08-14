@@ -157,6 +157,24 @@ describe('TopbarMobileMenu — unauthenticated', () => {
     // featuredBrandsSection with empty logo divs should be gone
     expect(container.querySelector('.brandLogos')).toBeNull();
   });
+
+  it('renders a Saved items link with a count badge for anonymous shoppers with saved items', () => {
+    render(
+      <TestWrapper>
+        <TopbarMobileMenu {...defaultUnauthProps} savedItemsCount={2} />
+      </TestWrapper>
+    );
+    expect(screen.getByTestId('link-SavedPage')).toHaveTextContent('2');
+  });
+
+  it('does not render a Saved items link for anonymous shoppers with nothing saved', () => {
+    render(
+      <TestWrapper>
+        <TopbarMobileMenu {...defaultUnauthProps} savedItemsCount={0} />
+      </TestWrapper>
+    );
+    expect(screen.queryByTestId('link-SavedPage')).not.toBeInTheDocument();
+  });
 });
 
 // ─── Authenticated state ──────────────────────────────────────────────────────
@@ -188,9 +206,23 @@ describe('TopbarMobileMenu — authenticated', () => {
     expect(screen.getByText('All Categories')).toBeInTheDocument();
   });
 
-  it('renders Saved items in BROWSE section (not in account section)', () => {
-    render(<TestWrapper><TopbarMobileMenu {...defaultAuthProps} /></TestWrapper>);
+  it('renders Saved items in BROWSE section when savedItemsCount > 0 (not in account section)', () => {
+    render(
+      <TestWrapper>
+        <TopbarMobileMenu {...defaultAuthProps} savedItemsCount={3} />
+      </TestWrapper>
+    );
     expect(screen.getByText(/saved items/i)).toBeInTheDocument();
+    expect(screen.getByTestId('link-SavedPage')).toHaveTextContent('3');
+  });
+
+  it('does not render Saved items link when savedItemsCount is 0', () => {
+    render(
+      <TestWrapper>
+        <TopbarMobileMenu {...defaultAuthProps} savedItemsCount={0} />
+      </TestWrapper>
+    );
+    expect(screen.queryByText(/saved items/i)).not.toBeInTheDocument();
   });
 
   it('renders account links in YOUR ACCOUNT section', () => {

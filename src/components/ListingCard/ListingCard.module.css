@@ -29,6 +29,71 @@
   }
 }
 
+/* SavedPage-only "Shop on {brand} →" CTA — stock-aware, rendered when onShopNow is passed */
+.shopCta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--borderRadiusMedium);
+  border: 1px solid var(--colorGrey200);
+  background-color: transparent;
+  cursor: pointer;
+
+  composes: textSmall from global;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--marketplaceColor);
+
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--marketplaceColor);
+    background-color: var(--colorGrey50);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--marketplaceColor);
+    outline-offset: 2px;
+  }
+}
+
+/* Fallback for cards rendered in a Shop-CTA context (SavedPage) that have no
+   brand/productUrl to route through — same footprint as .shopCta, muted styling so it
+   doesn't compete with cards that do have a real Shop CTA. */
+.shopCtaFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--borderRadiusMedium);
+  border: 1px solid var(--colorGrey100);
+  background-color: transparent;
+
+  composes: textSmall from global;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey500);
+
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--colorGrey300);
+    background-color: var(--colorGrey50);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--marketplaceColor);
+    outline-offset: 2px;
+  }
+}
+
 /* Heart save button — bottom-right corner of the image */
 .saveButton {
   position: absolute;

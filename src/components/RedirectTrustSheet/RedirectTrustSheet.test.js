@@ -28,6 +28,8 @@ const TestWrapper = ({ children }) => {
     'RedirectTrustSheet.dismissLabel': 'Not now',
     'RedirectTrustSheet.dismissLabelExpanded': 'Close',
     'RedirectTrustSheet.ariaLabel': 'Shop brand routing',
+    'RedirectTrustSheet.continueDelayAnnouncement': 'The Continue button will be available in a moment.',
+    'RedirectTrustSheet.continueReadyAnnouncement': 'The Continue button is now available.',
   };
   return (
     <IntlProvider locale="en" messages={messages}>
@@ -134,6 +136,26 @@ describe('RedirectTrustSheet', () => {
     });
     // button should be enabled after the delay
     expect(continueBtn).not.toBeDisabled();
+    jest.useRealTimers();
+  });
+
+  it('announces the Continue button activation delay via aria-live, then the ready state', () => {
+    jest.useFakeTimers();
+    render(<TestWrapper><RedirectTrustSheet {...defaultProps} /></TestWrapper>);
+
+    // The announcement text is deferred one tick after mount (screen readers don't
+    // announce content already present the moment a live region first mounts).
+    act(() => {
+      jest.advanceTimersByTime(50);
+    });
+    const announcement = screen.getByText('The Continue button will be available in a moment.');
+    expect(announcement.closest('[aria-live="polite"]')).toBeInTheDocument();
+
+    act(() => {
+      jest.advanceTimersByTime(1550);
+    });
+    expect(screen.getByText('The Continue button is now available.')).toBeInTheDocument();
+
     jest.useRealTimers();
   });
 

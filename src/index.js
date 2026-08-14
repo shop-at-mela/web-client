@@ -28,10 +28,10 @@ import { LoggingAnalyticsHandler, GoogleAnalyticsHandler } from './analytics/han
 import configureStore from './store';
 
 // Utils
-import { createInstance, types as sdkTypes } from './util/sdkLoader';
+import { types as sdkTypes } from './util/sdkLoader';
+import sdk from './util/homepageSdk';
 import { mergeConfig } from './util/configHelpers';
 import { matchPathname } from './util/routes';
-import * as apiUtils from './util/api';
 import * as log from './util/log';
 import { captureEntrySource } from './util/analytics/entrySource';
 
@@ -132,21 +132,14 @@ if (typeof window !== 'undefined') {
   // load, so calling it here is naturally "once per session, first page only."
   captureEntrySource();
 
-  const baseUrl = appSettings.sdk.baseUrl ? { baseUrl: appSettings.sdk.baseUrl } : {};
-  const assetCdnBaseUrl = appSettings.sdk.assetCdnBaseUrl
-    ? { assetCdnBaseUrl: appSettings.sdk.assetCdnBaseUrl }
-    : {};
-
   const preloadedState = window.__PRELOADED_STATE__ || '{}';
   const initialState = JSON.parse(preloadedState, sdkTypes.reviver);
-  const sdk = createInstance({
-    transitVerbose: appSettings.sdk.transitVerbose,
-    clientId: appSettings.sdk.clientId,
-    secure: appSettings.usingSSL,
-    typeHandlers: apiUtils.typeHandlers,
-    ...baseUrl,
-    ...assetCdnBaseUrl,
-  });
+  // `sdk` (imported above) is the single shared browser SDK instance — do not create
+  // a second `createInstance(...)` here. Two independent SDK clients built from
+  // identical config default to the same cookie-backed token store (keyed only by
+  // clientId), and concurrent anonymous-token refreshes from both instances raced on
+  // that cookie, corrupting it and throwing "Unknown token type: undefined" from the
+  // SDK's auth interceptor on nearly every public query. See homepageSdk.js.
 
   // Note: on localhost:3000, you need to use environment variable.
   const googleAnalyticsIdFromSSR = initialState?.hostedAssets?.googleAnalyticsId;

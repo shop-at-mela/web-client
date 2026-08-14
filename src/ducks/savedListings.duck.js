@@ -1,6 +1,7 @@
 import { storableError } from '../util/errors';
 import { addMarketplaceEntities } from './marketplaceData.duck';
 import { fetchCurrentUserThunk } from './user.duck';
+import { pushSaveToggle } from '../util/analytics/savedListings';
 
 const STORAGE_KEY = 'melaUnsavedItems';
 const MAX_SAVED = 200;
@@ -16,6 +17,7 @@ export const FETCH_SAVED_LISTINGS_SUCCESS = 'app/savedListings/FETCH_SAVED_LISTI
 export const FETCH_SAVED_LISTINGS_ERROR = 'app/savedListings/FETCH_SAVED_LISTINGS_ERROR';
 
 export const SET_ANON_SAVED = 'app/savedListings/SET_ANON_SAVED';
+export const SET_LAST_TOGGLE_SOURCE = 'app/savedListings/SET_LAST_TOGGLE_SOURCE';
 
 // ================ Reducer ================ //
 
@@ -33,6 +35,9 @@ const initialState = {
   // Anonymous saved items: array of { id, title, imageUrl }
   anonSavedItems: [],
 
+  // Source of the most recent toggle ('add_to_cart_button' | 'heart_icon') — a display
+  // gate only, used to suppress the anon SavedItemsBanner toast for Add-to-Cart saves.
+  lastToggleSource: null,
 };
 
 export default function savedListingsReducer(state = initialState, action = {}) {
@@ -83,6 +88,9 @@ export default function savedListingsReducer(state = initialState, action = {}) 
     case SET_ANON_SAVED:
       return { ...state, anonSavedItems: payload };
 
+    case SET_LAST_TOGGLE_SOURCE:
+      return { ...state, lastToggleSource: payload };
+
     default:
       return state;
   }
@@ -97,6 +105,23 @@ export const selectIsListingSaved = (state, listingId) =>
 export const selectToggleInProgress = (state, listingId) =>
   !!state.savedListings.toggleInProgress[listingId];
 export const selectAnonSavedItems = state => state.savedListings.anonSavedItems;
+export const selectLastToggleSource = state => state.savedListings.lastToggleSource;
+
+// The listing IDs that belong to *this* shopper right now, regardless of auth state —
+// authenticated and anonymous shoppers are tracked in different underlying lists
+// (savedListingIds vs. anonSavedItems), and SavedPage needs this unified view to fetch
+// and render the grid for anonymous shoppers too (found via manual browser verification:
+// SavedPage previously only ever fetched from savedListingIds, so anonymous shoppers saw
+// "Nothing saved yet" even with items saved — see add-to-cart-restoration-prd.md §12/§13).
+export const selectEffectiveSavedListingIds = state =>
+  state.auth.isAuthenticated
+    ? state.savedListings.savedListingIds
+    : state.savedListings.anonSavedItems.map(item => item.id);
+
+// Single source of truth for "how many items does this shopper have saved right now" —
+// shared by the header badge, the Add-to-Cart confirmation, and SavedPage's total count so
+// those three surfaces can't drift out of sync with each other (add-to-cart-restoration-prd.md §12.3).
+export const selectSavedItemsCount = state => selectEffectiveSavedListingIds(state).length;
 
 // ================ Action creators ================ //
 
@@ -118,6 +143,7 @@ export const fetchSavedListingsError = error => ({
 });
 
 export const setAnonSaved = items => ({ type: SET_ANON_SAVED, payload: items });
+export const setLastToggleSource = source => ({ type: SET_LAST_TOGGLE_SOURCE, payload: source });
 
 // ================ localStorage helpers (anon saves) ================ //
 
@@ -147,7 +173,11 @@ export const clearLocalSaves = () => {
  * Toggle save/unsave for an authenticated user.
  * Optimistically updates local state; rolls back on API error.
  */
-export const toggleSaveListing = (listingId, listingData) => (dispatch, getState, sdk) => {
+export const toggleSaveListing = (listingId, listingData, source = 'heart_icon') => (
+  dispatch,
+  getState,
+  sdk
+) => {
   const state = getState();
   const isAuthenticated = state.auth.isAuthenticated;
 
@@ -167,21 +197,32 @@ export const toggleSaveListing = (listingId, listingData) => (dispatch, getState
       updated = [...current, newItem];
     }
     writeLocalItems(updated);
+    dispatch(setLastToggleSource(source));
     dispatch(setAnonSaved(updated));
+    pushSaveToggle({ source, listingId, isSaved: !alreadySaved });
     return Promise.resolve();
   }
 
   const previousIds = state.savedListings.savedListingIds;
   const isSaved = previousIds.includes(listingId);
+  const capReached = !isSaved && previousIds.length >= MAX_SAVED;
   const updatedIds = isSaved
     ? previousIds.filter(id => id !== listingId)
-    : previousIds.length >= MAX_SAVED
+    : capReached
     ? previousIds // cap reached — no-op (UI shows cap message)
     : [...previousIds, listingId];
 
+  if (capReached) {
+    // No-op: cap-reached UI already disables the control before this thunk fires
+    // (see SavedListingButton's cta variant); nothing changed, so nothing to report.
+    return Promise.resolve();
+  }
+
   // Optimistic update
+  dispatch(setLastToggleSource(source));
   dispatch(toggleSaveRequest(listingId));
   dispatch(toggleSaveSuccess(listingId, updatedIds));
+  pushSaveToggle({ source, listingId, isSaved: !isSaved });
 
   return sdk.currentUser
     .updateProfile({ privateData: { savedListings: updatedIds } })
@@ -208,7 +249,7 @@ export const fetchSavedListings = listingIds => (dispatch, getState, sdk) => {
   return sdk.listings
     .query({
       ids: listingIds,
-      include: ['images', 'author'],
+      include: ['images', 'author', 'currentStock'],
       'fields.image': ['variants.listing-card', 'variants.listing-card-2x'],
       'fields.listing': ['title', 'price', 'publicData', 'state'],
       perPage: Math.min(listingIds.length, 200),

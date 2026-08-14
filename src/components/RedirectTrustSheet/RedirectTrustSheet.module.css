@@ -368,3 +368,17 @@
   border-color: #a0aec0;
   color: #2d3748;
 }
+
+/* Visually hidden, still readable by screen readers — announces the Continue button's
+   1.5s activation delay (add-to-cart-restoration-prd.md §13.1 fix #8). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

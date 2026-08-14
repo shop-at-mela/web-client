@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import classNames from 'classnames';
 
 import appSettings from '../../../config/settings';
@@ -17,11 +17,14 @@ import {
   LinkedLogo,
   Modal,
   ModalMissingInformation,
+  NamedLink,
+  NotificationBadge,
 } from '../../../components';
 import { getSearchPageResourceLocatorStringParams } from '../../SearchPage/SearchPage.shared';
 
 import MenuIcon from './MenuIcon';
 import SearchIcon from './SearchIcon';
+import SavedIcon from './SavedIcon';
 import TopbarSearchForm from './TopbarSearchForm/TopbarSearchForm';
 import TopbarMobileMenu from './TopbarMobileMenu/TopbarMobileMenu';
 import TopbarDesktop from './TopbarDesktop/TopbarDesktop';
@@ -36,6 +39,7 @@ const SEARCH_DISPLAY_NOT_LANDING_PAGE = 'notLandingPage';
 const SEARCH_DISPLAY_ONLY_SEARCH_PAGE = 'onlySearchPage';
 const MOBILE_MENU_BUTTON_ID = 'mobileMenuButton';
 const MOBILE_SEARCH_BUTTON_ID = 'mobileSearchButton';
+const MOBILE_SAVED_BUTTON_ID = 'mobileSavedButton';
 
 const redirectToURLWithModalState = (history, location, modalStateParam) => {
   const { pathname, search, state } = location;
@@ -146,6 +150,7 @@ const TopbarComponent = props => {
     currentUserHasOrders,
     currentPage,
     notificationCount = 0,
+    savedItemsCount = 0,
     intl,
     history,
     location,
@@ -157,6 +162,13 @@ const TopbarComponent = props => {
     config,
     routeConfiguration,
   } = props;
+
+  // Avoids an SSR/CSR hydration mismatch: savedItemsCount for anonymous shoppers
+  // comes from localStorage, which isn't available during SSR (mirrors TopbarDesktop).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubmit = values => {
     const { currentSearchParams, history, location, config, routeConfiguration } = props;
@@ -253,6 +265,7 @@ const TopbarComponent = props => {
       currentUser={currentUser}
       onLogout={handleLogout}
       notificationCount={notificationCount}
+      savedItemsCount={savedItemsCount}
       currentPage={resolvedCurrentPage}
       customLinks={customLinks}
       showCreateListingsLink={showCreateListingsLink}
@@ -312,6 +325,33 @@ const TopbarComponent = props => {
     <div className={css.searchMenu} />
   );
 
+  const savedCountBadgeMaybe =
+    savedItemsCount > 0 ? (
+      <NotificationBadge className={css.savedCountBadge} count={savedItemsCount} />
+    ) : null;
+
+  // Always visible on mobile (unlike the desktop header link, which only appears once
+  // something's saved) so first-time shoppers can discover the feature without opening
+  // the hamburger menu. `mounted` avoids the SSR/CSR hydration mismatch described above.
+  const savedButtonMaybe = mounted ? (
+    <NamedLink
+      id={MOBILE_SAVED_BUTTON_ID}
+      name="SavedPage"
+      to={{ search: 'entry=header_badge' }}
+      className={css.savedMenu}
+      title={intl.formatMessage({ id: 'Topbar.savedIcon' })}
+    >
+      <SavedIcon
+        className={css.savedMenuIcon}
+        ariaLabel={intl.formatMessage({ id: 'Topbar.savedIcon' })}
+        filled={savedItemsCount > 0}
+      />
+      {savedCountBadgeMaybe}
+    </NamedLink>
+  ) : (
+    <div className={css.savedMenu} />
+  );
+
   const handleSkipToMainContent = e => {
     e.preventDefault();
     const mainContent = document.getElementById('main-content');
@@ -360,11 +400,15 @@ const TopbarComponent = props => {
         </Button>
         <LinkedLogo
           id="logo-topbar-mobile"
+          className={css.logoCenterMobile}
           layout={'mobile'}
           alt={intl.formatMessage({ id: 'Topbar.logoIcon' })}
           linkToExternalSite={config?.topbar?.logoLink}
         />
-        {mobileSearchButtonMaybe}
+        <div className={css.mobileActions}>
+          {mobileSearchButtonMaybe}
+          {savedButtonMaybe}
+        </div>
       </nav>
       <div className={css.desktop}>
         <TopbarDesktop
@@ -376,6 +420,7 @@ const TopbarComponent = props => {
           intl={intl}
           isAuthenticated={isAuthenticated}
           notificationCount={notificationCount}
+          savedItemsCount={savedItemsCount}
           onLogout={handleLogout}
           onSearchSubmit={handleSubmit}
           config={config}

@@ -7,6 +7,7 @@ import loadable from '@loadable/component';
 import { sendVerificationEmail, hasCurrentUserErrors } from '../../ducks/user.duck';
 import { logout, authenticationInProgress } from '../../ducks/auth.duck';
 import { manageDisableScrolling } from '../../ducks/ui.duck';
+import { selectSavedItemsCount } from '../../ducks/savedListings.duck';
 import { SavedItemsBanner } from '../../components';
 
 const Topbar = loadable(() => import(/* webpackChunkName: "Topbar" */ './Topbar/Topbar'));
@@ -55,6 +56,7 @@ const mapStateToProps = state => {
     currentUserHasListings,
     currentUserHasOrders,
     notificationCount: currentUserSaleNotificationCount + currentUserOrderNotificationCount,
+    savedItemsCount: selectSavedItemsCount(state),
     isAuthenticated,
     isLoggedInAs,
     authScopes,

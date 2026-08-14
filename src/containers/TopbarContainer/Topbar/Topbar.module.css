@@ -48,6 +48,8 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  /* Anchor for the absolutely centered logo (see .logoCenterMobile) */
+  position: relative;
 
   /* fill */
   background-color: var(--colorWhite);
@@ -70,17 +72,23 @@
 
 /* Child component's size (and positioning) should be given here */
 .menu,
-.searchMenu {
+.searchMenu,
+.savedMenu {
   /* Font */
   composes: h5 from global;
   color: var(--colorGrey700);
 
   /* Layout */
   display: flex;
-  width: 66px;
   margin: 0;
   border-width: 0px;
   background-color: transparent;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+    color: var(--colorGrey700);
+  }
 
   /* Hovers */
   &:enabled {
@@ -98,6 +106,7 @@
 }
 
 .menu {
+  width: 66px;
   padding: 15px 24px;
   position: relative;
 
@@ -105,17 +114,60 @@
     padding: 21px 24px;
   }
 }
+/* Search and Saved read as one "utility actions" pair (Gestalt proximity): tighter
+   on the edges facing each other, roomier on the edges facing the logo / screen
+   edge — so the pair reads as grouped rather than three evenly-spaced icons.
+   Unlike .menu, these size from content (padding + icon), not a fixed 66px box,
+   so tightening the shared edge actually recovers space instead of just shifting
+   the icon inside a same-size box. Still >=44px tap targets (WCAG/Apple HIG min). */
 .searchMenu {
-  padding: 12px 24px;
+  padding: 12px 14px 12px 22px;
 
   @media (--viewportMedium) {
-    padding: 18px 24px;
+    padding: 18px 18px 18px 26px;
+  }
+}
+.savedMenu {
+  padding: 12px 22px 12px 14px;
+  position: relative;
+
+  @media (--viewportMedium) {
+    padding: 18px 26px 18px 18px;
   }
 }
 
+.mobileActions {
+  display: flex;
+  align-items: center;
+}
+
+/* Logo is taken out of flex flow and centered independently so it stays
+   dead-center regardless of how many icons sit in .mobileActions on the right
+   vs. the single menu icon on the left. */
+.logoCenterMobile {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 .menuIcon,
-.searchMenuIcon {
+.searchMenuIcon,
+.savedMenuIcon {
   margin: 9px 0;
+}
+
+.rootSavedIcon {
+  color: var(--colorGrey700);
+}
+
+/* Numeric count badge on the mobile Saved icon — reuses NotificationBadge's
+   pill styling, just repositioned to the icon's corner (same override pattern
+   as TopbarMobileMenu.module.css's .notificationBadge). */
+.savedCountBadge {
+  position: absolute;
+  top: 6px;
+  right: 10px;
 }
 
 .notificationDot {

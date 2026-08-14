@@ -79,6 +79,7 @@ const TopbarMobileMenu = props => {
     inboxTab,
     currentUser,
     notificationCount = 0,
+    savedItemsCount = 0,
     customLinks,
     onLogout,
     showCreateListingsLink,
@@ -182,6 +183,19 @@ const TopbarMobileMenu = props => {
                 <span className={css.navigationArrow}>→</span>
               </span>
             </NamedLink>
+            {savedItemsCount > 0 ? (
+              <NamedLink
+                name="SavedPage"
+                className={css.navigationLink}
+                to={{ search: 'entry=header_badge' }}
+              >
+                <span className={css.navigationLinkContent}>
+                  ❤ <FormattedMessage id="TopbarMobileMenu.savedItemsLink" />
+                  <NotificationBadge className={css.notificationBadge} count={savedItemsCount} />
+                  <span className={css.navigationArrow}>→</span>
+                </span>
+              </NamedLink>
+            ) : null}
           </div>
 
           {/* Custom Links */}
@@ -261,12 +275,16 @@ const TopbarMobileMenu = props => {
           >
             <FormattedMessage id="TopbarMobileMenu.allCategoriesLink" />
           </NamedLink>
-          <NamedLink
-            className={classNames(css.navigationLink, currentPageClass('SavedPage'))}
-            name="SavedPage"
-          >
-            ❤ <FormattedMessage id="TopbarMobileMenu.savedItemsLink" />
-          </NamedLink>
+          {savedItemsCount > 0 ? (
+            <NamedLink
+              className={classNames(css.navigationLink, currentPageClass('SavedPage'))}
+              name="SavedPage"
+              to={{ search: 'entry=header_badge' }}
+            >
+              ❤ <FormattedMessage id="TopbarMobileMenu.savedItemsLink" />
+              <NotificationBadge className={css.notificationBadge} count={savedItemsCount} />
+            </NamedLink>
+          ) : null}
         </div>
 
         {/* Account Section */}

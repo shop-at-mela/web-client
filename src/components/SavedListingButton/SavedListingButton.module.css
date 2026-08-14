@@ -96,6 +96,7 @@
 .buttonContent {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 
@@ -104,6 +105,15 @@
   height: 18px;
   fill: currentColor;
   flex-shrink: 0;
+}
+
+/* ── CTA variant (PDP "Add to Cart", replaces the old Shop-from-Brand button) ── */
+
+.ctaRoot {
+  composes: buttonPrimary from global;
+
+  /* Clear padding set for link elements looking like buttons (matches PrimaryButton) */
+  padding: 0;
 }
 
 /* ── Loading state ───────────────────────────────────────────────────── */

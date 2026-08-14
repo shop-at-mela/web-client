@@ -157,6 +157,7 @@ const TopbarDesktop = props => {
     currentPage,
     rootClassName,
     notificationCount = 0,
+    savedItemsCount = 0,
     intl,
     isAuthenticated,
     onLogout,
@@ -179,10 +180,15 @@ const TopbarDesktop = props => {
   const giveSpaceForSearch = customLinks == null || customLinks?.length === 0;
   const classes = classNames(rootClassName || css.root, className);
 
-  const savedLinkMaybe = authenticatedOnClientSide ? (
-    <NamedLink name="SavedPage" className={css.topbarLink}>
+  // Visible for any user — authenticated or anonymous — who has at least one saved
+  // item, not just authenticated users (founder browser-testing feedback,
+  // add-to-cart-restoration-prd.md §12). `mounted` avoids an SSR/CSR hydration mismatch
+  // since the anonymous count comes from localStorage, unavailable during SSR.
+  const savedLinkMaybe = mounted && savedItemsCount > 0 ? (
+    <NamedLink name="SavedPage" className={css.topbarLink} to={{ search: 'entry=header_badge' }}>
       <span className={css.topbarLinkLabel}>
         ❤ <FormattedMessage id="TopbarDesktop.savedItemsLink" />
+        <span className={css.savedCountBadge}>{savedItemsCount}</span>
       </span>
     </NamedLink>
   ) : null;
