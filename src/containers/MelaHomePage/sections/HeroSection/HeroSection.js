@@ -229,13 +229,13 @@ const HeroSectionComponent = ({
       <h1 className={css.headline}>
         <FormattedMessage
           id="SectionMelaHero.heroHeadline"
-          defaultMessage="The makers and stories behind India's best brands."
+          defaultMessage="Modern brands, rooted in India's rich, regional culture."
         />
       </h1>
       <p className={css.subheadline}>
         <FormattedMessage
           id="SectionMelaHero.heroSubheadline"
-          defaultMessage="Independent Indian brands worth knowing. Meet the craft, the makers, and why each piece lasts, shipped to your door worldwide."
+          defaultMessage="Independent Indian brands worth knowing — modern design, real makers, shipped to your door worldwide."
         />
       </p>
     </div>

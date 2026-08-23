@@ -114,7 +114,7 @@ describe('HeroSection', () => {
     it('renders the headline', () => {
       renderHeroSection();
       expect(
-        screen.getByText("The makers and stories behind India's best brands.")
+        screen.getByText("Modern brands, rooted in India's rich, regional culture.")
       ).toBeInTheDocument();
     });
 
@@ -150,7 +150,7 @@ describe('HeroSection', () => {
     it('still shows headline during loading', () => {
       renderHeroSection({ fetchInProgress: true });
       expect(
-        screen.getByText("The makers and stories behind India's best brands.")
+        screen.getByText("Modern brands, rooted in India's rich, regional culture.")
       ).toBeInTheDocument();
     });
   });
@@ -159,7 +159,7 @@ describe('HeroSection', () => {
     it('shows headline and CTA with no brand card or carousel', () => {
       renderHeroSection({ heroBrands: [] });
       expect(
-        screen.getByText("The makers and stories behind India's best brands.")
+        screen.getByText("Modern brands, rooted in India's rich, regional culture.")
       ).toBeInTheDocument();
       expect(screen.getByTestId('link-BrandsPage')).toBeInTheDocument();
       expect(screen.queryByTestId('brand-hero-card')).not.toBeInTheDocument();

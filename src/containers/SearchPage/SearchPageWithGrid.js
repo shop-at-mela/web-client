@@ -354,6 +354,10 @@ export class SearchPageComponent extends Component {
       ? classNames(css.topbarBehindModal, css.topbar)
       : css.topbar;
 
+    // Deep pagination pages carry little SEO value and inflate crawl volume
+    // (see server/index.js's MAX_SSR_SEARCH_PAGE for the matching resource-side cap).
+    const noIndex = Number(pagination?.page) > 10;
+
     // N.B. openMobileMap button is sticky.
     // For some reason, stickyness doesn't work on Safari, if the element is <button>
     return (
@@ -362,6 +366,7 @@ export class SearchPageComponent extends Component {
         description={description}
         title={title}
         schema={schema}
+        noIndex={noIndex}
       >
         <TopbarContainer rootClassName={topbarClasses} currentSearchParams={validQueryParams} />
         <SearchQueryBar

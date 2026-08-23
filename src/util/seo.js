@@ -153,7 +153,14 @@ export const metaTagProps = (tagData, config) => {
   const keywordsMaybe = tagData.keywords
     ? [{ name: 'keywords', content: tagData.keywords }]
     : [];
-  const robotsMaybe = tagData.robots
+  // A single robots tag: noIndex takes priority over an explicit tagData.robots
+  // value, which takes priority over the default. Previously noIndex was
+  // appended as a second <meta name="robots"> tag alongside the default
+  // 'index, follow' one; that only rendered correctly by relying on
+  // react-helmet-async's last-tag-wins de-dupe for same-name meta tags.
+  const robotsMaybe = tagData.noIndex
+    ? [{ name: 'robots', content: 'noindex' }]
+    : tagData.robots
     ? [{ name: 'robots', content: tagData.robots }]
     : [{ name: 'robots', content: 'index, follow' }];
 
@@ -164,10 +171,6 @@ export const metaTagProps = (tagData, config) => {
     ...robotsMaybe,
     ...googleSiteVerificationMaybe,
   ];
-
-  if (tagData.noIndex) {
-    defaultMeta.push({ name: 'robots', content: 'noindex' });
-  }
 
   const openGraphMeta = openGraphMetaProps({
     ...tagData,

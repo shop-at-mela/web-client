@@ -231,6 +231,50 @@ const noCacheHeaders = {
   'Cache-control': 'no-cache, no-store, must-revalidate',
 };
 
+// Deep search-result pages (e.g. /s?page=385) are essentially never requested
+// by real users but are a common bot/scraper pattern. Rendering one costs the
+// same memory as any other page (fresh Redux store + SSR render + serialized
+// preloaded state), so a burst of concurrent deep-page requests can exhaust
+// the server's memory even though no single request is unusually large.
+// Rejecting them before any data loading or rendering happens is what
+// actually bounds memory use; the 404 status also causes Googlebot to reduce
+// its crawl rate for the URL pattern.
+const MAX_SSR_SEARCH_PAGE = parseInt(process.env.MAX_SSR_SEARCH_PAGE, 10) || 20;
+
+// Caps how many requests are allowed to be inside the data-loading/render
+// pipeline at the same time. Without this, a burst of concurrent requests
+// (bot fan-out, traffic spike) each hold their own Redux store and SSR
+// render tree in memory simultaneously with no upper bound. Requests beyond
+// the limit wait in a FIFO queue instead of starting immediately.
+const MAX_CONCURRENT_RENDERS = parseInt(process.env.MAX_CONCURRENT_RENDERS, 10) || 8;
+// Caps how many requests may wait for a slot. Without this, sustained
+// (not just bursty) overload grows the queue without bound -- each queued
+// request still holds its req/res objects and open socket, so an unbounded
+// queue just delays the same memory growth instead of preventing it. Once
+// the queue is full, further requests are rejected immediately with 503
+// rather than parked.
+const MAX_RENDER_QUEUE_LENGTH = parseInt(process.env.MAX_RENDER_QUEUE_LENGTH, 10) || 40;
+let activeRenderCount = 0;
+const renderQueue = [];
+const acquireRenderSlot = () => {
+  if (activeRenderCount < MAX_CONCURRENT_RENDERS) {
+    activeRenderCount += 1;
+    return Promise.resolve();
+  }
+  if (renderQueue.length >= MAX_RENDER_QUEUE_LENGTH) {
+    return Promise.reject(new Error('render-queue-full'));
+  }
+  return new Promise(resolve => renderQueue.push(resolve));
+};
+const releaseRenderSlot = () => {
+  const next = renderQueue.shift();
+  if (next) {
+    next();
+  } else {
+    activeRenderCount -= 1;
+  }
+};
+
 app.get('/{*splat}', async (req, res) => {
   if (req.url.startsWith('/static/')) {
     // The express.static middleware only handles static resources
@@ -244,6 +288,15 @@ app.get('/{*splat}', async (req, res) => {
     return res.status(200).send({ status: 'ok' });
   }
 
+  const requestUrl = new URL(req.url, 'http://localhost');
+  const requestedPage = parseInt(requestUrl.searchParams.get('page'), 10);
+  const isSearchPath =
+    requestUrl.pathname === '/s' || requestUrl.pathname.startsWith('/s/');
+  if (isSearchPath && requestedPage > MAX_SSR_SEARCH_PAGE) {
+    res.set({ 'X-Robots-Tag': 'noindex' });
+    return res.status(404).send(errorPage404);
+  }
+
   const context = {};
 
   // Until we have a better plan for caching dynamic content and we
@@ -251,29 +304,64 @@ app.get('/{*splat}', async (req, res) => {
   // data, let's disable response caching altogether.
   res.set(noCacheHeaders);
 
-  // Get chunk extractors from node and web builds
-  // https://loadable-components.com/docs/api-loadable-server/#chunkextractor
-  const { nodeExtractor, webExtractor } = getExtractors();
+  // Bound how many requests can be inside data-loading/rendering at once.
+  // Requests beyond MAX_CONCURRENT_RENDERS wait here instead of piling up
+  // memory by all starting immediately; once the wait queue itself is full,
+  // reject fast instead of growing it further.
+  try {
+    await acquireRenderSlot();
+  } catch (e) {
+    res.set({ 'Retry-After': '5' });
+    return res.status(503).send(errorPage500);
+  }
 
-  // Server-side entrypoint provides us the functions for server-side data loading and rendering
-  const nodeEntrypoint = nodeExtractor.requireEntrypoint();
-  const { default: renderApp, ...appInfo } = nodeEntrypoint;
+  // Everything below this point runs while a render slot is held. Some of
+  // it (chunk extractor construction, SDK setup) is synchronous and can
+  // throw (e.g. loadable-stats.json missing/partial mid-deploy) before any
+  // promise chain exists to attach a .finally to. Without this try/catch,
+  // a synchronous throw here would leak the slot permanently, and repeated
+  // failures would eventually wedge every request behind a queue that never
+  // drains -- a full outage, which is worse than the OOM this is meant to
+  // prevent.
+  let nodeExtractor;
+  let webExtractor;
+  let renderApp;
+  let appInfo;
+  let sdk;
+  try {
+    // Get chunk extractors from node and web builds
+    // https://loadable-components.com/docs/api-loadable-server/#chunkextractor
+    ({ nodeExtractor, webExtractor } = getExtractors());
 
-  // Note: Check ttl (time-to-live) and maxBytes (10MB by default for cached data) from sdkCacheProxy.js
-  // You could also define maxBytes based on free memory: const maxBytes = os.freemem() * 0.5;
-  const sharetribeSDK = sdkUtils.getSdk(req, res);
-  const sdk = getSDKProxy(sharetribeSDK);
+    // Server-side entrypoint provides us the functions for server-side data loading and rendering
+    const nodeEntrypoint = nodeExtractor.requireEntrypoint();
+    ({ default: renderApp, ...appInfo } = nodeEntrypoint);
+
+    // Note: Check ttl (time-to-live) and maxBytes (10MB by default for cached data) from sdkCacheProxy.js
+    // You could also define maxBytes based on free memory: const maxBytes = os.freemem() * 0.5;
+    const sharetribeSDK = sdkUtils.getSdk(req, res);
+    sdk = getSDKProxy(sharetribeSDK);
+  } catch (e) {
+    releaseRenderSlot();
+    log.error(e, 'server-side-render-failed');
+    return res.status(500).send(errorPage500);
+  }
 
   res.locals.beforeLoadDataTimestamp = Date.now();
 
-  dataLoader
-    .loadData(req.url, sdk, appInfo)
+  // Wrapped in Promise.resolve().then(...) so that a synchronous throw
+  // inside loadData (e.g. configureStore failing) becomes a rejection that
+  // flows through the .finally(releaseRenderSlot) below, rather than
+  // escaping the chain entirely and leaking the render slot.
+  Promise.resolve()
+    .then(() => dataLoader.loadData(req.url, sdk, appInfo))
     .then(data => {
       res.locals.timestampAfterLoadData = Date.now();
       const cspNonce = cspEnabled ? res.locals.cspNonce : null;
 
       return renderer.render(req.url, context, data, renderApp, webExtractor, cspNonce);
     })
+    .finally(releaseRenderSlot)
     .then(html => {
       res.locals.timestampAfterRender = Date.now();
 
