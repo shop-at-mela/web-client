@@ -22,6 +22,9 @@ export const openGraphMetaProps = data => {
     facebookImages,
     facebookAppId,
     marketplaceName,
+    productPriceAmount,
+    productPriceCurrency,
+    productAvailability,
   } = data;
 
   if (!(socialSharingTitle && socialSharingDescription && openGraphType && url && facebookImages)) {
@@ -70,6 +73,17 @@ export const openGraphMetaProps = data => {
 
   if (updated) {
     openGraphMeta.push({ property: 'article:modified_time', content: updated });
+  }
+
+  // Pinterest Product Rich Pins read these OG tags (not JSON-LD) to show a
+  // price/stock badge on pins. See developers.pinterest.com/docs/web-features/product-rich-pins/
+  if (openGraphType === 'product' && productPriceAmount && productPriceCurrency) {
+    openGraphMeta.push({ property: 'product:price:amount', content: productPriceAmount });
+    openGraphMeta.push({ property: 'product:price:currency', content: productPriceCurrency });
+
+    if (productAvailability) {
+      openGraphMeta.push({ property: 'og:availability', content: productAvailability });
+    }
   }
 
   return openGraphMeta;

@@ -48,6 +48,7 @@ const NoAccessPage = loadable(() => import(/* webpackChunkName: "NoAccessPage" *
 const StyleguidePage = loadable(() => import(/* webpackChunkName: "StyleguidePage" */ '../containers/StyleguidePage/StyleguidePage'));
 const SavedPage = loadable(() => import(/* webpackChunkName: "SavedPage" */ '../containers/SavedPage/SavedPage'));
 const CategoryPage = loadable(() => import(/* webpackChunkName: "CategoryPage" */ '../containers/CategoryPage/CategoryPage'));
+const GiftingPage = loadable(() => import(/* webpackChunkName: "GiftingPage" */ '../containers/GiftingPage/GiftingPage'));
 
 export const ACCOUNT_SETTINGS_PAGES = [
   'ContactDetailsPage',
@@ -134,6 +135,20 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       ...authForPrivateMarketplace,
       component: CategoryPage,
       loadData: pageDataLoadingAPI.CategoryPage.loadData,
+    },
+    {
+      path: '/gifts',
+      name: 'GiftsPage',
+      ...authForPrivateMarketplace,
+      component: GiftingPage,
+      loadData: pageDataLoadingAPI.GiftingPage.loadData,
+    },
+    {
+      path: '/occasions/:occasionSlug',
+      name: 'OccasionPage',
+      ...authForPrivateMarketplace,
+      component: GiftingPage,
+      loadData: pageDataLoadingAPI.GiftingPage.loadData,
     },
     {
       path: '/brands',

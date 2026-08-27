@@ -18,6 +18,7 @@ import { richText } from '../../util/richText';
 import { createSlug } from '../../util/urlHelpers';
 import { isMelaVerified } from '../../util/certificationHelpers';
 import { isBookingProcessAlias } from '../../transactions/transaction';
+import { getOccasionLabel } from '../../util/occasionLabels';
 
 import {
   NamedLink,
@@ -68,6 +69,38 @@ const TrustBadges = props => {
           </span>
         );
       })}
+    </div>
+  );
+};
+
+/**
+ * OccasionChips
+ * Component to render occasion tags overlaid on the product image (gifting merchandising —
+ * gifting-festival-traffic-prd.md Day 2 Phase 1). Opt-in via showOccasionChips: most search
+ * surfaces don't want occasion tags cluttering the card, but GiftingPage/occasion pages do.
+ * @param {Object} props
+ * @param {string|Array<string>} props.occasion raw publicData.occasion — a listing tagged
+ *   before the multi-enum search schema was set up stores this as a bare string rather than
+ *   an array (see the same string-or-array handling in OccasionStrip, CategoryShowcase.js)
+ */
+const OccasionChips = props => {
+  const { occasion } = props;
+  const occasions = Array.isArray(occasion) ? occasion : occasion ? [occasion] : [];
+
+  if (occasions.length === 0) {
+    return null;
+  }
+
+  // Up to 2 chips — matches TrustBadges' cap, keeps the image overlay uncluttered.
+  const topOccasions = occasions.slice(0, 2);
+
+  return (
+    <div className={css.occasionChips}>
+      {topOccasions.map(slug => (
+        <span key={slug} className={css.occasionChip}>
+          {getOccasionLabel(slug)}
+        </span>
+      ))}
     </div>
   );
 };
@@ -276,6 +309,7 @@ const ListingCardImage = props => {
  * @param {boolean?} props.showAuthorInfo whether to display author name (default: true)
  * @param {boolean?} props.showTrustBadges whether to display certification badges (default: false)
  * @param {boolean?} props.showConversionBadges whether to display conversion badges (default: false)
+ * @param {boolean?} props.showOccasionChips whether to display occasion tags (default: false)
  * @param {boolean?} props.isBestseller whether product is a bestseller (default: false)
  * @param {number?} props.stockCount remaining stock for urgency display (default: null)
  * @param {boolean?} props.isNew whether product is newly listed (default: false)
@@ -300,6 +334,7 @@ export const ListingCard = props => {
     showAuthorInfo = true,
     showTrustBadges = false,
     showConversionBadges = false,
+    showOccasionChips = false,
     isBestseller = false,
     stockCount = null,
     isNew = false,
@@ -429,6 +464,7 @@ export const ListingCard = props => {
             {showConversionBadges && (
               <ConversionBadges isBestseller={isBestseller} stockCount={stockCount} isNew={isNew} />
             )}
+            {showOccasionChips && <OccasionChips occasion={publicData?.occasion} />}
           </div>
         </NamedLink>
         <SavedListingButton

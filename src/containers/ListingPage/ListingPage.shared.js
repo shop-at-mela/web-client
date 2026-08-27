@@ -82,6 +82,23 @@ export const priceForSchemaMaybe = price => {
 };
 
 /**
+ * Maps our schema.org availability URL (used in the Product/Offer JSON-LD block)
+ * to the value Pinterest's og:availability tag expects for Product Rich Pins.
+ * See developers.pinterest.com/docs/web-features/product-rich-pins/
+ *
+ * @param {String} schemaAvailabilityUrl e.g. 'https://schema.org/InStock'
+ * @returns {String|undefined} Pinterest og:availability value, or undefined if unknown
+ */
+export const pinterestAvailability = schemaAvailabilityUrl => {
+  if (schemaAvailabilityUrl === 'https://schema.org/InStock') {
+    return 'instock';
+  } else if (schemaAvailabilityUrl === 'https://schema.org/OutOfStock') {
+    return 'out of stock';
+  }
+  return undefined;
+};
+
+/**
  * Get category's label.
  *
  * @param {Array} categories array of category objects (key & label)

@@ -131,6 +131,9 @@ class PageComponent extends Component {
       config,
       routeConfiguration,
       canonicalURL,
+      productPriceAmount,
+      productPriceCurrency,
+      productAvailability,
     } = this.props;
 
     const classes = classNames(rootClassName || css.root, className, {
@@ -195,6 +198,9 @@ class PageComponent extends Component {
         url: canonicalUrl,
         locale: intl.locale,
         noIndex,
+        productPriceAmount,
+        productPriceCurrency,
+        productAvailability,
       },
       config
     );
@@ -350,6 +356,9 @@ class PageComponent extends Component {
  * @param {string} props.title - The page title
  * @param {string} props.twitterHandle - The twitter handle
  * @param {string} props.updated - The updated date article:modified_time
+ * @param {string} [props.productPriceAmount] - Numeric price (e.g. '22.94') for product:price:amount, used together with openGraphType="product" for Pinterest Rich Pins
+ * @param {string} [props.productPriceCurrency] - ISO 4217 currency code for product:price:currency
+ * @param {string} [props.productAvailability] - Pinterest og:availability value ('instock', 'out of stock', 'preorder', 'backorder', 'discontinued', 'pending')
  * @returns {JSX.Element} Page component that handles SEO and social sharing
  */
 const Page = props => {

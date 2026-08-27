@@ -19,6 +19,13 @@ import css from './SearchResultsPanel.module.css';
  * @param {Object} props.search - The search
  * @param {Function} props.setActiveListing - The function to handle the active listing
  * @param {boolean} [props.isMapVariant] - Whether the map variant is enabled
+ * @param {boolean} [props.showOccasionChips] - Whether to show occasion tags on each
+ *   ListingCard (opt-in — see ListingCard.js; used by GiftingPage's grid)
+ * @param {string} [props.pageName] - Override the route name PaginationLinks builds hrefs
+ *   for (defaults to SearchPage/SearchPageWithListingType). GiftingPage passes its own
+ *   route name so pagination stays on /gifts or /occasions/:slug instead of routing to /s.
+ * @param {Object} [props.pagePathParams] - Path params for the pageName route override
+ *   above (defaults to { listingType: listingTypeParam }).
  * @returns {JSX.Element}
  */
 const SearchResultsPanel = props => {
@@ -31,17 +38,22 @@ const SearchResultsPanel = props => {
     setActiveListing,
     isMapVariant = true,
     listingTypeParam,
+    showOccasionChips = false,
+    pageName: pageNameOverride,
+    pagePathParams: pagePathParamsOverride,
     intl,
   } = props;
   const classes = classNames(rootClassName || css.root, className);
-  const pageName = listingTypeParam ? 'SearchPageWithListingType' : 'SearchPage';
+  const pageName =
+    pageNameOverride || (listingTypeParam ? 'SearchPageWithListingType' : 'SearchPage');
+  const pagePathParams = pagePathParamsOverride || { listingType: listingTypeParam };
 
   const paginationLinks =
     pagination && pagination.totalPages > 1 ? (
       <PaginationLinks
         className={css.pagination}
         pageName={pageName}
-        pagePathParams={{ listingType: listingTypeParam }}
+        pagePathParams={pagePathParams}
         pageSearchParams={search}
         pagination={pagination}
         aria-label={intl.formatMessage({ id: 'SearchResultsPanel.screenreader.pagination' })}
@@ -101,6 +113,7 @@ const SearchResultsPanel = props => {
                 isBestseller={isBestseller}
                 stockCount={stockCount}
                 isNew={isNew}
+                showOccasionChips={showOccasionChips}
               />
             </li>
           );

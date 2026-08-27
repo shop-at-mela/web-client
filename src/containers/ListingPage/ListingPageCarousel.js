@@ -89,6 +89,7 @@ import {
   handleNavigateToRequestQuotePage,
   handleSubmit,
   priceForSchemaMaybe,
+  pinterestAvailability,
   getDerivedRenderData,
 } from './ListingPage.shared';
 import VariantDisplay from '../../components/VariantDisplay/VariantDisplay';
@@ -363,7 +364,7 @@ export const ListingPageComponent = props => {
     : currentStock > 0
     ? 'https://schema.org/InStock'
     : 'https://schema.org/OutOfStock';
-
+  const schemaOffer = priceForSchemaMaybe(price);
 
   return (
     <Page
@@ -373,6 +374,10 @@ export const ListingPageComponent = props => {
       description={seoDescription}
       facebookImages={facebookImages}
       twitterImages={twitterImages}
+      openGraphType="product"
+      productPriceAmount={schemaOffer.price}
+      productPriceCurrency={schemaOffer.priceCurrency}
+      productAvailability={pinterestAvailability(schemaAvailability)}
       {...noIndexMaybe}
       schema={{
         '@context': 'http://schema.org',
@@ -393,7 +398,7 @@ export const ListingPageComponent = props => {
             name: marketplaceName,
             description: `Authentic Indian ${categoryDisplayName} Marketplace for US Indian Diaspora`
           },
-          ...priceForSchemaMaybe(price),
+          ...schemaOffer,
           availability: schemaAvailability,
         },
         audience: {

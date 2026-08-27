@@ -147,6 +147,29 @@ export const captureEntrySource = () => {
   }
 };
 
+/**
+ * Removes utm_* params from the visible URL via history.replaceState, without a navigation
+ * or reload. Call only after captureEntrySource() has already read them. Leaves any
+ * non-utm query params and the hash untouched, and no-ops if there is nothing to strip
+ * (avoids pushing a redundant history entry state).
+ */
+export const stripUtmParams = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    const { pathname, search, hash } = window.location;
+    const params = new URLSearchParams(search);
+    const utmKeys = [...params.keys()].filter(key => key.startsWith('utm_'));
+    if (utmKeys.length === 0) return;
+
+    utmKeys.forEach(key => params.delete(key));
+    const newSearch = params.toString();
+    const newUrl = `${pathname}${newSearch ? `?${newSearch}` : ''}${hash}`;
+    window.history.replaceState(window.history.state, '', newUrl);
+  } catch {
+    // history API unavailable — ignore
+  }
+};
+
 /** Returns the persisted entry_source for this session, or 'direct' if unavailable. */
 export const getEntrySource = () => {
   if (typeof window === 'undefined') return 'direct';

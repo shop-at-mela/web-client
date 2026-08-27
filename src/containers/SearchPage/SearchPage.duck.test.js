@@ -182,6 +182,72 @@ describe('SearchPage.duck', () => {
       expect(mockQuery.mock.calls.length).toBe(2);
     });
   });
+
+  // Merchandised sort (gifting-festival-traffic-prd Day 2, Phase 3): in a gifting/occasion
+  // context the default sort switches to a bestseller-aware order, without disturbing the
+  // general createdAt default, explicit user sorts, or the keyword/relevance branch.
+  describe('gifting-aware default sort', () => {
+    const GIFTING_DEFAULT_SORT = 'pub_isBestseller,createdAt';
+
+    // Config with a realistic sortConfig so defaultSort resolves to 'createdAt' and the
+    // relevance branch is exercisable.
+    const createSortConfig = () => {
+      const config = createTestConfig();
+      config.search.sortConfig = {
+        active: true,
+        queryParamName: 'sort',
+        relevanceKey: 'relevance',
+        relevanceFilter: 'keywords',
+        options: [
+          { key: 'createdAt', label: 'Newest' },
+          { key: '-createdAt', label: 'Oldest' },
+          { key: '-price', label: 'Lowest price' },
+          { key: 'relevance', label: 'Relevance' },
+        ],
+      };
+      return config;
+    };
+
+    // Dispatches the searchListings thunk directly with a raw searchParams object (the shape
+    // searchListingsPayloadCreator receives) and returns the params passed to sdk.listings.query.
+    const runSearch = async searchParams => {
+      const config = createSortConfig();
+      await mockDispatch(searchListings({ searchParams, config }));
+      return mockQuery.mock.calls[0][0];
+    };
+
+    it('uses the bestseller-aware sort for gifting context with no explicit sort', async () => {
+      const params = await runSearch({ giftingContext: true, perPage: 24 });
+      expect(params.sort).toBe(GIFTING_DEFAULT_SORT);
+    });
+
+    it('lets an explicit user sort win over the gifting default', async () => {
+      const params = await runSearch({ giftingContext: true, sort: '-price', perPage: 24 });
+      expect(params.sort).toBe('-price');
+    });
+
+    it('keeps the plain createdAt default when there is no gifting context', async () => {
+      const params = await runSearch({ perPage: 24 });
+      expect(params.sort).toBe('createdAt');
+    });
+
+    it('still returns no sort (relevance branch) for a keyword search in gifting context', async () => {
+      const params = await runSearch({ giftingContext: true, keywords: 'diya', perPage: 24 });
+      expect(params.sort).toBeUndefined();
+    });
+
+    it('triggers the gifting default from pub_occasion alone (OccasionStrip /s path, no flag)', async () => {
+      const params = await runSearch({ pub_occasion: 'has_any:diwali', perPage: 24 });
+      expect(params.sort).toBe(GIFTING_DEFAULT_SORT);
+      // The occasion filter itself is a real listing query param and must be forwarded.
+      expect(params.pub_occasion).toBe('has_any:diwali');
+    });
+
+    it('never leaks the giftingContext flag into the sdk.listings.query params', async () => {
+      const params = await runSearch({ giftingContext: true, pub_occasion: 'has_any:diwali', perPage: 24 });
+      expect(params).not.toHaveProperty('giftingContext');
+    });
+  });
 });
 
 // Regression tests for the category-page cross-contamination bug: rapid navigation

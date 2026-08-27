@@ -3,6 +3,8 @@ import { Helmet } from 'react-helmet-async';
 
 import { useRouteConfiguration } from '../context/routeConfigurationContext';
 import { matchPathname } from '../util/routes';
+import { getEntrySource } from './analytics/entrySource';
+import { getOrCreateSessionId } from './sentimentCapture';
 
 const MAPBOX_SCRIPT_ID = 'mapbox_GL_JS';
 const GOOGLE_MAPS_SCRIPT_ID = 'GoogleMapsApi';
@@ -165,6 +167,14 @@ export const IncludeScripts = props => {
       gtag('js', new Date());
       gtag('config', googleAnalyticsId, {
         cookie_flags: 'SameSite=None;Secure',
+        // Config-level params apply to every subsequently auto-collected event too, so this
+        // is what makes the FIRST landing page_view (sent automatically by gtag.js before
+        // any of our own code runs) carry entry_source — src/analytics/handlers.js only
+        // covers in-app SPA navigations. entry_source/mela_session_id must already be in
+        // sessionStorage by the time this renders, since captureEntrySource() runs
+        // synchronously before the app tree mounts (see src/index.js).
+        entry_source: getEntrySource(),
+        mela_session_id: getOrCreateSessionId(),
       });
     }
   }

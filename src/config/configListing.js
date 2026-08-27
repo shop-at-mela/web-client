@@ -550,7 +550,10 @@ export const listingFields = [
     saveConfig: { label: 'Mark as bestseller' },
   },
 
-  // Occasion — for occasion-based product discovery on the homepage
+  // Occasion — the occasion the item is WORN/USED at (see classifier/prompt_engine.py Task 1
+  // `occasion`). 'diwali-festivals' and 'gifting' are legacy values from before this field was
+  // broadened (gifting-festival-traffic-prd.md §1A/1F) — kept recognized so existing tagged
+  // listings stay filterable; the enrichment pipeline no longer emits them going forward.
   // ⚠️ Requires Sharetribe CLI: sharetribe-cli search-schema/set --key pub_occasion --type multi-enum
   {
     key: 'occasion',
@@ -559,15 +562,99 @@ export const listingFields = [
     enumOptions: [
       { option: 'diwali-festivals', label: 'Diwali & Festivals' },
       { option: 'gifting', label: 'Gifting' },
+      { option: 'diwali', label: 'Diwali' },
+      { option: 'holi', label: 'Holi' },
+      { option: 'eid', label: 'Eid' },
+      { option: 'pongal', label: 'Pongal' },
+      { option: 'navratri', label: 'Navratri' },
+      { option: 'onam', label: 'Onam' },
+      { option: 'raksha_bandhan', label: 'Raksha Bandhan' },
+      { option: 'karva_chauth', label: 'Karva Chauth' },
+      { option: 'bhai_dooj', label: 'Bhai Dooj' },
+      { option: 'wedding', label: 'Wedding' },
+      { option: 'mehendi', label: 'Mehendi' },
+      { option: 'haldi', label: 'Haldi' },
+      { option: 'naming_ceremony', label: 'Naming Ceremony' },
+      { option: 'baby_shower', label: 'Baby Shower' },
+      { option: 'housewarming', label: 'Housewarming' },
+      { option: 'birthday', label: 'Birthday' },
+      { option: 'mothers_day', label: "Mother's Day" },
+      { option: 'fathers_day', label: "Father's Day" },
     ],
     filterConfig: {
       indexForSearch: true,
       label: 'Occasion',
-      group: 'secondary',
+      group: 'primary',
       searchMode: 'has_any',
     },
     showConfig: { label: 'Occasion' },
     saveConfig: { label: 'Occasion', placeholderMessage: 'Select occasion(s)…' },
+  },
+
+  // Gift Occasion — gift-SUITABILITY, distinct from `occasion` (wear/use). Bounded-inference
+  // field: see classifier/prompt_engine.py Task 1 `gift_occasion` (gifting-festival-traffic-prd.md §1B).
+  // ⚠️ Requires Sharetribe CLI: sharetribe-cli search-schema/set --key pub_gift_occasion --type multi-enum
+  {
+    key: 'gift_occasion',
+    scope: 'public',
+    schemaType: 'multi-enum',
+    enumOptions: [
+      { option: 'diwali', label: 'Diwali' },
+      { option: 'raksha_bandhan', label: 'Raksha Bandhan' },
+      { option: 'karva_chauth', label: 'Karva Chauth' },
+      { option: 'bhai_dooj', label: 'Bhai Dooj' },
+      { option: 'wedding', label: 'Wedding' },
+      { option: 'anniversary', label: 'Anniversary' },
+      { option: 'navratri', label: 'Navratri' },
+      { option: 'holi', label: 'Holi' },
+      { option: 'eid', label: 'Eid' },
+      { option: 'pongal', label: 'Pongal' },
+      { option: 'onam', label: 'Onam' },
+      { option: 'naming_ceremony', label: 'Naming Ceremony' },
+      { option: 'baby_shower', label: 'Baby Shower' },
+      { option: 'housewarming', label: 'Housewarming' },
+      { option: 'birthday', label: 'Birthday' },
+      { option: 'mothers_day', label: "Mother's Day" },
+      { option: 'fathers_day', label: "Father's Day" },
+      { option: 'general_gifting', label: 'General Gifting' },
+    ],
+    filterConfig: {
+      indexForSearch: true,
+      label: 'Gift Occasion',
+      group: 'primary',
+      searchMode: 'has_any',
+    },
+    showConfig: { label: 'Great Gift For' },
+    saveConfig: { label: 'Gift Occasion', placeholderMessage: 'Select gift occasion(s)…' },
+  },
+
+  // Recipient — bounded inference of who the product naturally suits, see
+  // classifier/prompt_engine.py Task 1 `recipient` (gifting-festival-traffic-prd.md §1C).
+  // ⚠️ Requires Sharetribe CLI: sharetribe-cli search-schema/set --key pub_recipient --type multi-enum
+  {
+    key: 'recipient',
+    scope: 'public',
+    schemaType: 'multi-enum',
+    enumOptions: [
+      { option: 'for_mom', label: 'For Mom' },
+      { option: 'for_dad', label: 'For Dad' },
+      { option: 'for_him', label: 'For Him' },
+      { option: 'for_her', label: 'For Her' },
+      { option: 'for_kids', label: 'For Kids' },
+      { option: 'for_baby', label: 'For Baby' },
+      { option: 'for_new_parents', label: 'For New Parents' },
+      { option: 'for_couple', label: 'For Couple' },
+      { option: 'for_host', label: 'For Host' },
+      { option: 'for_self', label: 'For Self' },
+    ],
+    filterConfig: {
+      indexForSearch: true,
+      label: 'Recipient',
+      group: 'primary',
+      searchMode: 'has_any',
+    },
+    showConfig: { label: 'Recipient' },
+    saveConfig: { label: 'Recipient', placeholderMessage: 'Select recipient(s)…' },
   },
 ];
 

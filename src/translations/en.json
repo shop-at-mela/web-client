@@ -1704,6 +1704,14 @@
   "CategoryPage.browseCategory": "Browse →",
   "CategoryPage.allCategories": "All Categories",
 
+  "GiftingPage.title": "{heading} | Curated Indian Brands | {marketplaceName}",
+  "GiftingPage.home": "Home",
+  "GiftingPage.priceChipsLabel": "Shop by price",
+  "GiftingPage.recipientChipsLabel": "Shop by recipient",
+  "GiftingPage.loadingProducts": "Loading gifts…",
+  "GiftingPage.noProducts": "No gifts found here yet.",
+  "GiftingPage.browseAllGifts": "Browse all gifts",
+
   "BrandsPage.title": "All Brands | {brandCount}+ Hand Vetted Indian Brands | Mela",
   "BrandsPage.description": "Browse {brandCount}+ hand vetted Indian brands across fashion, home, beauty, jewelry, and kids. Every brand ships to the US and accepts US cards. You buy directly on each brand's own store.",
   "BrandsPage.heroTitle": "Discover India's Most Trusted Brands",

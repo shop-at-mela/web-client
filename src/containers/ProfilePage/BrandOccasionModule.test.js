@@ -20,29 +20,30 @@ jest.mock('../../components', () => ({
   ),
 }));
 
-// Mock CategoryShowcase so occasion copy is fixed and isDiwaliSeason is controllable.
-// Also avoids CategoryShowcase's real module-level SDK instantiation running in tests.
+// Mock CategoryShowcase so occasion copy is fixed and getActiveSeasonOccasion is
+// controllable. Also avoids CategoryShowcase's real module-level SDK instantiation
+// running in tests.
 jest.mock('../MelaHomePage/sections/CategoryShowcase/CategoryShowcase', () => ({
   OCCASIONS: [
     {
       option: 'diwali-festivals',
       label: 'Diwali & Festivals',
       cta: 'Shop Festive Wear',
-      ctaSeasonal: 'Shop for Diwali',
       colorTheme: 'festive',
+      matchValues: ['diwali-festivals'],
     },
     {
       option: 'gifting',
       label: 'Gifting',
       cta: 'Shop Gifts',
-      ctaSeasonal: null,
       colorTheme: 'gifting',
+      matchValues: ['gifting'],
     },
   ],
-  isDiwaliSeason: jest.fn(() => false),
+  getActiveSeasonOccasion: jest.fn(() => []),
 }));
 
-import { isDiwaliSeason } from '../MelaHomePage/sections/CategoryShowcase/CategoryShowcase';
+import { getActiveSeasonOccasion } from '../MelaHomePage/sections/CategoryShowcase/CategoryShowcase';
 
 const makeListing = (id, occasionTag) => ({
   id: { uuid: id },
@@ -64,7 +65,7 @@ const renderInContext = ui =>
 
 describe('BrandOccasionModule', () => {
   beforeEach(() => {
-    isDiwaliSeason.mockReturnValue(false);
+    getActiveSeasonOccasion.mockReturnValue([]);
   });
 
   it('renders nothing when the brand has no occasion-tagged listings', () => {
@@ -140,8 +141,8 @@ describe('BrandOccasionModule', () => {
     expect(link.getAttribute('href')).not.toContain('author_id');
   });
 
-  it('orders Gifting before Diwali & Festivals outside Diwali season', () => {
-    isDiwaliSeason.mockReturnValue(false);
+  it('ranks the active-season occasion first when Gifting is active', () => {
+    getActiveSeasonOccasion.mockReturnValue(['gifting']);
     const listings = [
       makeListing('1', 'gifting'),
       makeListing('2', 'gifting'),
@@ -154,8 +155,8 @@ describe('BrandOccasionModule', () => {
     expect(titles).toEqual(['Gifting', 'Diwali & Festivals']);
   });
 
-  it('orders Diwali & Festivals first during Diwali season', () => {
-    isDiwaliSeason.mockReturnValue(true);
+  it('ranks the active-season occasion first when Diwali & Festivals is active', () => {
+    getActiveSeasonOccasion.mockReturnValue(['diwali-festivals']);
     const listings = [
       makeListing('1', 'gifting'),
       makeListing('2', 'gifting'),
@@ -166,5 +167,19 @@ describe('BrandOccasionModule', () => {
 
     const titles = screen.getAllByRole('heading', { level: 4 }).map(el => el.textContent);
     expect(titles).toEqual(['Diwali & Festivals', 'Gifting']);
+  });
+
+  it('still shows every qualifying panel even when neither occasion is currently active', () => {
+    getActiveSeasonOccasion.mockReturnValue([]);
+    const listings = [
+      makeListing('1', 'gifting'),
+      makeListing('2', 'gifting'),
+      makeListing('3', 'diwali-festivals'),
+      makeListing('4', 'diwali-festivals'),
+    ];
+    renderInContext(<BrandOccasionModule listings={listings} brandUserId="u1" />);
+
+    expect(screen.getByText('Gifting')).toBeInTheDocument();
+    expect(screen.getByText('Diwali & Festivals')).toBeInTheDocument();
   });
 });

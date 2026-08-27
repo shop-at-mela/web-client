@@ -22,6 +22,12 @@ import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 // So, there's enough cards to fill all columns on full pagination pages
 const RESULT_PAGE_SIZE = 24;
 
+// Default sort used only in a gifting/occasion context (see sortSearchParams). Bestsellers
+// first (`isBestseller` desc), newest-first as the tie-breaker — matching the plain
+// `createdAt` default's semantics elsewhere. Swap this to `'-pub_melaScore'` in one line once
+// search-ranking-relevance-prd.md ships; do not add query-time scoring.
+const GIFTING_DEFAULT_SORT = 'pub_isBestseller,createdAt';
+
 // ================ Helper Functions ================ //
 
 const resultIds = data => {
@@ -242,7 +248,7 @@ const searchListingsPayloadCreator = ({ searchParams, config }, thunkAPI) => {
     return hasDatesFilterInUse && seatsFilter ? { seats } : {};
   };
 
-  const sortSearchParams = (sortParam, hasKeywords) => {
+  const sortSearchParams = (sortParam, hasKeywords, hasGiftingContext) => {
     const sortConfig = config?.search?.sortConfig || {};
     // If no sort options are set, defaultSort will be undefined
     const defaultSort = sortConfig?.options?.[0]?.key;
@@ -260,8 +266,9 @@ const searchListingsPayloadCreator = ({ searchParams, config }, thunkAPI) => {
       return {};
     }
 
-    // Fall back to default sort
-    return { sort: defaultSort };
+    // Fall back to default sort. In a gifting/occasion context, merchandise bestsellers to
+    // the top instead of the newest-first createdAt default (only affects this branch).
+    return { sort: hasGiftingContext ? GIFTING_DEFAULT_SORT : defaultSort };
   };
 
   const {
@@ -271,17 +278,31 @@ const searchListingsPayloadCreator = ({ searchParams, config }, thunkAPI) => {
     seats,
     sort,
     mapSearch,
+    giftingContext,
     listingTypePathParam,
     isListingTypeVariant,
     ...restOfParams
   } = searchParams;
+  // Gifting context can arrive as an explicit flag (GiftingPage) or implicitly via an occasion
+  // filter (OccasionStrip "View All" links straight to /s?pub_occasion=...). Either triggers the
+  // bestseller-aware default sort. `giftingContext` is destructured out above so it never leaks
+  // into the Sharetribe API params (same as mapSearch), and pub_occasion/pub_gift_occasion stay
+  // in restOfParams because they are real listing query filters.
+  const hasGiftingContext =
+    Boolean(giftingContext) ||
+    Boolean(restOfParams.pub_occasion) ||
+    Boolean(restOfParams.pub_gift_occasion);
   // The params related to default filters are prepared one-by-one
   // We could consider moving them to the prepareAPIParams function too.
   const priceMaybe = priceSearchParams(price);
   const datesMaybe = datesSearchParams(dates);
   const stockMaybe = stockFilters(datesMaybe);
   const seatsMaybe = seatsSearchParams(seats, datesMaybe);
-  const sortMaybe = sortSearchParams(sort, searchParams?.keywords !== undefined);
+  const sortMaybe = sortSearchParams(
+    sort,
+    searchParams?.keywords !== undefined,
+    hasGiftingContext
+  );
 
   // Filter out potential referral data parameters so that they are not included in the API query
   const { userTypes = [] } = config.user;

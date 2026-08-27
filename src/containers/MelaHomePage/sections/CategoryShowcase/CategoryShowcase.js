@@ -8,40 +8,152 @@ import { denormalisedEntities, updatedEntities, pickBrandDiverse } from '../../.
 import { fetchListingsAcrossBrands } from '../../../../util/bestsellerCarousel';
 import { allBrandIds, getBrandSlugById } from '../../../../config/configBrands';
 import sdk from '../../../../util/homepageSdk';
+// Re-exported for discoverability (ListingCard's occasion chips, GiftingPage) — implemented
+// in util/occasionLabels.js rather than here to avoid a circular import: this file pulls in
+// the `components` barrel below (for ProductCarousel), which re-exports ListingCard.
+export { getOccasionLabel, OCCASION_LABELS } from '../../../../util/occasionLabels';
 
 import css from './CategoryShowcase.module.css';
 
 // ── Occasion config ────────────────────────────────────────────────────────
-// Only two validated occasions for Mela's US diaspora audience.
-// 'everyday' and 'new-baby' removed — covered by age-group filters.
+// The full near-term festival sequence (gifting-festival-traffic-prd.md's Shopper-behavior
+// model: Raksha Bandhan → Navratri → Karva Chauth → Diwali → Bhai Dooj → wedding season),
+// plus the evergreen 'gifting' catch-all. 7 occasions is too many panels to show at once —
+// getActiveSeasonOccasion() below picks which 2-3 are relevant "today".
 
 // Exported so other surfaces (e.g. BrandOccasionModule on the brand storefront)
 // reuse the same occasion copy/config instead of redefining it.
 export const OCCASIONS = [
   {
-    option: 'diwali-festivals',
-    label: 'Diwali & Festivals',
-    description: 'Indian festive wear, artisan toys, and gifts for every celebration',
-    cta: 'Shop Festive Wear',
-    ctaSeasonal: 'Shop for Diwali',
-    colorTheme: 'festive',
-  },
-  {
     option: 'gifting',
     label: 'Gifting',
     description: 'Curated gifts for baby showers, naming ceremonies, and first milestones',
     cta: 'Shop Gifts',
-    ctaSeasonal: null,
     colorTheme: 'gifting',
+    matchValues: ['gifting'],
+  },
+  {
+    option: 'raksha_bandhan',
+    label: 'Raksha Bandhan',
+    description: 'Gifts for siblings this Raksha Bandhan',
+    cta: 'Shop Raksha Bandhan',
+    colorTheme: 'festive',
+    matchValues: ['raksha_bandhan'],
+  },
+  {
+    option: 'navratri',
+    label: 'Navratri',
+    description: 'Festive fashion and gifting picks for Navratri',
+    cta: 'Shop Navratri',
+    colorTheme: 'festive',
+    matchValues: ['navratri'],
+  },
+  {
+    option: 'karva_chauth',
+    label: 'Karva Chauth',
+    description: 'Jewelry, fashion, and gifts for Karva Chauth',
+    cta: 'Shop Karva Chauth',
+    colorTheme: 'festive',
+    matchValues: ['karva_chauth'],
+  },
+  {
+    option: 'diwali',
+    label: 'Diwali & Festivals',
+    description: 'Indian festive wear, artisan toys, and gifts for every celebration',
+    cta: 'Shop for Diwali',
+    colorTheme: 'festive',
+    // 'diwali-festivals' is the legacy pre-broadened-enum value already tagged on existing
+    // inventory (see configListing.js) — matched too so this panel isn't empty pre-backfill.
+    matchValues: ['diwali', 'diwali-festivals'],
+  },
+  {
+    option: 'bhai_dooj',
+    label: 'Bhai Dooj',
+    description: 'Gifts for Bhai Dooj',
+    cta: 'Shop Bhai Dooj',
+    colorTheme: 'festive',
+    matchValues: ['bhai_dooj'],
+  },
+  {
+    option: 'wedding',
+    label: 'Wedding Season',
+    description: 'Wedding and wedding-guest gifts from independent Indian brands',
+    cta: 'Shop Wedding Gifts',
+    colorTheme: 'festive',
+    matchValues: ['wedding'],
   },
 ];
 
-// Diwali season: Oct 1 – Nov 15
-export const isDiwaliSeason = () => {
-  const now = new Date();
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
-  return month === 10 || (month === 11 && day <= 15);
+// Festival dates as month/day only — annual recurrence lets the season math below ignore
+// year-to-year drift for this specific set, which never crosses the Dec 31 → Jan 1 boundary
+// (Raksha Bandhan in August through Bhai Dooj in November). Verify against a panchang each
+// year — see gifting-festival-traffic-prd.md's Timing note; these are 2026 estimates.
+const FESTIVAL_MONTH_DAY = {
+  raksha_bandhan: { month: 8, day: 28 },
+  navratri: { month: 10, day: 11 },
+  karva_chauth: { month: 10, day: 29 },
+  diwali: { month: 11, day: 8 },
+  bhai_dooj: { month: 11, day: 10 },
+};
+
+// Shoppers plan gifting occasions weeks ahead on Pinterest (Shopper-behavior model:
+// "boards built 6-8wks ahead") — a panel goes "in season" this many days before its
+// festival date, and stays up this many days after for last-minute shoppers.
+const SEASON_LEAD_DAYS = 21;
+const SEASON_LAG_DAYS = 3;
+
+const dayOfYear = date => {
+  const startOfYear = Date.UTC(date.getFullYear(), 0, 1);
+  const current = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  return Math.round((current - startOfYear) / 86400000);
+};
+
+const festivalDayOfYear = (option, year) => {
+  const { month, day } = FESTIVAL_MONTH_DAY[option];
+  return Math.round((Date.UTC(year, month - 1, day) - Date.UTC(year, 0, 1)) / 86400000);
+};
+
+// Signed day-distance from `date` to this year's occurrence of `option`'s festival date —
+// negative means the festival already happened this year.
+const daysUntilFestival = (option, date) =>
+  festivalDayOfYear(option, date.getFullYear()) - dayOfYear(date);
+
+const isFestivalInSeason = (option, date) => {
+  const distance = daysUntilFestival(option, date);
+  return distance <= SEASON_LEAD_DAYS && distance >= -SEASON_LAG_DAYS;
+};
+
+const isWeddingSeason = date => [11, 12, 1, 2].includes(date.getMonth() + 1);
+
+/**
+ * Picks which occasion options OccasionStrip should render "today", in display order:
+ * when a festival is in season (or it's wedding season, Nov-Feb), that festival leads —
+ * up to 2 of them — with the evergreen 'gifting' panel trailing. If nothing is currently in
+ * season, falls back to gifting leading plus the single nearest-upcoming dated festival, so
+ * the strip is never just one panel wide. Never returns more than 3 options.
+ * @param {Date} [date] - defaults to now; a param mainly for testability.
+ * @returns {Array<string>} OCCASIONS option keys, in display order.
+ */
+export const getActiveSeasonOccasion = (date = new Date()) => {
+  const datedOptions = Object.keys(FESTIVAL_MONTH_DAY);
+  const inSeasonDated = datedOptions.filter(option => isFestivalInSeason(option, date));
+  const inSeason = isWeddingSeason(date) ? [...inSeasonDated, 'wedding'] : inSeasonDated;
+
+  if (inSeason.length > 0) {
+    return [...inSeason.slice(0, 2), 'gifting'];
+  }
+
+  // Off-season: gifting leads, plus the single nearest-upcoming dated festival.
+  // Already-passed festivals wrap around to "next year" (add 365) so they sort behind
+  // whatever's upcoming instead of looking closer just because their raw distance is a
+  // small negative number.
+  const nearest = [...datedOptions].sort((a, b) => {
+    const da = daysUntilFestival(a, date);
+    const db = daysUntilFestival(b, date);
+    return (da < 0 ? da + 365 : da) - (db < 0 ? db + 365 : db);
+  })[0];
+
+  return ['gifting', nearest];
 };
 
 // Max listings fetched per brand for the fetchListingsAcrossBrands query-time
@@ -136,32 +248,37 @@ const generateStructuredData = (categories, categoryProducts) => {
 // AgeNavigation (below) uses the shared ProductCarousel component directly.
 
 // ── OccasionStrip ──────────────────────────────────────────────────────────
-// Two-panel editorial section: one panel per occasion.
-// Accepts optional additionalQueryParams to scope results to a category
-// (used on CategoryPage to show occasion products within the current category).
-// Seasonal ordering: Diwali & Festivals first Oct 1–Nov 15, Gifting first otherwise.
+// Editorial section, one panel per currently-relevant occasion. Accepts optional
+// additionalQueryParams to scope results to a category (used on CategoryPage to show
+// occasion products within the current category). Which 2-3 of the 7 configured OCCASIONS
+// render is decided by getActiveSeasonOccasion() — 'gifting' is always included, plus
+// whichever festivals are in-season (or the nearest upcoming one, off-season).
 
 export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
+  // Computed once per mount, matching the original isDiwaliSeason() call site — the active
+  // set doesn't need to re-derive mid-session just because the clock ticks forward.
+  const activeOptions = getActiveSeasonOccasion();
+  const orderedOccasions = activeOptions
+    .map(option => OCCASIONS.find(o => o.option === option))
+    .filter(Boolean);
+
   const [occasionProducts, setOccasionProducts] = useState({});
   // Loading is tracked per occasion (not one shared flag) so a slow occasion's
   // fetch never delays a faster sibling's panel from rendering — see the
   // per-occasion effect below.
   const [loadingByOccasion, setLoadingByOccasion] = useState(() =>
-    OCCASIONS.reduce((acc, { option }) => ({ ...acc, [option]: true }), {})
+    orderedOccasions.reduce((acc, { option }) => ({ ...acc, [option]: true }), {})
   );
 
-  const inSeason = isDiwaliSeason();
-  // Show Diwali first during season, Gifting first off-season
-  const orderedOccasions = inSeason ? OCCASIONS : [...OCCASIONS].reverse();
-
   const additionalParamsKey = JSON.stringify(additionalQueryParams);
+  const activeOptionsKey = activeOptions.join(',');
   const DISPLAY_COUNT = 6;
 
   useEffect(() => {
     const listingFields = config?.listing?.listingFields;
     const sanitizeConfig = { listingFields };
 
-    setLoadingByOccasion(OCCASIONS.reduce((acc, { option }) => ({ ...acc, [option]: true }), {}));
+    setLoadingByOccasion(orderedOccasions.reduce((acc, { option }) => ({ ...acc, [option]: true }), {}));
 
     // Fire each occasion's fetch independently (not inside a shared Promise.all)
     // and update only that occasion's slice of state on completion, so whichever
@@ -169,39 +286,42 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
     // slower of the two. fetchListingsAcrossBrands additionally bounds each
     // per-brand request within a single occasion's fetch (see PER_BRAND_TIMEOUT_MS
     // in util/bestsellerCarousel.js).
-    OCCASIONS.forEach(({ option }) => {
+    orderedOccasions.forEach(({ option, matchValues }) => {
       (async () => {
         try {
           // Query-time diversity: fetch a couple of listings from every configured
           // brand rather than one marketplace-wide query, so one brand's inventory
           // can't monopolize the pool before diversification even gets a chance.
+          // has_any: lets an occasion match more than one publicData.occasion value
+          // (e.g. 'diwali' also matches the legacy 'diwali-festivals' tag).
           const { pool, allIncluded } = await fetchListingsAcrossBrands(
             sdk,
             DISCOVERY_BRAND_IDS,
             {
-              pub_occasion: option,
+              pub_occasion: `has_any:${matchValues.join(',')}`,
               include: ['author', 'images', 'currentStock'],
               ...additionalQueryParams,
             },
             PER_BRAND_COUNT
           );
 
-          // Client-side guard: only keep raw listings that actually carry this
+          // Client-side guard: only keep raw listings that actually carry a matching
           // occasion value in publicData. Protects against the pub_occasion search
           // index not being set up in Sharetribe Console (filter silently ignored →
           // all listings returned). Must run BEFORE pickBrandDiverse — diversifying
           // first and filtering after would diversify across the whole unfiltered
           // pool, then collapse back down to whichever single brand happens to have
           // the most occasion-tagged listings once the irrelevant picks are dropped.
-          const occasionTagged = pool.filter(listing => {
+          const matchesOccasion = listing => {
             const occasions = listing.attributes?.publicData?.occasion;
             // Handle both storage formats:
             // - array ['gifting'] when ingested with schema-aware parsing
             // - string 'gifting' when ingested before schema config was loaded
-            return Array.isArray(occasions)
-              ? occasions.includes(option)
-              : occasions === option;
-          });
+            const tags = Array.isArray(occasions) ? occasions : occasions ? [occasions] : [];
+            return tags.some(tag => matchValues.includes(tag));
+          };
+
+          const occasionTagged = pool.filter(matchesOccasion);
           if (process.env.NODE_ENV !== 'production') {
             console.debug(
               `[OccasionStrip] ${option}: ${pool.length} from API → ${occasionTagged.length} with occasion tag`
@@ -217,12 +337,7 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
           // brand-diverse listings above, so this should be a no-op in practice —
           // but re-check here too in case denormalisedEntities resolves a listing
           // whose entity data doesn't match what was in the filtered pool.
-          const filtered = all.filter(listing => {
-            const occasions = listing.attributes?.publicData?.occasion;
-            return Array.isArray(occasions)
-              ? occasions.includes(option)
-              : occasions === option;
-          });
+          const filtered = all.filter(matchesOccasion);
 
           setOccasionProducts(prev => ({ ...prev, [option]: filtered }));
         } catch {
@@ -232,7 +347,7 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
         }
       })();
     });
-  }, [additionalParamsKey]); // eslint-disable-line
+  }, [additionalParamsKey, activeOptionsKey]); // eslint-disable-line
 
   const anyLoading = Object.values(loadingByOccasion).some(Boolean);
 
@@ -259,11 +374,12 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
           const stillLoading = loadingByOccasion[occasion.option];
           const products = occasionProducts[occasion.option] || [];
 
-          const ctaLabel = inSeason && occasion.ctaSeasonal ? occasion.ctaSeasonal : occasion.cta;
-
           // SearchPage URL needs the has_any: prefix for multi-enum fields;
           // the direct SDK query above uses the bare value instead
-          const queryParts = { pub_occasion: `has_any:${occasion.option}`, ...additionalQueryParams };
+          const queryParts = {
+            pub_occasion: `has_any:${occasion.matchValues.join(',')}`,
+            ...additionalQueryParams,
+          };
           const viewAllSearch = '?' + new URLSearchParams(queryParts).toString();
 
           return (
@@ -274,7 +390,7 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
               colorTheme={occasion.colorTheme}
               products={products}
               isLoading={stillLoading}
-              ctaLabel={ctaLabel}
+              ctaLabel={occasion.cta}
               viewAllSearch={viewAllSearch}
             />
           );

@@ -1,4 +1,4 @@
-import { normalizeEntrySource, captureEntrySource, getEntrySource } from './entrySource';
+import { normalizeEntrySource, captureEntrySource, getEntrySource, stripUtmParams } from './entrySource';
 
 const ENTRY_SOURCE_KEY = 'mela_entry_source';
 
@@ -189,5 +189,27 @@ describe('captureEntrySource() + getEntrySource()', () => {
 
   it('getEntrySource defaults to direct when nothing was ever captured', () => {
     expect(getEntrySource()).toEqual('direct');
+  });
+});
+
+describe('stripUtmParams()', () => {
+  it('removes utm_* params via replaceState without touching other query params', () => {
+    window.history.pushState({}, '', '/gifts?utm_source=pinterest&utm_medium=social&pub_recipient=has_any%3Afor_mom');
+    stripUtmParams();
+    expect(window.location.search).toEqual('?pub_recipient=has_any%3Afor_mom');
+    expect(window.location.pathname).toEqual('/gifts');
+  });
+
+  it('preserves the hash', () => {
+    window.history.pushState({}, '', '/gifts?utm_source=instagram#section');
+    stripUtmParams();
+    expect(window.location.search).toEqual('');
+    expect(window.location.hash).toEqual('#section');
+  });
+
+  it('no-ops when there are no utm params', () => {
+    window.history.pushState({}, '', '/gifts?pub_recipient=has_any%3Afor_mom');
+    stripUtmParams();
+    expect(window.location.search).toEqual('?pub_recipient=has_any%3Afor_mom');
   });
 });

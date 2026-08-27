@@ -3,7 +3,7 @@ import { FormattedMessage } from '../../util/reactIntl';
 import { NamedLink, ListingCard } from '../../components';
 import {
   OCCASIONS,
-  isDiwaliSeason,
+  getActiveSeasonOccasion,
 } from '../MelaHomePage/sections/CategoryShowcase/CategoryShowcase';
 
 import css from './BrandOccasionModule.module.css';
@@ -23,20 +23,32 @@ const listingOccasions = listing => {
 /**
  * "Shop by Occasion" module for the brand storefront (/brands/:brandSlug).
  *
- * Unlike OccasionStrip (homepage/CategoryPage), this doesn't fetch its own
- * data — ProfilePage's loadData already loads the brand's full listing set
- * into props before this renders, so occasion panels are just a client-side
- * filter of listings the page already has.
+ * Unlike OccasionStrip (homepage/CategoryPage), this doesn't fetch its own data —
+ * ProfilePage's loadData already loads the brand's full listing set into props before this
+ * renders, so occasion panels are just a client-side filter of listings the page already
+ * has. Also unlike OccasionStrip, this doesn't restrict itself to only the 2-3
+ * currently-in-season occasions — a brand's off-season inventory (e.g. Karva Chauth pieces
+ * browsed in December) is still worth surfacing on their own storefront, since there's no
+ * extra fetch cost to showing every qualifying panel. getActiveSeasonOccasion() is used only
+ * to rank in-season occasions first among whichever panels already qualify.
  */
 const BrandOccasionModule = ({ listings = [], brandUserId }) => {
-  const inSeason = isDiwaliSeason();
-  const orderedOccasions = inSeason ? OCCASIONS : [...OCCASIONS].reverse();
+  const activeOptions = getActiveSeasonOccasion();
+  const orderedOccasions = [...OCCASIONS].sort((a, b) => {
+    const rankA = activeOptions.indexOf(a.option);
+    const rankB = activeOptions.indexOf(b.option);
+    const scoreA = rankA === -1 ? activeOptions.length : rankA;
+    const scoreB = rankB === -1 ? activeOptions.length : rankB;
+    return scoreA - scoreB;
+  });
 
   const panels = orderedOccasions
     .map(occasion => ({
       occasion,
       products: listings
-        .filter(listing => listingOccasions(listing).includes(occasion.option))
+        .filter(listing =>
+          listingOccasions(listing).some(tag => occasion.matchValues.includes(tag))
+        )
         .slice(0, DISPLAY_COUNT),
     }))
     .filter(panel => panel.products.length >= MIN_TO_SHOW_PANEL);
@@ -53,9 +65,9 @@ const BrandOccasionModule = ({ listings = [], brandUserId }) => {
 
       <div className={css.occasionPanels}>
         {panels.map(({ occasion, products }) => {
-          const ctaLabel = inSeason && occasion.ctaSeasonal ? occasion.ctaSeasonal : occasion.cta;
+          const ctaLabel = occasion.cta;
           const queryParts = {
-            pub_occasion: `has_any:${occasion.option}`,
+            pub_occasion: `has_any:${occasion.matchValues.join(',')}`,
             ...(brandUserId ? { author_id: brandUserId } : {}),
           };
           const viewAllSearch = '?' + new URLSearchParams(queryParts).toString();

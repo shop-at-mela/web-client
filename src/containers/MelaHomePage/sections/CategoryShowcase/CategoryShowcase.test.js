@@ -5,7 +5,12 @@ import { IntlProvider } from 'react-intl';
 import '@testing-library/jest-dom';
 
 import { ConfigurationProvider } from '../../../../context/configurationContext';
-import CategoryShowcase, { OccasionStrip, AgeNavigation, EXCLUDED_DISCOVERY_BRAND_SLUGS } from './CategoryShowcase';
+import CategoryShowcase, {
+  OccasionStrip,
+  AgeNavigation,
+  EXCLUDED_DISCOVERY_BRAND_SLUGS,
+  getActiveSeasonOccasion,
+} from './CategoryShowcase';
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
@@ -332,14 +337,23 @@ describe('OccasionStrip', () => {
     jest.clearAllMocks();
     mockQuery.mockResolvedValue(emptyQueryResponse());
     denormalisedEntities.mockReturnValue([]);
+    // Fixed, off-season, non-wedding-season date so getActiveSeasonOccasion() resolves
+    // deterministically to ['gifting', 'raksha_bandhan'] (the nearest upcoming dated
+    // festival from mid-March) for every test in this block except 'seasonal ordering'
+    // below, which sets its own dates to exercise the in-season/wedding-season branches.
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-15'));
   });
 
-  it('queries every configured brand for each occasion', async () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('queries every configured brand for each active occasion', async () => {
     renderInContext(<OccasionStrip />);
 
     await waitFor(() => {
       const calls = mockQuery.mock.calls.filter(([p]) => p.pub_occasion);
-      expect(calls).toHaveLength(TEST_BRAND_IDS.length * 2); // 3 brands × 2 occasions
+      expect(calls).toHaveLength(TEST_BRAND_IDS.length * 2); // 3 brands × 2 active occasions
       calls.forEach(([params]) => {
         expect(TEST_BRAND_IDS).toContain(params.author_id);
         expect(params.perPage).toBe(2);
@@ -347,7 +361,7 @@ describe('OccasionStrip', () => {
     });
   });
 
-  it('queries diwali-festivals and gifting occasions', async () => {
+  it('queries gifting and the nearest-upcoming festival with has_any:', async () => {
     renderInContext(<OccasionStrip />);
 
     await waitFor(() => {
@@ -355,7 +369,7 @@ describe('OccasionStrip', () => {
         .mock.calls.filter(([p]) => p.pub_occasion)
         .map(([p]) => p.pub_occasion);
       expect(occasions).toEqual(
-        expect.arrayContaining(['diwali-festivals', 'gifting'])
+        expect.arrayContaining(['has_any:gifting', 'has_any:raksha_bandhan'])
       );
     });
   });
@@ -364,21 +378,21 @@ describe('OccasionStrip', () => {
     mockQuery.mockReturnValue(new Promise(() => {}));
     renderInContext(<OccasionStrip />);
 
-    expect(screen.getByText('Diwali & Festivals')).toBeInTheDocument();
     expect(screen.getByText('Gifting')).toBeInTheDocument();
+    expect(screen.getByText('Raksha Bandhan')).toBeInTheDocument();
   });
 
   it('renders listing cards when products have matching occasion tag', async () => {
-    const diwaliListings = Array.from({ length: 3 }, (_, i) =>
-      makeListing(`d-${i}`, { occasionTag: 'diwali-festivals' })
-    );
     const giftingListings = Array.from({ length: 3 }, (_, i) =>
       makeListing(`g-${i}`, { occasionTag: 'gifting' })
     );
+    const rakshaListings = Array.from({ length: 3 }, (_, i) =>
+      makeListing(`r-${i}`, { occasionTag: 'raksha_bandhan' })
+    );
 
     denormalisedEntities
-      .mockReturnValueOnce(diwaliListings) // diwali-festivals
-      .mockReturnValueOnce(giftingListings); // gifting
+      .mockReturnValueOnce(giftingListings) // gifting (leads off-season)
+      .mockReturnValueOnce(rakshaListings); // raksha_bandhan
 
     renderInContext(<OccasionStrip />);
 
@@ -409,7 +423,7 @@ describe('OccasionStrip', () => {
   });
 
   it('client-side filters out listings that lack the matching occasion tag', async () => {
-    // diwali: nothing; gifting: 2 valid + 1 without tag
+    // gifting: 2 valid + 1 without tag; raksha_bandhan: nothing
     const mixedGiftingListings = [
       makeListing('g1', { occasionTag: 'gifting' }),
       makeListing('g2', { occasionTag: 'gifting' }),
@@ -417,8 +431,8 @@ describe('OccasionStrip', () => {
     ];
 
     denormalisedEntities
-      .mockReturnValueOnce([]) // diwali → hidden
-      .mockReturnValueOnce(mixedGiftingListings); // gifting: 2 pass, 1 blocked
+      .mockReturnValueOnce(mixedGiftingListings) // gifting: 2 pass, 1 blocked
+      .mockReturnValueOnce([]); // raksha_bandhan → hidden
 
     renderInContext(<OccasionStrip />);
 
@@ -436,13 +450,31 @@ describe('OccasionStrip', () => {
     ];
 
     denormalisedEntities
-      .mockReturnValueOnce([]) // diwali
-      .mockReturnValueOnce(legacyListings); // gifting
+      .mockReturnValueOnce(legacyListings) // gifting
+      .mockReturnValueOnce([]); // raksha_bandhan
 
     renderInContext(<OccasionStrip />);
 
     await waitFor(() => {
       expect(screen.getAllByTestId('listing-card')).toHaveLength(2);
+    });
+  });
+
+  it('matches Diwali listings tagged with either the current or legacy occasion value', async () => {
+    // Diwali's matchValues covers both 'diwali' (current) and 'diwali-festivals' (legacy,
+    // pre-backfill inventory) — only exercised directly here since the default fixture
+    // date (off-season) doesn't put Diwali in the active set.
+    jest.useFakeTimers().setSystemTime(new Date('2026-10-25')); // Diwali in season
+    const mixedDiwaliListings = [
+      makeListing('d1', { occasionTag: 'diwali' }),
+      makeListing('d2', { occasionTag: 'diwali-festivals' }),
+    ];
+    denormalisedEntities.mockReturnValue(mixedDiwaliListings);
+
+    renderInContext(<OccasionStrip />);
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('listing-card').length).toBeGreaterThanOrEqual(2);
     });
   });
 
@@ -468,8 +500,8 @@ describe('OccasionStrip', () => {
       ];
 
       denormalisedEntities
-        .mockReturnValueOnce([]) // diwali → hidden
-        .mockReturnValueOnce(listings); // gifting
+        .mockReturnValueOnce(listings) // gifting
+        .mockReturnValueOnce([]); // raksha_bandhan → hidden
 
       renderInContext(<OccasionStrip />);
 
@@ -488,8 +520,8 @@ describe('OccasionStrip', () => {
       ];
 
       denormalisedEntities
-        .mockReturnValueOnce([]) // diwali → hidden
-        .mockReturnValueOnce(listings); // gifting
+        .mockReturnValueOnce(listings) // gifting
+        .mockReturnValueOnce([]); // raksha_bandhan → hidden
 
       renderInContext(<OccasionStrip />);
 
@@ -502,10 +534,14 @@ describe('OccasionStrip', () => {
   });
 
   describe('seasonal ordering', () => {
-    const setup = async () => {
-      const diwaliListings = [
-        makeListing('d1', { occasionTag: 'diwali-festivals' }),
-        makeListing('d2', { occasionTag: 'diwali-festivals' }),
+    it('leads with the in-season festival, gifting trailing', async () => {
+      // Only Navratri is in season on this date (its 21-day lead window doesn't overlap
+      // any other dated festival's window — see getActiveSeasonOccasion's comments).
+      jest.useFakeTimers().setSystemTime(new Date('2026-09-25'));
+
+      const navratriListings = [
+        makeListing('n1', { occasionTag: 'navratri' }),
+        makeListing('n2', { occasionTag: 'navratri' }),
       ];
       const giftingListings = [
         makeListing('g1', { occasionTag: 'gifting' }),
@@ -513,7 +549,7 @@ describe('OccasionStrip', () => {
       ];
 
       denormalisedEntities
-        .mockReturnValueOnce(diwaliListings)
+        .mockReturnValueOnce(navratriListings)
         .mockReturnValueOnce(giftingListings);
 
       renderInContext(<OccasionStrip />);
@@ -522,21 +558,67 @@ describe('OccasionStrip', () => {
         expect(screen.getAllByTestId('listing-card').length).toBeGreaterThanOrEqual(4);
       });
 
-      return screen.getAllByRole('heading', { level: 4 }).map(h => h.textContent);
-    };
-
-    it('shows Diwali & Festivals first during Oct 1 – Nov 15', async () => {
-      jest.useFakeTimers().setSystemTime(new Date('2025-10-20'));
-      const order = await setup();
-      jest.useRealTimers();
-      expect(order[0]).toBe('Diwali & Festivals');
+      const order = screen.getAllByRole('heading', { level: 4 }).map(h => h.textContent);
+      expect(order).toEqual(['Navratri', 'Gifting']);
     });
 
-    it('shows Gifting first outside Diwali season', async () => {
-      jest.useFakeTimers().setSystemTime(new Date('2025-07-04'));
-      const order = await setup();
-      jest.useRealTimers();
-      expect(order[0]).toBe('Gifting');
+    it('leads with gifting, nearest-upcoming festival trailing, off-season', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-03-15'));
+
+      const giftingListings = [
+        makeListing('g1', { occasionTag: 'gifting' }),
+        makeListing('g2', { occasionTag: 'gifting' }),
+      ];
+      const rakshaListings = [
+        makeListing('r1', { occasionTag: 'raksha_bandhan' }),
+        makeListing('r2', { occasionTag: 'raksha_bandhan' }),
+      ];
+
+      denormalisedEntities
+        .mockReturnValueOnce(giftingListings)
+        .mockReturnValueOnce(rakshaListings);
+
+      renderInContext(<OccasionStrip />);
+
+      await waitFor(() => {
+        expect(screen.getAllByTestId('listing-card').length).toBeGreaterThanOrEqual(4);
+      });
+
+      const order = screen.getAllByRole('heading', { level: 4 }).map(h => h.textContent);
+      expect(order).toEqual(['Gifting', 'Raksha Bandhan']);
+    });
+
+    it('includes Wedding Season during wedding season (Nov-Feb)', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-12-15'));
+
+      const weddingListings = [
+        makeListing('w1', { occasionTag: 'wedding' }),
+        makeListing('w2', { occasionTag: 'wedding' }),
+      ];
+      const giftingListings = [
+        makeListing('g1', { occasionTag: 'gifting' }),
+        makeListing('g2', { occasionTag: 'gifting' }),
+      ];
+
+      denormalisedEntities
+        .mockReturnValueOnce(weddingListings)
+        .mockReturnValueOnce(giftingListings);
+
+      renderInContext(<OccasionStrip />);
+
+      await waitFor(() => {
+        expect(screen.getAllByTestId('listing-card').length).toBeGreaterThanOrEqual(4);
+      });
+
+      const order = screen.getAllByRole('heading', { level: 4 }).map(h => h.textContent);
+      expect(order).toEqual(['Wedding Season', 'Gifting']);
+    });
+
+    it('never returns more than 3 occasions even when several festivals overlap in season', () => {
+      // Late Oct: Karva Chauth, Diwali, and Bhai Dooj windows all overlap.
+      const options = getActiveSeasonOccasion(new Date('2026-10-25'));
+      expect(options.length).toBeLessThanOrEqual(3);
+      expect(options).toContain('gifting');
     });
   });
 });

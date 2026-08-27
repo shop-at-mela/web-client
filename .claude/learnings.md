@@ -306,6 +306,16 @@ const categoryPath = (level1, level2, level3) => {
 - **Test seam**: `fetchBestsellersForBrands`/`fetchBrandProfiles` exported; `jest.spyOn(configBrands, 'getBestsellerProductIds')` intercepts the named import (Babel CJS interop) to exercise cached vs fallback branches.
 - **Deferred (long tail)**: `CategoryPage.duck.js` carousel (category-scoped per-brand queries) and `BrandSpotlight`/`NewFromIndia` local-state re-fetchers — same cache/limiter utils apply.
 
+### Local `configListing.js` Edits Don't Reach the Running App by Default
+- **Issue**: `configHelpers.js`'s `mergeListingConfig` merges `hostedListingFields` (Sharetribe **Console**-managed asset) with local `configListing.js` only when `shouldMerge` is true — and `shouldMerge = mergeDefaultTypesAndFieldsForDebugging(false)` hardcodes `false`. So by default `listingFields = union(hostedListingFields, localOnlyListingFields, 'key')`: a field's real definition (enumOptions, filterConfig, etc.) comes from **Console**, not this file, unless the field is marked `localOnly: true` (e.g. `isBestseller`, a `boolean` schemaType Console can't configure at all).
+- **Consequence**: Adding a new enum value (or a whole new field) to `configListing.js` locally does nothing for the running app until the same value/field is also added in Sharetribe Console. `sanitizeMultiEnum` (`src/util/sanitize.js`) silently **drops** any `publicData` value not present in the field's live (Console) `enumOptions` during `updatedEntities`/`denormalisedEntities` — even when the raw API response already contains it (search-schema registration via `flex-cli` is a separate, also-required step; this is a third, distinct gap).
+- **Symptom to watch for**: A client-side query genuinely returns matching listings (visible in `console.debug`/network before denormalization), but the same listings render zero results after `denormalisedEntities` — check whether the field's enum value is new and whether Console has been updated, before assuming a filtering/schema bug.
+- **Found via**: gifting-festival-traffic-prd.md Day 2 — OccasionStrip's Raksha Bandhan panel had 4 API-matching listings but rendered 0 cards.
+
+### Sort Param Supports Up to 3 Comma-Separated Attributes
+- **Sharetribe `/listings/query` `sort`**: accepts up to 3 comma-separated attributes, applied first-to-last as tiebreakers; each is descending by default, prefix `-` for ascending. E.g. `pub_isBestseller,createdAt` = bestsellers first, newest-first as tiebreaker.
+- **Used for**: gifting-context merchandised sort (`SearchPage.duck.js` `GIFTING_DEFAULT_SORT`) — bestseller-aware ordering without any query-time scoring.
+
 ## Session Log
 2024-10-10: Fixed CategoryProducts to display proper category names + product filtering improvements
 2025-10-10: Implemented HeroProducts with real API integration, randomization, and comprehensive testing
@@ -316,3 +326,4 @@ const categoryPath = (level1, level2, level3) => {
 2026-04-19: Sharetribe upstream merge v8.8.0→v10.7.0 — incremental tag-by-tag strategy, Redux Toolkit migration fixes, Mela brand color/nav preservation patterns
 2026-07-31: Homepage redesign build — hero copy (story-led + global shipping); new reusable components CategoryTiles, OccasionCard (extracted from OccasionStrip), BrandPhotoCard (hover/tap photo swap); EarnedItsPlace section reusing FeaturedBrandPartners data path; TrustAssurance retitled "Shop with Confidence". 4 new test suites, 115 homepage-tree tests passing.
 2026-08-08: Sharetribe Dev 429 rate-limit fix — batched bestsellers by cached config ids (BrandsPage.duck) + brandProfileCache (TTL) + mapWithConcurrency burst cap; keeps live author_id path for prod via data-presence gate; scripts/harvest-bestseller-ids.js to populate pools. 20 new tests (57 duck+util, 75 incl. component suites) passing.
+2026-08-25: gifting-festival-traffic-prd.md Day 2 — entry_source/utm attribution, GiftingPage (/gifts + /occasions/:slug) with price/recipient/occasion chips, OccasionStrip generalized to a 7-occasion season selector (getActiveSeasonOccasion), gifting-context bestseller-aware sort. Found the Console-vs-local-listingFields gap (see Patterns above) live-verifying OccasionStrip. 151/151 suites green.

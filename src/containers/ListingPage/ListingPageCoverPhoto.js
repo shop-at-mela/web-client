@@ -89,6 +89,7 @@ import {
   handleNavigateToRequestQuotePage,
   handleSubmit,
   priceForSchemaMaybe,
+  pinterestAvailability,
   getDerivedRenderData,
 } from './ListingPage.shared';
 import SectionHero from './SectionHero';
@@ -364,7 +365,7 @@ export const ListingPageComponent = props => {
     : currentStock > 0
     ? 'https://schema.org/InStock'
     : 'https://schema.org/OutOfStock';
-
+  const schemaOffer = priceForSchemaMaybe(price);
 
   const handleViewPhotosClick = e => {
     // Stop event from bubbling up to prevent image click handler
@@ -401,6 +402,10 @@ export const ListingPageComponent = props => {
       description={seoDescription} // SEO ONLY: Meta description for search engines, NOT visible on page
       facebookImages={facebookImages}
       twitterImages={twitterImages}
+      openGraphType="product"
+      productPriceAmount={schemaOffer.price}
+      productPriceCurrency={schemaOffer.priceCurrency}
+      productAvailability={pinterestAvailability(schemaAvailability)}
       {...noIndexMaybe}
       schema={{
         // SEO ONLY: JSON-LD structured data for search engines (Google, Bing, etc.)
@@ -424,7 +429,7 @@ export const ListingPageComponent = props => {
         offers: {
           '@type': 'Offer',
           url: productURL,
-          ...priceForSchemaMaybe(price), // Price for Google Shopping/rich snippets
+          ...schemaOffer, // Price for Google Shopping/rich snippets
           availability: schemaAvailability, // Stock status for search engines (always required)
 
           // FIX #1: Add shipping details (calculated based on buyer's location)

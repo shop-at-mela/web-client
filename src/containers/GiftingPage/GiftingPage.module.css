@@ -1,0 +1,128 @@
+.root {
+  padding: 16px;
+}
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--colorTextSecondary, #6b7280);
+  margin-bottom: 20px;
+}
+
+.breadcrumbLink {
+  color: var(--colorTextSecondary, #6b7280);
+  text-decoration: none;
+}
+
+.breadcrumbLink:hover {
+  text-decoration: underline;
+}
+
+.breadcrumbSep {
+  color: var(--colorTextSecondary, #9ca3af);
+  margin: 0 2px;
+}
+
+.breadcrumbCurrent {
+  color: var(--colorTextPrimary, #111827);
+  font-weight: 500;
+}
+
+/* ── Header ── */
+.header {
+  margin-bottom: 20px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--colorTextPrimary, #111827);
+  margin: 0 0 8px;
+  line-height: 1.2;
+}
+
+.description {
+  font-size: 15px;
+  color: var(--colorTextSecondary, #6b7280);
+  margin: 0;
+  max-width: 640px;
+}
+
+/* ── Gift filter chips ── */
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.chip {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--colorBorder, #e5e7eb);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--colorTextPrimary, #374151);
+  text-decoration: none;
+  background: var(--colorBackground, #fff);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.chip:hover {
+  background: var(--colorBackgroundHover, #f9fafb);
+  border-color: var(--colorBorderHover, #d1d5db);
+}
+
+/* ── Products ── */
+.productsSection {
+  margin-top: 20px;
+}
+
+/* ── States ── */
+.loading,
+.empty {
+  padding: 48px 0;
+  text-align: center;
+  color: var(--colorTextSecondary, #6b7280);
+}
+
+.emptyText {
+  margin: 0 0 16px;
+  font-size: 16px;
+}
+
+.emptyLink {
+  display: inline-block;
+  padding: 10px 24px;
+  background: var(--marketplaceColor, #4f46e5);
+  color: #fff;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ── Tablet+ ── */
+@media (min-width: 768px) {
+  .root {
+    padding: 24px 32px;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+}
+
+/* ── Desktop ── */
+@media (min-width: 1024px) {
+  .root {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 32px 40px;
+  }
+}

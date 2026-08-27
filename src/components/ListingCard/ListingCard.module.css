@@ -323,3 +323,32 @@
 .urgencyBadge {
   background-color: #e74c3c;
 }
+
+/* Occasion Chips - overlaid bottom-left of image (TrustBadges takes top-left,
+   ConversionBadges takes top-right) */
+.occasionChips {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.occasionChip {
+  composes: marketplaceTinyFontStyles from global;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: var(--colorGrey700, #4a4a4a);
+  font-weight: var(--fontWeightSemiBold);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  width: fit-content;
+
+  @media (--viewportMedium) {
+    font-size: 11px;
+    padding: 5px 9px;
+  }
+}
