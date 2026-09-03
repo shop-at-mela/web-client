@@ -253,7 +253,15 @@ export const ListingPageComponent = props => {
   }
 
   if (!rawParams.slug && currentListing.id) {
-    return <NamedRedirect name="ListingPage" params={{ slug: listingSlug, id: rawParams.id }} />;
+    // Preserve the query string (e.g. UTM params) through the canonical-slug
+    // redirect so campaign attribution survives the /l/:id -> /l/:slug/:id hop.
+    return (
+      <NamedRedirect
+        name="ListingPage"
+        params={{ slug: listingSlug, id: rawParams.id }}
+        search={location.search}
+      />
+    );
   }
 
   // Memoize the recommended products SKUs to prevent infinite re-renders
@@ -400,6 +408,7 @@ export const ListingPageComponent = props => {
       scrollingDisabled={scrollingDisabled}
       author={authorDisplayName}
       description={seoDescription} // SEO ONLY: Meta description for search engines, NOT visible on page
+      keywords={publicData.searchKeywords} // SEO ONLY: Meta keywords for search engines, NOT visible on page
       facebookImages={facebookImages}
       twitterImages={twitterImages}
       openGraphType="product"

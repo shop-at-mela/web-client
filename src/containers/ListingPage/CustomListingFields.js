@@ -11,6 +11,11 @@ import {
 
 import CustomExtendedDataSection from '../../components/CustomExtendedDataSection/CustomExtendedDataSection.js';
 
+// These listing fields are used for SEO metadata (page <meta> tags) only and
+// must never be rendered as visible listing details, regardless of the
+// showConfig.displayOnListingPage value set in the Console listing-fields asset.
+const SEO_ONLY_FIELD_KEYS = ['searchKeywords', 'metaDescription'];
+
 /**
  * Renders custom listing fields.
  * - SectionDetails is used if schemaType is 'enum', 'long', or 'boolean'
@@ -29,7 +34,9 @@ const CustomListingFields = props => {
 
   // Fields are shown by default. Set showConfig.displayOnListingPage to false to explicitly hide a field.
   const displayableFieldConfigs = listingFieldConfigs.filter(
-    fieldConfig => fieldConfig.showConfig?.displayOnListingPage !== false
+    fieldConfig =>
+      fieldConfig.showConfig?.displayOnListingPage !== false &&
+      !SEO_ONLY_FIELD_KEYS.includes(fieldConfig.key)
   );
 
   const isFieldForSelectedCategories = fieldConfig => {

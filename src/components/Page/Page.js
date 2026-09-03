@@ -119,6 +119,7 @@ class PageComponent extends Component {
       author,
       openGraphType = 'website',
       description,
+      keywords,
       facebookImages,
       published,
       schema,
@@ -190,6 +191,7 @@ class PageComponent extends Component {
         socialSharingTitle: socialSharingTitle || pageTitle,
         socialSharingDescription: socialSharingDescription || pageDescription,
         description: pageDescription,
+        keywords,
         facebookImages: facebookImgs,
         twitterImages: twitterImgs,
         twitterHandle,
@@ -348,6 +350,7 @@ class PageComponent extends Component {
  * @param {string} props.author - The author
  * @param {string} props.openGraphType - The open graph type (aka 'og:type')
  * @param {string} props.description - The description
+ * @param {string} [props.keywords] - Comma-separated keywords for the meta keywords tag
  * @param {Array<ImageConfig>} props.facebookImages - The facebook images
  * @param {Array<ImageConfig>} props.twitterImages - The twitter images
  * @param {string} props.published - The published date (article:published_time)

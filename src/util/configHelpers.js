@@ -1367,6 +1367,25 @@ const mergeDefaultTypesAndFieldsForDebugging = isDebugging => {
   return isDebugging && isDev;
 };
 
+// has_any vs has_all is an API-call-time choice, not a schema-level one (confirmed by
+// Sharetribe Developer Advocate, 2026-08-27) — but Console has no UI to set
+// filterConfig.searchMode, so a Console-managed field always validates to the 'has_all'
+// default (see validSearchMode below) regardless of what configListing.js declares
+// locally, since local filterConfig for non-localOnly fields is dropped entirely once
+// merged (mergeListingConfig's `listingFields`, below). Hard-coding the override here — on
+// the raw config, before validListingFields runs — is the supported way to get has_any
+// semantics on a Console-created field without moving its schema definition to the CLI.
+// gifting-festival-traffic-prd.md Day 2: these three all need has_any (OR) matching so a
+// shopper selecting multiple occasion/recipient values in the filter panel gets listings
+// matching ANY of them, not ALL of them.
+export const HAS_ANY_SEARCH_MODE_KEYS = ['occasion', 'gift_occasion', 'recipient'];
+export const applyHasAnySearchModeOverride = listingFields =>
+  listingFields.map(field =>
+    HAS_ANY_SEARCH_MODE_KEYS.includes(field.key)
+      ? { ...field, filterConfig: { ...field.filterConfig, searchMode: 'has_any' } }
+      : field
+  );
+
 // Note: by default, listing types and fields are only merged if explicitly set for debugging
 const mergeListingConfig = (hostedConfig, defaultConfigs, categoriesInUse) => {
   // Listing configuration is splitted to several assets in Console
@@ -1397,7 +1416,11 @@ const mergeListingConfig = (hostedConfig, defaultConfigs, categoriesInUse) => {
 
   return {
     ...rest,
-    listingFields: validListingFields(listingFields, listingTypesInUse, categoriesInUse),
+    listingFields: validListingFields(
+      applyHasAnySearchModeOverride(listingFields),
+      listingTypesInUse,
+      categoriesInUse
+    ),
     listingTypes: validListingTypes(listingTypes),
     enforceValidListingType: defaultConfigs.listing.enforceValidListingType,
   };
