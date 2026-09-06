@@ -305,7 +305,7 @@ const renderForm = formRenderProps => {
               source="add_to_cart_button"
               onAdded={() => setAddedTrigger(t => t + 1)}
             />
-            <AddToCartConfirmation trigger={addedTrigger} />
+            <AddToCartConfirmation trigger={addedTrigger} brand={brand} />
           </>
         ) : (
           <PrimaryButton type="submit" inProgress={submitInProgress} disabled={submitDisabled}>

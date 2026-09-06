@@ -1820,7 +1820,8 @@
   "SavedItemsBanner.signUpLink": "sign up",
   "SavedItemsBanner.dismiss": "Dismiss",
 
-  "AddToCartConfirmation.added": "Added",
+  "AddToCartConfirmation.added": "Saved to your list — checkout happens on the brand's site when you're ready",
+  "AddToCartConfirmation.addedWithBrand": "Saved to your list — shop on {brand} when you're ready",
   "AddToCartConfirmation.viewSaved": "View Saved ({count}) →",
 
   "SavedPage.title": "Saved",
