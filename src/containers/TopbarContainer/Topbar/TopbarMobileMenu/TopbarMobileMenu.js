@@ -147,6 +147,12 @@ const TopbarMobileMenu = props => {
                 <span className={css.navigationArrow}>→</span>
               </span>
             </NamedLink>
+            <NamedLink name="CategoriesPage" className={css.navigationLink}>
+              <span className={css.navigationLinkContent}>
+                <FormattedMessage id="TopbarMobileMenu.allCategoriesLink" />
+                <span className={css.navigationArrow}>→</span>
+              </span>
+            </NamedLink>
             <Link to="/categories/Baby-Kids" className={css.navigationLink}>
               <span className={css.navigationLinkContent}>
                 <FormattedMessage id="TopbarMobileMenu.babyKidsLink" />
@@ -177,9 +183,9 @@ const TopbarMobileMenu = props => {
                 <span className={css.navigationArrow}>→</span>
               </span>
             </Link>
-            <NamedLink name="CategoriesPage" className={css.navigationLink}>
+            <NamedLink name="GiftsPage" className={css.navigationLink}>
               <span className={css.navigationLinkContent}>
-                <FormattedMessage id="TopbarMobileMenu.allCategoriesLink" />
+                <FormattedMessage id="TopbarMobileMenu.giftsLink" defaultMessage="Gifts" />
                 <span className={css.navigationArrow}>→</span>
               </span>
             </NamedLink>
@@ -257,6 +263,12 @@ const TopbarMobileMenu = props => {
           >
             <FormattedMessage id="TopbarMobileMenu.allBrandsLink" />
           </NamedLink>
+          <NamedLink
+            className={classNames(css.navigationLink, currentPageClass('CategoriesPage'))}
+            name="CategoriesPage"
+          >
+            <FormattedMessage id="TopbarMobileMenu.allCategoriesLink" />
+          </NamedLink>
           <Link to="/categories/Baby-Kids" className={css.navigationLink}>
             <FormattedMessage id="TopbarMobileMenu.babyKidsLink" />
           </Link>
@@ -269,11 +281,14 @@ const TopbarMobileMenu = props => {
           <Link to="/categories/Jewelry-Accessories" className={css.navigationLink}>
             <FormattedMessage id="TopbarMobileMenu.jewelryLink" defaultMessage="Jewelry & Accessories" />
           </Link>
+          <Link to="/categories/Beauty-Wellness" className={css.navigationLink}>
+            <FormattedMessage id="TopbarMobileMenu.beautyLink" defaultMessage="Beauty & Wellness" />
+          </Link>
           <NamedLink
-            className={classNames(css.navigationLink, currentPageClass('CategoriesPage'))}
-            name="CategoriesPage"
+            className={classNames(css.navigationLink, currentPageClass('GiftsPage'))}
+            name="GiftsPage"
           >
-            <FormattedMessage id="TopbarMobileMenu.allCategoriesLink" />
+            <FormattedMessage id="TopbarMobileMenu.giftsLink" defaultMessage="Gifts" />
           </NamedLink>
           {savedItemsCount > 0 ? (
             <NamedLink
