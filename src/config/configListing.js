@@ -346,8 +346,18 @@ export const listingFields = [
       isRequired: false,
     },
   },
-  // Brand field - uses text schema for dynamic brands instead of enum
-  /* commenting this out to use Console based asset configurations
+  // Brand field - uses text schema for dynamic brands instead of enum.
+  // Re-enabled as a local fallback (a hosted Console asset, if configured, still takes
+  // precedence — see AGENTS.md). isRequired is false: this field previously shipped
+  // `isRequired: true`, which blocks listing save/edit for any listing missing pub_brand —
+  // a live regression risk on the scraper-driven ingestion path with zero buyer-facing
+  // benefit, since `filterType: SelectSingleFilter` on schemaType 'text' does not actually
+  // render a filter (FilterComponent.js's schemaType switch has no 'text' case — it falls to
+  // `default: return null`; Sharetribe's text schema is keyword-search only, not exact-match
+  // filterable, so SelectSingleFilter was never going to work here as configured).
+  // Making the buyer-facing brand filter (feedback-log.md F-024) actually render needs either
+  // a Console-hosted enum field with generated options, or a new filter component — tracked
+  // as follow-up work, not shipped by this block.
   {
     key: 'brand',
     scope: 'public',
@@ -365,11 +375,9 @@ export const listingFields = [
     saveConfig: {
       label: 'Brand',
       placeholderMessage: 'Enter brand name…',
-      isRequired: true,
-      requiredMessage: 'You need to enter a brand name.',
+      isRequired: false,
     },
   },
-  */
   // {
   //   "scope": "public",
   //   "label": "Gears",
