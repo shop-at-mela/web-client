@@ -1704,6 +1704,9 @@
   "CategoryPage.brandCarouselTitle": "Shop {categoryName} Brands",
   "CategoryPage.browseCategory": "Browse →",
   "CategoryPage.allCategories": "All Categories",
+  "CategoryPage.brandFilterLabel": "Brand",
+  "CategoryPage.gridHeadingAll": "All {categoryName}",
+  "CategoryPage.gridHeadingFiltered": "{brandName} in {categoryName}",
 
   "GiftingPage.title": "{heading} | Curated Indian Brands | {marketplaceName}",
   "GiftingPage.home": "Home",

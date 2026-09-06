@@ -35,7 +35,16 @@ describe('CategoryPage.duck reducer', () => {
       brandTilesInProgress: false,
       brandCarouselEntries: [],
       brandCarouselInProgress: false,
+      lastCategoryKey: null,
     });
+  });
+
+  it('stores the category key on CATEGORY_KEY_UPDATED', () => {
+    const state = categoryPageReducer(undefined, {
+      type: 'app/CategoryPage/CATEGORY_KEY_UPDATED',
+      payload: 'Fashion||',
+    });
+    expect(state.lastCategoryKey).toBe('Fashion||');
   });
 
   it('sets brandTilesInProgress on request', () => {
@@ -284,5 +293,36 @@ describe('loadData', () => {
     expect(tileFetchCall).toBeTruthy();
     expect(mockSdk.users.show).toHaveBeenCalledWith(expect.objectContaining({ id: 'brand-a' }));
     expect(mockSdk.users.show).toHaveBeenCalledWith(expect.objectContaining({ id: 'brand-b' }));
+  });
+
+  it('does not re-run the brand-tile/carousel fetch fan-out on a second call for the same category (only `search` differs)', async () => {
+    getListingsById.mockReturnValue([{ id: { uuid: 'l1' }, author: { id: { uuid: 'brand-a' } } }]);
+
+    // Minimal inline reducer just for CATEGORY_KEY_UPDATED, so getState() reflects it on
+    // the second loadData call the same way the real store would.
+    const categoryPageState = { lastCategoryKey: null };
+    mockGetState = jest.fn(() => ({
+      SearchPage: { currentPageResultIds: ['l1'] },
+      CategoryPage: categoryPageState,
+    }));
+    mockDispatch = jest.fn(action => {
+      if (typeof action === 'function') return action(mockDispatch, mockGetState, mockSdk);
+      if (action?.type === 'app/CategoryPage/CATEGORY_KEY_UPDATED') {
+        categoryPageState.lastCategoryKey = action.payload;
+      }
+      return action;
+    });
+
+    await loadData({ level1: 'Fashion' }, '', {})(mockDispatch, mockGetState, mockSdk);
+    expect(mockSdk.users.show).toHaveBeenCalledTimes(1);
+
+    const result = await loadData({ level1: 'Fashion' }, '?author_id=brand-a', {})(
+      mockDispatch,
+      mockGetState,
+      mockSdk
+    );
+
+    expect(result).toBe('search-result');
+    expect(mockSdk.users.show).toHaveBeenCalledTimes(1); // unchanged — no second fan-out
   });
 });

@@ -36,6 +36,14 @@ const CATEGORY_BRAND_CAROUSEL_SUCCESS = 'app/CategoryPage/CATEGORY_BRAND_CAROUSE
 
 export const MAX_CATEGORY_CAROUSEL_PRODUCTS = 4;
 
+// Tracks which level1/level2/level3 the brand-tile/carousel fetches last ran for, so
+// selecting the brand filter (which only changes `search`, e.g. author_id) doesn't
+// re-trigger the full per-brand sdk.listings.query + sdk.users.show fan-out again.
+const CATEGORY_KEY_UPDATED = 'app/CategoryPage/CATEGORY_KEY_UPDATED';
+
+const categoryKeyFromParams = params =>
+  `${params?.level1 || ''}|${params?.level2 || ''}|${params?.level3 || ''}`;
+
 // L1 route param values (Sharetribe Console category config ids, also used as
 // CATEGORY_DESCRIPTIONS keys in CategoryPage.js) mapped to the BRAND_CATEGORIES id
 // configBrands.js tags each brand with. Categories with no mapping (e.g.
@@ -53,6 +61,7 @@ const initialState = {
   brandTilesInProgress: false,
   brandCarouselEntries: [],
   brandCarouselInProgress: false,
+  lastCategoryKey: null,
 };
 
 export const categoryPageReducer = (state = initialState, action) => {
@@ -65,6 +74,8 @@ export const categoryPageReducer = (state = initialState, action) => {
       return { ...state, brandCarouselInProgress: true };
     case CATEGORY_BRAND_CAROUSEL_SUCCESS:
       return { ...state, brandCarouselInProgress: false, brandCarouselEntries: action.payload };
+    case CATEGORY_KEY_UPDATED:
+      return { ...state, lastCategoryKey: action.payload };
     default:
       return state;
   }
@@ -259,6 +270,15 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
   const searchThunk = searchPageLoadData(params, mergedSearch, config);
 
   return searchThunk(dispatch, getState, sdk).then(result => {
+    // Selecting/clearing a filter (e.g. the brand filter's author_id) re-triggers loadData
+    // with the same level1/level2/level3 but a different `search` — the brand roster for
+    // this category hasn't changed, so skip re-running the per-brand fetch fan-out.
+    const key = categoryKeyFromParams(params);
+    if (getState().CategoryPage?.lastCategoryKey === key) {
+      return result;
+    }
+    dispatch({ type: CATEGORY_KEY_UPDATED, payload: key });
+
     const { currentPageResultIds = [] } = getState().SearchPage || {};
     const listings = getListingsById(getState(), currentPageResultIds);
 
