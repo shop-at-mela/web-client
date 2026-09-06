@@ -8,6 +8,8 @@
  * Desktop (≥768px): same fixed behaviour, max-width centered, rounded top corners.
  * ────────────────────────────────────────────────────────────────────────── */
 
+@import '../../styles/customMediaQueries.css';
+
 .sheet {
   position: fixed;
   bottom: 0;
@@ -23,6 +25,23 @@
   /* Collapsed height — just the strip */
   max-height: 64px;
   transition: max-height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* OrderPanel.js adds 'mela-has-sticky-order-bar' to <body> while its
+   fixed bottom-0 mobile CTA bar is mounted (see OrderPanel.js). Only offset this sheet
+   when that bar actually exists on the current page — a page-agnostic constant here
+   previously floated the sheet mid-content on every non-PDP page. 96px clears the bar
+   across both the <768px and 768–1023px OrderPanel layouts (the button grows to
+   min-height 56px with more padding at --viewportMedium); it's hidden entirely at
+   --viewportLarge, where OrderPanel's mobile bar is `display: none`. */
+:global(.mela-has-sticky-order-bar) .sheet {
+  bottom: 96px;
+}
+
+@media (--viewportLarge) {
+  :global(.mela-has-sticky-order-bar) .sheet {
+    bottom: 0;
+  }
 }
 
 .sheet.expanded {
@@ -104,9 +123,14 @@
   font-size: 1.25rem;
   color: #a0aec0;
   cursor: pointer;
-  padding: 0 0.25rem;
+  padding: 0;
   line-height: 1;
   margin-left: 0.25rem;
+  min-width: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     color: #4a5568;

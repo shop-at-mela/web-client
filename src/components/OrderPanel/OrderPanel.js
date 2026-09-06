@@ -308,6 +308,19 @@ const OrderPanel = React.forwardRef((props, ref) => {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Marks <body> while this panel's fixed bottom-0 mobile CTA bar (.openOrderForm,
+  // hidden only at --viewportLarge) is on screen, so other fixed-bottom UI — e.g.
+  // SentimentSheet — can offset itself above it instead of stacking on top and
+  // blocking taps on the CTA (see SentimentSheet.module.css).
+  useEffect(() => {
+    const BODY_CLASS = 'mela-has-sticky-order-bar';
+    document.body.classList.add(BODY_CLASS);
+    return () => {
+      document.body.classList.remove(BODY_CLASS);
+    };
+  }, []);
+
   const {
     rootClassName,
     className,

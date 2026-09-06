@@ -22,7 +22,7 @@ import { shouldShowSentiment, markSentimentShown, postSentiment } from '../../ut
 
 import css from './SentimentSheet.module.css';
 
-const SHOW_DELAY_MS = 15_000;
+const SHOW_DELAY_MS = 30_000;
 const THANK_YOU_DURATION_MS = 2_500;
 
 // State enum
