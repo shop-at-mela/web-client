@@ -16,6 +16,11 @@
  *     onContinue={url => openBrandStorefront(url, trackingParams)}
  *     onClose={() => setRedirectSheetOpen(false)}
  *   />
+ *
+ * Pass skipSentiment (from shouldSkipRedirectTrustSentiment()) when the general
+ * SentimentSheet already captured sentiment this session, so a shopper isn't asked the
+ * same thumbs-up/down + free-text question twice in one visit. The trust-disclosure
+ * content always renders regardless — only the sentiment ask is conditional.
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -33,7 +38,15 @@ const S = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const RedirectTrustSheet = ({ isOpen, brandName, productUrl, isVerified, onContinue, onClose }) => {
+const RedirectTrustSheet = ({
+  isOpen,
+  brandName,
+  productUrl,
+  isVerified,
+  onContinue,
+  onClose,
+  skipSentiment = false,
+}) => {
   const intl = useIntl();
   const [state, setState] = useState(S.OPEN);
   const [thumbs, setThumbs] = useState(null);
@@ -159,10 +172,10 @@ const RedirectTrustSheet = ({ isOpen, brandName, productUrl, isVerified, onConti
           </ul>
         </div>
 
-        <div className={css.divider} />
+        {!skipSentiment && <div className={css.divider} />}
 
         {/* ── Sentiment ── */}
-        {!isSubmitted ? (
+        {skipSentiment ? null : !isSubmitted ? (
           <>
             <div className={css.sentimentRow}>
               <span className={css.sentimentPrompt}>
@@ -267,6 +280,7 @@ RedirectTrustSheet.propTypes = {
   isVerified: bool,
   onContinue: func.isRequired,
   onClose: func.isRequired,
+  skipSentiment: bool,
 };
 
 export default RedirectTrustSheet;
