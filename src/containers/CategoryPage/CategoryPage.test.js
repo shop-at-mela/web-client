@@ -552,7 +552,7 @@ describe('CategoryPage', () => {
       expect(screen.queryByText(/Shop .* Brands/)).not.toBeInTheDocument();
     });
 
-    it('shows the L1 title even on an L2 sub-page', () => {
+    it('does not render on an L2 sub-page (L0 only — duplicated the brand filter otherwise)', () => {
       const store = createStore(() => ({
         ...mockState,
         marketplaceData: {
@@ -567,7 +567,7 @@ describe('CategoryPage', () => {
       }));
 
       renderAt('/categories/Baby-Kids/Clothing', store);
-      expect(screen.getByText('Shop Baby & Kids Brands')).toBeInTheDocument();
+      expect(screen.queryByText(/Shop .* Brands/)).not.toBeInTheDocument();
     });
   });
 
@@ -584,8 +584,48 @@ describe('CategoryPage', () => {
       attributes: { title: `Product ${id}`, price: { amount: 2500, currency: 'USD' } },
     });
 
+    // Filter is gated to >=3 carousel entries — below that the dropdown has nothing
+    // meaningful to narrow (e.g. Beauty-Wellness, Home-Kitchen today).
     const storeWithBrandA = () =>
       createStore(() => ({
+        ...mockState,
+        marketplaceData: {
+          entities: {
+            user: {
+              brandA: userEntity('brandA', 'Masilo'),
+              brandB: userEntity('brandB', 'Brand B'),
+              brandC: userEntity('brandC', 'Brand C'),
+            },
+            listing: {
+              l1: listingEntity('l1'),
+              l2: listingEntity('l2'),
+              l3: listingEntity('l3'),
+            },
+          },
+        },
+        CategoryPage: {
+          brandCarouselEntries: [
+            { brandId: 'brandA', productIds: ['l1'] },
+            { brandId: 'brandB', productIds: ['l2'] },
+            { brandId: 'brandC', productIds: ['l3'] },
+          ],
+        },
+      }));
+
+    it('renders the filter and "All {categoryName}" heading when the carousel has >=3 entries', () => {
+      renderAt('/categories/Baby-Kids', storeWithBrandA());
+      expect(screen.getByRole('button', { name: /Brand filter/i })).toBeInTheDocument();
+      expect(screen.getByText('All Baby & Kids')).toBeInTheDocument();
+    });
+
+    it('renders neither the filter nor a brand-specific heading when the carousel is empty', () => {
+      renderAt('/categories/Baby-Kids');
+      expect(screen.queryByRole('button', { name: /Brand filter/i })).not.toBeInTheDocument();
+      expect(screen.getByText('All Baby & Kids')).toBeInTheDocument();
+    });
+
+    it('renders no filter when the carousel has fewer than 3 entries', () => {
+      const store = createStore(() => ({
         ...mockState,
         marketplaceData: {
           entities: {
@@ -598,14 +638,7 @@ describe('CategoryPage', () => {
         },
       }));
 
-    it('renders the filter and "All {categoryName}" heading when the carousel has entries', () => {
-      renderAt('/categories/Baby-Kids', storeWithBrandA());
-      expect(screen.getByRole('button', { name: /Brand filter/i })).toBeInTheDocument();
-      expect(screen.getByText('All Baby & Kids')).toBeInTheDocument();
-    });
-
-    it('renders neither the filter nor a brand-specific heading when the carousel is empty', () => {
-      renderAt('/categories/Baby-Kids');
+      renderAt('/categories/Baby-Kids', store);
       expect(screen.queryByRole('button', { name: /Brand filter/i })).not.toBeInTheDocument();
       expect(screen.getByText('All Baby & Kids')).toBeInTheDocument();
     });

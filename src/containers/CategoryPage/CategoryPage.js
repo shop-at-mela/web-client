@@ -489,11 +489,13 @@ const CategoryPageComponent = props => {
             <OccasionStrip config={config} additionalQueryParams={occasionCategoryParams} />
           </div>
 
-          {/* "Shop {L1} Brands" carousel — always the full L1 brand roster (e.g. every
-              Fashion brand on a Women's Ethnic L2 page), each tile's products scoped to
-              the current page's deepest category level. Brands with no listings at that
-              depth are dropped by the duck before this ever renders. */}
-          {brandCarousel.length > 0 && (
+          {/* "Shop {L1} Brands" carousel — always the full L1 brand roster, each tile's
+              products scoped to the current page's deepest category level. Brands with no
+              listings at that depth are dropped by the duck before this ever renders.
+              L0 only: on L1/L2 pages this duplicated the grid's own brand filter ~1,900px
+              apart with opposite behavior (carousel ejects off-page; filter narrows in
+              place). */}
+          {brandCarousel.length > 0 && !level2 && (
             <div className={css.brandCarouselSection}>
               <h2 className={css.brandCarouselTitle}>
                 <FormattedMessage
@@ -509,7 +511,7 @@ const CategoryPageComponent = props => {
                   <BrandCardHome
                     brand={brand}
                     products={products}
-                    showCertifications={false}
+                    showCertifications={true}
                     showPlaceholders={false}
                   />
                 )}
@@ -542,7 +544,9 @@ const CategoryPageComponent = props => {
                   />
                 )}
               </h2>
-              {brandCarousel.length > 0 && (
+              {/* Gated to >=3 options — below that (e.g. Beauty-Wellness, Home-Kitchen
+                  today) the dropdown has nothing meaningful to narrow. */}
+              {brandCarousel.length >= 3 && (
                 <SelectSingleFilter
                   id="CategoryPage.brandFilter"
                   name="author_id"
