@@ -316,6 +316,12 @@ const categoryPath = (level1, level2, level3) => {
 - **Sharetribe `/listings/query` `sort`**: accepts up to 3 comma-separated attributes, applied first-to-last as tiebreakers; each is descending by default, prefix `-` for ascending. E.g. `pub_isBestseller,createdAt` = bestsellers first, newest-first as tiebreaker.
 - **Used for**: gifting-context merchandised sort (`SearchPage.duck.js` `GIFTING_DEFAULT_SORT`) — bestseller-aware ordering without any query-time scoring.
 
+### SelectSingleFilter/FieldSelectTree Can't Carry Extra Option Data
+- **Issue**: `FieldSelectTree.js`'s `pickValidOptions` only keeps `option`/`label`/`suboptions` per option — any other field (e.g. a second description line) is silently dropped, and `FilterPopup.js` always wraps its `children` in `FilterForm` (Cancel/Clear/Apply), which can't be bypassed per-usage without editing `FilterPopup` itself — a component every `SearchPage` filter depends on.
+- **When richer option content is needed for exactly one filter**: don't touch the shared stack. Build a small, page-scoped popup reusing the same low-level primitives `FilterPopup` itself is built from — `PopupOpenerButton` (`SearchPage/PopupOpenerButton`), `OutsideClickHandler`, `KeyboardListener` — instead of `FieldSelectTree`/`FilterForm`. See `CategoryPage/BrandFilterPopup/BrandFilterPopup.js` (shows a brand's craft line under its name; applies selection immediately on click instead of FilterForm's Apply/Cancel step).
+- **Import `KeyboardListener`/`OutsideClickHandler` directly** (`components/KeyboardListener/KeyboardListener`, not the barrel) — same barrel→`SavedPageRecommendations`→`homepageSdk`→`createInstance()` crash as the *Extracting a Reusable Component* pattern above.
+- **Deterministic scroll-clip beats a fade/gradient for a popup option list**: set the scrollable container's `max-height` to a non-whole multiple of the row height (e.g. `4.5 × rowHeight`) instead of a round pixel value or a `::after` fade. A physically truncated row is an honest "there's more" cue that needs no JS scroll-position check (a static fade can't tell whether the list actually overflows) and reads better for low-vision/magnifier users. Panel-reviewed via `/ux-design panel` before adopting — see `CategoryPage/BrandFilterPopup/BrandFilterPopup.module.css`.
+
 ## Session Log
 2024-10-10: Fixed CategoryProducts to display proper category names + product filtering improvements
 2025-10-10: Implemented HeroProducts with real API integration, randomization, and comprehensive testing

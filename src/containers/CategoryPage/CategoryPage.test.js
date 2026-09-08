@@ -105,6 +105,7 @@ const mockMessages = {
   'CategoryPage.browseCategory': 'Browse →',
   'CategoryPage.allCategories': 'All Categories',
   'CategoryPage.brandFilterLabel': 'Brand',
+  'CategoryPage.brandFilterClear': 'Clear',
   'CategoryPage.gridHeadingAll': 'All {categoryName}',
   'CategoryPage.gridHeadingFiltered': '{brandName} in {categoryName}',
   'Page.schemaTitle': '{marketplaceName}',
@@ -647,8 +648,8 @@ describe('CategoryPage', () => {
       renderAtWithLocation('/categories/Baby-Kids?pub_occasion=diwali', storeWithBrandA());
 
       fireEvent.click(screen.getByRole('button', { name: /Brand filter/i }));
+      // Selection applies immediately — no separate Apply step.
       fireEvent.click(screen.getByRole('button', { name: /Masilo/i }));
-      fireEvent.click(screen.getByText('Apply'));
 
       expect(screen.getByTestId('location')).toHaveTextContent(
         '/categories/Baby-Kids?author_id=brandA&pub_occasion=diwali'

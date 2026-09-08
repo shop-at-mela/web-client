@@ -1,0 +1,126 @@
+.root {
+  position: relative;
+  display: inline-block;
+}
+
+.popup {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: var(--zIndexPopup);
+
+  min-width: 264px;
+  margin-top: 7px;
+  background-color: var(--colorWhite);
+
+  border-top: 1px solid var(--colorGrey100);
+  box-shadow: var(--boxShadowPopup);
+  border-radius: var(--borderRadiusMedium);
+  padding: 15px 20px 12px;
+}
+
+.popupLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--colorGrey700);
+  margin: 0 0 8px;
+}
+
+/* Only the option list scrolls — label above and Clear below stay put, so a longer
+   brand roster never pushes Clear off-screen or grows the popup past the viewport.
+   max-height is 4.5 rows (row height × 4.5), not a round pixel number — that
+   guarantees a physically truncated row whenever content overflows: an honest,
+   JS-free "there's more" cue (a bottom fade/gradient can't tell whether the list
+   actually has more content without a scroll-position listener, and is a weaker
+   signal for low-vision/magnifier users). When the roster fits without overflowing,
+   nothing clips — correctly signaling "that's everything". */
+.optionListScroll {
+  --optionRowHeight: 44px; /* also the min touch-target size for single-line rows below */
+  max-height: calc(var(--optionRowHeight) * 4.5);
+  overflow-y: auto;
+  margin-right: -12px;
+  padding-right: 12px;
+}
+
+.optionList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.optionRow + .optionRow {
+  margin-top: 1px;
+}
+
+.optionBtn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  text-align: left;
+  min-height: var(--optionRowHeight);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  margin: 0 -8px;
+  border-radius: 6px;
+}
+
+.optionBtn:hover {
+  background: var(--colorGrey50);
+}
+
+.optionName {
+  display: block;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--colorGrey700);
+  line-height: 1.3;
+}
+
+/* Craft line — clamped to one line so a long description can't wrap and blow out
+   the row height on a narrow viewport. Rows with no craft data simply render no
+   second line (an established pattern elsewhere, e.g. BrandCardHome's tagline). */
+.optionCraft {
+  display: block;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--colorGrey500);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selectedOption {
+  /* rgba(38, 34, 97) = --marketplaceColor (#262261) at 6% opacity — avoids relative
+     color syntax (hsl(from ...)) for broader browser support. */
+  background: rgba(38, 34, 97, 0.06);
+}
+
+.selectedOption .optionName {
+  color: var(--marketplaceColor);
+  font-weight: 600;
+}
+
+.selectedOption .optionName::after {
+  content: '✓';
+  float: right;
+  font-weight: 700;
+}
+
+.clearBtn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--marketplaceColor);
+  padding: 10px 0 2px;
+  margin-top: 6px;
+  border-top: 1px solid var(--colorGrey100);
+}

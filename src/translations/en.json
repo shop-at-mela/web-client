@@ -1705,6 +1705,7 @@
   "CategoryPage.browseCategory": "Browse →",
   "CategoryPage.allCategories": "All Categories",
   "CategoryPage.brandFilterLabel": "Brand",
+  "CategoryPage.brandFilterClear": "Clear",
   "CategoryPage.gridHeadingAll": "All {categoryName}",
   "CategoryPage.gridHeadingFiltered": "{brandName} in {categoryName}",
 

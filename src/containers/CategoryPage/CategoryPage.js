@@ -11,6 +11,7 @@ import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { applyCategoryMerchandising } from '../../util/categoryMerchandising';
 import { parse, stringify } from '../../util/urlHelpers';
+import { deriveBrandCraftLine } from '../../util/brandCraft';
 
 import {
   Page,
@@ -23,7 +24,7 @@ import {
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 import { OccasionStrip, AgeNavigation } from '../MelaHomePage/sections/CategoryShowcase/CategoryShowcase';
-import SelectSingleFilter from '../SearchPage/SelectSingleFilter/SelectSingleFilter';
+import BrandFilterPopup from './BrandFilterPopup/BrandFilterPopup';
 import { getCategoryBrandTiles, getCategoryBrandCarousel } from './CategoryPage.duck';
 
 import css from './CategoryPage.module.css';
@@ -134,12 +135,14 @@ const categoryPath = (level1, level2, level3) => {
 /**
  * Brand filter options for the current page, sourced from the "Shop {L1} Brands" carousel
  * data already fetched for this page (no separate API call) — every option is guaranteed to
- * have at least one listing at the current category depth.
+ * have at least one listing at the current category depth. Each option carries its craft
+ * line (see util/brandCraft.js) for BrandFilterPopup's two-line rows.
  */
 const brandFilterOptions = brandCarousel =>
   brandCarousel.map(({ brand }) => ({
-    option: brand.id.uuid,
-    label: brand.attributes.profile.displayName,
+    id: brand.id.uuid,
+    name: brand.attributes.profile.displayName,
+    craft: deriveBrandCraftLine(brand),
   }));
 
 /**
@@ -327,8 +330,8 @@ const CategoryPageComponent = props => {
   const selectedBrandEntry = brandCarousel.find(({ brand }) => brand.id.uuid === selectedBrandId);
   const selectedBrandName = selectedBrandEntry?.brand.attributes.profile.displayName;
 
-  const handleBrandFilterSubmit = values => {
-    const nextParams = { ...currentSearchParams, author_id: values?.author_id || null };
+  const handleBrandFilterSelect = brandId => {
+    const nextParams = { ...currentSearchParams, author_id: brandId || null };
     const search = stringify(nextParams);
     // preserveScroll: the whole point of this control sitting next to the grid is that
     // picking a brand narrows what's below it in place — Routes.js's global
@@ -341,14 +344,6 @@ const CategoryPageComponent = props => {
       state: { preserveScroll: true },
     });
   };
-
-  // Mirrors FilterComponent.js's existing getAriaLabel pattern — reuses the site's one
-  // screenreader string for every filter instead of inventing a new i18n key.
-  const getBrandFilterAriaLabel = (label, values) =>
-    intl.formatMessage(
-      { id: 'SearchPage.screenreader.openFilterButton' },
-      { label, status: values ? 'active' : 'inactive', values, mode: 'normal' }
-    );
 
   // P1.2: brand-diversity cap + utility-item demotion, then interleaved brand tiles.
   // No brand tile is spliced in while a brand filter is active — every listing already
@@ -547,16 +542,12 @@ const CategoryPageComponent = props => {
               {/* Gated to >=3 options — below that (e.g. Beauty-Wellness, Home-Kitchen
                   today) the dropdown has nothing meaningful to narrow. */}
               {brandCarousel.length >= 3 && (
-                <SelectSingleFilter
+                <BrandFilterPopup
                   id="CategoryPage.brandFilter"
-                  name="author_id"
-                  queryParamNames={['author_id']}
-                  label={selectedBrandName || intl.formatMessage({ id: 'CategoryPage.brandFilterLabel' })}
-                  options={brandFilterOptions(brandCarousel)}
-                  initialValues={{ author_id: selectedBrandId }}
-                  onSubmit={handleBrandFilterSubmit}
-                  showAsPopup
-                  getAriaLabel={getBrandFilterAriaLabel}
+                  brands={brandFilterOptions(brandCarousel)}
+                  selectedBrandId={selectedBrandId}
+                  selectedBrandName={selectedBrandName}
+                  onSelect={handleBrandFilterSelect}
                 />
               )}
             </div>
