@@ -50,6 +50,12 @@ const callLoadData = props => {
 };
 
 const setPageScrollPosition = (location, delayed) => {
+  if (location.state?.preserveScroll) {
+    // Opt-out for in-place filter interactions (e.g. CategoryPage's brand filter) that push
+    // a new location purely to update the URL's query string — the default reset-to-top
+    // behavior below is meant for actual page-to-page navigation, not this.
+    return;
+  }
   if (!location.hash) {
     // No hash, scroll to top
     window.scroll({

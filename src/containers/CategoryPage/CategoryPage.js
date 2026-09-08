@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'redux';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useHistory, useLocation, useParams } from 'react-router-dom';
 
 import { useConfiguration } from '../../context/configurationContext';
 import { useRouteConfiguration } from '../../context/routeConfigurationContext';
@@ -10,6 +10,8 @@ import { createResourceLocatorString } from '../../util/routes';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { applyCategoryMerchandising } from '../../util/categoryMerchandising';
+import { parse, stringify } from '../../util/urlHelpers';
+import { deriveBrandCraftLine } from '../../util/brandCraft';
 
 import {
   Page,
@@ -22,6 +24,7 @@ import {
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 import { OccasionStrip, AgeNavigation } from '../MelaHomePage/sections/CategoryShowcase/CategoryShowcase';
+import BrandFilterPopup from './BrandFilterPopup/BrandFilterPopup';
 import { getCategoryBrandTiles, getCategoryBrandCarousel } from './CategoryPage.duck';
 
 import css from './CategoryPage.module.css';
@@ -128,6 +131,19 @@ const categoryPath = (level1, level2, level3) => {
   if (level3) path += `/${level3}`;
   return path;
 };
+
+/**
+ * Brand filter options for the current page, sourced from the "Shop {L1} Brands" carousel
+ * data already fetched for this page (no separate API call) — every option is guaranteed to
+ * have at least one listing at the current category depth. Each option carries its craft
+ * line (see util/brandCraft.js) for BrandFilterPopup's two-line rows.
+ */
+const brandFilterOptions = brandCarousel =>
+  brandCarousel.map(({ brand }) => ({
+    id: brand.id.uuid,
+    name: brand.attributes.profile.displayName,
+    craft: deriveBrandCraftLine(brand),
+  }));
 
 /**
  * Build breadcrumb items from URL path params.
@@ -299,15 +315,41 @@ const RootCategoriesPage = ({ categories, scrollingDisabled, config, routeConfig
 const CategoryPageComponent = props => {
   const { listings, brandTiles = [], brandCarousel = [], scrollingDisabled, searchInProgress } = props;
 
-  // P1.2: brand-diversity cap + utility-item demotion, then interleaved brand tiles.
-  const mergedListings = applyCategoryMerchandising(listings);
-  const gridItems = buildCategoryGridItems(mergedListings, brandTiles);
-
   const config = useConfiguration();
   const routeConfiguration = useRouteConfiguration();
   const intl = useIntl();
+  const history = useHistory();
   const location = useLocation();
   const { level1, level2, level3 } = useParams();
+
+  // Brand filter — backed directly by Sharetribe's `author_id` query param (single UUID
+  // only; no OR/comma-list support). Options come from the brand-carousel data already
+  // fetched for this page, so every option is guaranteed to have listings here.
+  const currentSearchParams = parse(location.search);
+  const selectedBrandId = currentSearchParams.author_id;
+  const selectedBrandEntry = brandCarousel.find(({ brand }) => brand.id.uuid === selectedBrandId);
+  const selectedBrandName = selectedBrandEntry?.brand.attributes.profile.displayName;
+
+  const handleBrandFilterSelect = brandId => {
+    const nextParams = { ...currentSearchParams, author_id: brandId || null };
+    const search = stringify(nextParams);
+    // preserveScroll: the whole point of this control sitting next to the grid is that
+    // picking a brand narrows what's below it in place — Routes.js's global
+    // setPageScrollPosition otherwise resets scroll to the top on every navigation
+    // (including a search-only change like this one), which would yank the shopper away
+    // from the grid they just filtered.
+    history.push({
+      pathname: categoryPath(level1, level2, level3),
+      search: search ? `?${search}` : '',
+      state: { preserveScroll: true },
+    });
+  };
+
+  // P1.2: brand-diversity cap + utility-item demotion, then interleaved brand tiles.
+  // No brand tile is spliced in while a brand filter is active — every listing already
+  // belongs to that brand, so its own "Shop All" tile would just point back at this page.
+  const mergedListings = applyCategoryMerchandising(listings);
+  const gridItems = buildCategoryGridItems(mergedListings, selectedBrandId ? [] : brandTiles);
 
   const categories = config.categoryConfiguration?.categories || [];
 
@@ -442,11 +484,13 @@ const CategoryPageComponent = props => {
             <OccasionStrip config={config} additionalQueryParams={occasionCategoryParams} />
           </div>
 
-          {/* "Shop {L1} Brands" carousel — always the full L1 brand roster (e.g. every
-              Fashion brand on a Women's Ethnic L2 page), each tile's products scoped to
-              the current page's deepest category level. Brands with no listings at that
-              depth are dropped by the duck before this ever renders. */}
-          {brandCarousel.length > 0 && (
+          {/* "Shop {L1} Brands" carousel — always the full L1 brand roster, each tile's
+              products scoped to the current page's deepest category level. Brands with no
+              listings at that depth are dropped by the duck before this ever renders.
+              L0 only: on L1/L2 pages this duplicated the grid's own brand filter ~1,900px
+              apart with opposite behavior (carousel ejects off-page; filter narrows in
+              place). */}
+          {brandCarousel.length > 0 && !level2 && (
             <div className={css.brandCarouselSection}>
               <h2 className={css.brandCarouselTitle}>
                 <FormattedMessage
@@ -462,7 +506,7 @@ const CategoryPageComponent = props => {
                   <BrandCardHome
                     brand={brand}
                     products={products}
-                    showCertifications={false}
+                    showCertifications={true}
                     showPlaceholders={false}
                   />
                 )}
@@ -481,6 +525,32 @@ const CategoryPageComponent = props => {
 
           {/* Product grid */}
           <section className={css.productsSection}>
+            <div className={css.gridHeader}>
+              <h2 className={css.gridHeading}>
+                {selectedBrandName ? (
+                  <FormattedMessage
+                    id="CategoryPage.gridHeadingFiltered"
+                    values={{ brandName: selectedBrandName, categoryName: currentCategory.name }}
+                  />
+                ) : (
+                  <FormattedMessage
+                    id="CategoryPage.gridHeadingAll"
+                    values={{ categoryName: currentCategory.name }}
+                  />
+                )}
+              </h2>
+              {/* Gated to >=3 options — below that (e.g. Beauty-Wellness, Home-Kitchen
+                  today) the dropdown has nothing meaningful to narrow. */}
+              {brandCarousel.length >= 3 && (
+                <BrandFilterPopup
+                  id="CategoryPage.brandFilter"
+                  brands={brandFilterOptions(brandCarousel)}
+                  selectedBrandId={selectedBrandId}
+                  selectedBrandName={selectedBrandName}
+                  onSelect={handleBrandFilterSelect}
+                />
+              )}
+            </div>
             {searchInProgress ? (
               <div className={css.loading}>
                 <FormattedMessage id="CategoryPage.loadingProducts" />

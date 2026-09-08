@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter, Route } from 'react-router-dom';
 import { createStore } from 'redux';
@@ -104,8 +104,23 @@ const mockMessages = {
   'CategoryPage.brandCarouselTitle': 'Shop {categoryName} Brands',
   'CategoryPage.browseCategory': 'Browse →',
   'CategoryPage.allCategories': 'All Categories',
+  'CategoryPage.brandFilterLabel': 'Brand',
+  'CategoryPage.brandFilterClear': 'Clear',
+  'CategoryPage.gridHeadingAll': 'All {categoryName}',
+  'CategoryPage.gridHeadingFiltered': '{brandName} in {categoryName}',
   'Page.schemaTitle': '{marketplaceName}',
   'Page.schemaDescription': 'Marketplace',
+  // Needed by SelectSingleFilter's popup filter (brand filter reuses it as-is)
+  'SearchPage.screenreader.openFilterButton':
+    '{label} filter. {status, select, active {Current selection: {values}.} other {Not in use.}} {mode, select, live {Changing filter values will update the search page immediately.} other {}}',
+  'FilterForm.screenreader.label':
+    'Filter form. {mode, select, live {Changing filter values will update the search page immediately.} other {}}',
+  'FilterForm.cancel': 'Cancel',
+  'FilterForm.clear': 'Clear',
+  'FilterForm.submit': 'Apply',
+  'FieldSelectTree.screenreader.optionSelected':
+    '{pathMatch, select, exact {{optionName} is selected.} other {{optionName}. One of the nested options is selected.}}',
+  'FieldSelectTree.screenreader.option': 'Choose {optionName}.',
 };
 
 const mockState = {
@@ -135,6 +150,43 @@ const renderAt = (path, store = mockStore) => {
                 <Route path="/categories/:level1/:level2?/:level3?">
                   <CategoryPage />
                 </Route>
+              </RouteConfigurationProvider>
+            </ConfigurationProvider>
+          </IntlProvider>
+        </MemoryRouter>
+      </Provider>
+    </HelmetProvider>
+  );
+};
+
+/**
+ * Render at an L0/L1/L2 path, plus a sibling catch-all Route that mirrors the current
+ * location into a `data-testid="location"` div — the only way to observe a `history.push`
+ * triggered from inside CategoryPage, since MemoryRouter doesn't expose its history directly.
+ */
+const renderAtWithLocation = (path, store = mockStore) => {
+  return render(
+    <HelmetProvider>
+      <Provider store={store}>
+        <MemoryRouter initialEntries={[path]}>
+          <IntlProvider locale="en" messages={mockMessages}>
+            <ConfigurationProvider value={mockConfig}>
+              <RouteConfigurationProvider value={mockRoutes}>
+                <Route path="/categories/:level1/:level2?/:level3?">
+                  <CategoryPage />
+                </Route>
+                <Route
+                  path="*"
+                  render={({ location }) => (
+                    <div data-testid="location">{location.pathname + location.search}</div>
+                  )}
+                />
+                <Route
+                  path="*"
+                  render={({ location }) => (
+                    <div data-testid="location-state">{JSON.stringify(location.state || null)}</div>
+                  )}
+                />
               </RouteConfigurationProvider>
             </ConfigurationProvider>
           </IntlProvider>
@@ -440,6 +492,28 @@ describe('CategoryPage', () => {
       expect(screen.queryByTestId('brand-tile')).not.toBeInTheDocument();
       expect(gridOrder(container)).toHaveLength(6);
     });
+
+    it('suppresses the interleaved brand tile when that brand is the active filter', () => {
+      const listings = Array.from({ length: 6 }, (_, i) =>
+        listingEntity(`l${i}`, { title: `Product ${i}`, price: 8000, author: 'brandA' })
+      );
+      const entityMap = Object.fromEntries(listings.map(l => [l.id.uuid, l]));
+      const store = createStore(() => ({
+        ...mockState,
+        SearchPage: {
+          currentPageResultIds: listings.map(l => l.id),
+          searchInProgress: false,
+        },
+        marketplaceData: {
+          entities: { listing: entityMap, user: { brandA: userEntity('brandA', 'Brand A') } },
+        },
+        CategoryPage: { brandTileIds: ['brandA'], brandTilesInProgress: false },
+      }));
+
+      const { container } = renderAt('/categories/baby-clothing?author_id=brandA', store);
+      expect(screen.queryByTestId('brand-tile')).not.toBeInTheDocument();
+      expect(gridOrder(container)).toHaveLength(6); // no interleaved tile while filtered to brandA
+    });
   });
 
   describe('"Shop {L1} Brands" carousel', () => {
@@ -479,7 +553,7 @@ describe('CategoryPage', () => {
       expect(screen.queryByText(/Shop .* Brands/)).not.toBeInTheDocument();
     });
 
-    it('shows the L1 title even on an L2 sub-page', () => {
+    it('does not render on an L2 sub-page (L0 only — duplicated the brand filter otherwise)', () => {
       const store = createStore(() => ({
         ...mockState,
         marketplaceData: {
@@ -494,7 +568,115 @@ describe('CategoryPage', () => {
       }));
 
       renderAt('/categories/Baby-Kids/Clothing', store);
-      expect(screen.getByText('Shop Baby & Kids Brands')).toBeInTheDocument();
+      expect(screen.queryByText(/Shop .* Brands/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('brand filter', () => {
+    const userEntity = (id, displayName) => ({
+      id: { uuid: id },
+      type: 'user',
+      attributes: { profile: { displayName, publicData: {} } },
+    });
+
+    const listingEntity = id => ({
+      id: { uuid: id },
+      type: 'listing',
+      attributes: { title: `Product ${id}`, price: { amount: 2500, currency: 'USD' } },
+    });
+
+    // Filter is gated to >=3 carousel entries — below that the dropdown has nothing
+    // meaningful to narrow (e.g. Beauty-Wellness, Home-Kitchen today).
+    const storeWithBrandA = () =>
+      createStore(() => ({
+        ...mockState,
+        marketplaceData: {
+          entities: {
+            user: {
+              brandA: userEntity('brandA', 'Masilo'),
+              brandB: userEntity('brandB', 'Brand B'),
+              brandC: userEntity('brandC', 'Brand C'),
+            },
+            listing: {
+              l1: listingEntity('l1'),
+              l2: listingEntity('l2'),
+              l3: listingEntity('l3'),
+            },
+          },
+        },
+        CategoryPage: {
+          brandCarouselEntries: [
+            { brandId: 'brandA', productIds: ['l1'] },
+            { brandId: 'brandB', productIds: ['l2'] },
+            { brandId: 'brandC', productIds: ['l3'] },
+          ],
+        },
+      }));
+
+    it('renders the filter and "All {categoryName}" heading when the carousel has >=3 entries', () => {
+      renderAt('/categories/Baby-Kids', storeWithBrandA());
+      expect(screen.getByRole('button', { name: /Brand filter/i })).toBeInTheDocument();
+      expect(screen.getByText('All Baby & Kids')).toBeInTheDocument();
+    });
+
+    it('renders neither the filter nor a brand-specific heading when the carousel is empty', () => {
+      renderAt('/categories/Baby-Kids');
+      expect(screen.queryByRole('button', { name: /Brand filter/i })).not.toBeInTheDocument();
+      expect(screen.getByText('All Baby & Kids')).toBeInTheDocument();
+    });
+
+    it('renders no filter when the carousel has fewer than 3 entries', () => {
+      const store = createStore(() => ({
+        ...mockState,
+        marketplaceData: {
+          entities: {
+            user: { brandA: userEntity('brandA', 'Masilo') },
+            listing: { l1: listingEntity('l1') },
+          },
+        },
+        CategoryPage: {
+          brandCarouselEntries: [{ brandId: 'brandA', productIds: ['l1'] }],
+        },
+      }));
+
+      renderAt('/categories/Baby-Kids', store);
+      expect(screen.queryByRole('button', { name: /Brand filter/i })).not.toBeInTheDocument();
+      expect(screen.getByText('All Baby & Kids')).toBeInTheDocument();
+    });
+
+    it('selecting a brand navigates to ?author_id=<uuid>, preserving other params, and updates the heading', () => {
+      renderAtWithLocation('/categories/Baby-Kids?pub_occasion=diwali', storeWithBrandA());
+
+      fireEvent.click(screen.getByRole('button', { name: /Brand filter/i }));
+      // Selection applies immediately — no separate Apply step.
+      fireEvent.click(screen.getByRole('button', { name: /Masilo/i }));
+
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        '/categories/Baby-Kids?author_id=brandA&pub_occasion=diwali'
+      );
+      expect(screen.getByText('Masilo in Baby & Kids')).toBeInTheDocument();
+      // Regression guard: without this state flag, Routes.js's global scroll-reset
+      // (setPageScrollPosition) yanks the page back to the top on every filter selection.
+      expect(screen.getByTestId('location-state')).toHaveTextContent('{"preserveScroll":true}');
+    });
+
+    it('clearing the filter removes author_id, keeps other params, and reverts the heading', () => {
+      renderAtWithLocation(
+        '/categories/Baby-Kids?author_id=brandA&pub_occasion=diwali',
+        storeWithBrandA()
+      );
+      expect(screen.getByText('Masilo in Baby & Kids')).toBeInTheDocument();
+
+      // Once filtered, the toggle button's label/aria-name is the brand's own name
+      // ("Masilo filter...") rather than the generic "Brand filter..." — match on the
+      // part common to both states.
+      fireEvent.click(screen.getByRole('button', { name: /filter\./i }));
+      fireEvent.click(screen.getByText('Clear'));
+
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        '/categories/Baby-Kids?pub_occasion=diwali'
+      );
+      expect(screen.getByText('All Baby & Kids')).toBeInTheDocument();
     });
   });
 });

@@ -22,7 +22,7 @@ const { shouldShowSentiment, markSentimentShown, postSentiment } =
 
 // ── Timer setup ───────────────────────────────────────────────────────────────
 
-const SHOW_DELAY = 15_000;
+const SHOW_DELAY = 30_000;
 const THANK_YOU_DELAY = 2_500;
 
 beforeEach(() => {
@@ -70,7 +70,7 @@ describe('SentimentSheet', () => {
   });
 
   describe('collapsed state', () => {
-    it('shows the sheet after 15 seconds', () => {
+    it('shows the sheet after 30 seconds', () => {
       render(<SentimentSheet />);
       showSheet();
       expect(screen.getByRole('dialog')).toBeInTheDocument();

@@ -7,7 +7,11 @@ import { useDesktopLayoutManager } from './layoutUtils';
 
 // Utils
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
-import { shouldShowRedirectTrust, markRedirectTrustShown } from '../../util/sentimentCapture';
+import {
+  shouldShowRedirectTrust,
+  markRedirectTrustShown,
+  shouldSkipRedirectTrustSentiment,
+} from '../../util/sentimentCapture';
 import { openBrandStorefront } from '../../util/analytics/brandClickout';
 import { isMelaVerified } from '../../util/certificationHelpers';
 import { LISTING_STATE_PENDING_APPROVAL, LISTING_STATE_CLOSED, propTypes } from '../../util/types';
@@ -644,6 +648,7 @@ export const ListingPageComponent = props => {
           isVerified={isMelaVerified(publicData)}
           onContinue={url => openBrandStorefront(url, pendingTrackingParams)}
           onClose={() => setRedirectSheetOpen(false)}
+          skipSentiment={shouldSkipRedirectTrustSentiment()}
         />
       )}
     </Page>

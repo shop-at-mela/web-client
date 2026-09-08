@@ -11,9 +11,16 @@ import css from './AddToCartConfirmation.module.css';
 /**
  * AddToCartConfirmation
  *
- * Inline "✓ Added · View Saved (n) →" confirmation shown under the PDP's Add to Cart
- * CTA, for both authenticated and anonymous shoppers (add-to-cart-restoration-prd.md
- * §12 — before this fix, anon shoppers got zero feedback after clicking Add to Cart).
+ * Inline "Saved to your list — shop on {brand} when you're ready · View Saved (n) →"
+ * confirmation shown under the PDP's Add to Cart CTA, for both authenticated and
+ * anonymous shoppers (add-to-cart-restoration-prd.md §12 — before this fix, anon
+ * shoppers got zero feedback after clicking Add to Cart).
+ *
+ * States the destination and next step explicitly at the moment of the tap — "Add to
+ * Cart" saves to a list rather than starting checkout, and a shopper who doesn't already
+ * know that has no way to find out otherwise (feedback-log.md F-020: a respondent
+ * described this as a confusing "two step process"). Deliberately does not rename the
+ * CTA — see add-to-cart-restoration-prd.md §3 for why "Cart" stays.
  *
  * Controlled by the parent via the `trigger` prop: bump it (e.g. an incrementing
  * counter) each time SavedListingButton's onAdded fires. Any change to `trigger` shows
@@ -22,11 +29,12 @@ import css from './AddToCartConfirmation.module.css';
  *
  * @param {Object} props
  * @param {number} props.trigger bump this value to (re)show the confirmation
+ * @param {string} [props.brand] brand name, shown in the confirmation copy when known
  * -- injected by connect --
  * @param {number} props.savedItemsCount
  */
 const AddToCartConfirmationComponent = props => {
-  const { trigger, savedItemsCount } = props;
+  const { trigger, brand, savedItemsCount } = props;
   const [visible, setVisible] = useState(false);
   const prevTriggerRef = useRef(trigger);
   const timerRef = useRef(null);
@@ -53,7 +61,11 @@ const AddToCartConfirmationComponent = props => {
       <span className={css.checkmark} aria-hidden="true">
         ✓
       </span>{' '}
-      <FormattedMessage id="AddToCartConfirmation.added" />
+      {brand ? (
+        <FormattedMessage id="AddToCartConfirmation.addedWithBrand" values={{ brand }} />
+      ) : (
+        <FormattedMessage id="AddToCartConfirmation.added" />
+      )}
       {' · '}
       <NamedLink
         name="SavedPage"

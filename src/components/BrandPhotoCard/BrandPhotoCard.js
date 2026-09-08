@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import NamedLink from '../NamedLink/NamedLink';
 import ListingImage from '../ListingImage/ListingImage';
 import { getBrandSlugById } from '../../config/configBrands';
+import { deriveBrandCraftLine } from '../../util/brandCraft';
 
 import css from './BrandPhotoCard.module.css';
 
@@ -28,11 +29,9 @@ import css from './BrandPhotoCard.module.css';
  */
 const MAX_THUMBS = 4;
 
-export const deriveWhyLine = brand => {
-  const { bio, publicData } = brand?.attributes?.profile || {};
-  const firstSentence = bio ? bio.split('.')[0].trim() : '';
-  return publicData?.brandCraft || publicData?.brandTagline || firstSentence || null;
-};
+// Re-exported for existing callers (this file's own tests included) — the derivation
+// itself lives in util/brandCraft.js so other components can reuse it directly.
+export const deriveWhyLine = deriveBrandCraftLine;
 
 const BrandPhotoCard = props => {
   const { brand, products = [], whyLine, className = null } = props;

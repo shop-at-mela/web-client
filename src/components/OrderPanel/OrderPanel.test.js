@@ -762,12 +762,14 @@ describe('OrderPanel', () => {
       });
 
       // Confirmation is absent until a click.
-      expect(screen.queryByText('AddToCartConfirmation.added')).not.toBeInTheDocument();
+      expect(screen.queryByText('AddToCartConfirmation.addedWithBrand')).not.toBeInTheDocument();
 
       addToCartButtons[0].click();
 
       await waitFor(() => {
-        const confirmations = screen.getAllByText('AddToCartConfirmation.added');
+        // createListingWithBrand() sets a brand, so the confirmation includes it
+        // (AddToCartConfirmation.addedWithBrand) rather than the brand-less fallback.
+        const confirmations = screen.getAllByText('AddToCartConfirmation.addedWithBrand');
         expect(confirmations.length).toBeGreaterThan(0);
         // aria-live="polite" is required so anonymous/authenticated shoppers alike get
         // non-visual feedback (add-to-cart-restoration-prd.md §12.3, P0).

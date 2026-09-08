@@ -13,10 +13,16 @@ const SESSION_ID_KEY = 'mela_session_id';
 /**
  * Returns true if the sentiment sheet should be shown this session.
  * Once the user has seen it (any response or dismiss), we suppress for the session.
+ *
+ * Also suppressed if RedirectTrustSheet has already fired this session — the two sheets
+ * ask a near-identical thumbs-up/down + free-text question, and nothing else stopped both
+ * from firing in one visit (a UXR panel review flagged this — being asked for sentiment
+ * twice in one session reads as the site testing you, not selling to you). They share one
+ * per-session "asked once" budget; whichever fires first wins.
  */
 export const shouldShowSentiment = () => {
   try {
-    return !sessionStorage.getItem(SESSION_SHOWN_KEY);
+    return !sessionStorage.getItem(SESSION_SHOWN_KEY) && !sessionStorage.getItem(REDIRECT_TRUST_KEY);
   } catch {
     return false;
   }
@@ -25,10 +31,30 @@ export const shouldShowSentiment = () => {
 /**
  * Returns true if the redirect trust sheet should be shown this session.
  * Shown once per session on the first CTA click; subsequent clicks redirect directly.
+ *
+ * Deliberately NOT suppressed by the general SentimentSheet's shown-flag: this sheet's
+ * trust-disclosure content ("you're visiting {brand}'s official store", secure checkout,
+ * returns) must always get a chance to show before the first redirect — that disclosure
+ * is what keeps "Add to Cart" honest (see add-to-cart-restoration-prd.md §3) and is
+ * independent of whether sentiment has already been asked elsewhere. Use
+ * `shouldSkipRedirectTrustSentiment()` to suppress just the sentiment portion instead.
  */
 export const shouldShowRedirectTrust = () => {
   try {
     return !sessionStorage.getItem(REDIRECT_TRUST_KEY);
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Returns true if RedirectTrustSheet should skip its own thumbs/text/email sentiment
+ * ask because the general SentimentSheet already captured sentiment this session. The
+ * trust-disclosure content still shows regardless — only the sentiment section is hidden.
+ */
+export const shouldSkipRedirectTrustSentiment = () => {
+  try {
+    return !!sessionStorage.getItem(SESSION_SHOWN_KEY);
   } catch {
     return false;
   }

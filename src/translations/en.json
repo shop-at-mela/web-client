@@ -1409,6 +1409,7 @@
   "TopbarMobileMenu.homeKitchenLink": "Home & Kitchen",
   "TopbarMobileMenu.jewelryLink": "Jewelry & Accessories",
   "TopbarMobileMenu.beautyLink": "Beauty & Wellness",
+  "TopbarMobileMenu.giftsLink": "Gifts",
   "TopbarMobileMenu.inboxLink": "Inbox",
   "TopbarMobileMenu.loginLink": "Log in",
   "TopbarMobileMenu.logoutLink": "Log out",
@@ -1703,6 +1704,10 @@
   "CategoryPage.brandCarouselTitle": "Shop {categoryName} Brands",
   "CategoryPage.browseCategory": "Browse →",
   "CategoryPage.allCategories": "All Categories",
+  "CategoryPage.brandFilterLabel": "Brand",
+  "CategoryPage.brandFilterClear": "Clear",
+  "CategoryPage.gridHeadingAll": "All {categoryName}",
+  "CategoryPage.gridHeadingFiltered": "{brandName} in {categoryName}",
 
   "GiftingPage.title": "{heading} | Curated Indian Brands | {marketplaceName}",
   "GiftingPage.home": "Home",
@@ -1819,7 +1824,8 @@
   "SavedItemsBanner.signUpLink": "sign up",
   "SavedItemsBanner.dismiss": "Dismiss",
 
-  "AddToCartConfirmation.added": "Added",
+  "AddToCartConfirmation.added": "Saved to your list — checkout happens on the brand's site when you're ready",
+  "AddToCartConfirmation.addedWithBrand": "Saved to your list — shop on {brand} when you're ready",
   "AddToCartConfirmation.viewSaved": "View Saved ({count}) →",
 
   "SavedPage.title": "Saved",
