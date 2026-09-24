@@ -4,11 +4,17 @@ import { NamedLink, ProductCarousel } from '../../../../components';
 import { getWeeklyFlagshipBrandId, getBrandSlugById } from '../../../../config/configBrands';
 import { denormalisedEntities, updatedEntities } from '../../../../util/data';
 import { pushSpotlightView, pushSpotlightBrandClick } from '../../../../util/analytics/homepageEditorial';
+import { withExternalImageWidth } from '../../../../util/images';
 import sdk from '../../../../util/homepageSdk';
 
 import css from './BrandSpotlight.module.css';
 
 const MAX_PRODUCTS = 8;
+// Full-bleed banner (width: 100%, see BrandSpotlight.module.css .bannerImg) —
+// sized generously for wide desktop at 2x DPR rather than a fixed slot, since
+// brandHeroImages is a raw vendor CDN URL with no Sharetribe/imgix variants
+// to pick from (see util/images.js).
+const HERO_IMAGE_TARGET_WIDTH = 1600;
 
 /**
  * Module A: Brand Spotlight (homepage-editorial-modules.md).
@@ -105,7 +111,9 @@ const BrandSpotlight = () => {
 
   const { displayName, bio = '', publicData = {} } = brand.attributes?.profile || {};
   const { brandCraft, brandHeroImages } = publicData;
-  const heroImageUrl = Array.isArray(brandHeroImages) && brandHeroImages.length > 0 ? brandHeroImages[0] : null;
+  const heroImageUrl = Array.isArray(brandHeroImages) && brandHeroImages.length > 0
+    ? withExternalImageWidth(brandHeroImages[0], HERO_IMAGE_TARGET_WIDTH)
+    : null;
   const brandSlug = getBrandSlugById(brandId);
   const brandLinkProps = brandSlug
     ? { name: 'BrandPage', params: { brandSlug } }
