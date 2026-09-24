@@ -84,8 +84,14 @@ const fetchHeroListings = (sdk, brandUsers) => {
         'variants.square-small',
         'variants.square-small2x',
       ],
-      'imageVariant.square-hero': 'w:600;h:600;fit:crop',
-      'imageVariant.square-hero2x': 'w:1200;h:1200;fit:crop',
+      // f:auto serves WebP/AVIF to browsers that support it (matches
+      // util/sdkLoader.js's createImageVariantConfig, which every other
+      // image variant in the app goes through) — omitting it was serving
+      // these hero images as plain JPEG regardless of browser support,
+      // the likely driver of Lighthouse's "increase compression" finding
+      // once the dimension-sizing half of that finding was fixed.
+      'imageVariant.square-hero': 'w:600;h:600;fit:crop;q:75;f:auto',
+      'imageVariant.square-hero2x': 'w:1200;h:1200;fit:crop;q:75;f:auto',
       'imageVariant.square-small': 'w:400;h:300;fit:crop',
       'imageVariant.square-small2x': 'w:800;h:600;fit:crop',
       perPage: 100,
