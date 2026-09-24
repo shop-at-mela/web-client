@@ -25,7 +25,10 @@ import {
 import { includeCSSProperties } from './util/style';
 import { IncludeScripts } from './util/includeScripts';
 
-import { MaintenanceMode } from './components';
+// Imported directly (not via the `./components` barrel) so this eagerly-loaded
+// entry point doesn't pull ~130 components' worth of module graph into main.js
+// — see package.json's `sideEffects` field for the broader fix.
+import MaintenanceMode from './components/MaintenanceMode/MaintenanceMode';
 
 // routing
 import routeConfiguration from './routing/routeConfiguration';
