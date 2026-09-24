@@ -605,14 +605,16 @@ describe('BrandsPage Duck', () => {
         ]);
       });
 
-      it('resolves hero image ids to variant URLs, preferring the 2x variant', () => {
+      it('maps hero image ids to their raw image entity (for responsive srcSet)', () => {
         const result = getHeroBrands(makeState());
 
-        expect(result[0].heroImageUrlById).toEqual({
-          'hero-img-1': 'http://sharetribe.imgix.net/hero-1@2x.jpg',
-          // 'hero-img-unresolved' has no image entity → omitted from the map;
-          // BrandHeroCard falls back to the Shopify URL at that index.
+        expect(Object.keys(result[0].heroImagesById)).toEqual(['hero-img-1']);
+        expect(result[0].heroImagesById['hero-img-1'].attributes.variants).toEqual({
+          'square-hero': { url: 'http://sharetribe.imgix.net/hero-1.jpg' },
+          'square-hero2x': { url: 'http://sharetribe.imgix.net/hero-1@2x.jpg' },
         });
+        // 'hero-img-unresolved' has no image entity → omitted from the map;
+        // BrandHeroCard falls back to the Shopify URL at that index.
       });
 
       it('filters out a listed id that turns out to have no hero source (defensive re-check)', () => {

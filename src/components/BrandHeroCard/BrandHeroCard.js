@@ -3,13 +3,45 @@ import { bool, object, objectOf, shape, string } from 'prop-types';
 import classNames from 'classnames';
 
 import { FormattedMessage } from '../../util/reactIntl';
-// Direct import (not via the components barrel) — this component is itself
+// Direct imports (not via the components barrel) — this component is itself
 // barrel-exported, and importing the barrel from here deepens the circular
 // chain that resolves sdkLoader/sdkTypes (see HeroSection.js header comment).
 import NamedLink from '../NamedLink/NamedLink';
+import ResponsiveImage from '../ResponsiveImage/ResponsiveImage';
 import { getBrandSlugById } from '../../config/configBrands';
 
 import css from './BrandHeroCard.module.css';
+
+// Variant names requested for hero images (see BrandsPage.duck.js's
+// heroImageVariants query params). Passed to ResponsiveImage so the browser
+// picks the right size instead of always downloading the 1200x1200 2x
+// variant for a ~340px slot (the imgix "Improve image delivery" finding).
+// square-small2x is a defensive fallback for images fetched before the hero
+// variants existed on their entity.
+const HERO_IMAGE_VARIANTS = ['square-hero', 'square-hero2x', 'square-small2x'];
+const HERO_IMAGE_SIZES = '(max-width: 768px) 88vw, 340px';
+
+// Vendor/Shopify-sourced hero images bypass Sharetribe's imgix pipeline
+// entirely and are uploaded at arbitrary native dimensions (Lighthouse
+// flagged several at 2000px+ for this ~340px slot). Shopify's CDN honors a
+// `?width=` query param for server-side resizing — request that instead of
+// serving the raw upload. 2x width of the largest real render size (340px
+// desktop slide) covers retina without re-fetching per breakpoint.
+const SHOPIFY_IMAGE_TARGET_WIDTH = 700;
+
+const withShopifyImageWidth = (url, width) => {
+  if (!url) {
+    return url;
+  }
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.set('width', String(width));
+    return parsed.toString();
+  } catch {
+    // Not a parseable absolute URL — serve as-is rather than break the image.
+    return url;
+  }
+};
 
 /**
  * Pick the hero index once per mount: a random index across the parallel hero
@@ -44,17 +76,19 @@ export const pickHeroIndex = (imageIds, imageUrls, random = Math.random) => {
  * - Picks ONE random index across the parallel `publicData` hero arrays per
  *   mount (stable within a session; a fresh pick on next page load is the
  *   intended variety).
- * - Sharetribe-first: `brandHeroImageIds[i]` resolved to a variant URL via
- *   `heroImageUrlById` (built by the consumer from marketplace entities);
- *   falls back to `brandHeroImages[i]` (Shopify CDN URL) when the id is
- *   absent or fails to resolve — including at runtime via <img> onError.
+ * - Sharetribe-first: `brandHeroImageIds[i]` resolved to a raw image entity
+ *   via `heroImagesById` (built by the consumer from marketplace entities)
+ *   and rendered responsively (ResponsiveImage, srcSet over HERO_IMAGE_VARIANTS);
+ *   falls back to `brandHeroImages[i]` (Shopify CDN URL, width-constrained)
+ *   when the id is absent or fails to resolve — including at runtime via
+ *   <img>/ResponsiveImage onError.
  * - Renders null only when the brand has no hero source at all. No
  *   logo/profileImage fallback: a hero surface shows only brands with a real
  *   hero image.
  *
  * @param {Object} props
  * @param {Object} props.brand - Brand user entity
- * @param {Object} props.heroImageUrlById - Map of Sharetribe image UUID → resolved variant URL
+ * @param {Object} props.heroImagesById - Map of Sharetribe image UUID → raw image entity
  * @param {boolean} props.isPriority - Eager-load the image (first/LCP slide)
  * @param {string} props.className - Additional CSS class
  * @param {string} props.rootClassName - Root CSS class override
@@ -62,7 +96,7 @@ export const pickHeroIndex = (imageIds, imageUrls, random = Math.random) => {
 const BrandHeroCard = props => {
   const {
     brand,
-    heroImageUrlById = {},
+    heroImagesById = {},
     isPriority = false,
     className = null,
     rootClassName = null,
@@ -83,16 +117,27 @@ const BrandHeroCard = props => {
     return null;
   }
 
-  const sharetribeUrl = Array.isArray(brandHeroImageIds)
-    ? heroImageUrlById[brandHeroImageIds[heroIndex]] || null
+  const sharetribeImage = Array.isArray(brandHeroImageIds)
+    ? heroImagesById[brandHeroImageIds[heroIndex]] || null
     : null;
-  const shopifyUrl = Array.isArray(brandHeroImages)
-    ? brandHeroImages[heroIndex] || null
+  const sharetribeVariants = sharetribeImage?.attributes?.variants || null;
+  // Representative URL for this source, used only to track runtime failures
+  // (ResponsiveImage itself picks the actual srcSet entry the browser loads).
+  const sharetribeFallbackUrl = sharetribeVariants
+    ? sharetribeVariants['square-hero2x']?.url ||
+      sharetribeVariants['square-hero']?.url ||
+      sharetribeVariants['square-small2x']?.url ||
+      null
+    : null;
+  const shopifyUrl = Array.isArray(brandHeroImages) ? brandHeroImages[heroIndex] || null : null;
+  const shopifyResizedUrl = shopifyUrl
+    ? withShopifyImageWidth(shopifyUrl, SHOPIFY_IMAGE_TARGET_WIDTH)
     : null;
 
   // Sharetribe-first, Shopify-fallback; a failed load advances the chain.
-  const src =
-    [sharetribeUrl, shopifyUrl].filter(url => url && !failedSrcs.includes(url))[0] || null;
+  const useSharetribeImage = !!sharetribeVariants && !failedSrcs.includes(sharetribeFallbackUrl);
+  const useShopifyImage = !useSharetribeImage && !!shopifyUrl && !failedSrcs.includes(shopifyUrl);
+  const src = useSharetribeImage ? sharetribeFallbackUrl : useShopifyImage ? shopifyUrl : null;
 
   const handleImageError = () => {
     if (src) {
@@ -136,10 +181,22 @@ const BrandHeroCard = props => {
 
   return (
     <NamedLink {...brandLinkProps} className={classes}>
-      {src ? (
+      {useSharetribeImage ? (
+        <ResponsiveImage
+          className={css.heroImage}
+          image={sharetribeImage}
+          variants={HERO_IMAGE_VARIANTS}
+          sizes={HERO_IMAGE_SIZES}
+          alt=""
+          aria-hidden="true"
+          loading={isPriority ? 'eager' : 'lazy'}
+          fetchpriority={isPriority ? 'high' : undefined}
+          onError={handleImageError}
+        />
+      ) : useShopifyImage ? (
         <img
           className={css.heroImage}
-          src={src}
+          src={shopifyResizedUrl}
           alt=""
           aria-hidden="true"
           loading={isPriority ? 'eager' : 'lazy'}
@@ -180,7 +237,7 @@ BrandHeroCard.propTypes = {
     }).isRequired,
     attributes: object,
   }).isRequired,
-  heroImageUrlById: objectOf(string),
+  heroImagesById: objectOf(object),
   isPriority: bool,
   className: string,
   rootClassName: string,

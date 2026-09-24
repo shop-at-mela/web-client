@@ -362,7 +362,7 @@ const HeroSectionComponent = ({
                 >
                   <BrandHeroCard
                     brand={item.brand}
-                    heroImageUrlById={item.heroImageUrlById}
+                    heroImagesById={item.heroImagesById}
                     isPriority={index === 0}
                   />
                 </div>

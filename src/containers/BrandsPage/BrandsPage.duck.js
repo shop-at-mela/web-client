@@ -1098,9 +1098,11 @@ export const getFeaturedBrandsWithProducts = state => {
  * brand with a real hero image but zero fetched products must still qualify;
  * gating on products here would silently drop it. Curated order is preserved
  * (heroBrandIds is written from fetchHeroBrands' candidate order, filter-only
- * here, no re-sort). Each entry is augmented with `heroImageUrlById` —
- * Sharetribe image UUID → square hero variant URL. BrandHeroCard falls back
- * to the Shopify URL at the same index for any id missing from the map.
+ * here, no re-sort). Each entry is augmented with `heroImagesById` —
+ * Sharetribe image UUID → the raw image entity (so BrandHeroCard can build a
+ * responsive srcSet from its variants, instead of hardcoding one variant's
+ * URL). BrandHeroCard falls back to the Shopify URL at the same index for
+ * any id missing from the map.
  */
 export const getHeroBrands = state => {
   const { heroBrandIds } = state.BrandsPage;
@@ -1117,19 +1119,17 @@ export const getHeroBrands = state => {
     .filter(hasHeroImageSource)
     .map(brand => {
       const { brandHeroImageIds = [] } = brand.attributes?.profile?.publicData || {};
-      const heroImageUrlById = {};
+      const heroImagesById = {};
       (Array.isArray(brandHeroImageIds) ? brandHeroImageIds : []).forEach(imageId => {
-        const variants = imageEntities[imageId]?.attributes?.variants || {};
-        const url =
-          variants['square-hero2x']?.url ||
-          variants['square-hero']?.url ||
-          variants['square-small2x']?.url ||
-          null;
-        if (url) {
-          heroImageUrlById[imageId] = url;
+        const image = imageEntities[imageId];
+        const variants = image?.attributes?.variants || {};
+        const hasUsableVariant =
+          variants['square-hero2x'] || variants['square-hero'] || variants['square-small2x'];
+        if (hasUsableVariant) {
+          heroImagesById[imageId] = image;
         }
       });
-      return { brand, heroImageUrlById };
+      return { brand, heroImagesById };
     });
 };
 
