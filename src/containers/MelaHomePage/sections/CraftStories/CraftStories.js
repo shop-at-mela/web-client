@@ -3,11 +3,16 @@ import { FormattedMessage } from '../../../../util/reactIntl';
 import { NamedLink } from '../../../../components';
 import { getAllBrandIds, getBrandSlugById } from '../../../../config/configBrands';
 import { pushCraftTileClick } from '../../../../util/analytics/homepageEditorial';
+import { withExternalImageWidth } from '../../../../util/images';
 import sdk from '../../../../util/homepageSdk';
 
 import css from './CraftStories.module.css';
 
 const TILE_COUNT = 3;
+// One of 3 tiles in a row (flex: 1, see CraftStories.module.css .tile) — sized
+// generously for its ~1/3-width slot at 2x DPR, since brandHeroImages is a raw
+// vendor CDN URL with no Sharetribe/imgix variants to pick from (util/images.js).
+const TILE_IMAGE_TARGET_WIDTH = 900;
 
 /** Day-of-year (UTC) — seeds the daily trio rotation (P1.3b). */
 const getDayOfYear = (date = new Date()) => {
@@ -111,7 +116,7 @@ const CraftStories = () => {
                 >
                   <NamedLink {...linkProps} className={css.tile}>
                     <img
-                      src={publicData.brandHeroImages[0]}
+                      src={withExternalImageWidth(publicData.brandHeroImages[0], TILE_IMAGE_TARGET_WIDTH)}
                       alt={displayName}
                       className={css.tileImage}
                     />

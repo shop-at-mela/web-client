@@ -9,6 +9,7 @@ import { FormattedMessage } from '../../util/reactIntl';
 import NamedLink from '../NamedLink/NamedLink';
 import ResponsiveImage from '../ResponsiveImage/ResponsiveImage';
 import { getBrandSlugById } from '../../config/configBrands';
+import { withExternalImageWidth } from '../../util/images';
 
 import css from './BrandHeroCard.module.css';
 
@@ -23,25 +24,11 @@ const HERO_IMAGE_SIZES = '(max-width: 768px) 88vw, 340px';
 
 // Vendor/Shopify-sourced hero images bypass Sharetribe's imgix pipeline
 // entirely and are uploaded at arbitrary native dimensions (Lighthouse
-// flagged several at 2000px+ for this ~340px slot). Shopify's CDN honors a
-// `?width=` query param for server-side resizing — request that instead of
-// serving the raw upload. 2x width of the largest real render size (340px
-// desktop slide) covers retina without re-fetching per breakpoint.
+// flagged several at 2000px+ for this ~340px slot). 2x width of the largest
+// real render size (340px desktop slide) covers retina without re-fetching
+// per breakpoint. See util/images.js for the resize helper — BrandSpotlight
+// and CraftStories apply the same helper to the same publicData field.
 const SHOPIFY_IMAGE_TARGET_WIDTH = 700;
-
-const withShopifyImageWidth = (url, width) => {
-  if (!url) {
-    return url;
-  }
-  try {
-    const parsed = new URL(url);
-    parsed.searchParams.set('width', String(width));
-    return parsed.toString();
-  } catch {
-    // Not a parseable absolute URL — serve as-is rather than break the image.
-    return url;
-  }
-};
 
 /**
  * Pick the hero index once per mount: a random index across the parallel hero
@@ -131,7 +118,7 @@ const BrandHeroCard = props => {
     : null;
   const shopifyUrl = Array.isArray(brandHeroImages) ? brandHeroImages[heroIndex] || null : null;
   const shopifyResizedUrl = shopifyUrl
-    ? withShopifyImageWidth(shopifyUrl, SHOPIFY_IMAGE_TARGET_WIDTH)
+    ? withExternalImageWidth(shopifyUrl, SHOPIFY_IMAGE_TARGET_WIDTH)
     : null;
 
   // Sharetribe-first, Shopify-fallback; a failed load advances the chain.
