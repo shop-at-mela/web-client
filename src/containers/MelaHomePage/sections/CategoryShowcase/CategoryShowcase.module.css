@@ -141,15 +141,26 @@
   }
 }
 
-/* Two-panel editorial grid: stacked on mobile, side-by-side on tablet+ */
+/* Two-panel editorial grid: stacked on mobile, side-by-side on tablet+.
+   min-height reserves space for the panel count the grid mounts with
+   (--occasion-count/--occasion-rows, set inline in CategoryShowcase.js from
+   orderedOccasions.length) so a panel later dropping out — an occasion that
+   resolves to <2 matching listings — doesn't collapse the grid and shift
+   whatever follows it on the page. The 460px/620px figures are conservative
+   estimates of one OccasionCard's rendered height (editorial header + peek +
+   CTA row) at mobile/desktop width; re-check against a real CLS run. */
 .occasionPanels {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
+  min-height: calc(
+    var(--occasion-count, 2) * 460px + (var(--occasion-count, 2) - 1) * 1.5rem
+  );
 
   @media (min-width: 768px) {
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
+    min-height: calc(var(--occasion-rows, 1) * 620px + (var(--occasion-rows, 1) - 1) * 2rem);
   }
 }
 

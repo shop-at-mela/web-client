@@ -327,10 +327,20 @@
   }
 }
 
-/* Loading skeleton for brand card */
+/* Loading skeleton for brand card.
+   aspect-ratio: 1 (not a fixed height) mirrors BrandHeroCard.module.css's
+   .root, so the skeleton's height tracks its own width exactly the way the
+   real square card does — at any viewport, not just the ones a fixed px
+   value happened to match. Previously a flat 280px height under-matched the
+   real ~340px-wide desktop card by ~60px, shifting categoryPillsWrapper down
+   once heroBrands loaded (Lighthouse CLS finding). margin-bottom reserves
+   the .carouselControls row's height too, since that row only renders once
+   heroBrands.length > 1 (the common case) and doesn't exist in this loading
+   state — a single-hero-brand marketplace will over-reserve by that amount,
+   an acceptable trade-off against the multi-brand shift this prevents. */
 .brandSkeleton {
   width: 100%;
-  height: 280px;
+  aspect-ratio: 1;
   border-radius: 16px;
   background: linear-gradient(
     90deg,
@@ -340,6 +350,7 @@
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
+  margin-bottom: 2.5rem;
 
   @media (min-width: 768px) {
     max-width: 340px;

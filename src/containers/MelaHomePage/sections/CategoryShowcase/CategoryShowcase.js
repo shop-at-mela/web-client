@@ -363,13 +363,25 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
   // enough products.
   if (!anyLoading && visibleOccasions.length === 0) return null;
 
+  // orderedOccasions.length (always 2 or 3, fixed at mount — see
+  // getActiveSeasonOccasion) is the MOST panels this grid will ever show:
+  // visibleOccasions only shrinks over time as occasions resolve to <2
+  // matching listings, never grows. Reserving height for that initial count
+  // (via CSS custom properties consumed in .occasionPanels' min-height)
+  // stops a later shrink from collapsing the grid and shifting content below
+  // it (Lighthouse CLS finding on div.MelaHomePage_occasionSection).
+  const occasionPanelsStyle = {
+    '--occasion-count': orderedOccasions.length,
+    '--occasion-rows': Math.ceil(orderedOccasions.length / 2),
+  };
+
   return (
     <div className={css.occasionStrip}>
       <h3 className={css.ageNavigationTitle}>
         <FormattedMessage id="MelaHomePage.shopByOccasion" defaultMessage="Shop by Occasion" />
       </h3>
 
-      <div className={css.occasionPanels}>
+      <div className={css.occasionPanels} style={occasionPanelsStyle}>
         {visibleOccasions.map(occasion => {
           const stillLoading = loadingByOccasion[occasion.option];
           const products = occasionProducts[occasion.option] || [];
