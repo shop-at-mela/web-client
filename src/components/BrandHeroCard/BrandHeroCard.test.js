@@ -13,6 +13,15 @@ const SHARETRIBE_URL = 'https://sharetribe.imgix.net/hero-variant.jpg';
 const SHOPIFY_URL_0 = 'https://cdn.shopify.com/hero-0.jpg';
 const SHOPIFY_URL_1 = 'https://cdn.shopify.com/hero-1.jpg';
 
+// Minimal raw Sharetribe image entity shape ResponsiveImage/BrandHeroCard expect
+// (`image.attributes.variants[name].url`) — mirrors what getHeroBrands (see
+// BrandsPage.duck.js) puts in heroImagesById.
+const makeImageEntity = url => ({
+  id: { uuid: 'img-uuid-0' },
+  type: 'image',
+  attributes: { variants: { 'square-hero2x': { url, width: 1200, height: 1200 } } },
+});
+
 const makeBrand = publicData => ({
   id: { uuid: 'brand-hero-1' },
   type: 'user',
@@ -112,24 +121,24 @@ describe('BrandHeroCard', () => {
         brandHeroImageListingIds: ['listing-uuid-0'],
         brandHeroImages: [SHOPIFY_URL_0],
       },
-      { heroImageUrlById: { 'img-uuid-0': SHARETRIBE_URL } }
+      { heroImagesById: { 'img-uuid-0': makeImageEntity(SHARETRIBE_URL) } }
     );
 
     expect(getHeroImg(container)).toHaveAttribute('src', SHARETRIBE_URL);
     expect(screen.getByText('House of Chikankari')).toBeInTheDocument();
   });
 
-  it('falls back to the Shopify URL at the same index when the id is unresolved', () => {
+  it('falls back to the Shopify URL (width-constrained) when the id is unresolved', () => {
     const { container } = renderCard(
       {
         brandHeroImageIds: ['img-uuid-0'],
         brandHeroImageListingIds: ['listing-uuid-0'],
         brandHeroImages: [SHOPIFY_URL_0],
       },
-      { heroImageUrlById: {} } // listing fetch failed / id missing from entities
+      { heroImagesById: {} } // listing fetch failed / id missing from entities
     );
 
-    expect(getHeroImg(container)).toHaveAttribute('src', SHOPIFY_URL_0);
+    expect(getHeroImg(container)).toHaveAttribute('src', `${SHOPIFY_URL_0}?width=700`);
   });
 
   it('falls back to the Shopify URL when the Sharetribe URL fails at runtime (img onError)', () => {
@@ -138,7 +147,7 @@ describe('BrandHeroCard', () => {
         brandHeroImageIds: ['img-uuid-0'],
         brandHeroImages: [SHOPIFY_URL_0],
       },
-      { heroImageUrlById: { 'img-uuid-0': SHARETRIBE_URL } }
+      { heroImagesById: { 'img-uuid-0': makeImageEntity(SHARETRIBE_URL) } }
     );
 
     const img = getHeroImg(container);
@@ -146,7 +155,7 @@ describe('BrandHeroCard', () => {
 
     fireEvent.error(img);
 
-    expect(getHeroImg(container)).toHaveAttribute('src', SHOPIFY_URL_0);
+    expect(getHeroImg(container)).toHaveAttribute('src', `${SHOPIFY_URL_0}?width=700`);
   });
 
   it('renders the manual-entry case: Shopify URL with no Sharetribe id at that index', () => {
@@ -155,7 +164,7 @@ describe('BrandHeroCard', () => {
     });
 
     const src = getHeroImg(container).getAttribute('src');
-    expect([SHOPIFY_URL_0, SHOPIFY_URL_1]).toContain(src);
+    expect([`${SHOPIFY_URL_0}?width=700`, `${SHOPIFY_URL_1}?width=700`]).toContain(src);
   });
 
   it('renders null when the brand has no hero source at all (no logo fallback)', () => {

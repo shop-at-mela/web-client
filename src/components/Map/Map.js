@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import classNames from 'classnames';
 
 import { useConfiguration } from '../../context/configurationContext';
 import { getMapProviderApiAccess } from '../../util/maps';
+import { ensureMapboxLoaded } from '../../util/includeScripts';
 import * as mapboxMap from './MapboxMap';
 import * as googleMapsMap from './GoogleMap';
 
@@ -46,9 +47,37 @@ export const Map = props => {
   const isGoogleMapsInUse = mapsConfiguration.mapProvider === 'googleMaps';
   const StaticMap = isGoogleMapsInUse ? googleMapsMap.StaticMap : mapboxMap.StaticMap;
   const DynamicMap = isGoogleMapsInUse ? googleMapsMap.DynamicMap : mapboxMap.DynamicMap;
-  const isMapsLibLoaded = isGoogleMapsInUse
-    ? googleMapsMap.isMapsLibLoaded
-    : mapboxMap.isMapsLibLoaded;
+
+  // Mapbox's script/CSS may not have been injected on this page load (e.g. the
+  // visitor landed on a route that never shows a map — see `neverUsesMap` in
+  // routeConfiguration.js — then navigated client-side to this one). Lazily
+  // load it on demand in that case; Google Maps is always loaded eagerly today
+  // (see util/includeScripts.js), so it doesn't need this fallback.
+  const [mapboxLibLoaded, setMapboxLibLoaded] = useState(mapboxMap.isMapsLibLoaded);
+  useEffect(() => {
+    if (isGoogleMapsInUse || mapboxLibLoaded || !hasApiAccessForMapProvider) {
+      return undefined;
+    }
+    let cancelled = false;
+    ensureMapboxLoaded({
+      mapboxAccessToken: mapsConfiguration.mapboxAccessToken,
+      rootURL: config.marketplaceRootURL,
+    }).then(() => {
+      if (!cancelled) {
+        setMapboxLibLoaded(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isGoogleMapsInUse,
+    mapboxLibLoaded,
+    hasApiAccessForMapProvider,
+    mapsConfiguration.mapboxAccessToken,
+    config.marketplaceRootURL,
+  ]);
+  const isMapsLibLoaded = isGoogleMapsInUse ? googleMapsMap.isMapsLibLoaded : () => mapboxLibLoaded;
 
   const classes = classNames(rootClassName || css.root, className);
   const mapClasses = mapRootClassName || css.mapRoot;

@@ -87,6 +87,11 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/',
       name: 'LandingPage',
       component: MelaHomePage,
+      // MelaHomePage never renders a Map component, so the Mapbox library
+      // (script + CSS) can be skipped entirely on first load instead of just
+      // deferred — see canSkipMapLibrary() in util/includeScripts.js. If this
+      // page ever grows a map, remove this flag.
+      neverUsesMap: true,
     },
     {
       path: '/cms-backup',

@@ -7,8 +7,17 @@ import { getEntrySource } from './analytics/entrySource';
 import { getOrCreateSessionId } from './sentimentCapture';
 
 const MAPBOX_SCRIPT_ID = 'mapbox_GL_JS';
+const MAPBOX_CSS_ID = 'mapbox_GL_CSS';
 const GOOGLE_MAPS_SCRIPT_ID = 'GoogleMapsApi';
 const STRIPE_SCRIPT_ID = 'stripe_js_v3';
+
+// NOTE: remember to update mapbox-sdk.min.js to a new version regularly.
+const MAPBOX_SDK_VERSION = '0.16.2';
+const MAPBOX_GL_VERSION = '3.7.0';
+const mapboxSdkSrc = rootURL =>
+  `${rootURL}/static/scripts/mapbox/mapbox-sdk@${MAPBOX_SDK_VERSION}/mapbox-sdk.min.js`;
+const MAPBOX_GL_CSS_SRC = `https://api.mapbox.com/mapbox-gl-js/v${MAPBOX_GL_VERSION}/mapbox-gl.css`;
+const MAPBOX_GL_JS_SRC = `https://api.mapbox.com/mapbox-gl-js/v${MAPBOX_GL_VERSION}/mapbox-gl.js`;
 
 /** Dispatched on `window` when Stripe.js has loaded (`window.Stripe` is available). */
 export const STRIPE_JS_LOADED_EVENT = 'stripe-js-loaded';
@@ -36,6 +45,26 @@ const canDeferMapLibrary = (initialPathname, routeConfiguration) => {
   const matchedRoutes = matchPathname(initialPathname, routeConfiguration);
   const currentRouteConfig = matchedRoutes.length > 0 ? matchedRoutes[0]?.route : null;
   return currentRouteConfig?.prioritizeLibraryLoading?.map !== true;
+};
+
+/**
+ * Whether the Mapbox script/CSS can be skipped on the initial page load entirely,
+ * rather than just deferred. This must stay conservative: only routes that are
+ * verified to never render a Map component (via the explicit `neverUsesMap` route
+ * flag) are skipped. Every other route keeps today's "load + defer" behavior,
+ * since skipping it incorrectly would leave `window.mapboxgl` unset.
+ *
+ * Note: this only affects the FIRST full page load (see initialPathname's origin
+ * in app.js). If the visitor later navigates client-side to a map-bearing route,
+ * `ensureMapboxLoaded()` (below) lazily injects the library at that point.
+ */
+const canSkipMapLibrary = (initialPathname, routeConfiguration) => {
+  if (!initialPathname) {
+    return false;
+  }
+  const matchedRoutes = matchPathname(initialPathname, routeConfiguration);
+  const currentRouteConfig = matchedRoutes.length > 0 ? matchedRoutes[0]?.route : null;
+  return currentRouteConfig?.neverUsesMap === true;
 };
 const canDeferStripeLibrary = (initialPathname, routeConfiguration) => {
   if (!initialPathname) {
@@ -99,24 +128,21 @@ export const IncludeScripts = props => {
     );
   }
 
-  if (isMapboxInUse) {
-    // NOTE: remember to update mapbox-sdk.min.js to a new version regularly.
+  const skipMapboxLibrary =
+    isMapboxInUse && canSkipMapLibrary(props?.initialPathname, routeConfiguration);
+
+  if (isMapboxInUse && !skipMapboxLibrary) {
     // mapbox-sdk.min.js is included from static folder for CSP purposes.
-    mapLibraries.push(
-      <script
-        key="mapboxSDK"
-        src={`${rootURL}/static/scripts/mapbox/mapbox-sdk@0.16.2/mapbox-sdk.min.js`}
-        async
-      ></script>
-    );
-    // License information for v3.7.0 of the mapbox-gl-js library:
+    mapLibraries.push(<script key="mapboxSDK" src={mapboxSdkSrc(rootURL)} async></script>);
+    // License information for the mapbox-gl-js library:
     // https://github.com/mapbox/mapbox-gl-js/blob/v3.7.0/LICENSE.txt
 
     // Add CSS for Mapbox map
     mapLibraries.push(
       <link
         key="mapbox_GL_CSS"
-        href="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css"
+        id={MAPBOX_CSS_ID}
+        href={MAPBOX_GL_CSS_SRC}
         rel="stylesheet"
         crossOrigin="anonymous"
       />
@@ -126,7 +152,7 @@ export const IncludeScripts = props => {
       <script
         id={MAPBOX_SCRIPT_ID}
         key="mapbox_GL_JS"
-        src="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.js"
+        src={MAPBOX_GL_JS_SRC}
         crossOrigin="anonymous"
         {...deferMapLibrary}
       ></script>
@@ -302,4 +328,73 @@ export const IncludeScripts = props => {
 
   const allScripts = [...stripeLibrary, ...analyticsLibraries, ...mapLibraries];
   return <Helmet onChangeClientState={onChangeClientState}>{allScripts}</Helmet>;
+};
+
+let mapboxLoadPromise = null;
+
+/**
+ * Ensures window.mapboxgl is available, loading the Mapbox script/CSS on the
+ * client if it wasn't injected by <IncludeScripts> on initial page load (e.g.
+ * the visitor landed on a route with `neverUsesMap: true` and then navigated
+ * client-side to a route that renders a map). Safe to call multiple times —
+ * it dedupes both in-flight loads and an already-injected/loaded script.
+ *
+ * @param {Object} params
+ * @param {string} params.mapboxAccessToken
+ * @param {string} params.rootURL - marketplaceRootURL, for the CSP-safe mapbox-sdk path.
+ * @returns {Promise<void>}
+ */
+export const ensureMapboxLoaded = ({ mapboxAccessToken, rootURL }) => {
+  if (typeof window === 'undefined') {
+    return Promise.resolve();
+  }
+  if (window.mapboxgl) {
+    if (!window.mapboxgl.accessToken) {
+      window.mapboxgl.accessToken = mapboxAccessToken;
+    }
+    return Promise.resolve();
+  }
+  if (mapboxLoadPromise) {
+    return mapboxLoadPromise;
+  }
+
+  mapboxLoadPromise = new Promise(resolve => {
+    const applyAccessToken = () => {
+      if (window.mapboxgl && !window.mapboxgl.accessToken) {
+        window.mapboxgl.accessToken = mapboxAccessToken;
+      }
+      resolve();
+    };
+
+    // <IncludeScripts> may already have injected the (deferred) script tag on
+    // this page load — if so, just wait for it instead of adding a second one.
+    const existingScript = document.getElementById(MAPBOX_SCRIPT_ID);
+    if (existingScript) {
+      existingScript.addEventListener('load', applyAccessToken, { once: true });
+      return;
+    }
+
+    if (!document.getElementById(MAPBOX_CSS_ID)) {
+      const link = document.createElement('link');
+      link.id = MAPBOX_CSS_ID;
+      link.rel = 'stylesheet';
+      link.href = MAPBOX_GL_CSS_SRC;
+      link.crossOrigin = 'anonymous';
+      document.head.appendChild(link);
+    }
+
+    const sdkScript = document.createElement('script');
+    sdkScript.src = mapboxSdkSrc(rootURL);
+    sdkScript.async = true;
+    document.head.appendChild(sdkScript);
+
+    const glScript = document.createElement('script');
+    glScript.id = MAPBOX_SCRIPT_ID;
+    glScript.src = MAPBOX_GL_JS_SRC;
+    glScript.crossOrigin = 'anonymous';
+    glScript.addEventListener('load', applyAccessToken, { once: true });
+    document.head.appendChild(glScript);
+  });
+
+  return mapboxLoadPromise;
 };

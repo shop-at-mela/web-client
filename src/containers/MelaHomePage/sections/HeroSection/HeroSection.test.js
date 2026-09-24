@@ -27,11 +27,11 @@ jest.mock('../../../BrandsPage/BrandsPage.duck', () => ({
 
 // Mock BrandHeroCard — we test HeroSection's wiring, not BrandHeroCard internals
 jest.mock('../../../../components/BrandHeroCard/BrandHeroCard', () => {
-  const BrandHeroCard = ({ brand, heroImageUrlById, isPriority }) => (
+  const BrandHeroCard = ({ brand, heroImagesById, isPriority }) => (
     <div
       data-testid="brand-hero-card"
       data-brand-name={brand?.attributes?.profile?.displayName}
-      data-hero-url-count={Object.keys(heroImageUrlById || {}).length}
+      data-hero-url-count={Object.keys(heroImagesById || {}).length}
       data-is-priority={String(isPriority)}
     />
   );
@@ -76,7 +76,17 @@ const makeHeroBrand = (name, id = `brand-${name}`) => ({
       },
     },
   },
-  heroImageUrlById: { [`${id}-img-0`]: `https://sharetribe.imgix.net/${id}-0.jpg` },
+  heroImagesById: {
+    [`${id}-img-0`]: {
+      id: { uuid: `${id}-img-0` },
+      type: 'image',
+      attributes: {
+        variants: {
+          'square-hero': { url: `https://sharetribe.imgix.net/${id}-0.jpg`, width: 600, height: 600 },
+        },
+      },
+    },
+  },
 });
 
 const mockConfig = {
