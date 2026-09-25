@@ -97,6 +97,8 @@ const mockRoutes = [
 const mockMessages = {
   'CategoryPage.title': '{categoryName} — {marketplaceName}',
   'CategoryPage.description': 'Discover authentic Indian {categoryName} products.',
+  'CategoryPage.faqQuestion': 'What {categoryName} products does Mela sell?',
+  'CategoryPage.faqAnswer': 'Mela sells {categoryName} from independent Indian brands.',
   'CategoryPage.home': 'Home',
   'CategoryPage.loadingProducts': 'Loading products…',
   'CategoryPage.noProducts': 'No products in {categoryName} yet.',
@@ -257,7 +259,7 @@ describe('CategoryPage', () => {
 
     it('renders the root description text', () => {
       renderRoot();
-      expect(screen.getByText(/Discover authentic Indian baby products/i)).toBeInTheDocument();
+      expect(screen.getByText(/Mela is a marketplace for independent Indian brands/i)).toBeInTheDocument();
     });
   });
 
@@ -284,10 +286,10 @@ describe('CategoryPage', () => {
       expect(screen.getAllByText('Baby Clothing').length).toBeGreaterThanOrEqual(1);
     });
 
-    it('uses editorial description from CATEGORY_DESCRIPTIONS for known category IDs', () => {
+    it('uses editorial description from CATEGORY_CONTENT for known category IDs', () => {
       renderAt('/categories/Baby-Kids');
-      // The editorial copy for Baby-Kids starts with "From handwoven bandhini"
-      expect(screen.getByText(/From handwoven bandhini/i)).toBeInTheDocument();
+      // The editorial copy for Baby-Kids starts with "Mela's Baby & Kids category"
+      expect(screen.getByText(/Mela's Baby & Kids category/i)).toBeInTheDocument();
     });
 
     it('falls back to i18n description template for unknown category IDs', () => {

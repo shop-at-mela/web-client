@@ -45,7 +45,7 @@ const categoryKeyFromParams = params =>
   `${params?.level1 || ''}|${params?.level2 || ''}|${params?.level3 || ''}`;
 
 // L1 route param values (Sharetribe Console category config ids, also used as
-// CATEGORY_DESCRIPTIONS keys in CategoryPage.js) mapped to the BRAND_CATEGORIES id
+// CATEGORY_CONTENT keys in CategoryPage.js) mapped to the BRAND_CATEGORIES id
 // configBrands.js tags each brand with. Categories with no mapping (e.g.
 // Food-Gourmet, Art-Craft) simply have no brands configured yet — carousel omitted.
 const LEVEL1_TO_BRAND_CATEGORY = {

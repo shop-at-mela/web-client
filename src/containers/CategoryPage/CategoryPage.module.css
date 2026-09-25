@@ -52,6 +52,46 @@
   max-width: 640px;
 }
 
+.byline {
+  font-size: 12px;
+  color: var(--colorTextSecondary, #9ca3af);
+  margin: 6px 0 0;
+}
+
+/* ── FAQ accordion — collapsed by default, placed after the product grid (not the
+   header) so a shopper sees products first. Question/answer text stays in the DOM
+   at all times, collapsed or not, so it's still crawlable/quotable by AI answer
+   engines. See seo-aeo-category-brand-pages-prd.md §5A/§8C. ── */
+.faqAccordion {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--colorBorder, #e5e7eb);
+}
+
+.faqSummary {
+  cursor: pointer;
+  list-style-position: outside;
+}
+
+.faqQuestion {
+  display: inline;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--colorTextPrimary, #111827);
+  margin: 0;
+}
+
+.faqAnswer {
+  font-size: 14px;
+  color: var(--colorTextSecondary, #6b7280);
+  margin: 10px 0 0;
+  max-width: 640px;
+}
+
+.faqAccordion .byline {
+  margin-top: 10px;
+}
+
 /* ── Subcategory pills ── */
 .subcategoryNav {
   display: flex;
