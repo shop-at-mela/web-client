@@ -15,9 +15,49 @@ import CraftStories from './sections/CraftStories/CraftStories';
 import EarnedItsPlaceContainer from './sections/EarnedItsPlace/EarnedItsPlaceContainer';
 import TrustAssurance from './sections/TrustAssurance/TrustAssurance';
 import SavedItemsModule from './sections/SavedItems/SavedItemsModule';
+import FAQSection from './sections/FAQSection/FAQSection';
 import { useConfiguration } from '../../context/configurationContext';
 
 import css from './MelaHomePage.module.css';
+
+// Manually maintained "content last reviewed" date — bump this by hand whenever the
+// copy below (title/description/FAQ) actually changes. Deliberately not derived from
+// any live data (e.g. newest listing), which would be a freshness-spam pattern AI
+// answer engines are tuned to discount.
+export const HOMEPAGE_LAST_UPDATED = '2026-09-25';
+
+// Single source of truth for the homepage FAQ: rendered as visible copy by
+// <FAQSection> below AND used to build the FAQPage JSON-LD in `schema`, so the two
+// can never drift apart. Previously these Q&As existed only inside the hidden
+// <script type="application/ld+json"> block — invisible to AI answer engines that
+// weight visible passages, and to human visitors.
+export const FAQ_ITEMS = [
+  {
+    question: 'Do Indian brands on Mela ship to the United States?',
+    answer:
+      'Yes. Every brand featured on Mela ships directly to US addresses. Most brands offer standard and express international shipping to all 50 states. Delivery typically takes 7–10 working days for standard shipping.',
+  },
+  {
+    question: 'Can I use my US credit card to shop on Mela?',
+    answer:
+      "Yes. Mela is a discovery platform — you purchase directly on each brand's own Shopify store, which accepts all major US-issued credit and debit cards including Visa, Mastercard, American Express, and Discover. No special international payment setup is needed.",
+  },
+  {
+    question: 'Are there customs duties or import taxes when ordering from India to the US?',
+    answer:
+      "Possibly — US import duty rules for personal shipments from India have changed recently, so brands can no longer guarantee a duty-free threshold. Each brand's own checkout will calculate and display any applicable duties or import taxes before you pay, so there are no surprises at your door.",
+  },
+  {
+    question: 'What is the return policy for brands on Mela?',
+    answer:
+      "Each brand maintains its own return policy, displayed on their store page. Mela vets all partners for fair return terms. Contact the Mela team for help navigating any return.",
+  },
+  {
+    question: 'How long does shipping from India to the US take?',
+    answer:
+      "Standard international shipping from India to the US takes 7–10 working days. Many brands also offer expedited options (3–7 business days). Exact timelines and costs are shown at checkout on each brand's store.",
+  },
+];
 
 const MelaHomePage = props => {
   const { currentPage } = props;
@@ -29,6 +69,11 @@ const MelaHomePage = props => {
   // SEO-optimized meta description with target keywords
   const pageDescription = "Mela is a curated home for proven Indian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store. Ships to all 50 states.";
 
+  // Reference (not duplicate) the Organization entity Page.js already injects into
+  // every page's JSON-LD @graph, so AI engines can attribute this page's editorial
+  // content without us inventing a fabricated named author persona.
+  const organizationRef = { '@id': `${config.marketplaceRootURL}#organization` };
+
   // Social sharing image: falls back to the marketplace-wide "Default social media
   // image" set in Sharetribe Console (config.branding.facebookImage / twitterImage,
   // 1.91:1). No per-page override here — the previous one pinned a dev-environment
@@ -38,6 +83,8 @@ const MelaHomePage = props => {
     <Page
       title={pageTitle}
       description={pageDescription}
+      published={HOMEPAGE_LAST_UPDATED}
+      updated={HOMEPAGE_LAST_UPDATED}
       schema={[
         {
           '@context': 'http://schema.org',
@@ -88,48 +135,17 @@ const MelaHomePage = props => {
         {
           '@context': 'http://schema.org',
           '@type': 'FAQPage',
-          mainEntity: [
-            {
-              '@type': 'Question',
-              name: 'Do Indian brands on Mela ship to the United States?',
-              acceptedAnswer: {
-                '@type': 'Answer',
-                text: 'Yes. Every brand featured on Mela ships directly to US addresses. Most brands offer standard and express international shipping to all 50 states. Delivery typically takes 7–10 working days for standard shipping.',
-              },
+          author: organizationRef,
+          publisher: organizationRef,
+          dateModified: HOMEPAGE_LAST_UPDATED,
+          mainEntity: FAQ_ITEMS.map(item => ({
+            '@type': 'Question',
+            name: item.question,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: item.answer,
             },
-            {
-              '@type': 'Question',
-              name: 'Can I use my US credit card to shop on Mela?',
-              acceptedAnswer: {
-                '@type': 'Answer',
-                text: "Yes. Mela is a discovery platform — you purchase directly on each brand's own Shopify store, which accepts all major US-issued credit and debit cards including Visa, Mastercard, American Express, and Discover. No special international payment setup is needed.",
-              },
-            },
-            {
-              '@type': 'Question',
-              name: 'Are there customs duties or import taxes when ordering from India to the US?',
-              acceptedAnswer: {
-                '@type': 'Answer',
-                text: "Import duties on personal-use orders under the US de minimis threshold ($800) are typically not charged. For larger orders, applicable duties are the buyer's responsibility. Each brand's checkout will show an estimate where applicable.",
-              },
-            },
-            {
-              '@type': 'Question',
-              name: 'What is the return policy for brands on Mela?',
-              acceptedAnswer: {
-                '@type': 'Answer',
-                text: "Each brand maintains its own return policy, displayed on their store page. Mela vets all partners for fair return terms. Contact the Mela team for help navigating any return.",
-              },
-            },
-            {
-              '@type': 'Question',
-              name: 'How long does shipping from India to the US take?',
-              acceptedAnswer: {
-                '@type': 'Answer',
-                text: "Standard international shipping from India to the US takes 7–10 working days. Many brands also offer expedited options (3–7 business days). Exact timelines and costs are shown at checkout on each brand's store.",
-              },
-            },
-          ],
+          })),
         },
       ]}
     >
@@ -142,6 +158,12 @@ const MelaHomePage = props => {
 
         {/* Vetting Strip - P0.1 compressed trust band, above the first carousel */}
         <VettingStrip vettingSectionId="how-we-vet" />
+
+        {/* FAQ Section — visible counterpart to the FAQPage JSON-LD above. Placed
+            high (before the first product module) so AI answer engines and human
+            visitors both get a real, quotable passage instead of only hidden
+            structured data (GEO fix, 2026-09-25). */}
+        <FAQSection items={FAQ_ITEMS} lastUpdated={HOMEPAGE_LAST_UPDATED} />
 
         {/* Saved Items Module — shows only for authenticated users with saves */}
         <SavedItemsModule />

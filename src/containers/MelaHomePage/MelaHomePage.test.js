@@ -4,6 +4,13 @@ import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import { IntlProvider } from 'react-intl';
 import MelaHomePage from './MelaHomePage';
+import { ConfigurationProvider } from '../../context/configurationContext';
+
+const mockConfig = {
+  marketplaceName: 'Mela',
+  marketplaceRootURL: 'https://mela.com',
+  branding: { facebookImage: null, twitterImage: null },
+};
 
 jest.mock('./sections/HeroSection/HeroSection', () => {
   return function HeroSection() {
@@ -95,9 +102,11 @@ jest.mock('../FooterContainer/FooterContainer', () => {
 
 const TestWrapper = ({ children }) => (
   <MemoryRouter>
-    <IntlProvider locale="en" messages={{}}>
-      {children}
-    </IntlProvider>
+    <ConfigurationProvider value={mockConfig}>
+      <IntlProvider locale="en" messages={{}}>
+        {children}
+      </IntlProvider>
+    </ConfigurationProvider>
   </MemoryRouter>
 );
 

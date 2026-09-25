@@ -1697,6 +1697,8 @@
 
   "CategoryPage.title": "{categoryName} | Curated Indian Brands | {marketplaceName}",
   "CategoryPage.description": "Discover {categoryName} from India's most loved independent brands. Curated by Mela, shipped to the US, purchased directly on each brand's own store.",
+  "CategoryPage.faqQuestion": "What {categoryName} products does Mela sell?",
+  "CategoryPage.faqAnswer": "Mela sells {categoryName} from independent Indian brands that make their products in India and ship directly to the US. Every brand is vetted by the Mela team before it's featured.",
   "CategoryPage.home": "Home",
   "CategoryPage.loadingProducts": "Loading products…",
   "CategoryPage.noProducts": "No products in {categoryName} yet.",
