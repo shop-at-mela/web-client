@@ -13,6 +13,7 @@ import {
   shouldSkipRedirectTrustSentiment,
 } from '../../util/sentimentCapture';
 import { openBrandStorefront } from '../../util/analytics/brandClickout';
+import { useListingView } from '../../util/analytics/pageViews';
 import { isMelaVerified } from '../../util/certificationHelpers';
 import { LISTING_STATE_PENDING_APPROVAL, LISTING_STATE_CLOSED, propTypes } from '../../util/types';
 import { types as sdkTypes } from '../../util/sdkLoader';
@@ -211,6 +212,9 @@ export const ListingPageComponent = props => {
     noIndexMaybe,
     hasInvalidListingData,
   } = derivedData;
+
+  // Basics dashboard: one listing_view per listing (basic-dashboards-prd.md §4.1)
+  useListingView(currentListing);
 
   // Helper function to recursively search through nested category structure
   const findCategoryById = (categories, categoryId) => {

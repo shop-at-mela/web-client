@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBrandPageView } from '../../util/analytics/pageViews';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { richText } from '../../util/richText';
 import {
@@ -207,6 +208,9 @@ const BrandStorefront = props => {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Basics dashboard: one brand_page_view per brand (basic-dashboards-prd.md §4.1)
+  useBrandPageView(user);
 
   // Callback ref: sets up IntersectionObserver whenever the sentinel element mounts.
   // useEffect with [] misses async listing loads because the element doesn't exist on mount.
