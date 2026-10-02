@@ -9,25 +9,28 @@ import css from './FAQSection.module.css';
  * only inside a hidden <script type="application/ld+json"> block: real content that
  * no human visitor and no AI answer engine reading visible text could ever see.
  * MelaHomePage passes the identical `items` array into both places so the visible
- * copy and the structured data can never drift apart.
+ * copy and the structured data can never drift apart. Styled as the white cards the
+ * old "Shipping & Payment to the US" module used.
  */
-const FAQSection = ({ items, lastUpdated }) => {
+const FAQSection = ({ id, items, lastUpdated }) => {
   if (!items || items.length === 0) return null;
 
   return (
-    <section className={css.root}>
-      <h2 className={css.title}>Frequently Asked Questions</h2>
-      <div className={css.list}>
-        {items.map(item => (
-          <div key={item.question} className={css.item}>
-            <h3 className={css.question}>{item.question}</h3>
-            <p className={css.answer}>{item.answer}</p>
-          </div>
-        ))}
+    <section id={id} className={css.root}>
+      <div className={css.inner}>
+        <h2 className={css.title}>Shipping, Payment & Returns for US Shoppers</h2>
+        <div className={css.list}>
+          {items.map(item => (
+            <div key={item.question} className={css.item}>
+              <h3 className={css.question}>{item.question}</h3>
+              <p className={css.answer}>{item.answer}</p>
+            </div>
+          ))}
+        </div>
+        <p className={css.byline}>
+          Curated by the Mela team{lastUpdated ? ` · Last reviewed ${lastUpdated}` : ''}
+        </p>
       </div>
-      <p className={css.byline}>
-        Curated by the Mela team{lastUpdated ? ` · Last reviewed ${lastUpdated}` : ''}
-      </p>
     </section>
   );
 };
@@ -40,6 +43,7 @@ FAQSection.propTypes = {
     })
   ).isRequired,
   lastUpdated: string,
+  id: string,
 };
 
 export default FAQSection;

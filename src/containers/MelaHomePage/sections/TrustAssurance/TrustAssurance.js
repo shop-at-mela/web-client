@@ -33,25 +33,6 @@ const SECURITY_FEATURES = [
   },
 ];
 
-const US_SHOPPER_FAQS = [
-  {
-    question: 'Do Indian brands on Mela ship to the United States?',
-    answer: 'Yes. Every brand on Mela ships directly to US addresses. Standard delivery is 7–10 working days; express options are available.',
-  },
-  {
-    question: 'Can I use my US credit card to shop?',
-    answer: "Yes — Mela has validated each brand accepts major US-issued (international) cards on their Shopify store. Visa, Mastercard, Amex, and Discover. No special setup needed.",
-  },
-  {
-    question: 'Are there customs duties or import taxes when ordering from India to the US?',
-    answer: "The US de minimis exemption (duty-free under $800) is under active review. Most Mela orders fall within this threshold but we can't guarantee this remains. Check CBP.gov for current rules.",
-  },
-  {
-    question: 'What is the return policy for brands on Mela?',
-    answer: "Each brand has its own return policy. Mela vets partners for fair return terms — contact us for help navigating any return.",
-  },
-];
-
 const QUALITY_GUARANTEES = [
   { title: 'Proven Track Record', icon: '✨' },
   { title: 'Verified Indian Brands', icon: '🤝' },
@@ -132,24 +113,6 @@ const TrustAssurance = () => {
                     <p className={css.securityDescription}>{feature.description}</p>
                   )}
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* US Shopper FAQ */}
-        <div className={css.faqSection}>
-          <h3 className={css.sectionTitle}>
-            <FormattedMessage
-              id="MelaHomePage.usShopperFaqTitle"
-              defaultMessage="Shipping & Payment to the US"
-            />
-          </h3>
-          <div className={css.faqList}>
-            {US_SHOPPER_FAQS.map((faq, index) => (
-              <div key={index} className={css.faqCard}>
-                <h4 className={css.faqQuestion}>{faq.question}</h4>
-                <p className={css.faqAnswer}>{faq.answer}</p>
               </div>
             ))}
           </div>

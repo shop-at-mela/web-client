@@ -24,7 +24,7 @@ import css from './MelaHomePage.module.css';
 // copy below (title/description/FAQ) actually changes. Deliberately not derived from
 // any live data (e.g. newest listing), which would be a freshness-spam pattern AI
 // answer engines are tuned to discount.
-export const HOMEPAGE_LAST_UPDATED = '2026-09-25';
+export const HOMEPAGE_LAST_UPDATED = '2026-10-02';
 
 // Single source of truth for the homepage FAQ: rendered as visible copy by
 // <FAQSection> below AND used to build the FAQPage JSON-LD in `schema`, so the two
@@ -33,9 +33,9 @@ export const HOMEPAGE_LAST_UPDATED = '2026-09-25';
 // weight visible passages, and to human visitors.
 export const FAQ_ITEMS = [
   {
-    question: 'Do Indian brands on Mela ship to the United States?',
+    question: 'Do Indian brands on Mela ship to the United States, and how long does it take?',
     answer:
-      'Yes. Every brand featured on Mela ships directly to US addresses. Most brands offer standard and express international shipping to all 50 states. Delivery typically takes 7–10 working days for standard shipping.',
+      "Yes. Every brand featured on Mela ships directly to US addresses, to all 50 states. Standard international shipping takes 7–10 working days, and many brands also offer expedited options (3–7 business days). Exact timelines and costs are shown at checkout on each brand's store.",
   },
   {
     question: 'Can I use my US credit card to shop on Mela?',
@@ -51,11 +51,6 @@ export const FAQ_ITEMS = [
     question: 'What is the return policy for brands on Mela?',
     answer:
       "Each brand maintains its own return policy, displayed on their store page. Mela vets all partners for fair return terms. Contact the Mela team for help navigating any return.",
-  },
-  {
-    question: 'How long does shipping from India to the US take?',
-    answer:
-      "Standard international shipping from India to the US takes 7–10 working days. Many brands also offer expedited options (3–7 business days). Exact timelines and costs are shown at checkout on each brand's store.",
   },
 ];
 
@@ -159,12 +154,6 @@ const MelaHomePage = props => {
         {/* Vetting Strip - P0.1 compressed trust band, above the first carousel */}
         <VettingStrip vettingSectionId="how-we-vet" />
 
-        {/* FAQ Section — visible counterpart to the FAQPage JSON-LD above. Placed
-            high (before the first product module) so AI answer engines and human
-            visitors both get a real, quotable passage instead of only hidden
-            structured data (GEO fix, 2026-09-25). */}
-        <FAQSection items={FAQ_ITEMS} lastUpdated={HOMEPAGE_LAST_UPDATED} />
-
         {/* Saved Items Module — shows only for authenticated users with saves */}
         <SavedItemsModule />
 
@@ -201,6 +190,11 @@ const MelaHomePage = props => {
         <section id="how-we-vet" className={css.trustSection}>
           <TrustAssurance />
         </section>
+
+        {/* FAQ Section — visible counterpart to the FAQPage JSON-LD above. Kept low on
+            the page (reference content, not a discovery surface); answers stay in the
+            server-rendered HTML inside <details>, so answer engines still read them. */}
+        <FAQSection id="faq" items={FAQ_ITEMS} lastUpdated={HOMEPAGE_LAST_UPDATED} />
       </div>
       <FooterContainer />
     </Page>
