@@ -80,6 +80,39 @@ describe('util/routes.js', () => {
       };
       expect(canonicalRoutePath(routes, location)).toEqual('/?some=value#and-some-hash');
     });
+    it('drops tracking params and keeps other params on non-listing routes', () => {
+      const location = {
+        pathname: '/s',
+        search: '?utm_source=pinterest&price=1000%2C5000&fbclid=abc&utm_campaign=x_w1',
+        hash: '#h',
+      };
+      expect(canonicalRoutePath(routes, location)).toEqual('/s?price=1000%2C5000#h');
+    });
+    it('drops all tracking params without leaving a dangling "?"', () => {
+      const location = {
+        pathname: '/',
+        search: '?utm_source=x&gclid=1&igshid=2&ttclid=3',
+        hash: '',
+      };
+      expect(canonicalRoutePath(routes, location)).toEqual('/');
+    });
+    it('does not re-encode a search string without tracking params', () => {
+      const location = { pathname: '/s', search: '?q=a%20b&x=1:2', hash: '' };
+      expect(canonicalRoutePath(routes, location)).toEqual('/s?q=a%20b&x=1:2');
+    });
+    it('drops tracking params on ListingPage and keeps other params', () => {
+      const location = {
+        pathname: '/l/some-slug-here/00000000-0000-0000-0000-000000000000',
+        search: '?utm_source=x&utm_medium=social&foo=1',
+        hash: '',
+      };
+      expect(canonicalRoutePath(routes, location)).toEqual(
+        '/l/00000000-0000-0000-0000-000000000000?foo=1'
+      );
+      expect(canonicalRoutePath(routes, { ...location, search: '?utm_source=x' })).toEqual(
+        '/l/00000000-0000-0000-0000-000000000000'
+      );
+    });
     it('handles ListingPage', () => {
       const location = {
         pathname: '/l/some-slug-here/00000000-0000-0000-0000-000000000000',

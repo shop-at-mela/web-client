@@ -1,5 +1,6 @@
 import React from 'react';
 import '@testing-library/jest-dom';
+import { Route } from 'react-router-dom';
 
 import configureStore from '../../store';
 import { types as sdkTypes } from '../../util/sdkLoader';
@@ -34,6 +35,7 @@ import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 import reducer, { showListing, loadData, setInitialValues } from './ListingPage.duck';
 
 import { ListingPageComponent } from './ListingPageCarousel';
+import { ListingPageComponent as ListingPageCoverPhotoComponent } from './ListingPageCoverPhoto';
 import ActionBar from './Notifications/ActionBar';
 
 const { UUID } = sdkTypes;
@@ -640,6 +642,55 @@ describe('Duck', () => {
       expect(relevantActions[5].type).toBe('ListingPage/showListing/fulfilled');
       expect(relevantActions[6].type).toBe('ListingPage/fetchReviews/fulfilled');
       expect(relevantActions[7].type).toBe('auth/authInfo/fulfilled');
+    });
+  });
+
+  // Campaign attribution: utm_* must survive the /l/:id -> /l/:slug/:id canonical-slug hop,
+  // since the UTMs now stay in the URL for GA4's first hit.
+  describe('canonical-slug redirect', () => {
+    const search = '?utm_source=pinterest&utm_medium=social&utm_campaign=brand_w1&foo=1';
+
+    const renderRedirect = (Component, variantType) => {
+      const listing = createListing(
+        'listing-no-slug',
+        { title: 'Nice Listing', publicData: {} },
+        { author: createUser('user1'), currentStock: 1 }
+      );
+      const config = getConfig(variantType);
+      const props = {
+        config: mergeConfig(config, getDefaultConfiguration()),
+        intl: testIntl,
+        params: { id: 'listing-no-slug' },
+        getListing: () => listing,
+        getOwnListing: () => null,
+        reviews: [],
+        showListingError: null,
+        callSetInitialValues: jest.fn(),
+        onManageDisableScrolling: jest.fn(),
+        onFetchTimeSlots: jest.fn(),
+        onFetchReviews: jest.fn(),
+        history: { push: jest.fn() },
+        location: { search, pathname: '/l/listing-no-slug' },
+      };
+      return render(
+        <>
+          <Component {...props} />
+          <Route render={({ location }) => <div data-testid="loc">{`${location.pathname}${location.search}`}</div>} />
+        </>,
+        { config, routeConfiguration: getRouteConfiguration() }
+      );
+    };
+
+    [
+      ['carousel', ListingPageComponent],
+      ['coverPhoto', ListingPageCoverPhotoComponent],
+    ].forEach(([variantType, Component]) => {
+      it(`keeps the query string through the redirect (${variantType})`, () => {
+        renderRedirect(Component, variantType);
+        expect(testingLibrary.screen.getByTestId('loc').textContent).toEqual(
+          `/l/nice-listing/listing-no-slug${search}`
+        );
+      });
     });
   });
 

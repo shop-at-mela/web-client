@@ -125,6 +125,23 @@ export const findRouteByRouteName = (nameToFind, routes) => {
   return route;
 };
 
+const TRACKING_PARAMS = ['fbclid', 'gclid', 'igshid', 'ttclid'];
+
+// Removes campaign/click-id params (utm_*, fbclid, ...) from a search string and keeps the
+// rest, so they never end up in canonical URLs. Returns '' or a string starting with '?'.
+const stripTrackingParams = search => {
+  if (!search) return '';
+  const params = new URLSearchParams(search);
+  const trackingKeys = [...params.keys()].filter(
+    key => key.startsWith('utm_') || TRACKING_PARAMS.includes(key)
+  );
+  // Leave the string byte-for-byte as is (no re-encoding) when there is nothing to remove.
+  if (trackingKeys.length === 0) return search;
+  trackingKeys.forEach(key => params.delete(key));
+  const remaining = params.toString();
+  return remaining ? `?${remaining}` : '';
+};
+
 /**
  * Get the canonical URL from the given location
  *
@@ -135,7 +152,8 @@ export const findRouteByRouteName = (nameToFind, routes) => {
  *
  */
 export const canonicalRoutePath = (routes, location, pathOnly = false) => {
-  const { pathname, search, hash } = location;
+  const { pathname, hash } = location;
+  const search = stripTrackingParams(location.search);
 
   const matches = matchPathname(pathname, routes);
   const isListingRoute = matches.length === 1 && matches[0].route.name === 'ListingPage';

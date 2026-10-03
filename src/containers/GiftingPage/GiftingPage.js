@@ -48,8 +48,7 @@ const GiftingPageComponent = props => {
   );
 
   // Query-less canonical: /gifts or /occasions/:slug, never with the chip params (price,
-  // pub_recipient) or utm_* attached — see src/index.js's stripUtmParams() for the
-  // first-load case, and Page.js's canonicalURL override for this SSR/route case.
+  // pub_recipient) or utm_* attached — see Page.js's canonicalURL override.
   const canonicalPath = occasionSlug ? `/occasions/${occasionSlug}` : '/gifts';
   const canonicalURL = `${config.marketplaceRootURL}${canonicalPath}`;
 

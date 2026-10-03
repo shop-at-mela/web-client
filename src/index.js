@@ -33,7 +33,7 @@ import sdk from './util/homepageSdk';
 import { mergeConfig } from './util/configHelpers';
 import { matchPathname } from './util/routes';
 import * as log from './util/log';
-import { captureEntrySource, stripUtmParams } from './util/analytics/entrySource';
+import { captureEntrySource } from './util/analytics/entrySource';
 
 // Import relevant global duck files
 import { authInfo } from './ducks/auth.duck';
@@ -131,9 +131,8 @@ if (typeof window !== 'undefined') {
   // src/util/analytics/entrySource.js). This module only runs on a full page
   // load, so calling it here is naturally "once per session, first page only."
   captureEntrySource();
-  // Keep utm_* out of the visible/shareable URL and out of canonicalURL once captured —
-  // they've already been persisted to sessionStorage above.
-  stripUtmParams();
+  // utm_* is deliberately left in the URL so GA4's native attribution sees it on the
+  // first hit. Canonical/og:url drop tracking params in canonicalRoutePath instead.
 
   const preloadedState = window.__PRELOADED_STATE__ || '{}';
   const initialState = JSON.parse(preloadedState, sdkTypes.reviver);
