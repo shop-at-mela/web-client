@@ -20,10 +20,17 @@ export const pushSaveToggle = (params = {}) => {
   const { source, listingId, isSaved } = params || {};
   if (typeof window === 'undefined') return;
 
+  const saveSource = source || 'heart_icon';
+
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({
     event: 'saved_listing_toggle',
-    source: source || 'heart_icon',
+    save_source: saveSource,
+    // Legacy key, still read by GTM `DLV - source` (GTM Version 9 sends it to GA4 as
+    // `save_source`). A GA4 event parameter literally named `source` is read as traffic
+    // source, so this key must never be mapped to a GA4 `source` parameter. Remove it once
+    // GTM `DLV - source` is repointed to `save_source`.
+    source: saveSource,
     listing_id: listingId || null,
     is_saved: !!isSaved,
   });
