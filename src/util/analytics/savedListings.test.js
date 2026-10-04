@@ -17,18 +17,17 @@ describe('pushSaveToggle(params)', () => {
     });
   });
 
-  it('keeps the legacy source key in step with save_source until GTM is repointed', () => {
+  it('does not push a `source` key (GA4 reads an event parameter named source as traffic source)', () => {
     pushSaveToggle({ source: 'heart_icon', listingId: 'listing-uuid-2', isSaved: false });
 
-    expect(window.dataLayer[0].source).toBe('heart_icon');
-    expect(window.dataLayer[0].save_source).toBe(window.dataLayer[0].source);
+    expect(window.dataLayer[0]).not.toHaveProperty('source');
+    expect(window.dataLayer[0].save_source).toBe('heart_icon');
   });
 
   it('defaults save_source to heart_icon when no source is given', () => {
     pushSaveToggle({ listingId: 'listing-uuid-3', isSaved: true });
 
     expect(window.dataLayer[0].save_source).toBe('heart_icon');
-    expect(window.dataLayer[0].source).toBe('heart_icon');
   });
 
   it('pushes explicit null for a missing listing id and coerces is_saved to a boolean', () => {
