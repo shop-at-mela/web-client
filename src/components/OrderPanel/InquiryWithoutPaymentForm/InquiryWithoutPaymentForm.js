@@ -18,6 +18,7 @@ const renderForm = formRenderProps => {
     handleSubmit,
     brand,
     productUrl,
+    dutiesType,
     listingId,
     listingData,
     isOwnListing,
@@ -35,6 +36,7 @@ const renderForm = formRenderProps => {
               listingData={listingData}
               variant="cta"
               source="add_to_cart_button"
+              dutiesType={dutiesType}
               onAdded={() => setAddedTrigger(t => t + 1)}
             />
             <AddToCartConfirmation trigger={addedTrigger} />

@@ -17,7 +17,7 @@ import { ensureListing, ensureUser } from '../../util/data';
 import { richText } from '../../util/richText';
 import { createSlug } from '../../util/urlHelpers';
 import { isMelaVerified } from '../../util/certificationHelpers';
-import { getBrandUsShipping } from '../../util/brandShipping';
+import { getBrandUsShipping, getDutiesTypeForAnalytics } from '../../util/brandShipping';
 import { isBookingProcessAlias } from '../../transactions/transaction';
 import { getOccasionLabel } from '../../util/occasionLabels';
 
@@ -402,6 +402,7 @@ export const ListingCard = props => {
         brandId: author?.id?.uuid,
         category: publicData.categoryLevel3 || publicData.categoryLevel2 || publicData.categoryLevel1,
         productId: id,
+        dutiesType: getDutiesTypeForAnalytics(author),
         // onShopNow is only ever wired up from SavedPage's per-card CTA — the group-level
         // CTA (SavedBrandGroup) tags 'saved_brand_group' itself. See §14 of
         // insights/crossshop-tracking-prd.md.
@@ -473,6 +474,7 @@ export const ListingCard = props => {
           listingId={id}
           listingData={listingData}
           variant="icon"
+          dutiesType={getDutiesTypeForAnalytics(author)}
           className={css.saveButton}
         />
       </div>

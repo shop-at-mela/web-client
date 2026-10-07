@@ -173,7 +173,7 @@ export const clearLocalSaves = () => {
  * Toggle save/unsave for an authenticated user.
  * Optimistically updates local state; rolls back on API error.
  */
-export const toggleSaveListing = (listingId, listingData, source = 'heart_icon') => (
+export const toggleSaveListing = (listingId, listingData, source = 'heart_icon', dutiesType = null) => (
   dispatch,
   getState,
   sdk
@@ -199,7 +199,7 @@ export const toggleSaveListing = (listingId, listingData, source = 'heart_icon')
     writeLocalItems(updated);
     dispatch(setLastToggleSource(source));
     dispatch(setAnonSaved(updated));
-    pushSaveToggle({ source, listingId, isSaved: !alreadySaved });
+    pushSaveToggle({ source, listingId, isSaved: !alreadySaved, dutiesType });
     return Promise.resolve();
   }
 
@@ -222,7 +222,7 @@ export const toggleSaveListing = (listingId, listingData, source = 'heart_icon')
   dispatch(setLastToggleSource(source));
   dispatch(toggleSaveRequest(listingId));
   dispatch(toggleSaveSuccess(listingId, updatedIds));
-  pushSaveToggle({ source, listingId, isSaved: !isSaved });
+  pushSaveToggle({ source, listingId, isSaved: !isSaved, dutiesType });
 
   return sdk.currentUser
     .updateProfile({ privateData: { savedListings: updatedIds } })

@@ -15,9 +15,11 @@
  * @param {'add_to_cart_button'|'heart_icon'} params.source - which UI surface toggled the save
  * @param {string} params.listingId - listing UUID string
  * @param {boolean} params.isSaved - state after the toggle (true = saved, false = unsaved)
+ * @param {'ddp'|'ddu'|'unknown'|'none'|null} [params.dutiesType] - the brand's duty terms, or null
+ *   when the surface has no brand profile (see util/brandShipping getDutiesTypeForAnalytics)
  */
 export const pushSaveToggle = (params = {}) => {
-  const { source, listingId, isSaved } = params || {};
+  const { source, listingId, isSaved, dutiesType } = params || {};
   if (typeof window === 'undefined') return;
 
   window.dataLayer = window.dataLayer || [];
@@ -28,5 +30,6 @@ export const pushSaveToggle = (params = {}) => {
     save_source: source || 'heart_icon',
     listing_id: listingId || null,
     is_saved: !!isSaved,
+    duties_type: dutiesType || null,
   });
 };

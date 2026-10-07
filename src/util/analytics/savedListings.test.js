@@ -36,4 +36,16 @@ describe('pushSaveToggle(params)', () => {
     expect(window.dataLayer[0].listing_id).toBeNull();
     expect(window.dataLayer[0].is_saved).toBe(false);
   });
+
+  it.each(['ddp', 'ddu', 'unknown', 'none'])('pushes duties_type %s', dutiesType => {
+    pushSaveToggle({ source: 'add_to_cart_button', listingId: 'l1', isSaved: true, dutiesType });
+    expect(window.dataLayer[0].duties_type).toBe(dutiesType);
+  });
+
+  it('pushes duties_type null when the surface has no brand profile (not "unknown")', () => {
+    pushSaveToggle({ source: 'heart_icon', listingId: 'l1', isSaved: true });
+    expect(window.dataLayer[0]).toHaveProperty('duties_type', null);
+    pushSaveToggle({ source: 'heart_icon', listingId: 'l1', isSaved: true, dutiesType: null });
+    expect(window.dataLayer[1].duties_type).toBeNull();
+  });
 });

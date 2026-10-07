@@ -41,7 +41,8 @@ import {
 } from '../../util/data';
 import { richText } from '../../util/richText';
 import { getItemSpecificsAttributes, getItemAspectsForSEO } from '../../util/itemAspectsHelpers';
-import { getBrandUsShipping } from '../../util/brandShipping';
+import { getBrandUsShipping, getDutiesTypeForAnalytics } from '../../util/brandShipping';
+import { getOfferSeller, getSeoDescriptionFallback } from '../../util/productSchema';
 import {
   OFFER,
   REQUEST,
@@ -345,6 +346,7 @@ export const ListingPageComponent = props => {
       brandId: ensuredAuthor?.id?.uuid,
       category: publicData.categoryLevel3 || publicData.categoryLevel2 || publicData.categoryLevel1,
       productId: currentListing?.id?.uuid,
+      dutiesType: getDutiesTypeForAnalytics(ensuredAuthor),
     };
     if (shouldShowRedirectTrust()) {
       markRedirectTrustShown();
@@ -366,14 +368,9 @@ export const ListingPageComponent = props => {
     findCategoryById(config.categoryConfiguration?.categories, listingCategoryId)?.name || 'Lifestyle Products';
   const schemaTitle = `${title}${brandPart} - Authentic Indian ${categoryDisplayName} | ${marketplaceName}`;
 
-  const generateSEODescription = (titleArg, brandNameArg, descriptionArg) => {
-    const bPart = brandNameArg ? `${brandNameArg} ` : '';
-    const truncatedDesc = descriptionArg ? descriptionArg.substring(0, 100) : '';
-    return `Shop authentic ${bPart}${titleArg} for Indian diaspora families. ${truncatedDesc} Trusted Indian brands delivered to USA. Cultural heritage meets modern living.`.substring(0, 160);
-  };
-
-  const seoDescription = publicData.metaDescription
-    || generateSEODescription(title, brandName, description);
+  const seoDescription =
+    publicData.metaDescription ||
+    getSeoDescriptionFallback(intl, { title, brandName, description, marketplaceName });
 
   const currentStock = currentListing.currentStock?.attributes?.quantity || 0;
   const schemaAvailability = !currentListing.currentStock
@@ -411,17 +408,13 @@ export const ListingPageComponent = props => {
         offers: {
           '@type': 'Offer',
           url: productURL,
-          seller: {
-            '@type': 'Organization',
-            name: marketplaceName,
-            description: `Authentic Indian ${categoryDisplayName} Marketplace for US Indian Diaspora`
-          },
+          // The brand sells the product, never Mela (curated directory, no retailer claim)
+          seller: getOfferSeller(
+            brandName,
+            ensuredAuthor?.attributes?.profile?.publicData?.brandStoreUrl
+          ),
           ...schemaOffer,
           availability: schemaAvailability,
-        },
-        audience: {
-          '@type': 'Audience',
-          name: 'Indian Diaspora Shoppers in USA'
         },
         // Consumer search synonyms — machine-readable for AI answer engines (AEO)
         ...(publicData.searchSynonyms?.length > 0 && {
@@ -433,11 +426,6 @@ export const ListingPageComponent = props => {
             '@type': 'PropertyValue',
             name: 'Cultural Heritage',
             value: 'Authentic Indian Products'
-          },
-          {
-            '@type': 'PropertyValue',
-            name: 'Target Market',
-            value: 'US Indian Diaspora Families'
           }
         ]
       }}

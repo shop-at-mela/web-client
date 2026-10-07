@@ -65,6 +65,16 @@ describe('pushBrandClickout(params)', () => {
     });
   });
 
+  it.each(['ddp', 'ddu', 'unknown', 'none'])('maps dutiesType %s to duties_type', dutiesType => {
+    pushBrandClickout({ brandName: 'Nicobar', dutiesType });
+    expect(window.dataLayer[0].duties_type).toBe(dutiesType);
+  });
+
+  it('pushes duties_type null (not "unknown") when there is no brand profile', () => {
+    pushBrandClickout({ brandName: 'Nicobar' });
+    expect(window.dataLayer[0]).toHaveProperty('duties_type', null);
+  });
+
   it('does not throw when called with no arguments', () => {
     expect(() => pushBrandClickout()).not.toThrow();
     expect(window.dataLayer).toHaveLength(1);

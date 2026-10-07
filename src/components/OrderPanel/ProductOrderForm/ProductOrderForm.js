@@ -138,6 +138,7 @@ const renderForm = formRenderProps => {
     marketplaceName,
     brand,
     productUrl,
+    dutiesType,
     onShopNow,
     listingData,
     values,
@@ -303,6 +304,7 @@ const renderForm = formRenderProps => {
               listingData={listingData}
               variant="cta"
               source="add_to_cart_button"
+              dutiesType={dutiesType}
               onAdded={() => setAddedTrigger(t => t + 1)}
             />
             <AddToCartConfirmation trigger={addedTrigger} brand={brand} />

@@ -8,6 +8,7 @@ import { timestampToDate } from '../../util/dates';
 import { requireListingImage } from '../../util/configHelpers';
 import { richText } from '../../util/richText';
 import { hasPermissionToInitiateTransactions, isUserAuthorized } from '../../util/userHelpers';
+import { getCanonicalProductUrl } from '../../util/productSchema';
 import {
   ensureListing,
   ensureOwnListing,
@@ -256,7 +257,8 @@ export const getDerivedRenderData = ({
     { title, price: formattedPrice, marketplaceName }
   );
 
-  const productURL = `${config.marketplaceRootURL}${location.pathname}${location.search}${location.hash}`;
+  // Path only: a query string or hash would carry UTM parameters into the Product JSON-LD.
+  const productURL = getCanonicalProductUrl(config.marketplaceRootURL, location.pathname);
   const currentStock = currentListing.currentStock?.attributes?.quantity || 0;
   const schemaAvailability = !currentListing.currentStock
     ? null

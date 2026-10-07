@@ -6,7 +6,7 @@ import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { formatMoney } from '../../util/currency';
 import { ensureListing } from '../../util/data';
 import { isMelaVerified } from '../../util/certificationHelpers';
-import { getBrandUsShipping } from '../../util/brandShipping';
+import { getBrandUsShipping, getDutiesTypeForAnalytics } from '../../util/brandShipping';
 import { types as sdkTypes } from '../../util/sdkLoader';
 import { ListingCard } from '../../components';
 
@@ -75,6 +75,7 @@ const SavedBrandGroup = ({ brandName, listings, onShopNow, renderSizes }) => {
         category:
           publicData.categoryLevel3 || publicData.categoryLevel2 || publicData.categoryLevel1,
         productId: shoppableListing.id.uuid,
+        dutiesType: getDutiesTypeForAnalytics(shoppableListing.author),
         savedSurface: 'saved_brand_group',
       },
     });
