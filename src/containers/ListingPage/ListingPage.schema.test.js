@@ -281,6 +281,13 @@ describe.each([
     expect(product.description).not.toMatch(/diaspora|delivered|authentic/i);
   });
 
+  it('has no Cultural Heritage property and a product-first title', async () => {
+    renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }));
+    const product = await readProductSchema();
+    expect(JSON.stringify(product)).not.toMatch(/Cultural Heritage|Authentic Indian/);
+    await waitFor(() => expect(document.title).toBe('Cotton Kurta by Nicobar | MarketplaceX'));
+  });
+
   it('keeps a listing metaDescription when one is set', async () => {
     renderPage(
       Component,

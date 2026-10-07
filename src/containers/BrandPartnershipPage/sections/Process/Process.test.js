@@ -181,7 +181,7 @@ describe('Process', () => {
       },
       {
         title: 'Start Selling',
-        details: ['Targeted marketing campaigns', 'Diaspora family outreach', 'Customer acquisition', 'Performance tracking']
+        details: ['Targeted marketing campaigns', 'US shopper outreach', 'Customer acquisition', 'Performance tracking']
       },
       {
         title: 'Grow Together',

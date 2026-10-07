@@ -85,11 +85,11 @@ const MelaHomePage = props => {
           '@context': 'http://schema.org',
           '@type': 'WebPage',
           name: pageTitle,
-          description: 'Curated marketplace for sustainable Indian design — baby clothing, fashion, home goods, and gifts from trusted Indian brands',
+          description: 'Curated marketplace for independent Indian brands: fashion, home, beauty, jewelry, and kids',
           mainEntity: {
             '@type': 'Store',
             name: 'Mela',
-            description: 'Sustainable Indian design marketplace for families',
+            description: 'Curated marketplace for independent Indian brands',
             currenciesAccepted: 'USD',
             areaServed: {
               '@type': 'Country',

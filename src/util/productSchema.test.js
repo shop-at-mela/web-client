@@ -1,6 +1,11 @@
 import { createIntl } from 'react-intl';
 import enMessages from '../translations/en.json';
-import { getCanonicalProductUrl, getOfferSeller, getSeoDescriptionFallback } from './productSchema';
+import {
+  getCanonicalProductUrl,
+  getListingSchemaTitle,
+  getOfferSeller,
+  getSeoDescriptionFallback,
+} from './productSchema';
 
 const intl = createIntl({ locale: 'en', messages: enMessages });
 
@@ -84,5 +89,31 @@ describe('getCanonicalProductUrl', () => {
     expect(getCanonicalProductUrl('https://shopatmela.com', '/l/cotton-kurta/abc')).toBe(
       'https://shopatmela.com/l/cotton-kurta/abc'
     );
+  });
+});
+
+describe('getListingSchemaTitle', () => {
+  const run = args => getListingSchemaTitle(intl, { marketplaceName: 'Mela', ...args });
+
+  it('leads with the product and adds the brand when the title lacks it', () => {
+    expect(run({ title: 'Cotton Kurta', brandName: 'Ankid' })).toBe('Cotton Kurta by Ankid | Mela');
+  });
+
+  it('does not repeat a brand already in the title, in any case', () => {
+    expect(run({ title: 'Glacier Sweatshirt in Light Grey Nicobar', brandName: 'Nicobar' })).toBe(
+      'Glacier Sweatshirt in Light Grey Nicobar | Mela'
+    );
+    expect(run({ title: 'NICOBAR Sweatshirt', brandName: 'Nicobar' })).toBe('NICOBAR Sweatshirt | Mela');
+  });
+
+  it('works without a brand', () => {
+    expect(run({ title: 'Cotton Kurta' })).toBe('Cotton Kurta | Mela');
+    expect(run({ title: 'Cotton Kurta', brandName: '' })).toBe('Cotton Kurta | Mela');
+  });
+
+  it('never says authentic, baby or uses a dash separator', () => {
+    const title = run({ title: 'Cotton Kurta', brandName: 'Ankid' });
+    expect(title).not.toMatch(/authentic|baby|diaspora/i);
+    expect(title).not.toMatch(/ [-\u2013\u2014] /);
   });
 });

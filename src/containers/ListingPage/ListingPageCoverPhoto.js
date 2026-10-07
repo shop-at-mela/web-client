@@ -43,7 +43,11 @@ import {
 } from '../../util/data';
 import { richText } from '../../util/richText';
 import { getBrandUsShipping, getDutiesTypeForAnalytics } from '../../util/brandShipping';
-import { getOfferSeller, getSeoDescriptionFallback } from '../../util/productSchema';
+import {
+  getListingSchemaTitle,
+  getOfferSeller,
+  getSeoDescriptionFallback,
+} from '../../util/productSchema';
 import {
   OFFER,
   REQUEST,
@@ -361,13 +365,7 @@ export const ListingPageComponent = props => {
 
   const marketplaceName = config.marketplaceName;
   const brandName = publicData.brand;
-  const brandPart = brandName ? ` by ${brandName}` : '';
-  // Category-aware, not hardcoded — Mela spans fashion, home & kitchen, jewelry, and baby/kids,
-  // so metadata must match whichever category this specific listing is actually in.
-  const listingCategoryId = publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3;
-  const categoryDisplayName =
-    findCategoryById(config.categoryConfiguration?.categories, listingCategoryId)?.name || 'Lifestyle Products';
-  const schemaTitle = `${title}${brandPart} - Authentic Indian ${categoryDisplayName} | ${marketplaceName}`;
+  const schemaTitle = getListingSchemaTitle(intl, { title, brandName, marketplaceName });
 
   const seoDescription =
     publicData.metaDescription ||
@@ -463,12 +461,6 @@ export const ListingPageComponent = props => {
         additionalProperty: [
           // Parse benefit-enriched Item_Aspects from publicData
           ...(publicData.itemAspects ? getAspectsForSchema(publicData.itemAspects, true) : []),
-          // Add cultural heritage properties
-          {
-            '@type': 'PropertyValue',
-            name: 'Cultural Heritage',
-            value: 'Authentic Indian Products'
-          }
         ]
       }}
     >

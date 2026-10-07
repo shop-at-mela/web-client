@@ -50,7 +50,7 @@ describe('SuccessStories', () => {
 
     expect(screen.getByText('Become a Founding Partner Success Story')).toBeInTheDocument();
     expect(screen.getByText(/Shape the platform, capture first-mover advantage/)).toBeInTheDocument();
-    expect(screen.getByText(/lucrative US Indian diaspora market/)).toBeInTheDocument();
+    expect(screen.getByText(/lucrative US market for Indian brands/)).toBeInTheDocument();
   });
 
   it('has proper accessibility structure', () => {

@@ -9,7 +9,7 @@ const MarketTiming = () => {
     {
       title: 'First-Mover Advantage',
       icon: '🎯',
-      description: 'While competitors hesitate, early partners capture mindshare and customer loyalty in the US diaspora market.',
+      description: 'While competitors hesitate, early partners capture mindshare and customer loyalty in the US market.',
       benefit: 'Establish brand recognition before competition increases'
     },
     {
@@ -36,7 +36,7 @@ const MarketTiming = () => {
     {
       period: 'NOW',
       status: 'Opportunity Window',
-      description: 'Limited competition, maximum attention from US diaspora families',
+      description: 'Limited competition, maximum attention from US shoppers',
       highlight: true,
       badge: '⚡ OPTIMAL TIMING'
     },

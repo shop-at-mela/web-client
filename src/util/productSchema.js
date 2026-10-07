@@ -55,3 +55,26 @@ export const getSeoDescriptionFallback = (intl, { title, brandName, description,
  */
 export const getCanonicalProductUrl = (marketplaceRootURL, pathname) =>
   `${marketplaceRootURL}${pathname}`;
+
+/**
+ * Browser tab and search result title for a listing.
+ * The product name leads, so a truncated mobile title still says what the page is. Listing
+ * titles often already carry the brand name; it is only added when missing, so the title never
+ * reads "Nicobar by Nicobar".
+ *
+ * @param {Object} intl react-intl instance
+ * @param {Object} args
+ * @param {string} args.title listing title
+ * @param {string?} args.brandName
+ * @param {string} args.marketplaceName
+ * @returns {string}
+ */
+export const getListingSchemaTitle = (intl, { title, brandName, marketplaceName }) => {
+  const brandAlreadyInTitle =
+    !!brandName && String(title).toLowerCase().includes(brandName.toLowerCase());
+  const id =
+    brandName && !brandAlreadyInTitle
+      ? 'ListingPage.schemaTitleWithBrand'
+      : 'ListingPage.schemaTitleNoBrand';
+  return intl.formatMessage({ id }, { title, brand: brandName, marketplaceName });
+};

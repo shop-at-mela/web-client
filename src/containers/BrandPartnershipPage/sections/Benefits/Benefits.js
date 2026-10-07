@@ -21,8 +21,8 @@ const Benefits = () => {
     {
       icon: "🎯",
       title: "Targeted Market",
-      headline: "Indian diaspora families",
-      description: "Connect with Indian families in the USA who value authentic products for their children.",
+      headline: "US shoppers",
+      description: "Connect with shoppers in the USA who value well made products and real craft.",
       details: [
         "Premium market segment",
         "High purchasing power",
