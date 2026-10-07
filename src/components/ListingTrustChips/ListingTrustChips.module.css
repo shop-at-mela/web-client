@@ -51,3 +51,8 @@
   background: rgba(192, 86, 33, 0.07);
   color: #7b341e;
 }
+
+/* The duties chip carries a tooltip button; keep the chip height unchanged. */
+.chipTooltip {
+  margin-left: 2px;
+}

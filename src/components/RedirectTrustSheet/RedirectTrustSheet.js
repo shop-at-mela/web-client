@@ -145,7 +145,7 @@ const RedirectTrustSheet = ({
 
   // Shipping and duty lines come from the brand's own structured data. No data renders the
   // neutral fallback, never a blanket claim.
-  const shippingLines = getTrustSheetShippingLines(usShipping, brandName, intl);
+  const shippingLines = getTrustSheetShippingLines(usShipping, intl);
 
   const textPrompt =
     thumbs === 'up'

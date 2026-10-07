@@ -11,6 +11,7 @@ import {
 } from '../../util/testHelpers';
 import { TIME_SLOT_TIME } from '../../util/types';
 
+import enMessages from '../../translations/en.json';
 import OrderPanel from './OrderPanel';
 
 const { screen, waitFor } = testingLibrary;
@@ -500,8 +501,19 @@ describe('OrderPanel', () => {
     });
   });
 
-  describe('INR-converted price disclaimer', () => {
-    const makeProps = publicData => {
+  describe('ListingShippingTerms in the price block (desktop)', () => {
+    const FRESH = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const authorWith = brandUsShipping => {
+      const author = createUser('john-author');
+      return {
+        ...author,
+        attributes: {
+          ...author.attributes,
+          profile: { ...author.attributes.profile, publicData: { brandUsShipping } },
+        },
+      };
+    };
+    const makeProps = (publicData, author = commonProps.author) => {
       const listing = createListing(
         'listing-product',
         {
@@ -518,28 +530,62 @@ describe('OrderPanel', () => {
         },
         { currentStock: createStock('stock-id', { quantity: 5 }) }
       );
-      return { ...commonProps, listing, isOwnListing: false, validListingTypes };
+      return { ...commonProps, author, listing, isOwnListing: false, validListingTypes };
     };
+    const renderPanel = props =>
+      render(<OrderPanel {...props} />, { config, routeConfiguration, messages: enMessages });
 
-    it('names the brand as the one that sets the final price', async () => {
-      const { queryAllByText } = render(<OrderPanel {...makeProps({ brand: 'Nicobar' })} />, {
-        config,
-        routeConfiguration,
+    it('replaces the INR line and the old disclaimer with the shipping line and one estimate line', async () => {
+      const author = authorWith({
+        duties: 'ddu',
+        method: 'flat_rate',
+        feeUsd: 34,
+        feeApprox: true,
+        checkedAt: FRESH,
       });
+      const { queryAllByText, queryByText } = renderPanel(makeProps({ brand: 'House of Chikankari' }, author));
       await waitFor(() => {
-        expect(queryAllByText('OrderPanel.priceConvertedDisclaimer')).toHaveLength(1);
-        expect(queryAllByText('OrderPanel.priceConvertedDisclaimerNoBrand')).toHaveLength(0);
+        expect(
+          queryAllByText(
+            'House of Chikankari ships to the US for about $34. Import duties are extra, paid on delivery'
+          )
+        ).toHaveLength(1);
+        expect(queryAllByText(/^Estimated from the .*3,600.* India price/)).toHaveLength(1);
+      });
+      expect(queryByText(/Estimated from the India price/)).not.toBeInTheDocument();
+      expect(queryByText(/includes shipping/i)).not.toBeInTheDocument();
+      expect(queryByText(/^~/)).not.toBeInTheDocument();
+    });
+
+    it('ends line 2 with "Duties included." for a DDP brand that has it in its prices', async () => {
+      const author = authorWith({
+        duties: 'ddp',
+        method: 'flat_rate_free_over_threshold',
+        feeUsd: 30,
+        freeOverUsd: 150,
+        checkedAt: FRESH,
+      });
+      const { container } = renderPanel(makeProps({ brand: 'Nicobar' }, author));
+      await waitFor(() => {
+        expect(container.textContent).toContain(
+          'Nicobar ships to the US for $30, free on orders over $150. Duties included.'
+        );
       });
     });
 
-    it('falls back to the brand-neutral wording when the listing has no brand', async () => {
-      const { queryAllByText } = render(<OrderPanel {...makeProps({})} />, {
-        config,
-        routeConfiguration,
-      });
+    it('renders nothing while the author profile has no publicData (loading)', async () => {
+      const { container } = renderPanel(makeProps({ brand: 'Nicobar' }));
       await waitFor(() => {
-        expect(queryAllByText('OrderPanel.priceConvertedDisclaimerNoBrand')).toHaveLength(1);
-        expect(queryAllByText('OrderPanel.priceConvertedDisclaimer')).toHaveLength(0);
+        expect(container.textContent).toMatch(/\$\d+/);
+      });
+      expect(container.textContent).not.toMatch(/ships to the US|sets shipping and duties/);
+      expect(container.textContent).not.toMatch(/Estimated from/);
+    });
+
+    it('shows the neutral sentence for a loaded brand with no usable data', async () => {
+      const { container } = renderPanel(makeProps({ brand: 'Isharya' }, authorWith(null)));
+      await waitFor(() => {
+        expect(container.textContent).toContain('Isharya sets shipping and duties at its checkout.');
       });
     });
   });

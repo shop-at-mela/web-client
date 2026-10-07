@@ -98,39 +98,47 @@ export const getDutiesTypeForAnalytics = (author, now = new Date()) => {
 const hasKnownMethod = usShipping => !!usShipping && METHODS.includes(usShipping.method);
 
 /**
- * The two shipping and duty lines of the pre-redirect trust sheet.
- * Brand is the subject wherever the brand is the one acting; the sheet heading already
- * names the brand for the rest.
+ * True when the brand has a recognized shipping method and fresh facts (PRD P1.10: stale or
+ * missing `checkedAt` fails closed to the neutral copy on every surface).
+ */
+const hasUsableTerms = (usShipping, now) =>
+  hasKnownMethod(usShipping) && !isShippingStale(usShipping.checkedAt, now);
+
+/**
+ * The shipping and duty items of the pre-redirect trust sheet (PRD P1.5). The sheet heading
+ * already names the brand, so items drop the repeated name.
  *
  * @param {Object?} usShipping brandUsShipping value
- * @param {string} brand brand display name
  * @param {Object} intl react-intl instance
- * @returns {{shipping: string, duties: string|null}} duties is null when the brand does not ship to the US
+ * @param {Date|number} now injected for the staleness check
+ * @returns {{shipping: string, duties: string|null}} duties is null when there is no usable
+ *   data or the brand does not ship to the US
  */
-export const getTrustSheetShippingLines = (usShipping, brand, intl) => {
-  const t = (key, values) => intl.formatMessage({ id: `RedirectTrustSheet.${key}` }, values);
+export const getTrustSheetShippingLines = (usShipping, intl, now = new Date()) => {
+  const t = key => intl.formatMessage({ id: `RedirectTrustSheet.${key}` });
 
-  if (!hasKnownMethod(usShipping)) {
-    return {
-      shipping: t('trustShippingUnknown', { brand }),
-      duties: t('trustDutiesUnknown', { brand }),
-    };
+  if (!hasUsableTerms(usShipping, now)) {
+    return { shipping: t('shipping.noData'), duties: null };
   }
-
   if (usShipping.method === 'none') {
-    return { shipping: t('trustShippingNone', { brand }), duties: null };
+    return { shipping: t('shipping.none'), duties: null };
   }
 
-  const shipping = t('trustShippingShips', { brand });
-  if (usShipping.duties === 'ddu') {
-    return { shipping, duties: t('trustDutiesDdu') };
-  }
-  if (usShipping.duties === 'ddp') {
-    const key =
-      usShipping.dutiesCollected === 'at_checkout' ? 'trustDutiesDdpAtCheckout' : 'trustDutiesDdp';
-    return { shipping, duties: t(key, { brand }) };
-  }
-  return { shipping, duties: t('trustDutiesUnknown', { brand }) };
+  const shipping = getShippingSentence(
+    usShipping,
+    null,
+    intl,
+    true,
+    false,
+    'RedirectTrustSheet.shipping'
+  );
+  const dutiesKeyByState = {
+    ddu: 'dutiesDdu',
+    ddp_in_price: 'dutiesDdpInPrice',
+    ddp_at_checkout: 'dutiesDdpAtCheckout',
+    unknown: 'dutiesUnknown',
+  };
+  return { shipping, duties: t(dutiesKeyByState[getDutiesState(usShipping)]) };
 };
 
 /**
@@ -211,9 +219,18 @@ const getDutiesState = usShipping => {
  * @param {Object} intl
  * @param {boolean} includeThreshold false drops every free shipping threshold clause
  * @param {boolean} compact true uses the shortest wording for the calculated cost sentence
+ * @param {string} ns en.json key namespace holding the sentence templates (product page line,
+ *   trust sheet items and brand page passage share the same structure)
  */
-const getShippingSentence = (usShipping, brand, intl, includeThreshold, compact) => {
-  const t = (key, values) => intl.formatMessage({ id: `BrandShipping.${key}` }, values);
+const getShippingSentence = (
+  usShipping,
+  brand,
+  intl,
+  includeThreshold,
+  compact,
+  ns = 'BrandShipping'
+) => {
+  const t = (key, values) => intl.formatMessage({ id: `${ns}.${key}` }, values);
   const hasFee = isAmount(usShipping.feeUsd);
   const hasThreshold = isAmount(usShipping.freeOverUsd);
   const fee = hasFee ? formatUsdAmount(intl, usShipping.feeUsd, usShipping.feeApprox) : null;
@@ -340,3 +357,224 @@ export const getShippingTerms = (usShipping, brand, intl, now = new Date()) => {
   const compact = composeTerms(usShipping, brand, intl, false, true);
   return { state: 'shipping', text: join(compact), ...compact, thresholdDropped };
 };
+
+// ---------------------------------------------------------------------------
+// Tooltips (PRD P1.2, P1.4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Tooltip copy for the duty facts shown on the product page. `dutiesState` comes from
+ * getShippingTerms(). Returns null when a state has no tooltip.
+ *
+ * @param {string?} dutiesState 'ddp_in_price' | 'ddp_at_checkout' | 'ddu' | 'unknown' | null
+ * @param {string} brand
+ * @param {Object} intl
+ * @returns {string|null}
+ */
+export const getDutiesTooltip = (dutiesState, brand, intl) => {
+  const idByState = {
+    ddp_in_price: 'BrandShipping.tooltipDdpInPrice',
+    ddu: 'BrandShipping.tooltipDdu',
+  };
+  const id = idByState[dutiesState];
+  return id ? intl.formatMessage({ id }, { brand }) : null;
+};
+
+// ---------------------------------------------------------------------------
+// Brand page hero line (PRD P1.6)
+// ---------------------------------------------------------------------------
+
+/**
+ * Facts for the brand page hero meta line. Only fresh data counts: stale or missing data shows
+ * neither "Ships to the US" nor "Duties included".
+ *
+ * @param {Object?} usShipping brandUsShipping value
+ * @param {Date|number} now injected for the staleness check
+ * @returns {{ships: boolean, doesNotShip: boolean, dutiesIncluded: boolean}}
+ */
+export const getBrandHeroShipping = (usShipping, now = new Date()) => {
+  if (!hasUsableTerms(usShipping, now)) {
+    return { ships: false, doesNotShip: false, dutiesIncluded: false };
+  }
+  if (usShipping.method === 'none') {
+    return { ships: false, doesNotShip: true, dutiesIncluded: false };
+  }
+  return { ships: true, doesNotShip: false, dutiesIncluded: usShipping.duties === 'ddp' };
+};
+
+// ---------------------------------------------------------------------------
+// Brand page "Shipping to the US" section and FAQPage JSON-LD (PRD P1.7, P1.8)
+// ---------------------------------------------------------------------------
+
+/**
+ * Whether the brand's free shipping fact is known well enough to answer "free shipping?".
+ */
+const hasFreeShippingFact = usShipping =>
+  usShipping.method === 'free' ||
+  ((usShipping.method === 'flat_rate_free_over_threshold' ||
+    usShipping.method === 'calculated_free_over_threshold') &&
+    isAmount(usShipping.freeOverUsd));
+
+const getFreeShippingAnswer = (usShipping, brand, intl) => {
+  const t = (key, values) => intl.formatMessage({ id: `BrandShipping.${key}` }, values);
+  if (usShipping.method === 'free') return t('faqFreeAlways', { brand });
+  const threshold = formatUsdAmount(intl, usShipping.freeOverUsd, usShipping.freeOverApprox);
+  if (isAmount(usShipping.feeUsd)) {
+    const fee = formatUsdAmount(intl, usShipping.feeUsd, usShipping.feeApprox);
+    return t('faqFreeOverWithFee', { brand, threshold, fee });
+  }
+  return t('faqFreeOver', { brand, threshold });
+};
+
+const getShipsFromSentence = (usShipping, intl) => {
+  const idByOrigin = {
+    india: 'BrandShipping.faqShipsFromIndia',
+    us_warehouse: 'BrandShipping.faqShipsFromUs',
+    mixed: 'BrandShipping.faqShipsFromMixed',
+  };
+  const id = idByOrigin[usShipping.shipsFrom];
+  return id ? intl.formatMessage({ id }) : null;
+};
+
+const getDutiesAnswer = (usShipping, brand, intl) => {
+  const idByState = {
+    ddp_in_price: 'BrandShipping.faqDutiesDdpInPrice',
+    ddp_at_checkout: 'BrandShipping.faqDutiesDdpAtCheckout',
+    ddu: 'BrandShipping.faqDutiesDdu',
+    unknown: 'BrandShipping.faqDutiesUnknown',
+  };
+  return intl.formatMessage({ id: idByState[getDutiesState(usShipping)] }, { brand });
+};
+
+const getPassageDuties = (usShipping, brand, intl) => {
+  const idByState = {
+    ddp_in_price: 'BrandPassage.dutiesDdpInPrice',
+    ddp_at_checkout: 'BrandPassage.dutiesDdpAtCheckout',
+    ddu: 'BrandPassage.dutiesDdu',
+    unknown: 'BrandPassage.dutiesUnknown',
+  };
+  return intl.formatMessage({ id: idByState[getDutiesState(usShipping)] }, { brand });
+};
+
+/**
+ * Format 'YYYY-MM-DD' as "October 7, 2026". Always UTC so the server and the browser agree.
+ */
+const formatCheckedDate = (intl, checkedAt) =>
+  intl.formatDate(new Date(`${checkedAt}T00:00:00Z`), {
+    timeZone: 'UTC',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+/** The brand page passage is meant to be quotable on its own: 40 to 60 words (PRD P1.7). */
+export const PASSAGE_MIN_WORDS = 40;
+export const PASSAGE_MAX_WORDS = 60;
+
+const countWords = text => text.trim().split(/\s+/).length;
+
+/**
+ * Everything the brand page "Shipping to the US" section shows, and the FAQPage JSON-LD
+ * built from it. The visible section and the structured data both call this one function, so
+ * their question and answer text cannot drift apart (PRD P1.8).
+ *
+ * With fresh data the section has a passage, up to three FAQ items and a dated byline. With no
+ * data, stale data or an unrecognized method it has a neutral passage and the first FAQ item
+ * only, and no date (fail closed, PRD P1.10).
+ *
+ * @param {Object?} usShipping brandUsShipping value
+ * @param {string} brand brand display name
+ * @param {Object} intl react-intl instance
+ * @param {Date|number} now injected for the staleness check
+ * @returns {{
+ *   state: 'noData'|'none'|'shipping',
+ *   passage: string,
+ *   faq: Array<{id: string, question: string, answer: string}>,
+ *   byline: string|null,
+ * }}
+ */
+export const getBrandShippingSection = (usShipping, brand, intl, now = new Date()) => {
+  const t = (key, values) => intl.formatMessage({ id: `BrandShipping.${key}` }, values);
+  const p = (key, values) => intl.formatMessage({ id: `BrandPassage.${key}` }, values);
+  const shipsQuestion = {
+    id: 'ships',
+    question: t('faqShipsQuestion', { brand }),
+  };
+
+  if (!hasUsableTerms(usShipping, now)) {
+    return {
+      state: 'noData',
+      passage: p('noData', { brand }),
+      faq: [{ ...shipsQuestion, answer: t('noData', { brand }) }],
+      byline: null,
+    };
+  }
+
+  const byline = t('byline', { date: formatCheckedDate(intl, usShipping.checkedAt) });
+
+  if (usShipping.method === 'none') {
+    return {
+      state: 'none',
+      passage: p('none', { brand }),
+      faq: [{ ...shipsQuestion, answer: t('none', { brand }) }],
+      byline,
+    };
+  }
+
+  const passageSentences = [
+    getShippingSentence(usShipping, brand, intl, true, false, 'BrandPassage'),
+    getPassageDuties(usShipping, brand, intl),
+    p('closing', { brand }),
+  ];
+  // Short states (for example free shipping with duties in the prices) read thin as a quotable
+  // passage. A fixed sentence about Mela's role brings them up to the minimum length, and it
+  // states what Mela does not do, so it never implies Mela ships or collects duties.
+  if (countWords(passageSentences.join(' ')) < PASSAGE_MIN_WORDS) {
+    passageSentences.push(p('role', { brand }));
+  }
+  const passage = passageSentences.join(' ');
+
+  const shipsFrom = getShipsFromSentence(usShipping, intl);
+  const shipsAnswer = [
+    getShippingSentence(usShipping, brand, intl, true, false, 'BrandShipping'),
+    shipsFrom,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const faq = [
+    { ...shipsQuestion, answer: shipsAnswer },
+    {
+      id: 'duties',
+      question: t('faqDutiesQuestion', { brand }),
+      answer: getDutiesAnswer(usShipping, brand, intl),
+    },
+  ];
+  if (hasFreeShippingFact(usShipping)) {
+    faq.push({
+      id: 'free',
+      question: t('faqFreeQuestion', { brand }),
+      answer: getFreeShippingAnswer(usShipping, brand, intl),
+    });
+  }
+
+  return { state: 'shipping', passage, faq, byline };
+};
+
+/**
+ * FAQPage structured data for a brand page, from the same items as the visible FAQ.
+ *
+ * @param {Array<{question: string, answer: string}>} faq items from getBrandShippingSection()
+ * @param {{'@id': string}} organizationRef reference to the marketplace Organization node
+ * @returns {Object} schema.org FAQPage node
+ */
+export const buildBrandFaqSchema = (faq, organizationRef) => ({
+  '@type': 'FAQPage',
+  author: organizationRef,
+  publisher: organizationRef,
+  mainEntity: faq.map(({ question, answer }) => ({
+    '@type': 'Question',
+    name: question,
+    acceptedAnswer: { '@type': 'Answer', text: answer },
+  })),
+});

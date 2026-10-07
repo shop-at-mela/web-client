@@ -28,6 +28,11 @@ import {
   isUserAuthorized,
 } from '../../util/userHelpers';
 import { richText } from '../../util/richText';
+import {
+  buildBrandFaqSchema,
+  getBrandShippingSection,
+  getBrandUsShipping,
+} from '../../util/brandShipping';
 
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { getMarketplaceEntities } from '../../ducks/marketplaceData.duck';
@@ -434,7 +439,7 @@ export const ProfilePageComponent = props => {
   const brandPageUrl = brandCanonicalUrl || `${config.marketplaceRootURL}/u/${profileUserId}`;
 
   // Construct Schema.org markup based on profile type
-  const schemaMarkup = isProvider
+  const brandOrganizationSchema = isProvider
     ? {
         '@context': 'http://schema.org',
         '@type': 'Organization',
@@ -464,15 +469,31 @@ export const ProfilePageComponent = props => {
           },
         }),
       }
-    : {
-        '@context': 'http://schema.org',
-        '@type': 'ProfilePage',
-        mainEntity: {
-          '@type': 'Person',
-          name: displayName,
-        },
-        name: schemaTitle,
-      };
+    : null;
+
+  const profilePageSchema = {
+    '@context': 'http://schema.org',
+    '@type': 'ProfilePage',
+    mainEntity: {
+      '@type': 'Person',
+      name: displayName,
+    },
+    name: schemaTitle,
+  };
+
+  // Brand pages publish the Organization and a FAQPage built from the same items as the
+  // visible "Shipping to the US" FAQ, so the structured data equals the visible text.
+  const brandShippingFaq = isProvider
+    ? getBrandShippingSection(getBrandUsShipping(profileUser), displayName, intl).faq
+    : null;
+  const schemaMarkup = isProvider
+    ? [
+        brandOrganizationSchema,
+        buildBrandFaqSchema(brandShippingFaq, {
+          '@id': `${config.marketplaceRootURL}#organization`,
+        }),
+      ]
+    : profilePageSchema;
 
   if (!isDataLoaded) {
     return null;

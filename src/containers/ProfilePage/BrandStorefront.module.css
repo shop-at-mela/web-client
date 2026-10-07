@@ -200,6 +200,11 @@
   color: var(--colorGrey200);
 }
 
+.shippingDetailsLink {
+  color: inherit;
+  text-decoration: underline;
+}
+
 .certifications {
   display: flex;
   flex-wrap: wrap;

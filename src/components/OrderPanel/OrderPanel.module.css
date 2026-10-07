@@ -75,28 +75,6 @@
   color: var(--marketplaceColor);
 }
 
-.inrPrice {
-  composes: marketplaceTinyFontStyles from global;
-  color: var(--colorGrey500);
-  font-weight: var(--fontWeightRegular);
-  margin: 2px 0 0 24px;
-
-  @media (--viewportMedium) {
-    margin: 2px 0 0 0;
-  }
-}
-
-.priceDisclaimer {
-  composes: marketplaceTinyFontStyles from global;
-  color: var(--colorGrey500);
-  font-weight: var(--fontWeightRegular);
-  margin: 2px 0 0 24px;
-
-  @media (--viewportMedium) {
-    margin: 2px 0 0 0;
-  }
-}
-
 .author {
   composes: p from global;
   margin: 0px 24px 32px 24px;
@@ -213,10 +191,10 @@
 
 .priceContainerInCTA,
 .priceContainer {
-  /* Layout */
+  /* Layout: the price, then the shipping and estimate lines under it */
   display: flex;
-  flex-direction: row;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 4px;
   flex-shrink: 0;
   margin-right: 22px;
@@ -227,7 +205,6 @@
   }
 
   @media (--viewportLarge) {
-    flex-direction: row;
     margin-right: unset;
     padding: 0;
   }
