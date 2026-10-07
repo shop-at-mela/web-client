@@ -1,4 +1,4 @@
-import { sanitizeUrl } from './sanitize';
+import { sanitizeUrl, sanitizeEntity } from './sanitize';
 
 describe('sanitize utils', () => {
   // Originates to https://github.com/braintree/sanitize-url/
@@ -177,6 +177,28 @@ describe('sanitize utils', () => {
           );
         });
       });
+    });
+  });
+
+  // The brand's US shipping terms live in user publicData and are read from the entity the
+  // app denormalizes, so they must survive sanitization untouched (PRD international-shipping).
+  describe('brandUsShipping on a user entity', () => {
+    const brandUsShipping = {
+      checkedAt: '2026-10-04',
+      duties: 'ddu',
+      feeApprox: true,
+      feeUsd: 34,
+      method: 'flat_rate',
+    };
+
+    it('keeps the nested object as is', () => {
+      const user = {
+        id: { uuid: 'u1' },
+        type: 'user',
+        attributes: { profile: { displayName: 'Brand', publicData: { brandUsShipping } } },
+      };
+      const result = sanitizeEntity(user, {});
+      expect(result.attributes.profile.publicData.brandUsShipping).toEqual(brandUsShipping);
     });
   });
 });
