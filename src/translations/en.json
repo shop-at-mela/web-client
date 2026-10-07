@@ -1696,7 +1696,7 @@
   "CategoryBreadcrumb.home": "Home",
 
   "CategoryPage.title": "{categoryName} | Curated Indian Brands | {marketplaceName}",
-  "CategoryPage.description": "Discover {categoryName} from India's most loved independent brands. Curated by Mela, shipped to the US, purchased directly on each brand's own store.",
+  "CategoryPage.description": "Discover {categoryName} from India's most loved independent brands. Curated by Mela. You buy directly on each brand's own store.",
   "CategoryPage.faqQuestion": "What {categoryName} products does Mela sell?",
   "CategoryPage.faqAnswer": "Mela sells {categoryName} from independent Indian brands that make their products in India and ship directly to the US. Every brand is vetted by the Mela team before it's featured.",
   "CategoryPage.home": "Home",
@@ -1720,7 +1720,7 @@
   "GiftingPage.browseAllGifts": "Browse all gifts",
 
   "BrandsPage.title": "All Brands | {brandCount}+ Hand Vetted Indian Brands | Mela",
-  "BrandsPage.description": "Browse {brandCount}+ hand vetted Indian brands across fashion, home, beauty, jewelry, and kids. Every brand ships to the US and accepts US cards. You buy directly on each brand's own store.",
+  "BrandsPage.description": "Browse {brandCount}+ hand vetted Indian brands across fashion, home, beauty, jewelry, and kids. You buy directly on each brand's own store.",
   "BrandsPage.heroTitle": "Discover India's Most Trusted Brands",
   "BrandsPage.ctaExploreAll": "Explore All Brands",
   "BrandsPage.ctaBecomePartner": "Become a Partner Brand",
