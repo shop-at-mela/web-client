@@ -24,7 +24,7 @@ import css from './MelaHomePage.module.css';
 // copy below (title/description/FAQ) actually changes. Deliberately not derived from
 // any live data (e.g. newest listing), which would be a freshness-spam pattern AI
 // answer engines are tuned to discount.
-export const HOMEPAGE_LAST_UPDATED = '2026-10-02';
+export const HOMEPAGE_LAST_UPDATED = '2026-10-06';
 
 // Single source of truth for the homepage FAQ: rendered as visible copy by
 // <FAQSection> below AND used to build the FAQPage JSON-LD in `schema`, so the two
@@ -35,22 +35,22 @@ export const FAQ_ITEMS = [
   {
     question: 'Do Indian brands on Mela ship to the United States, and how long does it take?',
     answer:
-      "Yes. Every brand featured on Mela ships directly to US addresses, to all 50 states. Standard international shipping takes 7–10 working days, and many brands also offer expedited options (3–7 business days). Exact timelines and costs are shown at checkout on each brand's store.",
+      "Shipping costs and delivery times are set by each brand; each brand page shows that brand's US shipping cost and whether its prices include import duties.",
   },
   {
     question: 'Can I use my US credit card to shop on Mela?',
     answer:
-      "Yes. Mela is a discovery platform — you purchase directly on each brand's own Shopify store, which accepts all major US-issued credit and debit cards including Visa, Mastercard, American Express, and Discover. No special international payment setup is needed.",
+      "Yes. Mela is a discovery platform, so you purchase directly on each brand's own Shopify store, which accepts all major credit and debit cards issued in the US, including Visa, Mastercard, American Express, and Discover. No special international payment setup is needed.",
   },
   {
     question: 'Are there customs duties or import taxes when ordering from India to the US?',
     answer:
-      "Possibly — US import duty rules for personal shipments from India have changed recently, so brands can no longer guarantee a duty-free threshold. Each brand's own checkout will calculate and display any applicable duties or import taxes before you pay, so there are no surprises at your door.",
+      "It depends on the brand. Some brands include US import duties in their prices. For others, the courier collects duties before delivery, and since August 2025 that can apply to orders of any value. Each brand page and product page says which applies.",
   },
   {
     question: 'What is the return policy for brands on Mela?',
     answer:
-      "Each brand maintains its own return policy, displayed on their store page. Mela vets all partners for fair return terms. Contact the Mela team for help navigating any return.",
+      "Each brand sets its own return policy, including whether it accepts returns from the US. Check the brand's policy before you buy.",
   },
 ];
 
@@ -62,7 +62,7 @@ const MelaHomePage = props => {
   const pageTitle = "Discover India's Most Loved Brands | Fashion, Home, Beauty & Kids | Mela";
 
   // SEO-optimized meta description with target keywords
-  const pageDescription = "Mela is a curated home for proven Indian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store. Ships to all 50 states.";
+  const pageDescription = "Mela is a curated home for proven Indian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store.";
 
   // Reference (not duplicate) the Organization entity Page.js already injects into
   // every page's JSON-LD @graph, so AI engines can attribute this page's editorial

@@ -50,10 +50,6 @@ const VettingStrip = ({ vettingSectionId = 'how-we-vet' }) => {
       </span>
       <span className={css.item}>
         <span className={css.check}>✓</span>{' '}
-        <FormattedMessage id="VettingStrip.shipping" />
-      </span>
-      <span className={css.item}>
-        <span className={css.check}>✓</span>{' '}
         <FormattedMessage id="VettingStrip.cards" />
       </span>
       <a className={css.how} href={`#${vettingSectionId}`} onClick={handleHowWeVetClick}>

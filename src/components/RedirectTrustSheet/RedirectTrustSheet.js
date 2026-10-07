@@ -13,6 +13,7 @@
  *     brandName="Aagghhoo"
  *     productUrl="https://..."
  *     isVerified={true}
+ *     usShipping={author.attributes.profile.publicData.brandUsShipping}
  *     onContinue={url => openBrandStorefront(url, trackingParams)}
  *     onClose={() => setRedirectSheetOpen(false)}
  *   />
@@ -24,9 +25,10 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { bool, func, string } from 'prop-types';
+import { bool, func, object, string } from 'prop-types';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { postSentiment } from '../../util/sentimentCapture';
+import { getTrustSheetShippingLines } from '../../util/brandShipping';
 
 import css from './RedirectTrustSheet.module.css';
 
@@ -43,6 +45,7 @@ const RedirectTrustSheet = ({
   brandName,
   productUrl,
   isVerified,
+  usShipping,
   onContinue,
   onClose,
   skipSentiment = false,
@@ -140,6 +143,10 @@ const RedirectTrustSheet = ({
     onClose();
   };
 
+  // Shipping and duty lines come from the brand's own structured data. No data renders the
+  // neutral fallback, never a blanket claim.
+  const shippingLines = getTrustSheetShippingLines(usShipping, brandName, intl);
+
   const textPrompt =
     thumbs === 'up'
       ? intl.formatMessage({ id: 'RedirectTrustSheet.promptThumbsUp' })
@@ -166,8 +173,9 @@ const RedirectTrustSheet = ({
             />
           </div>
           <ul className={css.trustList}>
-            <li>🔒 {intl.formatMessage({ id: 'RedirectTrustSheet.trustCheckout' })}</li>
-            <li>🇺🇸 {intl.formatMessage({ id: 'RedirectTrustSheet.trustShipping' })}</li>
+            <li>🔒 {intl.formatMessage({ id: 'RedirectTrustSheet.trustCheckout' }, { brand: brandName })}</li>
+            <li>🇺🇸 {shippingLines.shipping}</li>
+            {shippingLines.duties && <li>🧾 {shippingLines.duties}</li>}
             <li>↩️ {intl.formatMessage({ id: 'RedirectTrustSheet.trustReturns' }, { brand: brandName })}</li>
           </ul>
         </div>
@@ -278,6 +286,7 @@ RedirectTrustSheet.propTypes = {
   brandName: string.isRequired,
   productUrl: string.isRequired,
   isVerified: bool,
+  usShipping: object,
   onContinue: func.isRequired,
   onClose: func.isRequired,
   skipSentiment: bool,

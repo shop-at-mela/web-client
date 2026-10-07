@@ -235,7 +235,7 @@ const HeroSectionComponent = ({
       <p className={css.subheadline}>
         <FormattedMessage
           id="SectionMelaHero.heroSubheadline"
-          defaultMessage="Independent Indian brands worth knowing — modern design, real makers, shipped to your door worldwide."
+          defaultMessage="Independent Indian brands worth knowing: modern design, real makers, from brands that ship to the US."
         />
       </p>
     </div>
@@ -252,7 +252,7 @@ const HeroSectionComponent = ({
         <p className={css.breadthSignal}>
           <FormattedMessage
             id="SectionMelaHero.breadthCount"
-            defaultMessage="{brandCount}+ brands across {categoryCount} categories · shipped across the US"
+            defaultMessage="{brandCount}+ brands across {categoryCount} categories · brands that ship to the US"
             values={{ brandCount, categoryCount }}
           />
         </p>

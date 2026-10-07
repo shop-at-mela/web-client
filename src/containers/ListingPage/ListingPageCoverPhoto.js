@@ -42,6 +42,7 @@ import {
   userDisplayNameAsString,
 } from '../../util/data';
 import { richText } from '../../util/richText';
+import { getBrandUsShipping } from '../../util/brandShipping';
 import {
   OFFER,
   REQUEST,
@@ -699,6 +700,7 @@ export const ListingPageComponent = props => {
           brandName={brandName || authorDisplayName}
           productUrl={pendingRedirectUrl}
           isVerified={isMelaVerified(publicData)}
+          usShipping={getBrandUsShipping(ensuredAuthor)}
           onContinue={url => openBrandStorefront(url, pendingTrackingParams)}
           onClose={() => setRedirectSheetOpen(false)}
           skipSentiment={shouldSkipRedirectTrustSentiment()}

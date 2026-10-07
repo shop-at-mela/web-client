@@ -17,6 +17,7 @@ import { ensureListing, ensureUser } from '../../util/data';
 import { richText } from '../../util/richText';
 import { createSlug } from '../../util/urlHelpers';
 import { isMelaVerified } from '../../util/certificationHelpers';
+import { getBrandUsShipping } from '../../util/brandShipping';
 import { isBookingProcessAlias } from '../../transactions/transaction';
 import { getOccasionLabel } from '../../util/occasionLabels';
 
@@ -390,6 +391,7 @@ export const ListingCard = props => {
       url: productUrl,
       brandName: brand,
       isVerified: isMelaVerified(publicData),
+      usShipping: getBrandUsShipping(author),
       isOutOfStock,
       // Lets the caller (SavedPage) return keyboard focus to this exact button when
       // RedirectTrustSheet closes — see ListingCard.viewListingFallback docs and

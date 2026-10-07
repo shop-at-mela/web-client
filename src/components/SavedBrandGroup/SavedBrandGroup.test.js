@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { IntlProvider } from 'react-intl';
 
@@ -144,6 +144,34 @@ describe('SavedBrandGroup', () => {
     expect(call.brandName).toBe('Nicobar');
     expect(call.trackingParams.savedSurface).toBe('saved_brand_group');
     expect(call.triggerElement).toBeInstanceOf(HTMLElement);
+  });
+
+  it('passes the brand author\'s brandUsShipping to onShopNow (null when the author has none)', () => {
+    const usShipping = { duties: 'ddu', method: 'flat_rate', feeUsd: 34, feeApprox: true };
+    const withAuthorData = createListing(
+      'withData',
+      { publicData: { brand: 'House of Chikankari', productUrl: 'https://hoc.example/p' } },
+      {
+        author: {
+          id: { uuid: 'hoc-author' },
+          attributes: { profile: { publicData: { brandUsShipping: usShipping } } },
+        },
+      }
+    );
+    const onShopNow = jest.fn();
+    renderGroup({ onShopNow, brandName: 'House of Chikankari', listings: [withAuthorData] });
+    fireEvent.click(screen.getByTestId('saved-brand-group-shop-cta'));
+    expect(onShopNow.mock.calls[0][0].usShipping).toEqual(usShipping);
+
+    const onShopNow2 = jest.fn();
+    cleanup();
+    renderGroup({
+      onShopNow: onShopNow2,
+      brandName: 'Nicobar',
+      listings: [listingWithBrand('noData', { stock: 5 })],
+    });
+    fireEvent.click(screen.getByTestId('saved-brand-group-shop-cta'));
+    expect(onShopNow2.mock.calls[0][0].usShipping).toBeNull();
   });
 
   it('never shows a group CTA for the no-brand "More saved" group', () => {

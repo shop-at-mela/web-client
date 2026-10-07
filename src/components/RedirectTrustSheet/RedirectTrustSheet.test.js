@@ -4,13 +4,12 @@ import '@testing-library/jest-dom';
 import { IntlProvider } from 'react-intl';
 import RedirectTrustSheet from './RedirectTrustSheet';
 import * as sentimentCapture from '../../util/sentimentCapture';
+import enMessages from '../../translations/en.json';
 
 // Minimal i18n wrapper with stubs for required messages
 const TestWrapper = ({ children }) => {
   const messages = {
     'RedirectTrustSheet.heading': 'Shop on {brand}',
-    'RedirectTrustSheet.trustCheckout': 'Secure Shopify checkout',
-    'RedirectTrustSheet.trustShipping': 'Ships to the US',
     'RedirectTrustSheet.trustReturns': 'Easy returns from {brand}',
     'RedirectTrustSheet.sentimentPrompt': 'How likely to recommend?',
     'RedirectTrustSheet.thumbsUp': 'Thumbs up',
@@ -31,6 +30,12 @@ const TestWrapper = ({ children }) => {
     'RedirectTrustSheet.continueDelayAnnouncement': 'The Continue button will be available in a moment.',
     'RedirectTrustSheet.continueReadyAnnouncement': 'The Continue button is now available.',
   };
+  // Trust section strings come from the real en.json so these tests assert exactly what ships
+  Object.keys(enMessages)
+    .filter(key => /^RedirectTrustSheet\.trust(Checkout|Shipping|Duties)/.test(key))
+    .forEach(key => {
+      messages[key] = enMessages[key];
+    });
   return (
     <IntlProvider locale="en" messages={messages}>
       {children}
@@ -60,11 +65,59 @@ describe('RedirectTrustSheet', () => {
   it('renders trust section and CTA when open', () => {
     render(<TestWrapper><RedirectTrustSheet {...defaultProps} /></TestWrapper>);
     // trust list items
-    expect(screen.getByText(/Secure Shopify checkout/i)).toBeInTheDocument();
-    expect(screen.getByText(/Ships to the US/i)).toBeInTheDocument();
+    expect(screen.getByText(/Secure checkout on Aagghhoo's store · US cards accepted/)).toBeInTheDocument();
     // CTA is always present
     const cta = screen.getByRole('button', { name: /Continue to Aagghhoo/i });
     expect(cta).toBeInTheDocument();
+  });
+
+  describe('per-brand shipping and duty lines', () => {
+    const lines = props => {
+      render(<TestWrapper><RedirectTrustSheet {...defaultProps} {...props} /></TestWrapper>);
+      return Array.from(document.querySelectorAll('li')).map(li => li.textContent);
+    };
+
+    it('DDU brand (Fizzy Goblet)', () => {
+      const items = lines({
+        brandName: 'Fizzy Goblet',
+        usShipping: { duties: 'ddu', method: 'flat_rate_free_over_threshold', feeUsd: 15, freeOverUsd: 100 },
+      });
+      expect(items).toContain('🇺🇸 Fizzy Goblet ships to the US');
+      expect(items).toContain('🧾 US import duties are paid on delivery');
+    });
+
+    it('DDP brand (Nicobar)', () => {
+      const items = lines({ brandName: 'Nicobar', usShipping: { duties: 'ddp', method: 'flat_rate' } });
+      expect(items).toContain('🇺🇸 Nicobar ships to the US');
+      expect(items).toContain('🧾 Nicobar includes US import duties');
+    });
+
+    it('DDP brand that adds duties at checkout does not claim they are in the price', () => {
+      const items = lines({
+        brandName: 'Vilvah Store',
+        usShipping: { duties: 'ddp', dutiesCollected: 'at_checkout', method: 'flat_rate' },
+      });
+      expect(items).toContain('🧾 Vilvah Store adds US import duties at checkout');
+    });
+
+    it('unknown duties (Ankid)', () => {
+      const items = lines({ brandName: 'Ankid', usShipping: { method: 'flat_rate', feeUsd: 28, feeApprox: true } });
+      expect(items).toContain('🇺🇸 Ankid ships to the US');
+      expect(items).toContain("🧾 Ankid doesn't say if US duties are included");
+    });
+
+    it('no brandUsShipping shows the neutral fallback, never a blanket claim', () => {
+      const items = lines({ brandName: 'Isharya', usShipping: null });
+      expect(items).toContain('🇺🇸 Isharya sets shipping at its checkout');
+      expect(items).toContain("🧾 Isharya doesn't say if US duties are included");
+      expect(document.body.textContent).not.toMatch(/ships to the US/i);
+    });
+
+    it('method none says the brand does not ship yet and shows no duties line', () => {
+      const items = lines({ brandName: 'Pluchi', usShipping: { method: 'none' } });
+      expect(items).toContain("🇺🇸 Pluchi doesn't ship to the US yet");
+      expect(items.some(i => /duties/i.test(i))).toBe(false);
+    });
   });
 
   it('renders nothing when isOpen is false', () => {

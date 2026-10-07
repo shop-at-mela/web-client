@@ -211,7 +211,14 @@ const PriceMaybe = props => {
       )}
       {formattedINRPrice && (
         <p className={css.priceDisclaimer}>
-          <FormattedMessage id="OrderPanel.priceConvertedDisclaimer" />
+          {publicData?.brand ? (
+            <FormattedMessage
+              id="OrderPanel.priceConvertedDisclaimer"
+              values={{ brand: publicData.brand }}
+            />
+          ) : (
+            <FormattedMessage id="OrderPanel.priceConvertedDisclaimerNoBrand" />
+          )}
         </p>
       )}
     </div>

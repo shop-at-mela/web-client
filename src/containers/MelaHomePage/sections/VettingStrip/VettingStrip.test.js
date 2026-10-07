@@ -17,7 +17,6 @@ import { pushVettingStripView, pushVettingStripClick } from '../../../../util/an
 
 const mockMessages = {
   'VettingStrip.brandsVetted': '{count} brands, hand vetted',
-  'VettingStrip.shipping': 'Ship to all 50 states',
   'VettingStrip.cards': 'US cards verified',
   'VettingStrip.howWeVet': 'How we vet →',
 };
@@ -33,7 +32,7 @@ describe('VettingStrip', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the live brand count and static trust items', () => {
+  it('renders the live brand count and trust items without a shipping claim', () => {
     render(
       <TestWrapper>
         <VettingStrip />
@@ -41,7 +40,9 @@ describe('VettingStrip', () => {
     );
 
     expect(screen.getByText('19 brands, hand vetted')).toBeInTheDocument();
-    expect(screen.getByText('Ship to all 50 states')).toBeInTheDocument();
+    // The blanket shipping claim was removed (false while a brand is live that does not ship to the US)
+    expect(screen.queryByText(/50 states/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ship/i)).not.toBeInTheDocument();
     expect(screen.getByText('US cards verified')).toBeInTheDocument();
     expect(screen.getByText('How we vet →')).toBeInTheDocument();
   });

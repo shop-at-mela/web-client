@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useBrandPageView } from '../../util/analytics/pageViews';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { richText } from '../../util/richText';
+import { getBrandUsShipping, shipsToUs } from '../../util/brandShipping';
 import {
   Heading,
   H2,
@@ -236,6 +237,15 @@ const BrandStorefront = props => {
 
   const intl = useIntl();
   const { displayName, bio, publicData = {} } = user.attributes.profile;
+
+  // Hero shipping fact comes from the brand's own data: nothing without data, so the old
+  // blanket "ships to the US" claim can never show for a brand that does not ship.
+  const brandUsShipping = getBrandUsShipping(user);
+  const usShippingMetaId = shipsToUs(brandUsShipping)
+    ? 'BrandStorefront.metaShipping'
+    : brandUsShipping?.method === 'none'
+    ? 'BrandStorefront.metaShippingNone'
+    : null;
   const {
     certifications = [],
     brandTagline,
@@ -458,10 +468,14 @@ const BrandStorefront = props => {
                   values={{ count: sellableListings.length }}
                 />
               </span>
-              <span className={css.separator}>•</span>
-              <span>
-                <FormattedMessage id="BrandStorefront.metaShipping" />
-              </span>
+              {usShippingMetaId && (
+                <>
+                  <span className={css.separator}>•</span>
+                  <span>
+                    <FormattedMessage id={usShippingMetaId} />
+                  </span>
+                </>
+              )}
               <span className={css.separator}>•</span>
               <span>
                 <FormattedMessage id="BrandStorefront.metaCards" />
