@@ -15,7 +15,7 @@ describe('MarketOpportunity', () => {
     render(<MarketOpportunity />);
 
     expect(screen.getByText('The US Indian Baby Clothing Market Opportunity')).toBeInTheDocument();
-    expect(screen.getByText('A massive, underserved market waiting for authentic Indian brands')).toBeInTheDocument();
+    expect(screen.getByText('A massive, underserved market waiting for Indian brands')).toBeInTheDocument();
   });
 
   it('renders all opportunity cards', () => {

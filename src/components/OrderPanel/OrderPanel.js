@@ -25,6 +25,7 @@ import {
 import { formatMoney } from '../../util/currency';
 import { useDisplayPrice } from '../../util/liveInrRate';
 import { openBrandStorefront } from '../../util/analytics/brandClickout';
+import { getDutiesTypeForAnalytics } from '../../util/brandShipping';
 import { createSlug, parse, stringify } from '../../util/urlHelpers';
 import { userDisplayNameAsString } from '../../util/data';
 import {
@@ -211,7 +212,14 @@ const PriceMaybe = props => {
       )}
       {formattedINRPrice && (
         <p className={css.priceDisclaimer}>
-          <FormattedMessage id="OrderPanel.priceConvertedDisclaimer" />
+          {publicData?.brand ? (
+            <FormattedMessage
+              id="OrderPanel.priceConvertedDisclaimer"
+              values={{ brand: publicData.brand }}
+            />
+          ) : (
+            <FormattedMessage id="OrderPanel.priceConvertedDisclaimerNoBrand" />
+          )}
         </p>
       )}
     </div>
@@ -355,6 +363,9 @@ const OrderPanel = React.forwardRef((props, ref) => {
   const { listingType, unitType, transactionProcessAlias = '', priceVariants, startTimeInterval, brand, productUrl } =
     publicData || {};
 
+  // Duty terms of the brand for analytics (null while the author entity has no profile data).
+  const dutiesType = getDutiesTypeForAnalytics(author);
+
   // brand_clickout tracking params (see mela-docs/product/prds/crossshop-tracking-prd.md).
   // onShopNow (when passed by the parent container) already routes through the
   // pre-redirect trust sheet with its own tracking params bound — this fallback only
@@ -364,6 +375,7 @@ const OrderPanel = React.forwardRef((props, ref) => {
     brandId: author?.id?.uuid,
     category: publicData.categoryLevel3 || publicData.categoryLevel2 || publicData.categoryLevel1,
     productId: listing?.id?.uuid,
+    dutiesType,
   };
   const shopNow = onShopNow || (url => openBrandStorefront(url, brandTrackingParams));
 
@@ -595,6 +607,7 @@ const OrderPanel = React.forwardRef((props, ref) => {
             onContactUser={onContactUser}
             brand={brand}
             productUrl={productUrl}
+            dutiesType={dutiesType}
             onShopNow={shopNow}
             {...sharedProps}
           />
@@ -604,6 +617,7 @@ const OrderPanel = React.forwardRef((props, ref) => {
             onSubmit={onSubmit}
             brand={brand}
             productUrl={productUrl}
+            dutiesType={dutiesType}
             listingId={listing?.id?.uuid}
             listingData={listingData}
             finePrintComponent={SubmitFinePrint}
@@ -656,6 +670,7 @@ const OrderPanel = React.forwardRef((props, ref) => {
               listingData={listingData}
               variant="cta"
               source="add_to_cart_button"
+              dutiesType={dutiesType}
               onAdded={() => setAddedTrigger(t => t + 1)}
             />
             <AddToCartConfirmation trigger={addedTrigger} />

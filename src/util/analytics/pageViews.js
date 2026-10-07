@@ -16,8 +16,9 @@
 
 import { useEffect, useRef } from 'react';
 import { getOrCreateSessionId } from '../sentimentCapture';
+import { getDutiesTypeForAnalytics } from '../brandShipping';
 
-export const pushListingView = ({ listingId, brandId, brandName, category } = {}) => {
+export const pushListingView = ({ listingId, brandId, brandName, category, dutiesType } = {}) => {
   if (typeof window === 'undefined') return;
 
   window.dataLayer = window.dataLayer || [];
@@ -27,6 +28,7 @@ export const pushListingView = ({ listingId, brandId, brandName, category } = {}
     brand_id: brandId || null,
     brand_name: brandName || null,
     category: category || null,
+    duties_type: dutiesType || null,
     mela_session_id: getOrCreateSessionId(),
   });
 };
@@ -60,6 +62,7 @@ export const useListingView = listing => {
       brandId: listing?.author?.id?.uuid,
       brandName: publicData.brand,
       category: publicData.categoryLevel3 || publicData.categoryLevel2 || publicData.categoryLevel1,
+      dutiesType: getDutiesTypeForAnalytics(listing?.author),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listingId]);

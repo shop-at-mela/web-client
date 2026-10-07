@@ -529,55 +529,15 @@ export const createSearchResultSchema = (
   const marketplaceName = config.marketplaceName;
   const { address, keywords } = mainSearchData;
   const keywordsMaybe = keywords ? `"${keywords}"` : null;
-  // SEO OPTIMIZATION: Custom titles and descriptions for category and brand pages
-  // This affects BROWSER TAB TITLES and SEARCH ENGINE RESULTS, not visible page content
-  // Category pages like /categories/clothing get "Clothing - Authentic Indian Baby Products | Laem"
-  // Brand pages like /brands/masilo get "Masilo Products - Authentic Indian Baby Brand | Laem"
-  const pathname = location?.pathname || '';
-  const isCategoryPage = pathname.startsWith('/categories/');
-  const isBrandPage = pathname.startsWith('/brands/');
-
-  let searchTitle, schemaDescription, schemaTitle;
-
-  if (isCategoryPage) {
-    // Extract hierarchical category path from URL and format for SEO
-    // URL format: /categories/level1/level2/level3
-    const categoryPath = pathname.replace('/categories/', '');
-    const categoryLevels = categoryPath.split('/').filter(Boolean);
-
-    // Get the most specific (deepest) category for display
-    const deepestCategory = categoryLevels[categoryLevels.length - 1];
-    const categoryName = deepestCategory.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-
-    // Create breadcrumb-style title for nested categories
-    const categoryBreadcrumb = categoryLevels
-      .map(level => level.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()))
-      .join(' > ');
-
-    // SEO ONLY: These are for search engine results and browser tabs
-    searchTitle = categoryLevels.length > 1
-      ? `${categoryName} in ${categoryBreadcrumb.split(' > ').slice(0, -1).join(' > ')}`
-      : `${categoryName} Products for Indian Babies`;
-    schemaDescription = `Discover authentic Indian ${categoryName.toLowerCase()} products perfect for Indian diaspora families. Trusted brands, cultural heritage, modern parenting solutions.`;
-    schemaTitle = `${categoryName} - Authentic Indian Baby Products | ${marketplaceName}`;
-  } else if (isBrandPage) {
-    // Extract brand from URL slug and format for SEO
-    const brandSlug = pathname.replace('/brands/', '');
-    const brandName = brandSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-
-    // SEO ONLY: These are for search engine results and browser tabs
-    searchTitle = `${brandName} Baby Products`;
-    schemaDescription = `Shop ${brandName} authentic Indian baby products for US diaspora families. Trusted quality, cultural heritage, delivered to America.`;
-    schemaTitle = `${brandName} Products - Authentic Indian Baby Brand | ${marketplaceName}`;
-  } else {
-    // Default behavior for regular search pages (unchanged)
-    searchTitle = address || keywordsMaybe || intl.formatMessage({ id: 'SearchPage.schemaForSearch' });
-    schemaDescription = intl.formatMessage({ id: 'SearchPage.schemaDescription' });
-    schemaTitle = intl.formatMessage(
-      { id: 'SearchPage.schemaTitle' },
-      { searchTitle, marketplaceName, h1: pageHeading }
-    );
-  }
+  // Titles and descriptions for /categories/* and /brands/* come from CategoryPage and
+  // ProfilePage, not from here: SearchPage only serves /s.
+  const searchTitle =
+    address || keywordsMaybe || intl.formatMessage({ id: 'SearchPage.schemaForSearch' });
+  const schemaDescription = intl.formatMessage({ id: 'SearchPage.schemaDescription' });
+  const schemaTitle = intl.formatMessage(
+    { id: 'SearchPage.schemaTitle' },
+    { searchTitle, marketplaceName, h1: pageHeading }
+  );
 
   const schemaListings = listings.map((l, i) => {
     const title = l.attributes.title;

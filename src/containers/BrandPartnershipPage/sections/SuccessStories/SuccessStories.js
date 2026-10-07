@@ -60,7 +60,7 @@ const SuccessStories = () => {
           <h3 className={css.ctaTitle}>Become a Founding Partner Success Story</h3>
           <p className={css.ctaDescription}>
             Shape the platform, capture first-mover advantage, and build lasting brand presence
-            in the lucrative US Indian diaspora market.
+            in the lucrative US market for Indian brands.
           </p>
           <div className={css.ctaBenefits}>
             <div className={css.ctaBenefit}>

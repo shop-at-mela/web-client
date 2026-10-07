@@ -240,5 +240,34 @@ describe('ListingCard', () => {
       expect(call.url).toBe('https://nicobar.example/p');
       expect(call.trackingParams).toMatchObject({ savedSurface: 'saved_item_card' });
     });
+
+    it('passes the brand author\'s brandUsShipping to onShopNow (null without it)', () => {
+      const usShipping = { duties: 'ddp', method: 'flat_rate', feeUsd: 30 };
+      const withData = createListing(
+        'listing1',
+        { publicData: { brand: 'Nicobar', productUrl: 'https://nicobar.example/p' } },
+        {
+          author: {
+            id: { uuid: 'nicobar-author' },
+            attributes: { profile: { publicData: { brandUsShipping: usShipping } } },
+          },
+        }
+      );
+      const onShopNow = jest.fn();
+      const { unmount } = render(<ListingCard listing={withData} intl={fakeIntl} onShopNow={onShopNow} />);
+      fireEvent.click(screen.getByText('ListingCard.shopOnBrand'));
+      expect(onShopNow.mock.calls[0][0].usShipping).toEqual(usShipping);
+      unmount();
+
+      const noData = createListing(
+        'listing2',
+        { publicData: { brand: 'Nicobar', productUrl: 'https://nicobar.example/p' } },
+        { author: createUser('user1') }
+      );
+      const onShopNow2 = jest.fn();
+      render(<ListingCard listing={noData} intl={fakeIntl} onShopNow={onShopNow2} />);
+      fireEvent.click(screen.getByText('ListingCard.shopOnBrand'));
+      expect(onShopNow2.mock.calls[0][0].usShipping).toBeNull();
+    });
   });
 });

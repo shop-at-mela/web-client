@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import { IntlProvider } from 'react-intl';
-import MelaHomePage from './MelaHomePage';
+import MelaHomePage, { FAQ_ITEMS, HOMEPAGE_LAST_UPDATED } from './MelaHomePage';
 import { ConfigurationProvider } from '../../context/configurationContext';
 
 const mockConfig = {
@@ -77,8 +77,11 @@ jest.mock('../../components/CategoryTiles/CategoryTiles', () => {
 });
 
 jest.mock('../../components', () => ({
-  Page: ({ title, description, facebookImages, twitterImages, children }) => (
+  Page: ({ title, description, facebookImages, twitterImages, schema, children }) => (
     <div data-testid="page-component">
+      <script data-testid="page-schema" type="application/ld+json">
+        {JSON.stringify(schema)}
+      </script>
       <div data-testid="page-title">{title}</div>
       <div data-testid="page-description">{description}</div>
       <div data-testid="facebook-images">{JSON.stringify(facebookImages)}</div>
@@ -143,7 +146,7 @@ describe('MelaHomePage', () => {
     );
 
     expect(getByTestId('page-description').textContent).toBe(
-      "Mela is a curated home for proven Indian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store. Ships to all 50 states."
+      "Mela is a curated home for proven Indian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store."
     );
   });
 
@@ -183,5 +186,60 @@ describe('MelaHomePage', () => {
     );
 
     expect(container.querySelector('[data-testid="page-component"]')).toBeTruthy();
+  });
+
+  describe('FAQ copy and structured data', () => {
+    const renderPage = () =>
+      render(
+        <TestWrapper>
+          <MelaHomePage {...defaultProps} />
+        </TestWrapper>
+      );
+
+    it('FAQPage JSON-LD matches the visible FAQ character for character', () => {
+      const { getByTestId, container } = renderPage();
+      const schema = JSON.parse(getByTestId('page-schema').textContent);
+      const faqPage = schema.find(node => node['@type'] === 'FAQPage');
+      expect(faqPage.mainEntity).toHaveLength(FAQ_ITEMS.length);
+
+      const visibleQuestions = Array.from(container.querySelectorAll('h3')).map(n => n.textContent);
+      const visibleAnswers = Array.from(container.querySelectorAll('h3 + p')).map(n => n.textContent);
+      expect(visibleQuestions).toEqual(faqPage.mainEntity.map(q => q.name));
+      expect(visibleAnswers).toEqual(faqPage.mainEntity.map(q => q.acceptedAnswer.text));
+    });
+
+    it('states the reviewed date as the bumped HOMEPAGE_LAST_UPDATED', () => {
+      const { container } = renderPage();
+      expect(HOMEPAGE_LAST_UPDATED).toBe('2026-10-06');
+      expect(container.textContent).toContain(`Last reviewed ${HOMEPAGE_LAST_UPDATED}`);
+    });
+
+    it('makes no blanket shipping or duty claims in the FAQ or meta description', () => {
+      const { getByTestId } = renderPage();
+      const text = [
+        ...FAQ_ITEMS.map(i => `${i.question} ${i.answer}`),
+        getByTestId('page-description').textContent,
+      ].join(' ');
+      expect(text).not.toMatch(/50 states/i);
+      expect(text).not.toMatch(/no surprises/i);
+      expect(text).not.toMatch(/ships directly/i);
+      expect(text).not.toMatch(/vets all partners/i);
+    });
+
+    it('uses no dash characters in the FAQ answers', () => {
+      FAQ_ITEMS.forEach(item => expect(item.answer).not.toMatch(/[-\u2013\u2014]/));
+    });
+
+    it('Q1, Q3 and Q4 use the approved P0 wording', () => {
+      expect(FAQ_ITEMS[0].answer).toBe(
+        "Shipping costs and delivery times are set by each brand; each brand page shows that brand's US shipping cost and whether its prices include import duties."
+      );
+      expect(FAQ_ITEMS[2].answer).toBe(
+        'It depends on the brand. Some brands include US import duties in their prices. For others, the courier collects duties before delivery, and since August 2025 that can apply to orders of any value. Each brand page and product page says which applies.'
+      );
+      expect(FAQ_ITEMS[3].answer).toBe(
+        "Each brand sets its own return policy, including whether it accepts returns from the US. Check the brand's policy before you buy."
+      );
+    });
   });
 });

@@ -17,18 +17,17 @@ describe('pushSaveToggle(params)', () => {
     });
   });
 
-  it('keeps the legacy source key in step with save_source until GTM is repointed', () => {
+  it('does not push a `source` key (GA4 reads an event parameter named source as traffic source)', () => {
     pushSaveToggle({ source: 'heart_icon', listingId: 'listing-uuid-2', isSaved: false });
 
-    expect(window.dataLayer[0].source).toBe('heart_icon');
-    expect(window.dataLayer[0].save_source).toBe(window.dataLayer[0].source);
+    expect(window.dataLayer[0]).not.toHaveProperty('source');
+    expect(window.dataLayer[0].save_source).toBe('heart_icon');
   });
 
   it('defaults save_source to heart_icon when no source is given', () => {
     pushSaveToggle({ listingId: 'listing-uuid-3', isSaved: true });
 
     expect(window.dataLayer[0].save_source).toBe('heart_icon');
-    expect(window.dataLayer[0].source).toBe('heart_icon');
   });
 
   it('pushes explicit null for a missing listing id and coerces is_saved to a boolean', () => {
@@ -36,5 +35,17 @@ describe('pushSaveToggle(params)', () => {
 
     expect(window.dataLayer[0].listing_id).toBeNull();
     expect(window.dataLayer[0].is_saved).toBe(false);
+  });
+
+  it.each(['ddp', 'ddu', 'unknown', 'none'])('pushes duties_type %s', dutiesType => {
+    pushSaveToggle({ source: 'add_to_cart_button', listingId: 'l1', isSaved: true, dutiesType });
+    expect(window.dataLayer[0].duties_type).toBe(dutiesType);
+  });
+
+  it('pushes duties_type null when the surface has no brand profile (not "unknown")', () => {
+    pushSaveToggle({ source: 'heart_icon', listingId: 'l1', isSaved: true });
+    expect(window.dataLayer[0]).toHaveProperty('duties_type', null);
+    pushSaveToggle({ source: 'heart_icon', listingId: 'l1', isSaved: true, dutiesType: null });
+    expect(window.dataLayer[1].duties_type).toBeNull();
   });
 });

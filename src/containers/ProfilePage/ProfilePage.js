@@ -415,6 +415,12 @@ export const ProfilePageComponent = props => {
 
   const schemaTitleVars = { name: displayName, marketplaceName: config.marketplaceName };
   const schemaTitle = intl.formatMessage({ id: 'ProfilePage.schemaTitle' }, schemaTitleVars);
+  // Brands get their own meta description. Without one every brand page inherited the
+  // site-wide default.
+  const brandSchemaDescription = intl.formatMessage(
+    { id: 'ProfilePage.brandSchemaDescription' },
+    schemaTitleVars
+  );
 
   // Resolve the canonical brand URL: prefer /brands/:slug over /u/:uuid
   const profileUserId = profileUser?.id?.uuid;
@@ -519,6 +525,7 @@ export const ProfilePageComponent = props => {
     <Page
       scrollingDisabled={scrollingDisabled}
       title={schemaTitle}
+      description={isProvider ? brandSchemaDescription : undefined}
       schema={schemaMarkup}
       canonicalURL={brandCanonicalUrl}
     >

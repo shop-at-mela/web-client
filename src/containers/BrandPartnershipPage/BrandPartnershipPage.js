@@ -77,11 +77,11 @@ const BrandPartnershipPageComponent = () => {
     window.open(formUrl, '_blank', 'noopener,noreferrer');
   };
 
-  const schemaTitle = 'Partner with Mela: Build US Export Marketplace for Indian Baby Brands';
+  const schemaTitle = 'Partner with Mela: Export Your Brand to the US';
   const schemaDescription = 'Join Mela as a founding partner. Build the US export marketplace together. Zero listing fees, performance-based partnership. Baby clothing & accessories brands apply now.';
 
-  // SEO Keywords for Indian baby clothing export market (updated with tariff resilience)
-  const keywords = 'Indian baby clothing export, US marketplace partnership, baby clothing brands, Indian clothing export, diaspora market, baby accessories export, performance-based partnership, zero listing fees, Indian clothing USA, baby clothing wholesale, export partnership program, tariff resilient marketplace, global expansion platform, regulatory uncertainty partnership';
+  // SEO keywords for the Indian brand export market (updated with tariff resilience)
+  const keywords = 'Indian brand export, US marketplace partnership, Indian brands USA, brand export partnership, performance-based partnership, zero listing fees, export partnership program, tariff resilient marketplace, global expansion platform, regulatory uncertainty partnership';
 
   return (
     <Page
@@ -100,14 +100,14 @@ const BrandPartnershipPageComponent = () => {
           mainEntity: {
             '@type': 'Organization',
             name: 'Mela',
-            description: 'Premium marketplace for authentic Indian baby clothing in the USA'
+            description: 'Curated marketplace for Indian brands in the USA'
           }
         },
         {
           '@context': 'http://schema.org',
           '@type': 'Service',
           name: 'Mela Brand Partnership Program',
-          description: 'Export partnership program for Indian baby clothing brands to reach US diaspora families',
+          description: 'Export partnership program for Indian brands to reach US shoppers',
           provider: {
             '@type': 'Organization',
             name: 'Mela'
@@ -135,7 +135,7 @@ const BrandPartnershipPageComponent = () => {
               name: 'What are the requirements to partner with Mela?',
               acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'We partner with established Indian baby clothing brands that have quality products, manufacturing capabilities, and commitment to authentic Indian designs.'
+                text: 'We partner with established Indian brands that have quality products, manufacturing capabilities, and a commitment to Indian design.'
               }
             },
             {

@@ -31,6 +31,7 @@ const MAX_SAVED = 200;
  * @param {Object} [props.listingData] { title, imageUrl } for anon localStorage save
  * @param {"icon"|"button"|"cta"} [props.variant="icon"]
  * @param {"add_to_cart_button"|"heart_icon"} [props.source="heart_icon"] tags the saved_listing_toggle analytics event
+ * @param {'ddp'|'ddu'|'unknown'|'none'|null} [props.dutiesType] duty terms of the brand, tags the analytics event; null without a brand profile
  * @param {string} [props.className]
  * @param {string} [props.rootClassName]
  * @param {Function} [props.onAdded] called synchronously when a click transitions the listing
@@ -49,6 +50,7 @@ const SavedListingButtonComponent = props => {
     listingData,
     variant = 'icon',
     source = 'heart_icon',
+    dutiesType = null,
     className,
     rootClassName,
     isSaved,
@@ -80,7 +82,7 @@ const SavedListingButtonComponent = props => {
     e.stopPropagation();
     if (inProgress || capReached) return;
     const wasSaved = isSaved;
-    onToggle(listingId, listingData, source);
+    onToggle(listingId, listingData, source, dutiesType);
     // The optimistic update inside onToggle is synchronous, so isSaved has already
     // flipped by the time this runs — no need to await the network round-trip.
     if (!wasSaved && typeof onAdded === 'function') {
@@ -159,8 +161,8 @@ const mapStateToProps = (state, ownProps) => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-  onToggle: (listingId, listingData, source) =>
-    dispatch(toggleSaveListing(listingId, listingData, source)),
+  onToggle: (listingId, listingData, source, dutiesType) =>
+    dispatch(toggleSaveListing(listingId, listingData, source, dutiesType)),
 });
 
 const SavedListingButton = connect(mapStateToProps, mapDispatchToProps)(SavedListingButtonComponent);

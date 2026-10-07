@@ -98,6 +98,7 @@ const SavedPageComponent = props => {
   const [pendingTrackingParams, setPendingTrackingParams] = useState(null);
   const [pendingBrandName, setPendingBrandName] = useState(null);
   const [pendingIsVerified, setPendingIsVerified] = useState(false);
+  const [pendingUsShipping, setPendingUsShipping] = useState(null);
 
   // The Shop-CTA button that opened the trust sheet — refocused when it closes
   // (WCAG 2.4.3, see §13.1 fix #7). Not component state: changing it should never
@@ -144,7 +145,14 @@ const SavedPageComponent = props => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataSettled, recsShown]);
 
-  const handleShopNow = ({ url, brandName, isVerified, trackingParams, triggerElement }) => {
+  const handleShopNow = ({
+    url,
+    brandName,
+    isVerified,
+    usShipping,
+    trackingParams,
+    triggerElement,
+  }) => {
     shopTriggerRef.current = triggerElement || null;
     if (shouldShowRedirectTrust()) {
       markRedirectTrustShown();
@@ -152,6 +160,7 @@ const SavedPageComponent = props => {
       setPendingTrackingParams(trackingParams);
       setPendingBrandName(brandName);
       setPendingIsVerified(isVerified);
+      setPendingUsShipping(usShipping || null);
       setRedirectSheetOpen(true);
     } else {
       openBrandStorefront(url, trackingParams);
@@ -279,6 +288,7 @@ const SavedPageComponent = props => {
           brandName={pendingBrandName}
           productUrl={pendingRedirectUrl}
           isVerified={pendingIsVerified}
+          usShipping={pendingUsShipping}
           onContinue={url => openBrandStorefront(url, pendingTrackingParams)}
           onClose={handleTrustSheetClose}
         />

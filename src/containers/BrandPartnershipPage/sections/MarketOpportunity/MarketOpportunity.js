@@ -79,7 +79,7 @@ const MarketOpportunity = () => {
         <div className={css.header}>
           <H2 className={css.sectionTitle}>The US Indian Baby Clothing Market Opportunity</H2>
           <p className={css.sectionSubtitle}>
-            A massive, underserved market waiting for authentic Indian brands
+            A massive, underserved market waiting for Indian brands
           </p>
         </div>
 

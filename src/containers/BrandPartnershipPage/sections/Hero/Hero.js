@@ -35,7 +35,7 @@ const Hero = () => {
         {/* Mobile-optimized description */}
         <p className={css.description}>
           Join Mela's founding partnership program. We connect Indian baby clothing brands
-          with diaspora families in the USA. No upfront costs, only success fees.
+          with shoppers in the USA. No upfront costs, only success fees.
         </p>
 
         {/* CTA */}

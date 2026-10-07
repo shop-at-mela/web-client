@@ -116,7 +116,8 @@ const mockMessages = {
   'BrandStorefront.vettedBadge': 'Vetted by Mela',
   'BrandStorefront.madeInIndia': 'Made in India',
   'BrandStorefront.productsCount': '{count} products',
-  'BrandStorefront.metaShipping': 'Ships to all 50 US states',
+  'BrandStorefront.metaShipping': 'Ships to the US',
+  'BrandStorefront.metaShippingNone': "Doesn't ship to the US yet",
   'BrandStorefront.metaCards': 'US cards accepted',
   'BrandStorefront.readFullStory': 'Read the full story →',
   'BrandStorefront.craftLabel': 'The craft:',
@@ -776,6 +777,53 @@ describe('BrandStorefront', () => {
 
       expect(screen.queryByText('Limited Edition FREE Bag')).not.toBeInTheDocument();
       expect(screen.getByText('Products (2)')).toBeInTheDocument();
+    });
+  });
+
+  describe('Hero shipping fact (per brand, from brandUsShipping)', () => {
+    const withUsShipping = brandUsShipping => ({
+      ...mockBrand,
+      attributes: {
+        ...mockBrand.attributes,
+        profile: {
+          ...mockBrand.attributes.profile,
+          publicData: { ...mockBrand.attributes.profile.publicData, brandUsShipping },
+        },
+      },
+    });
+    const renderBrand = user =>
+      render(
+        <TestWrapper>
+          <BrandStorefront user={user} listings={mockListings} />
+        </TestWrapper>
+      );
+
+    it.each([
+      ['free'],
+      ['flat_rate'],
+      ['flat_rate_free_over_threshold'],
+      ['calculated_at_checkout'],
+      ['calculated_free_over_threshold'],
+    ])('shows "Ships to the US" when method is %s', method => {
+      renderBrand(withUsShipping({ method }));
+      expect(screen.getByText('Ships to the US')).toBeInTheDocument();
+    });
+
+    it('shows no shipping fact for a brand with no data (never the old blanket claim)', () => {
+      renderBrand(withUsShipping(undefined));
+      expect(screen.queryByText(/ships to/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/50/)).not.toBeInTheDocument();
+    });
+
+    it('shows no shipping fact when the method is missing', () => {
+      renderBrand(withUsShipping({ duties: 'ddp' }));
+      expect(screen.queryByText('Ships to the US')).not.toBeInTheDocument();
+    });
+
+    it('says the brand does not ship yet when method is none', () => {
+      renderBrand(withUsShipping({ method: 'none' }));
+      expect(screen.getByText("Doesn't ship to the US yet")).toBeInTheDocument();
+      expect(screen.queryByText('Ships to the US')).not.toBeInTheDocument();
     });
   });
 });

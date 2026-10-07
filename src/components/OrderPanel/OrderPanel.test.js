@@ -500,6 +500,50 @@ describe('OrderPanel', () => {
     });
   });
 
+  describe('INR-converted price disclaimer', () => {
+    const makeProps = publicData => {
+      const listing = createListing(
+        'listing-product',
+        {
+          title: 'the listing',
+          description: 'Lorem ipsum',
+          price: new Money(4100, 'USD'),
+          publicData: {
+            listingType: 'sell-bicycles',
+            transactionProcessAlias: 'default-purchase/release-1',
+            unitType: 'item',
+            priceInINR: 3600,
+            ...publicData,
+          },
+        },
+        { currentStock: createStock('stock-id', { quantity: 5 }) }
+      );
+      return { ...commonProps, listing, isOwnListing: false, validListingTypes };
+    };
+
+    it('names the brand as the one that sets the final price', async () => {
+      const { queryAllByText } = render(<OrderPanel {...makeProps({ brand: 'Nicobar' })} />, {
+        config,
+        routeConfiguration,
+      });
+      await waitFor(() => {
+        expect(queryAllByText('OrderPanel.priceConvertedDisclaimer')).toHaveLength(1);
+        expect(queryAllByText('OrderPanel.priceConvertedDisclaimerNoBrand')).toHaveLength(0);
+      });
+    });
+
+    it('falls back to the brand-neutral wording when the listing has no brand', async () => {
+      const { queryAllByText } = render(<OrderPanel {...makeProps({})} />, {
+        config,
+        routeConfiguration,
+      });
+      await waitFor(() => {
+        expect(queryAllByText('OrderPanel.priceConvertedDisclaimerNoBrand')).toHaveLength(1);
+        expect(queryAllByText('OrderPanel.priceConvertedDisclaimer')).toHaveLength(0);
+      });
+    });
+  });
+
   it('Purchase: item (no delivery method set)', async () => {
     const listing = createListing(
       'listing-product',

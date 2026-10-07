@@ -38,6 +38,28 @@ describe('page view events', () => {
     expect(window.dataLayer[0].mela_session_id.length).toBeGreaterThan(0);
   });
 
+  it('pushListingView pushes duties_type, null when missing', () => {
+    pushListingView({ listingId: 'l1', dutiesType: 'ddu' });
+    pushListingView({ listingId: 'l2' });
+    expect(window.dataLayer[0].duties_type).toBe('ddu');
+    expect(window.dataLayer[1]).toHaveProperty('duties_type', null);
+  });
+
+  it('useListingView derives duties_type from the author brandUsShipping', () => {
+    const withAuthor = (id, publicData) => ({
+      ...listing(id),
+      author: { id: { uuid: 'author-1' }, attributes: { profile: { publicData } } },
+    });
+    const { rerender } = render(
+      <ListingProbe
+        listing={withAuthor('l1', { brandUsShipping: { duties: 'ddu', method: 'flat_rate', checkedAt: new Date().toISOString().slice(0, 10) } })}
+      />
+    );
+    rerender(<ListingProbe listing={withAuthor('l2', {})} />);
+    rerender(<ListingProbe listing={listing('l3')} />);
+    expect(window.dataLayer.map(e => e.duties_type)).toEqual(['ddu', 'unknown', null]);
+  });
+
   it('pushBrandPageView pushes brand fields', () => {
     pushBrandPageView({ brandId: 'b1', brandName: 'Fizzy Goblet' });
     expect(window.dataLayer[0]).toMatchObject({

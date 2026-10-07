@@ -36,11 +36,11 @@ const Process = () => {
       number: "3",
       title: "Start Selling",
       shortDesc: "We drive customers to you",
-      fullDesc: "We promote your products to our network of diaspora families. You handle fulfillment while we handle marketing and customer acquisition.",
+      fullDesc: "We promote your products to our network of US shoppers. You handle fulfillment while we handle marketing and customer acquisition.",
       icon: "🚀",
       details: [
         "Targeted marketing campaigns",
-        "Diaspora family outreach",
+        "US shopper outreach",
         "Customer acquisition",
         "Performance tracking"
       ]

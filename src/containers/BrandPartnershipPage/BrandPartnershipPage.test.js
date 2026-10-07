@@ -95,7 +95,7 @@ const mockStore = createStore(() => ({}));
 const renderWithProviders = (component) => {
   const messages = {
     'Page.schemaTitle': 'Partner with {marketplaceName}',
-    'Page.schemaDescription': 'Discover authentic Indian baby brands and products.',
+    'Page.schemaDescription': 'Discover India\'s most loved independent brands.',
   };
 
   const mockRoutes = [];

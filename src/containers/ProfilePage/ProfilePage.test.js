@@ -459,6 +459,11 @@ describe('ProfilePage', () => {
       expect(organizationSchema.name).toBe('userId display name');
       expect(organizationSchema.logo.url).toBe('https://example.com/logo.png');
       expect(organizationSchema.foundingDate).toBe('2018');
+
+      // Brands get their own meta description instead of the site-wide default
+      expect(document.querySelector('meta[name="description"]')?.content).toBe(
+        'ProfilePage.brandSchemaDescription'
+      );
     });
 
     it('includes aggregateRating in Organization schema when reviews exist', async () => {

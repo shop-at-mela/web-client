@@ -67,7 +67,7 @@ const buildCategoryGridItems = (mergedListings, brandTiles) => {
 // Manually maintained "content last reviewed" date for all entries below — bump by
 // hand only when this copy actually changes. Not derived from listing data: an
 // auto-computed date would be a freshness-spam pattern AI answer engines discount.
-export const CATEGORY_CONTENT_LAST_UPDATED = '2026-09-25';
+export const CATEGORY_CONTENT_LAST_UPDATED = '2026-10-07';
 
 export const CATEGORY_CONTENT = {
   'Baby-Kids': {
@@ -131,7 +131,7 @@ export const CATEGORY_CONTENT = {
       'Fashion on Mela brings together handloom sarees, hand block-printed kurtas, embroidered juttis, Nehru jackets, and everyday contemporary clothing from independent Indian designers. Weavers, printers, and embroiderers across India are making these pieces today, and the labels on Mela range from modern everyday wear to festive and wedding-season outfits for women and men.',
     faqQuestion: 'Where can I buy handloom sarees and kurtas from independent Indian designers in the US?',
     faqAnswer:
-      'Mela sells handloom sarees, hand block-printed kurtas, Nehru jackets, embroidered juttis, and contemporary clothing from independent Indian designers, shipping to the US. Pieces range from everyday wear to festive and wedding-season outfits, made by weavers, printers, and embroiderers in India today.',
+      'Mela sells handloom sarees, hand block-printed kurtas, Nehru jackets, embroidered juttis, and contemporary clothing from independent Indian designers. Pieces range from everyday wear to festive and wedding-season outfits, made by weavers, printers, and embroiderers in India today.',
   },
   'Home-Kitchen': {
     description:
@@ -145,7 +145,7 @@ export const CATEGORY_CONTENT = {
       'Beauty & Wellness on Mela includes Ayurvedic face oils, cold-pressed hair oils, handmade rose petal soaps, skincare, and adaptogenic supplements from independent Indian beauty brands. These brands formulate with Indian botanicals such as rose, turmeric, neem, and ashwagandha, producing small-batch products in India today that apply Ayurvedic ingredients to modern skincare and self-care routines.',
     faqQuestion: 'Where can I buy Ayurvedic beauty products from Indian brands in the US?',
     faqAnswer:
-      'Mela brings together independent Indian beauty and wellness brands selling Ayurvedic face oils, hair oils, handmade soaps, skincare, and supplements, shipping to the US. Many of these brands make small-batch products in India with botanicals like rose, turmeric, neem, and ashwagandha.',
+      'Mela brings together independent Indian beauty and wellness brands selling Ayurvedic face oils, hair oils, handmade soaps, skincare, and supplements. Many of these brands make small-batch products in India with botanicals like rose, turmeric, neem, and ashwagandha.',
   },
   Skincare: {
     description:
@@ -159,7 +159,7 @@ export const CATEGORY_CONTENT = {
       'Hair Care on Mela includes hair oils, shampoos, serums, and treatments from independent Indian brands. Many products are made with cold-pressed oils and Indian herbs such as amla and bhringraj, and are produced in small batches in India today by brands updating the familiar practice of hair oiling for current routines.',
     faqQuestion: 'Where can I buy Indian herbal hair oils in the US?',
     faqAnswer:
-      'Mela sells hair oils, shampoos, serums, and treatments from independent Indian brands, shipping to the US. Many are made in small batches with cold-pressed oils and Indian herbs such as amla and bhringraj.',
+      'Mela sells hair oils, shampoos, serums, and treatments from independent Indian brands. Many are made in small batches with cold-pressed oils and Indian herbs such as amla and bhringraj.',
   },
   'Ayurveda-Supplements': {
     description:
@@ -194,10 +194,10 @@ export const CATEGORY_CONTENT = {
   },
   root: {
     description:
-      'Mela is a marketplace for independent Indian brands shipping to the US. Its live categories cover baby and kids products, handloom and contemporary fashion, handmade home décor and kitchenware, Ayurvedic beauty and wellness, and jewelry and accessories, all made in India today by designers, artisans, and makers. Mela is also building out Food & Gourmet and Art & Craft categories as new producers and artists join.',
+      'Mela is a marketplace for independent Indian brands. Its live categories cover baby and kids products, handloom and contemporary fashion, handmade home décor and kitchenware, Ayurvedic beauty and wellness, and jewelry and accessories, all made in India today by designers, artisans, and makers. Mela is also building out Food & Gourmet and Art & Craft categories as new producers and artists join.',
     faqQuestion: 'What can I buy on Mela?',
     faqAnswer:
-      'Mela sells products made in India by independent Indian brands, shipping to the US. Live categories include baby and kids clothing and gear, fashion, home and kitchen, beauty and wellness, and jewelry and accessories — with Food & Gourmet and Art & Craft coming soon as Mela onboards more brands.',
+      'Mela sells products made in India by independent Indian brands. Live categories include baby and kids clothing and gear, fashion, home and kitchen, beauty and wellness, and jewelry and accessories — with Food & Gourmet and Art & Craft coming soon as Mela onboards more brands.',
   },
 };
 

@@ -15,23 +15,21 @@
  * @param {'add_to_cart_button'|'heart_icon'} params.source - which UI surface toggled the save
  * @param {string} params.listingId - listing UUID string
  * @param {boolean} params.isSaved - state after the toggle (true = saved, false = unsaved)
+ * @param {'ddp'|'ddu'|'unknown'|'none'|null} [params.dutiesType] - the brand's duty terms, or null
+ *   when the surface has no brand profile (see util/brandShipping getDutiesTypeForAnalytics)
  */
 export const pushSaveToggle = (params = {}) => {
-  const { source, listingId, isSaved } = params || {};
+  const { source, listingId, isSaved, dutiesType } = params || {};
   if (typeof window === 'undefined') return;
-
-  const saveSource = source || 'heart_icon';
 
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({
     event: 'saved_listing_toggle',
-    save_source: saveSource,
-    // Legacy key, still read by GTM `DLV - source` (GTM Version 9 sends it to GA4 as
-    // `save_source`). A GA4 event parameter literally named `source` is read as traffic
-    // source, so this key must never be mapped to a GA4 `source` parameter. Remove it once
-    // GTM `DLV - source` is repointed to `save_source`.
-    source: saveSource,
+    // Do not push this under a key named `source`: a GA4 event parameter named `source`
+    // is read as traffic source and pollutes Session source / medium.
+    save_source: source || 'heart_icon',
     listing_id: listingId || null,
     is_saved: !!isSaved,
+    duties_type: dutiesType || null,
   });
 };

@@ -42,6 +42,12 @@ import {
   userDisplayNameAsString,
 } from '../../util/data';
 import { richText } from '../../util/richText';
+import { getBrandUsShipping, getDutiesTypeForAnalytics } from '../../util/brandShipping';
+import {
+  getListingSchemaTitle,
+  getOfferSeller,
+  getSeoDescriptionFallback,
+} from '../../util/productSchema';
 import {
   OFFER,
   REQUEST,
@@ -345,6 +351,7 @@ export const ListingPageComponent = props => {
       brandId: ensuredAuthor?.id?.uuid,
       category: publicData.categoryLevel3 || publicData.categoryLevel2 || publicData.categoryLevel1,
       productId: currentListing?.id?.uuid,
+      dutiesType: getDutiesTypeForAnalytics(ensuredAuthor),
     };
     if (shouldShowRedirectTrust()) {
       markRedirectTrustShown();
@@ -358,22 +365,11 @@ export const ListingPageComponent = props => {
 
   const marketplaceName = config.marketplaceName;
   const brandName = publicData.brand;
-  const brandPart = brandName ? ` by ${brandName}` : '';
-  // Category-aware, not hardcoded — Mela spans fashion, home & kitchen, jewelry, and baby/kids,
-  // so metadata must match whichever category this specific listing is actually in.
-  const listingCategoryId = publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3;
-  const categoryDisplayName =
-    findCategoryById(config.categoryConfiguration?.categories, listingCategoryId)?.name || 'Lifestyle Products';
-  const schemaTitle = `${title}${brandPart} - Authentic Indian ${categoryDisplayName} | ${marketplaceName}`;
+  const schemaTitle = getListingSchemaTitle(intl, { title, brandName, marketplaceName });
 
-  const generateSEODescription = (titleArg, brandNameArg, descriptionArg) => {
-    const bPart = brandNameArg ? `${brandNameArg} ` : '';
-    const truncatedDesc = descriptionArg ? descriptionArg.substring(0, 100) : '';
-    return `Shop authentic ${bPart}${titleArg} for Indian diaspora families. ${truncatedDesc} Trusted Indian brands delivered to USA. Cultural heritage meets modern living.`.substring(0, 160);
-  };
-
-  const seoDescription = publicData.metaDescription
-    || generateSEODescription(title, brandName, description);
+  const seoDescription =
+    publicData.metaDescription ||
+    getSeoDescriptionFallback(intl, { title, brandName, description, marketplaceName });
 
   const currentStock = currentListing.currentStock?.attributes?.quantity || 0;
   const schemaAvailability = !currentListing.currentStock
@@ -442,40 +438,18 @@ export const ListingPageComponent = props => {
         } : undefined,
         category: publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3, // Product category for search engines
 
-        // FIX #1 & #2: Enhanced offers section with shipping details and corrected seller
+        // The seller is the brand. No shippingDetails: Mela does not ship, and per-offer
+        // shipping data is blocked on the price accuracy check (PRD P2.1).
         offers: {
           '@type': 'Offer',
           url: productURL,
           ...schemaOffer, // Price for Google Shopping/rich snippets
           availability: schemaAvailability, // Stock status for search engines (always required)
 
-          // FIX #1: Add shipping details (calculated based on buyer's location)
-          shippingDetails: {
-            '@type': 'OfferShippingDetails',
-            shippingDestination: {
-              '@type': 'DefinedRegion',
-              addressCountry: 'US'
-            }
-          },
-
-          // FIX #2: Seller is the brand, not the marketplace (Mela is the platform/facilitator)
-          seller: {
-            '@type': 'Organization',
-            name: brandName || marketplaceName,
-            description: `Authentic Indian ${categoryDisplayName} brand${brandName ? ' available on Mela marketplace' : ''}`
-          }
-        },
-
-        // FIX #3: Fixed audience structure with audienceType and proper geographicArea
-        // Generic across categories — "Parents" doesn't fit fashion/jewelry/home shoppers
-        audience: {
-          '@type': 'Audience',
-          audienceType: 'Shoppers',
-          name: 'Indian Diaspora Shoppers in United States',
-          geographicArea: {
-            '@type': 'AdministrativeArea',
-            name: 'United States'
-          }
+          seller: getOfferSeller(
+            brandName,
+            ensuredAuthor?.attributes?.profile?.publicData?.brandStoreUrl
+          ),
         },
 
         // Consumer search synonyms — machine-readable for AI answer engines (AEO)
@@ -487,17 +461,6 @@ export const ListingPageComponent = props => {
         additionalProperty: [
           // Parse benefit-enriched Item_Aspects from publicData
           ...(publicData.itemAspects ? getAspectsForSchema(publicData.itemAspects, true) : []),
-          // Add cultural heritage properties
-          {
-            '@type': 'PropertyValue',
-            name: 'Cultural Heritage',
-            value: 'Authentic Indian Products'
-          },
-          {
-            '@type': 'PropertyValue',
-            name: 'Target Market',
-            value: 'US Indian Diaspora Families'
-          }
         ]
       }}
     >
@@ -699,6 +662,7 @@ export const ListingPageComponent = props => {
           brandName={brandName || authorDisplayName}
           productUrl={pendingRedirectUrl}
           isVerified={isMelaVerified(publicData)}
+          usShipping={getBrandUsShipping(ensuredAuthor)}
           onContinue={url => openBrandStorefront(url, pendingTrackingParams)}
           onClose={() => setRedirectSheetOpen(false)}
           skipSentiment={shouldSkipRedirectTrustSentiment()}
