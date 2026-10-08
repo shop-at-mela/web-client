@@ -104,13 +104,13 @@ describe('getBrandShippingSection: exact passages', () => {
         'House of Chikankari'
       ).passage
     ).toBe(
-      "House of Chikankari ships to US addresses for about $34 per order. Its prices don't include US import duties: the courier collects them before delivery, and since August 2025 that can apply to orders of any value. You pay on House of Chikankari's own store, which sets the final cost."
+      "House of Chikankari ships to US addresses for about $34 per order. Its prices don't include US import duties: the courier collects them before delivery. You pay on House of Chikankari's own store, which sets the final cost. Mela links to House of Chikankari's store and does not sell, ship or collect duties."
     );
   });
 
   it('Ankid (unknown duties)', () => {
     expect(section({ method: 'flat_rate', feeUsd: 28, feeApprox: true }, 'Ankid').passage).toBe(
-      "Ankid ships to US addresses for about $28 per order. Ankid hasn't confirmed whether its prices include US import duties. Since August 2025, US duties can apply to orders of any value. You pay on Ankid's own store, which sets the final cost."
+      "Ankid ships to US addresses for about $28 per order. Ankid hasn't confirmed whether its prices include US import duties. You pay on Ankid's own store, which sets the final cost. Mela links to Ankid's store and does not sell, ship or collect duties."
     );
   });
 
@@ -172,9 +172,18 @@ describe('getBrandShippingSection: thin passages get the Mela role sentence', ()
     );
   });
 
-  it('longer states do not get the sentence', () => {
+  it('the thinnest states get the longer role sentence', () => {
+    expect(section({ method: 'flat_rate' }, 'Suta').passage).toBe(
+      "Suta ships to US addresses. Suta hasn't confirmed whether its prices include US import duties. You pay on Suta's own store, which sets the final cost. Mela links to Suta's store and does not sell, ship or collect duties. Questions about an order go to Suta, not to Mela."
+    );
+  });
+
+  it('longer states do not get a role sentence', () => {
     expect(
-      section({ duties: 'ddu', method: 'flat_rate', feeUsd: 34 }, 'House of Chikankari').passage
+      section(
+        { duties: 'ddu', method: 'calculated_free_over_threshold', freeOverUsd: 199 },
+        'House of Chikankari'
+      ).passage
     ).not.toMatch(/Mela links/);
   });
 });
@@ -208,12 +217,12 @@ describe('getBrandShippingSection: FAQ', () => {
     [
       'DDU',
       { duties: 'ddu', method: 'flat_rate' },
-      "Yes. Nicobar's prices don't include US import duties, so the courier collects any duty owed before delivery. Since August 2025 this can apply to orders of any value. Mela can't estimate the amount.",
+      "Yes. Nicobar's prices don't include US import duties, so the courier collects any duty owed before delivery. Mela can't estimate the amount.",
     ],
     [
       'unknown',
       { method: 'flat_rate' },
-      "Nicobar hasn't confirmed whether its prices include US import duties. Since August 2025, US duties can apply to orders of any value.",
+      "Nicobar hasn't confirmed whether its prices include US import duties.",
     ],
   ])('duty answer opener for %s', (name, data, expected) => {
     expect(section(data).faq[1].answer).toBe(expected);
@@ -428,7 +437,7 @@ describe('getDutiesTooltip', () => {
       'Nicobar includes US import duties in its prices, so nothing is due when your order arrives.'
     );
     expect(getDutiesTooltip('ddu', 'House of Chikankari', intl)).toBe(
-      "House of Chikankari's prices don't include US import duties. The courier collects them before delivery. Since August 2025 this can apply to orders of any value. Mela can't estimate the amount."
+      "House of Chikankari's prices don't include US import duties. The courier collects them before delivery. Mela can't estimate the amount."
     );
     expect(getDutiesTooltip('ddp_at_checkout', 'Vilvah Store', intl)).toBeNull();
     expect(getDutiesTooltip('unknown', 'Ankid', intl)).toBeNull();

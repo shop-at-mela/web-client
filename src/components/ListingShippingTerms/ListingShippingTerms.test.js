@@ -253,7 +253,7 @@ describe('ListingShippingTerms', () => {
         />
       );
       expect(screen.getByRole('button', { name: 'About duties' })).toHaveAccessibleDescription(
-        "House of Chikankari's prices don't include US import duties. The courier collects them before delivery. Since August 2025 this can apply to orders of any value. Mela can't estimate the amount."
+        "House of Chikankari's prices don't include US import duties. The courier collects them before delivery. Mela can't estimate the amount."
       );
     });
 

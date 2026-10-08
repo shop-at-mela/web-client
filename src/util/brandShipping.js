@@ -470,6 +470,8 @@ const formatCheckedDate = (intl, checkedAt) =>
 /** The brand page passage is meant to be quotable on its own: 40 to 60 words (PRD P1.7). */
 export const PASSAGE_MIN_WORDS = 40;
 export const PASSAGE_MAX_WORDS = 60;
+// Below this the short Mela role sentence is not enough to reach the minimum.
+const PASSAGE_THIN_WORDS = 27;
 
 const countWords = text => text.trim().split(/\s+/).length;
 
@@ -529,7 +531,10 @@ export const getBrandShippingSection = (usShipping, brand, intl, now = new Date(
   // Short states (for example free shipping with duties in the prices) read thin as a quotable
   // passage. A fixed sentence about Mela's role brings them up to the minimum length, and it
   // states what Mela does not do, so it never implies Mela ships or collects duties.
-  if (countWords(passageSentences.join(' ')) < PASSAGE_MIN_WORDS) {
+  const baseWords = countWords(passageSentences.join(' '));
+  if (baseWords < PASSAGE_THIN_WORDS) {
+    passageSentences.push(p('roleLong', { brand }));
+  } else if (baseWords < PASSAGE_MIN_WORDS) {
     passageSentences.push(p('role', { brand }));
   }
   const passage = passageSentences.join(' ');
