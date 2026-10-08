@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter, Route } from 'react-router-dom';
 import { createStore } from 'redux';
@@ -290,6 +290,18 @@ describe('CategoryPage', () => {
       renderAt('/categories/Baby-Kids');
       // The editorial copy for Baby-Kids starts with "Mela's Baby & Kids category"
       expect(screen.getByText(/Mela's Baby & Kids category/i)).toBeInTheDocument();
+    });
+
+    it('meta description is cut to 155 characters (a prefix of the body) while the page keeps the full text', async () => {
+      renderAt('/categories/Baby-Kids');
+      const full = screen.getByText(/Mela's Baby & Kids category/i).textContent;
+      expect(full.length).toBeGreaterThan(155);
+      await waitFor(() => {
+        const meta = document.querySelector('meta[name="description"]')?.content;
+        expect(meta).toBeTruthy();
+        expect(meta.length).toBeLessThanOrEqual(155);
+        expect(full.startsWith(meta)).toBe(true);
+      });
     });
 
     it('falls back to i18n description template for unknown category IDs', () => {

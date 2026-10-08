@@ -25,7 +25,7 @@ import {
 import { formatMoney } from '../../util/currency';
 import { useDisplayPrice } from '../../util/liveInrRate';
 import { openBrandStorefront } from '../../util/analytics/brandClickout';
-import { getDutiesTypeForAnalytics } from '../../util/brandShipping';
+import { getBrandUsShipping, getDutiesTypeForAnalytics } from '../../util/brandShipping';
 import { createSlug, parse, stringify } from '../../util/urlHelpers';
 import { userDisplayNameAsString } from '../../util/data';
 import {
@@ -47,6 +47,7 @@ import {
   AvatarSmall,
   H1,
   H2,
+  ListingShippingTerms,
 } from '../../components';
 import PriceVariantPicker from './PriceVariantPicker/PriceVariantPicker';
 import SubmitFinePrint from './SubmitFinePrint/SubmitFinePrint';
@@ -154,8 +155,12 @@ const PriceMaybe = props => {
     intl,
     marketplaceCurrency,
     showCurrencyMismatch = false,
+    author,
   } = props;
   const { listingType, unitType } = publicData || {};
+  // The brand's own shipping terms. Nothing renders while the author has no profile data.
+  const shippingLoaded = !!author?.attributes?.profile?.publicData;
+  const usShipping = getBrandUsShipping(author);
 
   // Hook must run unconditionally (before the early return below) per Rules of Hooks.
   // Renamed on destructure — `displayPrice` (imported from configHelpers, called below) would
@@ -205,23 +210,13 @@ const PriceMaybe = props => {
       <p className={css.price}>
         <FormattedMessage id="OrderPanel.price" values={{ priceValue, pricePerUnit }} />
       </p>
-      {formattedINRPrice && (
-        <p className={css.inrPrice}>
-          <FormattedMessage id="OrderPanel.inrEquivalent" values={{ inrPrice: formattedINRPrice }} />
-        </p>
-      )}
-      {formattedINRPrice && (
-        <p className={css.priceDisclaimer}>
-          {publicData?.brand ? (
-            <FormattedMessage
-              id="OrderPanel.priceConvertedDisclaimer"
-              values={{ brand: publicData.brand }}
-            />
-          ) : (
-            <FormattedMessage id="OrderPanel.priceConvertedDisclaimerNoBrand" />
-          )}
-        </p>
-      )}
+      <ListingShippingTerms
+        loaded={shippingLoaded}
+        usShipping={usShipping}
+        brand={publicData?.brand}
+        inrPrice={formattedINRPrice}
+        variant="desktop"
+      />
     </div>
   );
 };
@@ -533,6 +528,7 @@ const OrderPanel = React.forwardRef((props, ref) => {
           validListingTypes={validListingTypes}
           intl={intl}
           marketplaceCurrency={marketplaceCurrency}
+          author={author}
         />
 
         <div className={css.author}>

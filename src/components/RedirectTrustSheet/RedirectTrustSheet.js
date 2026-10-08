@@ -28,7 +28,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { bool, func, object, string } from 'prop-types';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { postSentiment } from '../../util/sentimentCapture';
-import { getTrustSheetShippingLines } from '../../util/brandShipping';
+import { getTrustSheetShippingLines, possessiveSuffix } from '../../util/brandShipping';
 
 import css from './RedirectTrustSheet.module.css';
 
@@ -145,7 +145,7 @@ const RedirectTrustSheet = ({
 
   // Shipping and duty lines come from the brand's own structured data. No data renders the
   // neutral fallback, never a blanket claim.
-  const shippingLines = getTrustSheetShippingLines(usShipping, brandName, intl);
+  const shippingLines = getTrustSheetShippingLines(usShipping, intl);
 
   const textPrompt =
     thumbs === 'up'
@@ -169,11 +169,11 @@ const RedirectTrustSheet = ({
             {isVerified ? '✅' : '🛍️'}{' '}
             <FormattedMessage
               id="RedirectTrustSheet.heading"
-              values={{ brand: <strong>{brandName}</strong> }}
+              values={{ brand: <strong>{brandName}</strong>, possessive: possessiveSuffix(brandName) }}
             />
           </div>
           <ul className={css.trustList}>
-            <li>🔒 {intl.formatMessage({ id: 'RedirectTrustSheet.trustCheckout' }, { brand: brandName })}</li>
+            <li>🔒 {intl.formatMessage({ id: 'RedirectTrustSheet.trustCheckout' }, { brand: brandName, possessive: possessiveSuffix(brandName) })}</li>
             <li>🇺🇸 {shippingLines.shipping}</li>
             {shippingLines.duties && <li>🧾 {shippingLines.duties}</li>}
             <li>↩️ {intl.formatMessage({ id: 'RedirectTrustSheet.trustReturns' }, { brand: brandName })}</li>

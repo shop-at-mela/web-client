@@ -73,6 +73,7 @@ import {
   LayoutSingleColumn,
   CategoryBreadcrumb,
   ItemSpecifics,
+  ListingPriceAndShippingTerms,
   ListingTrustChips,
   RedirectTrustSheet,
   SavedListingButton,
@@ -458,10 +459,22 @@ export const ListingPageComponent = props => {
               )}
             </div>
 
-            {/* Certification + occasion trust chips */}
+            {/* Mobile price and the brand's own shipping terms. Desktop shows the same lines in
+                the OrderPanel price block, so this block is hidden from 1024px up. */}
+            <ListingPriceAndShippingTerms
+              price={price}
+              publicData={publicData}
+              loaded={!!ensuredAuthor?.attributes?.profile?.publicData}
+              usShipping={getBrandUsShipping(ensuredAuthor)}
+              brand={publicData.brand}
+            />
+
+            {/* Duties included + certification + occasion trust chips */}
             <ListingTrustChips
               certifications={publicData.certification}
               itemAspects={publicData.itemAspects}
+              usShipping={getBrandUsShipping(ensuredAuthor)}
+              brand={publicData.brand}
             />
 
             {/* Brand / author section — placed early for affiliate trust */}

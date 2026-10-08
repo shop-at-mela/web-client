@@ -503,6 +503,8 @@ export const ListingPageComponent = props => {
             <ListingTrustChips
               certifications={publicData.certification}
               itemAspects={publicData.itemAspects}
+              usShipping={getBrandUsShipping(ensuredAuthor)}
+              brand={publicData.brand}
             />
 
             {/* Brand / author section — placed early for affiliate trust */}

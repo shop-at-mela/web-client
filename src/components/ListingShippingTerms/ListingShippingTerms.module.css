@@ -1,0 +1,38 @@
+/* ListingShippingTerms: grey shipping and estimate lines under the product price. */
+
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  margin: 4px 0 0;
+}
+
+/* Same grey as the old INR and disclaimer lines. Duties text is neutral: no warning colour. */
+.line {
+  composes: marketplaceTinyFontStyles from global;
+  color: var(--colorGrey500);
+  font-weight: var(--fontWeightRegular);
+  margin: 2px 0 0;
+}
+
+/* Mobile block under the H1. The sticky bar already shows the price, this one anchors the
+   grey lines. Hidden at desktop width, where OrderPanel renders the same lines. */
+.mobileBlock {
+  padding: 0 24px;
+  margin: 0 0 12px;
+
+  @media (--viewportMedium) {
+    padding: 0;
+  }
+
+  @media (--viewportLarge) {
+    display: none;
+  }
+}
+
+.price {
+  margin: 0;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey700);
+}

@@ -1,0 +1,73 @@
+/* InfoTooltip: small "i" button with a 24px hit area and a fixed-position popover. */
+
+.root {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+/* The hit area is 24 x 24px (WCAG 2.2 target size) even though the visible glyph is small. */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: -4px 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--colorGrey500);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--colorGrey700);
+  outline-offset: -2px;
+  border-radius: 50%;
+}
+
+.glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 10px;
+  font-style: italic;
+  font-weight: var(--fontWeightSemiBold);
+  line-height: 1;
+}
+
+/* Screen reader description: always in the DOM, never visible. */
+.description {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Rendered in a portal under the body; `left`, `top` and `width` are set inline. */
+.popover {
+  position: fixed;
+  z-index: 20;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background-color: var(--colorGrey700);
+  color: var(--colorWhite);
+  box-shadow: var(--boxShadowPopup);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: var(--fontWeightRegular);
+  text-align: left;
+  white-space: normal;
+}

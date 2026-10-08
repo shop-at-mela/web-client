@@ -6,6 +6,7 @@ import { Link, useHistory, useLocation, useParams } from 'react-router-dom';
 import { useConfiguration } from '../../context/configurationContext';
 import { useRouteConfiguration } from '../../context/routeConfigurationContext';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
+import { toMetaDescription } from '../../util/metaDescription';
 import { createResourceLocatorString } from '../../util/routes';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
@@ -384,7 +385,7 @@ const RootCategoriesPage = ({ categories, scrollingDisabled, config, routeConfig
   return (
     <Page
       title={pageTitle}
-      description={rootDescription}
+      description={toMetaDescription(rootDescription)}
       schema={schema}
       canonicalURL={canonicalURL}
       scrollingDisabled={scrollingDisabled}
@@ -585,7 +586,7 @@ const CategoryPageComponent = props => {
   return (
     <Page
       title={pageTitle}
-      description={pageDescription}
+      description={toMetaDescription(pageDescription)}
       schema={schema}
       canonicalURL={canonicalURL}
       scrollingDisabled={scrollingDisabled}

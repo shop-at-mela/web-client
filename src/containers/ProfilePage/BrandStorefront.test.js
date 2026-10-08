@@ -24,6 +24,7 @@ jest.mock('../../util/sdkLoader', () => {
   };
 });
 
+import enMessages from '../../translations/en.json';
 import BrandStorefront from './BrandStorefront';
 
 // Mock specific components to avoid complex configuration dependencies
@@ -112,13 +113,14 @@ const mockRoutes = [
 const mockMessages = {
   'BrandStorefront.productsTab': 'Products ({count})',
   'BrandStorefront.aboutTab': 'About & Story',
+  'BrandStorefront.allProducts': 'All Products',
+  'BrandStorefront.featuredProducts': 'Featured Products',
   'BrandStorefront.curatedOrderNote': 'Curated order — hero products first, basics follow',
   'BrandStorefront.vettedBadge': 'Vetted by Mela',
   'BrandStorefront.madeInIndia': 'Made in India',
   'BrandStorefront.productsCount': '{count} products',
   'BrandStorefront.metaShipping': 'Ships to the US',
   'BrandStorefront.metaShippingNone': "Doesn't ship to the US yet",
-  'BrandStorefront.metaCards': 'US cards accepted',
   'BrandStorefront.readFullStory': 'Read the full story →',
   'BrandStorefront.craftLabel': 'The craft:',
   'BrandStorefront.browseProducts': 'Browse {count} Products ↓',
@@ -147,6 +149,12 @@ const mockMessages = {
   'BrandStorefront.placeholder.products.title': 'Add Your First Product',
   'BrandStorefront.placeholder.products.description': 'Create product listings to start selling on Mela.',
   'BrandStorefront.placeholder.cta': 'Complete Your Profile',
+  // Real shipping copy, so these tests assert the exact strings shoppers see.
+  ...Object.fromEntries(
+    Object.entries(enMessages).filter(
+      ([key]) => key.startsWith('BrandShipping.') || key.startsWith('BrandPassage.')
+    )
+  ),
 };
 
 const TestWrapper = ({ children }) => (
@@ -780,7 +788,9 @@ describe('BrandStorefront', () => {
     });
   });
 
-  describe('Hero shipping fact (per brand, from brandUsShipping)', () => {
+  describe('Hero shipping line (per brand, from brandUsShipping)', () => {
+    // Fresh facts: the brand page fails closed on missing or stale checkedAt.
+    const FRESH = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const withUsShipping = brandUsShipping => ({
       ...mockBrand,
       attributes: {
@@ -791,12 +801,13 @@ describe('BrandStorefront', () => {
         },
       },
     });
-    const renderBrand = user =>
+    const renderBrand = (user, props = {}) =>
       render(
         <TestWrapper>
-          <BrandStorefront user={user} listings={mockListings} />
+          <BrandStorefront user={user} listings={mockListings} {...props} />
         </TestWrapper>
       );
+    const getHero = () => screen.getByText(/products$/).parentElement;
 
     it.each([
       ['free'],
@@ -805,25 +816,140 @@ describe('BrandStorefront', () => {
       ['calculated_at_checkout'],
       ['calculated_free_over_threshold'],
     ])('shows "Ships to the US" when method is %s', method => {
-      renderBrand(withUsShipping({ method }));
+      renderBrand(withUsShipping({ method, checkedAt: FRESH }));
       expect(screen.getByText('Ships to the US')).toBeInTheDocument();
     });
 
     it('shows no shipping fact for a brand with no data (never the old blanket claim)', () => {
       renderBrand(withUsShipping(undefined));
-      expect(screen.queryByText(/ships to/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/50/)).not.toBeInTheDocument();
+      expect(getHero().textContent).not.toMatch(/ships to/i);
+      expect(getHero().textContent).not.toMatch(/50/);
     });
 
     it('shows no shipping fact when the method is missing', () => {
-      renderBrand(withUsShipping({ duties: 'ddp' }));
+      renderBrand(withUsShipping({ duties: 'ddp', checkedAt: FRESH }));
       expect(screen.queryByText('Ships to the US')).not.toBeInTheDocument();
+      expect(screen.queryByText('Duties included')).not.toBeInTheDocument();
+    });
+
+    it('shows no shipping fact when the data is stale or has no checkedAt', () => {
+      renderBrand(withUsShipping({ method: 'flat_rate', duties: 'ddp', checkedAt: '2025-01-01' }));
+      expect(screen.queryByText('Ships to the US')).not.toBeInTheDocument();
+      expect(screen.queryByText('Duties included')).not.toBeInTheDocument();
     });
 
     it('says the brand does not ship yet when method is none', () => {
-      renderBrand(withUsShipping({ method: 'none' }));
+      renderBrand(withUsShipping({ method: 'none', checkedAt: FRESH }));
       expect(screen.getByText("Doesn't ship to the US yet")).toBeInTheDocument();
       expect(screen.queryByText('Ships to the US')).not.toBeInTheDocument();
+    });
+
+    it('adds "Duties included" for DDP brands, in the price or at checkout', () => {
+      renderBrand(withUsShipping({ method: 'flat_rate', duties: 'ddp', checkedAt: FRESH }));
+      expect(screen.getByText('Duties included')).toBeInTheDocument();
+    });
+
+    it('adds "Duties included" for DDP brands that add duties at checkout', () => {
+      renderBrand(
+        withUsShipping({
+          method: 'flat_rate',
+          duties: 'ddp',
+          dutiesCollected: 'at_checkout',
+          checkedAt: FRESH,
+        })
+      );
+      expect(screen.getByText('Duties included')).toBeInTheDocument();
+    });
+
+    it('has no duty item for DDU or unknown brands', () => {
+      renderBrand(withUsShipping({ method: 'flat_rate', duties: 'ddu', checkedAt: FRESH }));
+      expect(screen.queryByText('Duties included')).not.toBeInTheDocument();
+    });
+
+    it('no longer claims "US cards accepted" for any brand', () => {
+      renderBrand(withUsShipping({ method: 'flat_rate', duties: 'ddp', checkedAt: FRESH }));
+      expect(screen.queryByText(/US cards/i)).not.toBeInTheDocument();
+    });
+
+    it('links to the shipping section from the products tab only', () => {
+      const { unmount } = renderBrand(withUsShipping({ method: 'free', checkedAt: FRESH }));
+      const link = screen.getByRole('link', { name: 'Shipping details ↓' });
+      expect(link).toHaveAttribute('href', '#shipping-to-the-us');
+      expect(document.getElementById('shipping-to-the-us')).not.toBeNull();
+      unmount();
+      renderBrand(withUsShipping({ method: 'free', checkedAt: FRESH }), { variant: 'about' });
+      expect(screen.queryByRole('link', { name: 'Shipping details ↓' })).not.toBeInTheDocument();
+      expect(document.getElementById('shipping-to-the-us')).toBeNull();
+    });
+  });
+
+  describe('Shipping to the US section', () => {
+    const FRESH = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const renderWith = brandUsShipping =>
+      render(
+        <TestWrapper>
+          <BrandStorefront
+            user={{
+              ...mockBrand,
+              attributes: {
+                ...mockBrand.attributes,
+                profile: {
+                  ...mockBrand.attributes.profile,
+                  publicData: { ...mockBrand.attributes.profile.publicData, brandUsShipping },
+                },
+              },
+            }}
+            listings={mockListings}
+          />
+        </TestWrapper>
+      );
+
+    it('renders after the Featured row and before All Products', () => {
+      const manyListings = Array.from({ length: 8 }, (_, i) => ({
+        ...mockListings[0],
+        id: { uuid: `product-many-${i}` },
+      }));
+      render(
+        <TestWrapper>
+          <BrandStorefront
+            user={{
+              ...mockBrand,
+              attributes: {
+                ...mockBrand.attributes,
+                profile: {
+                  ...mockBrand.attributes.profile,
+                  publicData: {
+                    ...mockBrand.attributes.profile.publicData,
+                    brandUsShipping: { method: 'free', duties: 'ddu', checkedAt: FRESH },
+                  },
+                },
+              },
+            }}
+            listings={manyListings}
+          />
+        </TestWrapper>
+      );
+      const section = document.getElementById('shipping-to-the-us');
+      const featured = screen.getByText('Featured Products');
+      const allProducts = screen.getByText('All Products');
+      expect(featured.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(section.compareDocumentPosition(allProducts) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(screen.getByRole('heading', { level: 2, name: 'Shipping to the US' })).toBeInTheDocument();
+    });
+
+    it('keeps every FAQ item collapsed by default', () => {
+      renderWith({ method: 'free', duties: 'ddu', checkedAt: FRESH });
+      const items = document.querySelectorAll('#shipping-to-the-us details');
+      expect(items.length).toBeGreaterThan(0);
+      items.forEach(item => expect(item.hasAttribute('open')).toBe(false));
+    });
+
+    it('shows the dated byline only for fresh data', () => {
+      const { unmount } = renderWith({ method: 'free', duties: 'ddu', checkedAt: FRESH });
+      expect(screen.getByText(/^Shipping details checked .+ · Curated by the Mela team$/)).toBeInTheDocument();
+      unmount();
+      renderWith({ method: 'free', duties: 'ddu', checkedAt: '2025-01-01' });
+      expect(screen.queryByText(/Shipping details checked/)).not.toBeInTheDocument();
     });
   });
 });

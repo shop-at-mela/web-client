@@ -32,7 +32,7 @@ const TestWrapper = ({ children }) => {
   };
   // Trust section strings come from the real en.json so these tests assert exactly what ships
   Object.keys(enMessages)
-    .filter(key => /^RedirectTrustSheet\.trust(Checkout|Shipping|Duties)/.test(key))
+    .filter(key => /^(RedirectTrustSheet\.(heading|trustCheckout|shipping\.|duties)|BrandShipping\.approx)/.test(key))
     .forEach(key => {
       messages[key] = enMessages[key];
     });
@@ -65,57 +65,116 @@ describe('RedirectTrustSheet', () => {
   it('renders trust section and CTA when open', () => {
     render(<TestWrapper><RedirectTrustSheet {...defaultProps} /></TestWrapper>);
     // trust list items
-    expect(screen.getByText(/Secure checkout on Aagghhoo's store · US cards accepted/)).toBeInTheDocument();
+    expect(screen.getByText(/Secure checkout on Aagghhoo's store/)).toBeInTheDocument();
     // CTA is always present
     const cta = screen.getByRole('button', { name: /Continue to Aagghhoo/i });
     expect(cta).toBeInTheDocument();
   });
 
-  describe('per-brand shipping and duty lines', () => {
+  describe('per-brand shipping and duty items (P1.5)', () => {
+    const FRESH = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const lines = props => {
       render(<TestWrapper><RedirectTrustSheet {...defaultProps} {...props} /></TestWrapper>);
       return Array.from(document.querySelectorAll('li')).map(li => li.textContent);
     };
 
-    it('DDU brand (Fizzy Goblet)', () => {
+    it('checkout item no longer claims "US cards accepted" for any brand', () => {
+      const items = lines({ brandName: 'Nicobar', usShipping: { duties: 'ddp', method: 'free', checkedAt: FRESH } });
+      expect(items).toContain("🔒 Secure checkout on Nicobar's store");
+      expect(document.body.textContent).not.toMatch(/US cards/i);
+    });
+
+    it("uses \"Labs'\" and not \"Labs's\" for a name ending in s", () => {
+      const items = lines({ brandName: 'Gully Labs', usShipping: null });
+      expect(items).toContain("🔒 Secure checkout on Gully Labs' store");
+      expect(document.body.textContent).toContain("You're visiting Gully Labs' official store");
+    });
+
+    it('DDU brand (Fizzy Goblet) shows the fee, the threshold and duties on delivery', () => {
       const items = lines({
         brandName: 'Fizzy Goblet',
-        usShipping: { duties: 'ddu', method: 'flat_rate_free_over_threshold', feeUsd: 15, freeOverUsd: 100 },
+        usShipping: {
+          duties: 'ddu',
+          method: 'flat_rate_free_over_threshold',
+          feeUsd: 15,
+          freeOverUsd: 100,
+          checkedAt: FRESH,
+        },
       });
-      expect(items).toContain('🇺🇸 Fizzy Goblet ships to the US');
+      expect(items).toContain('🇺🇸 Ships to the US for $15, free on orders over $100');
       expect(items).toContain('🧾 US import duties are paid on delivery');
     });
 
-    it('DDP brand (Nicobar)', () => {
-      const items = lines({ brandName: 'Nicobar', usShipping: { duties: 'ddp', method: 'flat_rate' } });
-      expect(items).toContain('🇺🇸 Nicobar ships to the US');
-      expect(items).toContain('🧾 Nicobar includes US import duties');
+    it('DDP brand with duties in its prices (SuperBottoms style fresh data)', () => {
+      const items = lines({
+        brandName: 'Nicobar',
+        usShipping: { duties: 'ddp', method: 'flat_rate', feeUsd: 30, checkedAt: FRESH },
+      });
+      expect(items).toContain('🇺🇸 Ships to the US for $30');
+      expect(items).toContain('🧾 Duties are included in the price');
     });
 
     it('DDP brand that adds duties at checkout does not claim they are in the price', () => {
       const items = lines({
         brandName: 'Vilvah Store',
-        usShipping: { duties: 'ddp', dutiesCollected: 'at_checkout', method: 'flat_rate' },
+        usShipping: {
+          duties: 'ddp',
+          dutiesCollected: 'at_checkout',
+          method: 'flat_rate_free_over_threshold',
+          freeOverUsd: 69,
+          checkedAt: FRESH,
+        },
       });
-      expect(items).toContain('🧾 Vilvah Store adds US import duties at checkout');
+      expect(items).toContain('🇺🇸 Ships free to the US on orders over $69');
+      expect(items).toContain('🧾 US import duties are added at checkout');
     });
 
-    it('unknown duties (Ankid)', () => {
-      const items = lines({ brandName: 'Ankid', usShipping: { method: 'flat_rate', feeUsd: 28, feeApprox: true } });
-      expect(items).toContain('🇺🇸 Ankid ships to the US');
-      expect(items).toContain("🧾 Ankid doesn't say if US duties are included");
+    it('unknown duties (Ankid) with an approximate fee', () => {
+      const items = lines({
+        brandName: 'Ankid',
+        usShipping: { method: 'flat_rate', feeUsd: 28, feeApprox: true, checkedAt: FRESH },
+      });
+      expect(items).toContain('🇺🇸 Ships to the US for about $28');
+      expect(items).toContain("🧾 The brand doesn't say if US duties are included");
     });
 
-    it('no brandUsShipping shows the neutral fallback, never a blanket claim', () => {
-      const items = lines({ brandName: 'Isharya', usShipping: null });
-      expect(items).toContain('🇺🇸 Isharya sets shipping at its checkout');
-      expect(items).toContain("🧾 Isharya doesn't say if US duties are included");
+    it('calculated shipping (SuperBottoms) points to the brand checkout', () => {
+      const items = lines({
+        brandName: 'SuperBottoms',
+        usShipping: { duties: 'ddu', method: 'calculated_at_checkout', checkedAt: FRESH },
+      });
+      expect(items).toContain('🇺🇸 Ships to the US, its checkout shows the shipping cost');
+    });
+
+    it('threshold missing (Kaunteya) says larger orders may ship free', () => {
+      const items = lines({
+        brandName: 'Kaunteya',
+        usShipping: {
+          duties: 'ddu',
+          method: 'flat_rate_free_over_threshold',
+          feeUsd: 51,
+          feeApprox: true,
+          checkedAt: FRESH,
+        },
+      });
+      expect(items).toContain('🇺🇸 Ships to the US for about $51, larger orders may ship free');
+    });
+
+    it.each([
+      ['no brandUsShipping (Isharya)', null],
+      ['stale data', { duties: 'ddp', method: 'flat_rate', feeUsd: 30, checkedAt: '2025-01-01' }],
+      ['missing checkedAt (Nicobar today)', { duties: 'ddp', method: 'flat_rate', feeUsd: 30 }],
+      ['unrecognized method', { duties: 'ddp', method: 'teleport', checkedAt: FRESH }],
+    ])('%s shows the neutral item and no duties item', (name, usShipping) => {
+      const items = lines({ brandName: 'Isharya', usShipping });
+      expect(items).toContain("🇺🇸 Shipping and duties are set at the brand's checkout");
+      expect(items.some(i => /duties/i.test(i) && !/set at the brand/.test(i))).toBe(false);
       expect(document.body.textContent).not.toMatch(/ships to the US/i);
     });
 
-    it('method none says the brand does not ship yet and shows no duties line', () => {
-      const items = lines({ brandName: 'Pluchi', usShipping: { method: 'none' } });
-      expect(items).toContain("🇺🇸 Pluchi doesn't ship to the US yet");
+    it('method none says the brand does not ship yet and shows no duties item', () => {
+      const items = lines({ brandName: 'Pluchi', usShipping: { method: 'none', checkedAt: FRESH } });
+      expect(items).toContain("🇺🇸 Doesn't ship to the US yet");
       expect(items.some(i => /duties/i.test(i))).toBe(false);
     });
   });

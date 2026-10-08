@@ -1,0 +1,57 @@
+/* "Shipping to the US" section on the brand page. The accordion mirrors CategoryPage's
+   faqAccordion so the two pages look the same. */
+
+.root {
+  margin: 0 0 32px;
+  /* Room for the sticky top bar when the hero "Shipping details" link scrolls here. */
+  scroll-margin-top: 72px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey700);
+}
+
+.passage {
+  margin: 0 0 12px;
+  max-width: 640px;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--colorGrey700);
+}
+
+.faqAccordion {
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid var(--colorGrey100);
+}
+
+.faqSummary {
+  cursor: pointer;
+  list-style-position: outside;
+}
+
+.faqQuestion {
+  display: inline;
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey700);
+}
+
+.faqAnswer {
+  margin: 8px 0 0;
+  max-width: 640px;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--colorGrey500);
+}
+
+.byline {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--colorGrey500);
+}

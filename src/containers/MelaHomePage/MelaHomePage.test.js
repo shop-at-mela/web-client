@@ -235,7 +235,7 @@ describe('MelaHomePage', () => {
         "Shipping costs and delivery times are set by each brand; each brand page shows that brand's US shipping cost and whether its prices include import duties."
       );
       expect(FAQ_ITEMS[2].answer).toBe(
-        'It depends on the brand. Some brands include US import duties in their prices. For others, the courier collects duties before delivery, and since August 2025 that can apply to orders of any value. Each brand page and product page says which applies.'
+        'It depends on the brand. Some brands include US import duties in their prices. For others, the courier collects duties before delivery. Each brand page and product page says which applies.'
       );
       expect(FAQ_ITEMS[3].answer).toBe(
         "Each brand sets its own return policy, including whether it accepts returns from the US. Check the brand's policy before you buy."

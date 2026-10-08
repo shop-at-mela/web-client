@@ -144,6 +144,7 @@ const BrandsPageComponent = props => {
   return (
     <Page
       title={schemaTitle}
+      description={schemaDescription}
       scrollingDisabled={scrollingDisabled}
       schema={{
         '@context': 'http://schema.org',

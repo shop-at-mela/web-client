@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useBrandPageView } from '../../util/analytics/pageViews';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { richText } from '../../util/richText';
-import { getBrandUsShipping, shipsToUs } from '../../util/brandShipping';
+import { getBrandHeroShipping, getBrandUsShipping } from '../../util/brandShipping';
 import {
   Heading,
   H2,
@@ -15,6 +15,7 @@ import {
 import CertificationBadge from '../../components/CertificationBadge/CertificationBadge';
 import BrandStorySection from './BrandStorySection';
 import BrandOccasionModule from './BrandOccasionModule';
+import BrandShippingSection, { BRAND_SHIPPING_SECTION_ID } from './BrandShippingSection';
 import { getCertification } from '../../config/certifications';
 import { getBrandSlugById } from '../../config/configBrands';
 
@@ -238,14 +239,10 @@ const BrandStorefront = props => {
   const intl = useIntl();
   const { displayName, bio, publicData = {} } = user.attributes.profile;
 
-  // Hero shipping fact comes from the brand's own data: nothing without data, so the old
+  // Hero shipping facts come from the brand's own fresh data: nothing without data, so the old
   // blanket "ships to the US" claim can never show for a brand that does not ship.
   const brandUsShipping = getBrandUsShipping(user);
-  const usShippingMetaId = shipsToUs(brandUsShipping)
-    ? 'BrandStorefront.metaShipping'
-    : brandUsShipping?.method === 'none'
-    ? 'BrandStorefront.metaShippingNone'
-    : null;
+  const heroShipping = getBrandHeroShipping(brandUsShipping);
   const {
     certifications = [],
     brandTagline,
@@ -468,18 +465,38 @@ const BrandStorefront = props => {
                   values={{ count: sellableListings.length }}
                 />
               </span>
-              {usShippingMetaId && (
+              {heroShipping.ships && (
                 <>
                   <span className={css.separator}>•</span>
                   <span>
-                    <FormattedMessage id={usShippingMetaId} />
+                    <FormattedMessage id="BrandStorefront.metaShipping" />
                   </span>
                 </>
               )}
-              <span className={css.separator}>•</span>
-              <span>
-                <FormattedMessage id="BrandStorefront.metaCards" />
-              </span>
+              {heroShipping.doesNotShip && (
+                <>
+                  <span className={css.separator}>•</span>
+                  <span>
+                    <FormattedMessage id="BrandStorefront.metaShippingNone" />
+                  </span>
+                </>
+              )}
+              {heroShipping.dutiesIncluded && (
+                <>
+                  <span className={css.separator}>•</span>
+                  <span>
+                    <FormattedMessage id="BrandShipping.heroDutiesIncluded" />
+                  </span>
+                </>
+              )}
+              {activeTab === 'products' && (
+                <>
+                  <span className={css.separator}>•</span>
+                  <a className={css.shippingDetailsLink} href={`#${BRAND_SHIPPING_SECTION_ID}`}>
+                    <FormattedMessage id="BrandShipping.heroDetailsLink" />
+                  </a>
+                </>
+              )}
             </div>
 
             {/* Certification Badges */}
@@ -582,6 +599,9 @@ const BrandStorefront = props => {
 
             {/* Shop by Occasion - this brand's Diwali & Festivals / Gifting picks */}
             <BrandOccasionModule listings={sellableListings} brandUserId={userId} />
+
+            {/* Shipping to the US: the brand's own cost and duty terms, before All Products */}
+            <BrandShippingSection usShipping={brandUsShipping} brand={displayName} />
 
             {/* All Products Grid */}
             {hasNonFeaturedProducts && (

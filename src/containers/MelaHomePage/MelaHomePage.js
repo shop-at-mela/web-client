@@ -45,7 +45,7 @@ export const FAQ_ITEMS = [
   {
     question: 'Are there customs duties or import taxes when ordering from India to the US?',
     answer:
-      "It depends on the brand. Some brands include US import duties in their prices. For others, the courier collects duties before delivery, and since August 2025 that can apply to orders of any value. Each brand page and product page says which applies.",
+      "It depends on the brand. Some brands include US import duties in their prices. For others, the courier collects duties before delivery. Each brand page and product page says which applies.",
   },
   {
     question: 'What is the return policy for brands on Mela?',

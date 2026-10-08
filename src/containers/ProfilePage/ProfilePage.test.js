@@ -33,6 +33,7 @@ import {
   testingLibrary,
 } from '../../util/testHelpers';
 
+import enMessages from '../../translations/en.json';
 import ProfilePage from './ProfilePage';
 
 import reducer, { loadData, setInitialState } from './ProfilePage.duck';
@@ -464,6 +465,109 @@ describe('ProfilePage', () => {
       expect(document.querySelector('meta[name="description"]')?.content).toBe(
         'ProfilePage.brandSchemaDescription'
       );
+    });
+
+    describe('brand page FAQPage schema (P1.8)', () => {
+      const FRESH = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+      const renderBrand = async brandUsShipping => {
+        const providerState = getInitialState();
+        const brandUser = createEnhancedUser(createUser, userId);
+        brandUser.attributes.profile.publicData = {
+          ...brandUser.attributes.profile.publicData,
+          userType: 'provider',
+          brandUsShipping,
+        };
+        const brandConfig = {
+          ...config,
+          user: {
+            userFields: [
+              {
+                key: 'userType',
+                scope: 'public',
+                schemaType: 'enum',
+                enumOptions: [
+                  { option: 'a', label: 'Customer' },
+                  { option: 'provider', label: 'Provider' },
+                ],
+                saveConfig: { label: 'User Type', placeholderMessage: 'Select', isRequired: true },
+              },
+            ],
+          },
+          userType: {
+            userTypeConfig: [
+              { userType: 'a', label: 'Customer', defaultUserFields: { profile: ['userType'] } },
+              { userType: 'provider', label: 'Provider', defaultUserFields: { profile: ['userType'] } },
+            ],
+          },
+        };
+        await act(async () => {
+          render(<ProfilePage {...props} />, {
+            initialState: {
+              ...providerState,
+              marketplaceData: {
+                entities: { ...providerState.marketplaceData.entities, user: { userId: brandUser } },
+              },
+            },
+            config: brandConfig,
+            messages: enMessages,
+          });
+        });
+        let graph;
+        await waitFor(() => {
+          const script = document.querySelector('script[type="application/ld+json"]');
+          graph = script && JSON.parse(script.textContent)['@graph'];
+          expect(graph).toBeTruthy();
+        });
+        return graph;
+      };
+
+      it('passes [organization, faqPage] and references the marketplace Organization by @id', async () => {
+        const graph = await renderBrand({
+          duties: 'ddu',
+          method: 'flat_rate',
+          feeUsd: 34,
+          feeApprox: true,
+          checkedAt: FRESH,
+        });
+        const brandOrg = graph.find(e => e['@type'] === 'Organization' && e.url?.includes('/u/'));
+        const faqPage = graph.find(e => e['@type'] === 'FAQPage');
+        expect(brandOrg).toBeTruthy();
+        expect(faqPage).toBeTruthy();
+        const marketplaceOrg = graph.find(e => e['@type'] === 'Organization' && e['@id']?.endsWith('#organization'));
+        expect(faqPage.author).toEqual({ '@id': marketplaceOrg['@id'] });
+        expect(faqPage.publisher).toEqual({ '@id': marketplaceOrg['@id'] });
+        // The brand Organization stays a single node: no second copy hangs off the FAQPage.
+        expect(graph.filter(e => e['@type'] === 'Organization')).toHaveLength(2);
+      });
+
+      it('JSON-LD questions and answers equal the visible FAQ text', async () => {
+        const graph = await renderBrand({
+          duties: 'ddu',
+          method: 'flat_rate_free_over_threshold',
+          feeUsd: 15,
+          freeOverUsd: 100,
+          checkedAt: FRESH,
+        });
+        const faqPage = graph.find(e => e['@type'] === 'FAQPage');
+        const section = document.getElementById('shipping-to-the-us');
+        expect(section).not.toBeNull();
+        const visible = Array.from(section.querySelectorAll('details')).map(details => [
+          details.querySelector('summary').textContent,
+          details.querySelector('p').textContent,
+        ]);
+        expect(visible.length).toBeGreaterThan(0);
+        expect(faqPage.mainEntity.map(q => [q.name, q.acceptedAnswer.text])).toEqual(visible);
+      });
+
+      it('a brand with no data gets the neutral first item only, in both places', async () => {
+        const graph = await renderBrand(undefined);
+        const faqPage = graph.find(e => e['@type'] === 'FAQPage');
+        expect(faqPage.mainEntity).toHaveLength(1);
+        expect(faqPage.mainEntity[0].acceptedAnswer.text).toMatch(/sets shipping and duties at its checkout\.$/);
+        expect(document.querySelectorAll('#shipping-to-the-us details')).toHaveLength(1);
+        expect(document.querySelector('#shipping-to-the-us').textContent).not.toMatch(/Shipping details checked/);
+      });
     });
 
     it('includes aggregateRating in Organization schema when reviews exist', async () => {
