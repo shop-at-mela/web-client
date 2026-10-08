@@ -6,6 +6,7 @@ import {
   getBrandShippingSection,
   getDutiesTooltip,
   getTrustSheetShippingLines,
+  possessiveSuffix,
 } from './brandShipping';
 import { BRANDS } from './brandShipping.fixtures';
 
@@ -482,5 +483,48 @@ describe('copy rules for the Stage 3 templates', () => {
     expect(
       JSON.stringify(Object.values(enMessages).filter(v => /US cards accepted/i.test(v)))
     ).toBe('[]');
+  });
+});
+
+describe('possessives for brand names ending in "s"', () => {
+  it('possessiveSuffix', () => {
+    expect(possessiveSuffix('Nicobar')).toBe("'s");
+    expect(possessiveSuffix('Gully Labs')).toBe("'");
+    expect(possessiveSuffix('SuperBottoms')).toBe("'");
+    expect(possessiveSuffix('Hemant & Nandita')).toBe("'s");
+    expect(possessiveSuffix('Needledust ')).toBe("'s");
+    expect(possessiveSuffix(undefined)).toBe("'s");
+  });
+
+  it('brand page passage and FAQ read "Labs\'" not "Labs\'s"', () => {
+    const { passage, faq } = section({ duties: 'ddu', method: 'flat_rate', feeUsd: 20 }, 'Gully Labs');
+    expect(passage).toContain("You pay on Gully Labs' own store, which sets the final cost.");
+    expect(faq[1].answer).toContain("Yes. Gully Labs' prices don't include US import duties");
+    expect([passage, ...faq.map(f => f.answer)].join(' ')).not.toMatch(/s's/);
+  });
+
+  it('keeps "\'s" for names that do not end in s', () => {
+    const { passage } = section({ duties: 'ddu', method: 'flat_rate', feeUsd: 20 }, 'Ankid');
+    expect(passage).toContain("You pay on Ankid's own store");
+  });
+
+  it('role sentences and the "no longer ships" passage use the right suffix', () => {
+    expect(section({ method: 'flat_rate' }, 'Gully Labs').passage).toContain(
+      "Mela links to Gully Labs' store and does not sell, ship or collect duties."
+    );
+    expect(section({ method: 'none' }, 'Gully Labs').passage).toContain("Check Gully Labs' own store");
+  });
+
+  it('the free shipping answer and the duties tooltip', () => {
+    const { faq } = section({ method: 'calculated_free_over_threshold', freeOverUsd: 100 }, 'Gully Labs');
+    expect(faq[2].answer).toBe("Yes, on orders over $100. Below that, Gully Labs' checkout shows the shipping cost.");
+    expect(getDutiesTooltip('ddu', 'Gully Labs', intl)).toMatch(/^Gully Labs' prices don't include/);
+  });
+
+  it('no template or rendered string contains the awkward "s\'s"', () => {
+    BRANDS.forEach(([brand, data]) => {
+      const { passage, faq } = section(data, brand);
+      expect([passage, ...faq.map(f => f.answer)].join(' ')).not.toMatch(/s's /);
+    });
   });
 });

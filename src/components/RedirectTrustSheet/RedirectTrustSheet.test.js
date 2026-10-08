@@ -32,7 +32,7 @@ const TestWrapper = ({ children }) => {
   };
   // Trust section strings come from the real en.json so these tests assert exactly what ships
   Object.keys(enMessages)
-    .filter(key => /^(RedirectTrustSheet\.(trustCheckout|shipping\.|duties)|BrandShipping\.approx)/.test(key))
+    .filter(key => /^(RedirectTrustSheet\.(heading|trustCheckout|shipping\.|duties)|BrandShipping\.approx)/.test(key))
     .forEach(key => {
       messages[key] = enMessages[key];
     });
@@ -82,6 +82,12 @@ describe('RedirectTrustSheet', () => {
       const items = lines({ brandName: 'Nicobar', usShipping: { duties: 'ddp', method: 'free', checkedAt: FRESH } });
       expect(items).toContain("🔒 Secure checkout on Nicobar's store");
       expect(document.body.textContent).not.toMatch(/US cards/i);
+    });
+
+    it("uses \"Labs'\" and not \"Labs's\" for a name ending in s", () => {
+      const items = lines({ brandName: 'Gully Labs', usShipping: null });
+      expect(items).toContain("🔒 Secure checkout on Gully Labs' store");
+      expect(document.body.textContent).toContain("You're visiting Gully Labs' official store");
     });
 
     it('DDU brand (Fizzy Goblet) shows the fee, the threshold and duties on delivery', () => {

@@ -25,6 +25,24 @@ const METHODS = [
 ];
 
 /**
+ * Possessive suffix for a brand name: "'" after a name ending in "s" (Gully Labs'), "'s"
+ * otherwise (Nicobar's). Templates write `{brand}{possessive}`.
+ */
+export const possessiveSuffix = name =>
+  typeof name === 'string' && /s$/i.test(name.trim()) ? "'" : "'s";
+
+/**
+ * formatMessage that also supplies `possessive` whenever a `brand` value is passed.
+ */
+export const formatBrandMessage = (intl, id, values) =>
+  intl.formatMessage(
+    { id },
+    values && typeof values.brand === 'string'
+      ? { possessive: possessiveSuffix(values.brand), ...values }
+      : values
+  );
+
+/**
  * Read `brandUsShipping` from a brand (author) user entity.
  * Returns null when the profile is missing or the field is absent or malformed.
  *
@@ -230,7 +248,7 @@ const getShippingSentence = (
   compact,
   ns = 'BrandShipping'
 ) => {
-  const t = (key, values) => intl.formatMessage({ id: `${ns}.${key}` }, values);
+  const t = (key, values) => formatBrandMessage(intl, `${ns}.${key}`, values);
   const hasFee = isAmount(usShipping.feeUsd);
   const hasThreshold = isAmount(usShipping.freeOverUsd);
   const fee = hasFee ? formatUsdAmount(intl, usShipping.feeUsd, usShipping.feeApprox) : null;
@@ -263,7 +281,7 @@ const getShippingSentence = (
 };
 
 const composeTerms = (usShipping, brand, intl, includeThreshold, compact = false) => {
-  const t = (key, values) => intl.formatMessage({ id: `BrandShipping.${key}` }, values);
+  const t = (key, values) => formatBrandMessage(intl, `BrandShipping.${key}`, values);
   const dutiesState = getDutiesState(usShipping);
 
   // Unknown duties and an unknown shipping cost read as one merged sentence (two separate
@@ -317,7 +335,7 @@ const composeTerms = (usShipping, brand, intl, includeThreshold, compact = false
  * }}
  */
 export const getShippingTerms = (usShipping, brand, intl, now = new Date()) => {
-  const t = (key, values) => intl.formatMessage({ id: `BrandShipping.${key}` }, values);
+  const t = (key, values) => formatBrandMessage(intl, `BrandShipping.${key}`, values);
   const neutral = (state, shipping) => ({
     state,
     text: shipping,
@@ -377,7 +395,7 @@ export const getDutiesTooltip = (dutiesState, brand, intl) => {
     ddu: 'BrandShipping.tooltipDdu',
   };
   const id = idByState[dutiesState];
-  return id ? intl.formatMessage({ id }, { brand }) : null;
+  return id ? formatBrandMessage(intl, id, { brand }) : null;
 };
 
 // ---------------------------------------------------------------------------
@@ -416,7 +434,7 @@ const hasFreeShippingFact = usShipping =>
     isAmount(usShipping.freeOverUsd));
 
 const getFreeShippingAnswer = (usShipping, brand, intl) => {
-  const t = (key, values) => intl.formatMessage({ id: `BrandShipping.${key}` }, values);
+  const t = (key, values) => formatBrandMessage(intl, `BrandShipping.${key}`, values);
   if (usShipping.method === 'free') return t('faqFreeAlways', { brand });
   const threshold = formatUsdAmount(intl, usShipping.freeOverUsd, usShipping.freeOverApprox);
   if (isAmount(usShipping.feeUsd)) {
@@ -443,7 +461,7 @@ const getDutiesAnswer = (usShipping, brand, intl) => {
     ddu: 'BrandShipping.faqDutiesDdu',
     unknown: 'BrandShipping.faqDutiesUnknown',
   };
-  return intl.formatMessage({ id: idByState[getDutiesState(usShipping)] }, { brand });
+  return formatBrandMessage(intl, idByState[getDutiesState(usShipping)], { brand });
 };
 
 const getPassageDuties = (usShipping, brand, intl) => {
@@ -453,7 +471,7 @@ const getPassageDuties = (usShipping, brand, intl) => {
     ddu: 'BrandPassage.dutiesDdu',
     unknown: 'BrandPassage.dutiesUnknown',
   };
-  return intl.formatMessage({ id: idByState[getDutiesState(usShipping)] }, { brand });
+  return formatBrandMessage(intl, idByState[getDutiesState(usShipping)], { brand });
 };
 
 /**
@@ -496,8 +514,8 @@ const countWords = text => text.trim().split(/\s+/).length;
  * }}
  */
 export const getBrandShippingSection = (usShipping, brand, intl, now = new Date()) => {
-  const t = (key, values) => intl.formatMessage({ id: `BrandShipping.${key}` }, values);
-  const p = (key, values) => intl.formatMessage({ id: `BrandPassage.${key}` }, values);
+  const t = (key, values) => formatBrandMessage(intl, `BrandShipping.${key}`, values);
+  const p = (key, values) => formatBrandMessage(intl, `BrandPassage.${key}`, values);
   const shipsQuestion = {
     id: 'ships',
     question: t('faqShipsQuestion', { brand }),
