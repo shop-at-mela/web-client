@@ -46,6 +46,7 @@ const dataLoader = require('./dataLoader');
 const { generateCSPNonce, csp } = require('./csp');
 const sdkUtils = require('./api-util/sdk');
 const { getSDKProxy } = require('./api-util/sdkCacheProxy');
+const profoundAnalytics = require('./profoundAnalytics');
 
 const buildPath = path.resolve(__dirname, '..', 'build');
 const dev = process.env.REACT_APP_ENV === 'development';
@@ -81,6 +82,10 @@ const app = express();
 
 const errorPage500 = fs.readFileSync(path.join(buildPath, '500.html'), 'utf-8');
 const errorPage404 = fs.readFileSync(path.join(buildPath, '404.html'), 'utf-8');
+
+// Forward request logs to Profound Agent Analytics. Mounted first so that every request,
+// including bot traffic rejected by the filter below, is recorded. See server/profoundAnalytics.js
+app.use(profoundAnalytics);
 
 // Filter out bot requests that scan websites for php vulnerabilities
 // from paths like /asdf/index.php, //cms/wp-includes/wlwmanifest.xml, etc.
