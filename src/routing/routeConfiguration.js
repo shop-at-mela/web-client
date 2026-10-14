@@ -15,6 +15,7 @@ const pageDataLoadingAPI = getPageDataLoadingAPI();
 const AuthenticationPage = loadable(() => import(/* webpackChunkName: "AuthenticationPage" */ '../containers/AuthenticationPage/AuthenticationPage'));
 const SignupPage = loadable(() => import(/* webpackChunkName: "SignupPage" */ '../containers/SignupPage/SignupPage'));
 const BrandPartnershipPage = loadable(() => import(/* webpackChunkName: "BrandPartnershipPage" */ '../containers/BrandPartnershipPage/BrandPartnershipPage'));
+const AboutPage = loadable(() => import(/* webpackChunkName: "AboutPage" */ '../containers/AboutPage/AboutPage'));
 const BrandsPage = loadable(() => import(/* webpackChunkName: "BrandsPage" */ '../containers/BrandsPage/BrandsPage'));
 const CheckoutPage = loadable(() => import(/* webpackChunkName: "CheckoutPage" */ '../containers/CheckoutPage/CheckoutPage'));
 const CMSPage = loadable(() => import(/* webpackChunkName: "CMSPage" */ '../containers/CMSPage/CMSPage'));
@@ -98,6 +99,13 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       name: 'CMSLandingPage',
       component: LandingPage,
       loadData: pageDataLoadingAPI.LandingPage.loadData,
+    },
+    {
+      // Code-owned About page. Must stay above '/p/:pageId' so it wins over the
+      // Console CMS page with the same id.
+      path: '/p/about',
+      name: 'AboutPage',
+      component: AboutPage,
     },
     {
       path: '/p/:pageId',

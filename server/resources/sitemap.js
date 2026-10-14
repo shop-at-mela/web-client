@@ -53,6 +53,8 @@ const defaultPublicPaths = {
   landingPage: { url: '/' },
   termsOfService: { url: '/terms-of-service' },
   privacyPolicy: { url: '/privacy-policy' },
+  // Code-owned page (src/containers/AboutPage), not a Console CMS page
+  about: { url: '/p/about' },
 };
 
 // Mela-specific public pages. Not shown in private marketplace mode
@@ -338,7 +340,7 @@ const sitemapPages = (req, res, rootUrl, sdk) => {
       const cmsPagePaths = assets.reduce((picked, asset) => {
         const assetFileName = asset.attributes?.assetPath?.slice(pathPrefix.length);
         const assetName = assetFileName.split('.')[0];
-        const permanentPaths = ['landing-page', 'terms-of-service', 'privacy-policy'];
+        const permanentPaths = ['landing-page', 'terms-of-service', 'privacy-policy', 'about'];
         return permanentPaths.includes(assetName) ? picked : [...picked, `p/${assetName}`];
       }, []);
 
