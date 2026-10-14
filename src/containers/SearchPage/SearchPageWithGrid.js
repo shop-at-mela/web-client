@@ -354,9 +354,11 @@ export class SearchPageComponent extends Component {
       ? classNames(css.topbarBehindModal, css.topbar)
       : css.topbar;
 
-    // Deep pagination pages carry little SEO value and inflate crawl volume
-    // (see server/index.js's MAX_SSR_SEARCH_PAGE for the matching resource-side cap).
-    const noIndex = Number(pagination?.page) > 10;
+    // Search result pages are never indexed: they are infinite parameter combinations with
+    // thin, duplicate content (brand and category pages are the indexable entry points).
+    // Links stay followable. See also server/index.js's MAX_SSR_SEARCH_PAGE for the
+    // resource-side cap on deep pagination.
+    const noIndex = true;
 
     // N.B. openMobileMap button is sticky.
     // For some reason, stickyness doesn't work on Safari, if the element is <button>

@@ -54,8 +54,13 @@ const port = rootURL => {
  */
 exports.getRootURL = options => {
   const { rootURL, useDevApiServerPort = false } = options || {};
-  const protocol = USING_SSL ? 'https' : 'http';
   const rUrl = rootURL || marketplaceRootUrl;
+  // Prefer the protocol written in the root URL itself, so server-generated URLs
+  // (sitemap, robots.txt) match the canonical URLs rendered by the client app, which
+  // use REACT_APP_MARKETPLACE_ROOT_URL as-is. Only fall back to the SSL flag when the
+  // root URL has no explicit protocol.
+  const explicitProtocol = /^(https?):\/\//i.exec(rUrl || '');
+  const protocol = explicitProtocol ? explicitProtocol[1].toLowerCase() : USING_SSL ? 'https' : 'http';
   const portInRootUrl = port(rUrl);
   const portMaybe =
     portInRootUrl && useDevApiServer && useDevApiServerPort

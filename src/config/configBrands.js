@@ -626,6 +626,14 @@ export const getBrandIdBySlug = slug => {
 };
 
 /**
+ * Slugs of every public brand in the directory (those with a /brands/:slug page),
+ * in allBrandIds order. Used by the server-side sitemap (server/resources/sitemap.js).
+ * @returns {Array<string>}
+ */
+export const getAllBrandSlugs = () =>
+  allBrandIds.map(id => brandConfigurations[id]?.slug).filter(Boolean);
+
+/**
  * Get brand slug by UUID
  * Used to build canonical URLs from /u/:id for brand users
  * @param {string} brandId - Brand user UUID

@@ -4,6 +4,7 @@ const log = require('../log.js');
 const { createTTLCache } = require('../api-util/cache.js');
 const { getRootURL } = require('../api-util/rootURL.js');
 const sdkUtils = require('../api-util/sdk.js');
+const { getExtractors } = require('../importer.js');
 
 const isSitemapDisabled = process.env.SITEMAP_DISABLED === 'true';
 const dev = process.env.REACT_APP_ENV === 'development';
@@ -16,6 +17,10 @@ const dev = process.env.REACT_APP_ENV === 'development';
 //     - Contains links to public built-in pages of the client app.          //
 //     - It also shows landing-page, terms-of-service and privacy-policy     //
 //       pages as they have fixed paths unlike other CMS pages.              //
+//     - Mela: also lists /brands, every /brands/:slug (slugs come from      //
+//       src/config/configBrands.js via the server bundle) and the           //
+//       /categories pages (from the hosted listing-categories.json asset).  //
+//     - /signup, /login and /s are intentionally omitted (/s is noindex).   //
 //   b. sitemap-recent-listings.xml                                          //
 //     - This returns max 10 000 recent listings                             //
 //   c. sitemap-recent-pages.xml                                             //
@@ -48,10 +53,60 @@ const defaultPublicPaths = {
   landingPage: { url: '/' },
   termsOfService: { url: '/terms-of-service' },
   privacyPolicy: { url: '/privacy-policy' },
-  signup: { url: '/signup' },
-  login: { url: '/login' },
-  search: { url: '/s' },
 };
+
+// Mela-specific public pages. Not shown in private marketplace mode
+// (the routes require auth there).
+const publicDirectoryPaths = {
+  brands: { url: '/brands' },
+  categories: { url: '/categories' },
+};
+
+/**
+ * Brand page paths (/brands/:slug). Brand slugs live in src/config/configBrands.js,
+ * which is ESM and part of the app bundle, so they are read through the server
+ * bundle entrypoint (same one the SSR renderer uses). Returns null if unavailable.
+ */
+const loadBrandPaths = () => {
+  try {
+    const { getAllBrandSlugs } = getExtractors().nodeExtractor.requireEntrypoint();
+    if (typeof getAllBrandSlugs !== 'function') {
+      return null;
+    }
+    return getAllBrandSlugs().map(slug => ({ url: `/brands/${encodeURIComponent(slug)}` }));
+  } catch (e) {
+    log.error(e, 'sitemap-default-brand-slugs-failed');
+    return null;
+  }
+};
+
+/**
+ * Category page paths from the hosted listing-categories.json tree:
+ * /categories/:category and /categories/:category/:subcategory.
+ *
+ * @param {Array} categories nested categories: [{ id, subcategories: [...] }]
+ * @returns {Array<{url: string}>}
+ */
+const categoryPaths = categories =>
+  (Array.isArray(categories) ? categories : []).flatMap(cat => {
+    if (!cat?.id) {
+      return [];
+    }
+    const base = `/categories/${encodeURIComponent(cat.id)}`;
+    const subs = (Array.isArray(cat.subcategories) ? cat.subcategories : [])
+      .filter(sub => sub?.id)
+      .map(sub => ({ url: `${base}/${encodeURIComponent(sub.id)}` }));
+    return [{ url: base }, ...subs];
+  });
+
+const loadCategoryPaths = sdk =>
+  sdk
+    .assetsByAlias({ paths: ['/listings/listing-categories.json'], alias: 'latest' })
+    .then(response => categoryPaths(response?.data?.data?.[0]?.attributes?.data?.categories))
+    .catch(e => {
+      log.error(e, 'sitemap-default-categories-failed');
+      return null;
+    });
 
 // Time-to-live (ttl) is set to one day aka 86400 seconds
 const ttl = 86400; // seconds
@@ -124,7 +179,7 @@ const sitemapIndex = (req, res, rootUrl, isPrivateMarketplace) => {
  * @param {String} rootUrl location from where these sitemap paths can be found
  * @param {Boolean} isPrivateMarketplace is private marketplace mode set
  */
-const sitemapDefault = (req, res, rootUrl, isPrivateMarketplace) => {
+const sitemapDefault = (req, res, rootUrl, isPrivateMarketplace, sdk) => {
   res.set({
     'Content-Type': 'application/xml',
     'Cache-Control': `public, max-age=${ttl}`,
@@ -139,28 +194,42 @@ const sitemapDefault = (req, res, rootUrl, isPrivateMarketplace) => {
     return;
   }
 
-  try {
-    const smStream = new SitemapStream({ hostname: rootUrl });
+  const brandPaths = isPrivateMarketplace ? [] : loadBrandPaths();
+  const categoryPathsPromise = isPrivateMarketplace ? Promise.resolve([]) : loadCategoryPaths(sdk);
 
-    // Pass default public paths to SitemapStream.
-    // These are defined in the beginning of the page
-    const { search, ...restOfPaths } = defaultPublicPaths;
-    const publicPaths = isPrivateMarketplace ? restOfPaths : defaultPublicPaths;
+  categoryPathsPromise
+    .then(categoryEntries => {
+      const dynamicLoaded = isPrivateMarketplace || (brandPaths !== null && categoryEntries !== null);
+      const paths = [
+        ...Object.values(defaultPublicPaths),
+        ...(isPrivateMarketplace ? [] : Object.values(publicDirectoryPaths)),
+        ...(brandPaths || []),
+        ...(categoryEntries || []),
+      ];
+      // /categories is already in publicDirectoryPaths; drop duplicates by url
+      const uniquePaths = paths.filter((p, i) => paths.findIndex(q => q.url === p.url) === i);
 
-    const paths = Object.values(publicPaths);
-    Readable.from(paths).pipe(smStream);
+      const smStream = new SitemapStream({ hostname: rootUrl });
+      Readable.from(uniquePaths).pipe(smStream);
 
-    // Save to in-memory cache
-    streamToPromise(smStream).then(sm => (cache.sitemapDefault = sm));
+      // Save to in-memory cache, but only a complete sitemap: if brands or categories
+      // failed to load, serve what we have and retry on the next request.
+      const done = streamToPromise(smStream);
+      if (dynamicLoaded) {
+        done.then(sm => (cache.sitemapDefault = sm));
+      } else {
+        done.catch(() => {});
+      }
 
-    // Write the stream to the response
-    smStream.pipe(res).on('error', e => {
-      throw e;
+      // Write the stream to the response
+      smStream.pipe(res).on('error', e => {
+        throw e;
+      });
+    })
+    .catch(e => {
+      log.error(e, 'sitemap-default-render-failed');
+      res.status(500).end();
     });
-  } catch (e) {
-    log.error(e, 'sitemap-default-render-failed');
-    res.status(500).end();
-  }
 };
 
 /**
@@ -309,7 +378,7 @@ const handleSitemaps = (req, res, next, sdk, isPrivateMarketplace) => {
   if (sitemapResource === 'index') {
     sitemapIndex(req, res, getRootURL({ useDevApiServerPort: true }), isPrivateMarketplace);
   } else if (sitemapResource === 'default') {
-    sitemapDefault(req, res, rootUrl, isPrivateMarketplace);
+    sitemapDefault(req, res, rootUrl, isPrivateMarketplace, sdk);
   } else if (sitemapResource === 'recent-listings' && !isPrivateMarketplace) {
     sitemapListings(req, res, rootUrl, sdk);
   } else if (sitemapResource === 'recent-pages') {
@@ -326,7 +395,7 @@ const handleSitemaps = (req, res, next, sdk, isPrivateMarketplace) => {
  * @param {Object} res response
  * @param {function} next
  */
-module.exports = (req, res, next) => {
+const sitemapMiddleware = (req, res, next) => {
   // Making it a bit faster to react to DDOS attacks, since the generation is a bit resource intensive.
   // You might want to consider adding cron job and avoid sitemap generation on request time.
   if (isSitemapDisabled) {
@@ -361,3 +430,7 @@ module.exports = (req, res, next) => {
       }
     });
 };
+
+module.exports = sitemapMiddleware;
+// Exposed for tests
+module.exports.categoryPaths = categoryPaths;
