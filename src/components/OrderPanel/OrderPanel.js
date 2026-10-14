@@ -512,7 +512,11 @@ const OrderPanel = React.forwardRef((props, ref) => {
         usePortal
       >
         <div className={css.modalHeading}>
-          <H1 className={css.heading}>{title}</H1>
+          {/* Styled as H1 but rendered as <h2>: this modal heading is always in the SSR
+              HTML, and the page's one <h1> is the listing title. */}
+          <H1 as="h2" className={css.heading}>
+            {title}
+          </H1>
         </div>
 
         {showListingImage && (

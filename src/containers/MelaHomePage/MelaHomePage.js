@@ -192,8 +192,9 @@ const MelaHomePage = props => {
         </section>
 
         {/* FAQ Section — visible counterpart to the FAQPage JSON-LD above. Kept low on
-            the page (reference content, not a discovery surface); answers stay in the
-            server-rendered HTML inside <details>, so answer engines still read them. */}
+            the page (reference content, not a discovery surface); every question and
+            answer is always expanded in the server-rendered HTML, so answer engines and
+            the JSON-LD see the same text. */}
         <FAQSection id="faq" items={FAQ_ITEMS} lastUpdated={HOMEPAGE_LAST_UPDATED} />
       </div>
       <FooterContainer />
