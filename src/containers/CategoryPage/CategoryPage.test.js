@@ -10,7 +10,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { ConfigurationProvider } from '../../context/configurationContext';
 import { RouteConfigurationProvider } from '../../context/routeConfigurationContext';
 
-import CategoryPage, { SUBCATEGORY_DESCRIPTIONS } from './CategoryPage';
+import CategoryPage, { SUBCATEGORY_DESCRIPTIONS, isCategoryConfirmedEmpty } from './CategoryPage';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────
 
@@ -395,6 +395,48 @@ describe('CategoryPage', () => {
       renderAt('/categories/baby-clothing');
       expect(screen.getByText(/No products in Baby Clothing yet/i)).toBeInTheDocument();
       expect(screen.getByText('Browse all brands')).toBeInTheDocument();
+    });
+  });
+
+  describe('robots meta for empty categories', () => {
+    const robotsContent = () =>
+      document.head.querySelector('meta[name="robots"]')?.getAttribute('content');
+    const storeWith = searchPage =>
+      createStore(() => ({ ...mockState, SearchPage: { ...mockState.SearchPage, ...searchPage } }));
+
+    it('is noindex, follow once loaded and genuinely empty', async () => {
+      renderAt('/categories/baby-clothing', storeWith({ pagination: { totalItems: 0 } }));
+      await waitFor(() => expect(robotsContent()).toBe('noindex, follow'));
+    });
+
+    it('is index, follow while loading', async () => {
+      renderAt(
+        '/categories/baby-clothing',
+        storeWith({ searchInProgress: true, pagination: { totalItems: 0 } })
+      );
+      await waitFor(() => expect(robotsContent()).toBe('index, follow'));
+    });
+
+    it('is index, follow before any search has run or after a fetch error', async () => {
+      renderAt('/categories/baby-clothing', storeWith({}));
+      await waitFor(() => expect(robotsContent()).toBe('index, follow'));
+    });
+
+    it('isCategoryConfirmedEmpty only trusts a successful, finished, zero-result query', () => {
+      const base = {
+        searchInProgress: false,
+        searchListingsError: null,
+        pagination: { totalItems: 0 },
+        listings: [],
+        hasBrandFilter: false,
+      };
+      expect(isCategoryConfirmedEmpty(base)).toBe(true);
+      expect(isCategoryConfirmedEmpty({ ...base, searchInProgress: true })).toBe(false);
+      expect(isCategoryConfirmedEmpty({ ...base, searchListingsError: { status: 429 } })).toBe(false);
+      expect(isCategoryConfirmedEmpty({ ...base, pagination: null })).toBe(false);
+      expect(isCategoryConfirmedEmpty({ ...base, pagination: { totalItems: 3 } })).toBe(false);
+      expect(isCategoryConfirmedEmpty({ ...base, listings: [{ id: 'x' }] })).toBe(false);
+      expect(isCategoryConfirmedEmpty({ ...base, hasBrandFilter: true })).toBe(false);
     });
   });
 

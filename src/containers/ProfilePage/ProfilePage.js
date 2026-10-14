@@ -55,7 +55,12 @@ import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
 import FooterContainer from '../../containers/FooterContainer/FooterContainer';
 import NotFoundPage from '../../containers/NotFoundPage/NotFoundPage';
 
-import { BRAND_CATEGORIES, getBrandCategory, getBrandSlugById } from '../../config/configBrands';
+import {
+  BRAND_CATEGORIES,
+  getBrandCategory,
+  getBrandSlugById,
+  isBrandNoIndex,
+} from '../../config/configBrands';
 import { possessiveSuffix } from '../../util/brandShipping';
 import { pickTitleThatFits } from '../../util/seoTitles';
 
@@ -565,6 +570,7 @@ export const ProfilePageComponent = props => {
       description={isProvider ? brandSchemaDescription : undefined}
       schema={schemaMarkup}
       canonicalURL={brandCanonicalUrl}
+      noIndex={isProvider && isBrandNoIndex(brandSlug)}
     >
       {isProvider ? (
         // Brand Storefront: Full-width layout without sidebar

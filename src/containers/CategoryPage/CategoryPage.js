@@ -473,8 +473,36 @@ const RootCategoriesPage = ({ categories, scrollingDisabled, config, routeConfig
 
 // ── Component ──────────────────────────────────────────────────────────────
 
+/**
+ * True only when the category's listings query has finished successfully and
+ * returned nothing. Used to send `noindex, follow` for empty categories. Must be
+ * false while loading, before any search ran (pagination null), on a fetch error
+ * (the reducer also resets pagination to null then) and while a brand filter is
+ * active (an empty filtered view says nothing about the category itself).
+ */
+export const isCategoryConfirmedEmpty = ({
+  searchInProgress,
+  searchListingsError,
+  pagination,
+  listings,
+  hasBrandFilter,
+}) =>
+  !searchInProgress &&
+  !searchListingsError &&
+  !hasBrandFilter &&
+  pagination?.totalItems === 0 &&
+  (listings || []).length === 0;
+
 const CategoryPageComponent = props => {
-  const { listings, brandTiles = [], brandCarousel = [], scrollingDisabled, searchInProgress } = props;
+  const {
+    listings,
+    brandTiles = [],
+    brandCarousel = [],
+    scrollingDisabled,
+    searchInProgress,
+    searchListingsError,
+    pagination,
+  } = props;
 
   const config = useConfiguration();
   const routeConfiguration = useRouteConfiguration();
@@ -614,6 +642,13 @@ const CategoryPageComponent = props => {
       scrollingDisabled={scrollingDisabled}
       published={CATEGORY_CONTENT_LAST_UPDATED}
       updated={CATEGORY_CONTENT_LAST_UPDATED}
+      noIndex={isCategoryConfirmedEmpty({
+        searchInProgress,
+        searchListingsError,
+        pagination,
+        listings,
+        hasBrandFilter: !!selectedBrandId,
+      })}
     >
       <LayoutSingleColumn
         topbar={<TopbarContainer />}
@@ -796,12 +831,19 @@ const CategoryPageComponent = props => {
 };
 
 const mapStateToProps = state => {
-  const { currentPageResultIds, searchInProgress } = state.SearchPage;
+  const {
+    currentPageResultIds,
+    searchInProgress,
+    searchListingsError,
+    pagination,
+  } = state.SearchPage;
   return {
     listings: getListingsById(state, currentPageResultIds),
     brandTiles: getCategoryBrandTiles(state),
     brandCarousel: getCategoryBrandCarousel(state),
     searchInProgress,
+    searchListingsError,
+    pagination,
     scrollingDisabled: isScrollingDisabled(state),
   };
 };

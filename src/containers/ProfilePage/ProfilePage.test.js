@@ -17,6 +17,13 @@ jest.mock('../../util/sdkLoader', () => {
   };
 });
 
+// Brand config is selected per REACT_APP_ENV (the production map is empty), so pin the
+// noIndex lookup here; the real flag on Pluchi is covered in configBrands.noIndex.test.js.
+jest.mock('../../config/configBrands', () => ({
+  ...jest.requireActual('../../config/configBrands'),
+  isBrandNoIndex: slug => slug === 'pluchi',
+}));
+
 import configureStore from '../../store';
 import { types as sdkTypes } from '../../util/sdkLoader';
 import {
@@ -282,6 +289,65 @@ describe('ProfilePage', () => {
       expect(container.querySelector('.brandStorefrontContainer')).toBeInTheDocument();
       // Should NOT render sidebar layout
       expect(container.querySelector('.aside')).not.toBeInTheDocument();
+    });
+
+    describe('robots meta for brand pages', () => {
+      const renderBrandPage = async brandSlug => {
+        const providerUser = createEnhancedUser(createUser, userId);
+        providerUser.attributes.profile.publicData.userType = 'provider';
+        const base = getInitialState();
+        const initialState = {
+          ...base,
+          marketplaceData: {
+            entities: { ...base.marketplaceData.entities, user: { userId: providerUser } },
+          },
+        };
+        const providerConfig = {
+          ...config,
+          user: {
+            userFields: [
+              {
+                key: 'userType',
+                scope: 'public',
+                schemaType: 'enum',
+                enumOptions: [
+                  { option: 'a', label: 'Customer' },
+                  { option: 'provider', label: 'Provider' },
+                ],
+                saveConfig: { label: 'User Type', placeholderMessage: 'x', isRequired: true },
+              },
+            ],
+          },
+          userType: {
+            userTypeConfig: [
+              { userType: 'a', label: 'Customer', defaultUserFields: { profile: ['userType'] } },
+              {
+                userType: 'provider',
+                label: 'Provider',
+                defaultUserFields: { profile: ['userType'] },
+              },
+            ],
+          },
+        };
+        await act(async () => {
+          render(<ProfilePage {...props} params={{ brandSlug }} />, {
+            initialState,
+            config: providerConfig,
+          });
+        });
+      };
+      const robotsContent = () =>
+        document.head.querySelector('meta[name="robots"]')?.getAttribute('content');
+
+      it('is noindex, follow for a brand flagged noIndex (Pluchi, pending delist)', async () => {
+        await renderBrandPage('pluchi');
+        await testingLibrary.waitFor(() => expect(robotsContent()).toBe('noindex, follow'));
+      });
+
+      it('is index, follow for other brands', async () => {
+        await renderBrandPage('masilo');
+        await testingLibrary.waitFor(() => expect(robotsContent()).toBe('index, follow'));
+      });
     });
 
     it('renders customer profile for non-provider users', async () => {
