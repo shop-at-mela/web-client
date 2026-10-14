@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { IntlProvider } from 'react-intl';
 import { Provider } from 'react-redux';
@@ -8,6 +8,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 
 import BrandPartnershipPage from './BrandPartnershipPage';
+import { BRAND_PARTNERSHIP_FAQ_ITEMS } from './sections/FAQ/faqItems';
 import { ConfigurationProvider } from '../../context/configurationContext';
 import { RouteConfigurationProvider } from '../../context/routeConfigurationContext';
 
@@ -169,5 +170,29 @@ describe('BrandPartnershipPage', () => {
 
     const links = document.querySelectorAll('a[href*="signup/provider"]');
     expect(links.length).toBe(0);
+  });
+
+  it('builds the FAQPage JSON-LD from the same items the visible FAQ renders', async () => {
+    renderWithProviders(<BrandPartnershipPage />);
+
+    let faqPage;
+    await waitFor(() => {
+      const nodes = Array.from(
+        document.querySelectorAll('script[type="application/ld+json"]')
+      ).flatMap(el => {
+        const parsed = JSON.parse(el.textContent);
+        // Page wraps all schema nodes in a single { '@graph': [...] } block
+        return parsed['@graph'] || (Array.isArray(parsed) ? parsed : [parsed]);
+      });
+      faqPage = nodes.find(n => n['@type'] === 'FAQPage');
+      expect(faqPage).toBeTruthy();
+    });
+
+    expect(faqPage.mainEntity.map(q => q.name)).toEqual(
+      BRAND_PARTNERSHIP_FAQ_ITEMS.map(i => i.question)
+    );
+    expect(faqPage.mainEntity.map(q => q.acceptedAnswer.text)).toEqual(
+      BRAND_PARTNERSHIP_FAQ_ITEMS.map(i => i.answer)
+    );
   });
 });

@@ -55,7 +55,14 @@ import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
 import FooterContainer from '../../containers/FooterContainer/FooterContainer';
 import NotFoundPage from '../../containers/NotFoundPage/NotFoundPage';
 
-import { getBrandSlugById } from '../../config/configBrands';
+import {
+  BRAND_CATEGORIES,
+  getBrandCategory,
+  getBrandSlugById,
+  isBrandNoIndex,
+} from '../../config/configBrands';
+import { possessiveSuffix } from '../../util/brandShipping';
+import { pickTitleThatFits } from '../../util/seoTitles';
 
 import css from './ProfilePage.module.css';
 import BrandStorefront from './BrandStorefront';
@@ -424,8 +431,22 @@ export const ProfilePageComponent = props => {
   // site-wide default.
   const brandSchemaDescription = intl.formatMessage(
     { id: 'ProfilePage.brandSchemaDescription' },
-    schemaTitleVars
+    { ...schemaTitleVars, possessive: possessiveSuffix(displayName) }
   );
+  // Brand title: "<Brand> | Indian <category> Brand | Mela" when the brand has a configured
+  // category and it fits in 60 characters, otherwise the shorter generic form.
+  const brandCategoryLabel = BRAND_CATEGORIES.find(
+    c => c.id === getBrandCategory(profileUser?.id?.uuid)
+  )?.label;
+  const brandTitle = pickTitleThatFits([
+    brandCategoryLabel
+      ? intl.formatMessage(
+          { id: 'ProfilePage.brandTitleWithCategory' },
+          { ...schemaTitleVars, category: brandCategoryLabel }
+        )
+      : null,
+    intl.formatMessage({ id: 'ProfilePage.brandTitle' }, schemaTitleVars),
+  ]);
 
   // Resolve the canonical brand URL: prefer /brands/:slug over /u/:uuid
   const profileUserId = profileUser?.id?.uuid;
@@ -545,10 +566,11 @@ export const ProfilePageComponent = props => {
   return (
     <Page
       scrollingDisabled={scrollingDisabled}
-      title={schemaTitle}
+      title={isProvider ? brandTitle : schemaTitle}
       description={isProvider ? brandSchemaDescription : undefined}
       schema={schemaMarkup}
       canonicalURL={brandCanonicalUrl}
+      noIndex={isProvider && isBrandNoIndex(brandSlug)}
     >
       {isProvider ? (
         // Brand Storefront: Full-width layout without sidebar

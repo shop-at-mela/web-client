@@ -38,6 +38,7 @@ import { captureEntrySource } from './util/analytics/entrySource';
 // Import relevant global duck files
 import { authInfo } from './ducks/auth.duck';
 import { fetchAppAssets } from './ducks/hostedAssets.duck';
+import { getAllBrandSlugs } from './config/configBrands';
 import { fetchCurrentUser } from './ducks/user.duck';
 import { initAnonSaved } from './ducks/savedListings.duck';
 
@@ -191,4 +192,5 @@ export {
   defaultConfig,
   mergeConfig,
   fetchAppAssets,
+  getAllBrandSlugs,
 };

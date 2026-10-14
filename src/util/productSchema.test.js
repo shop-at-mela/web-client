@@ -106,6 +106,20 @@ describe('getListingSchemaTitle', () => {
     expect(run({ title: 'NICOBAR Sweatshirt', brandName: 'Nicobar' })).toBe('NICOBAR Sweatshirt | Mela');
   });
 
+  it('drops "by <Brand>" when the title would pass 60 characters', () => {
+    const title = 'Handloom Silk Table Runner 12" x 44" Blue Border';
+    expect(`${title} by Kaunteya | Mela`.length).toBeGreaterThan(60);
+    expect(run({ title, brandName: 'Kaunteya' })).toBe(`${title} | Mela`);
+    expect(run({ title: 'Silk Table Runner', brandName: 'Kaunteya' })).toBe(
+      'Silk Table Runner by Kaunteya | Mela'
+    );
+  });
+
+  it('never truncates a long title mid-word', () => {
+    const title = 'Ceramic Decorative Dragonfly Stripe Vase in Multi 17.3x17.3x22cm for Home';
+    expect(run({ title, brandName: 'Nicobar' })).toBe(`${title} | Mela`);
+  });
+
   it('works without a brand', () => {
     expect(run({ title: 'Cotton Kurta' })).toBe('Cotton Kurta | Mela');
     expect(run({ title: 'Cotton Kurta', brandName: '' })).toBe('Cotton Kurta | Mela');

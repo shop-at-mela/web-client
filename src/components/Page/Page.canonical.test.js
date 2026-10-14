@@ -26,7 +26,7 @@ const routes = routeConfiguration({
 
 // Mirrors the server path (server/renderer.js -> app.js renderApp): StaticRouter given the
 // raw req.url, query string included, and the head collected via HelmetProvider's context.
-const renderHeadFor = url => {
+const renderHeadFor = (url, pageProps = {}) => {
   const helmetContext = {};
   renderToString(
     <HelmetProvider context={helmetContext}>
@@ -34,7 +34,7 @@ const renderHeadFor = url => {
         <IntlProvider locale="en" messages={{}} onError={() => {}}>
           <ConfigurationProvider value={config}>
             <RouteConfigurationProvider value={routes}>
-              <Page title="t" description="d" scrollingDisabled={false}>
+              <Page title="t" description="d" scrollingDisabled={false} {...pageProps}>
                 <div />
               </Page>
             </RouteConfigurationProvider>
@@ -64,5 +64,13 @@ describe('Page canonical and og:url (server render)', () => {
     );
     expect(link).toContain(`href="https://mela.test/l/${id}"`);
     expect(meta).toContain(`content="https://mela.test/l/${id}"`);
+  });
+
+  it('renders index, follow by default and a single noindex, follow robots tag with noIndex', () => {
+    expect(renderHeadFor('/brands').meta).toContain('name="robots" content="index, follow"');
+
+    const { meta } = renderHeadFor('/s?keywords=x', { noIndex: true });
+    expect(meta).toContain('name="robots" content="noindex, follow"');
+    expect(meta.match(/name="robots"/g)).toHaveLength(1);
   });
 });

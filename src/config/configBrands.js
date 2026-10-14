@@ -98,6 +98,10 @@ const brandConfigurationsByEnv = {
       // Pluchi
       slug: 'pluchi',
       category: 'baby_and_kids',
+      // TEMPORARY: Pluchi does not ship to the US. Hidden from Google (noindex + no
+      // sitemap entry) while the delisting decision is pending. Remove this flag if
+      // the brand is kept, or remove the brand entirely if it is delisted.
+      noIndex: true,
       featuredProductIds: [
         '69fea854-4cd3-453d-b346-7000b1bacba1',
         '69fca349-4352-4d0b-83cf-f7701145261a',
@@ -623,6 +627,28 @@ export const getBrandIdBySlug = slug => {
     ([, config]) => config.slug === slug
   );
   return entry ? entry[0] : null;
+};
+
+/**
+ * Slugs of every public brand in the directory (those with a /brands/:slug page),
+ * in allBrandIds order. Used by the server-side sitemap (server/resources/sitemap.js).
+ * @returns {Array<string>}
+ */
+export const getAllBrandSlugs = () =>
+  allBrandIds
+    .filter(id => !brandConfigurations[id]?.noIndex)
+    .map(id => brandConfigurations[id]?.slug)
+    .filter(Boolean);
+
+/**
+ * Whether a brand's page should be hidden from search engines (`noIndex: true` on
+ * its config entry; temporary, e.g. pending a delisting decision).
+ * @param {string} slug - Brand slug
+ * @returns {boolean}
+ */
+export const isBrandNoIndex = slug => {
+  const id = getBrandIdBySlug(slug);
+  return !!(id && brandConfigurations[id]?.noIndex);
 };
 
 /**

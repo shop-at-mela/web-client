@@ -17,6 +17,8 @@ import FooterContainer from '../FooterContainer/FooterContainer';
 // Import above-the-fold sections immediately
 import Hero from './sections/Hero/Hero';
 import MarketOpportunity from './sections/MarketOpportunity/MarketOpportunity';
+// FAQ data (not the FAQ component) is imported statically for the FAQPage JSON-LD
+import { BRAND_PARTNERSHIP_FAQ_ITEMS } from './sections/FAQ/faqItems';
 
 // Lazy load below-the-fold sections for better performance
 const WhyClothing = lazy(() => import('./sections/WhyClothing/WhyClothing'));
@@ -129,32 +131,16 @@ const BrandPartnershipPageComponent = () => {
         {
           '@context': 'http://schema.org',
           '@type': 'FAQPage',
-          mainEntity: [
-            {
-              '@type': 'Question',
-              name: 'What are the requirements to partner with Mela?',
-              acceptedAnswer: {
-                '@type': 'Answer',
-                text: 'We partner with established Indian brands that have quality products, manufacturing capabilities, and a commitment to Indian design.'
-              }
+          // Built from the same array the visible <FAQ> section renders, so the
+          // structured data can't list questions the page doesn't show.
+          mainEntity: BRAND_PARTNERSHIP_FAQ_ITEMS.map(item => ({
+            '@type': 'Question',
+            name: item.question,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: item.answer,
             },
-            {
-              '@type': 'Question',
-              name: 'Are there any upfront fees?',
-              acceptedAnswer: {
-                '@type': 'Answer',
-                text: 'No, Mela operates on a performance-based model with zero listing fees. We only succeed when our partners succeed.'
-              }
-            },
-            {
-              '@type': 'Question',
-              name: 'What categories does Mela currently accept?',
-              acceptedAnswer: {
-                '@type': 'Answer',
-                text: 'We are currently accepting baby clothing and accessories brands. Other categories will be available through our waitlist program.'
-              }
-            }
-          ]
+          })),
         }
       ]}
     >

@@ -173,7 +173,7 @@ export const metaTagProps = (tagData, config) => {
   // 'index, follow' one; that only rendered correctly by relying on
   // react-helmet-async's last-tag-wins de-dupe for same-name meta tags.
   const robotsMaybe = tagData.noIndex
-    ? [{ name: 'robots', content: 'noindex' }]
+    ? [{ name: 'robots', content: 'noindex, follow' }]
     : tagData.robots
     ? [{ name: 'robots', content: tagData.robots }]
     : [{ name: 'robots', content: 'index, follow' }];

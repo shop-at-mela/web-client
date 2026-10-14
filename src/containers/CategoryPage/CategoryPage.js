@@ -7,6 +7,7 @@ import { useConfiguration } from '../../context/configurationContext';
 import { useRouteConfiguration } from '../../context/routeConfigurationContext';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { toMetaDescription } from '../../util/metaDescription';
+import { categoryDisplayName } from '../../util/seoTitles';
 import { createResourceLocatorString } from '../../util/routes';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
@@ -202,7 +203,27 @@ export const CATEGORY_CONTENT = {
   },
 };
 
+// Optional meta descriptions for Home-Kitchen subcategories, keyed by L2 category ID.
+// Each noun was checked against the live category on 2026-10-13. Categories not listed
+// (Rugs-Floor-Coverings currently holds only rings) use the generic template.
+export const SUBCATEGORY_DESCRIPTIONS = {
+  Decor:
+    'Indian home decor: ceramic and glass vases, brass accents, candle holders, and trays from vetted Indian brands.',
+  'Kitchen-Dining':
+    'Bone china tableware, tea sets, cutlery, and serveware from vetted Indian brands.',
+  'Lighting-Outdoor': 'Iron and glass lanterns from vetted Indian brands.',
+  'Furniture-Storage':
+    'Woven bamboo and cotton storage baskets and jewelry boxes from vetted Indian brands.',
+};
+
 const getCategoryContent = (categoryId, intl, categoryName) => {
+  if (!CATEGORY_CONTENT[categoryId] && SUBCATEGORY_DESCRIPTIONS[categoryId]) {
+    return {
+      description: SUBCATEGORY_DESCRIPTIONS[categoryId],
+      faqQuestion: intl.formatMessage({ id: 'CategoryPage.faqQuestion' }, { categoryName }),
+      faqAnswer: intl.formatMessage({ id: 'CategoryPage.faqAnswer' }, { categoryName }),
+    };
+  }
   return (
     CATEGORY_CONTENT[categoryId] || {
       description: intl.formatMessage({ id: 'CategoryPage.description' }, { categoryName }),
@@ -264,7 +285,7 @@ const buildBreadcrumbs = (categories, level1, level2, level3) => {
   if (l1Cat) {
     crumbs.push({
       id: l1Cat.id,
-      name: l1Cat.name,
+      name: categoryDisplayName(l1Cat.name, l1Cat.id),
       path: categoryPath(level1),
     });
   }
@@ -274,7 +295,7 @@ const buildBreadcrumbs = (categories, level1, level2, level3) => {
     if (l2Cat) {
       crumbs.push({
         id: l2Cat.id,
-        name: l2Cat.name,
+        name: categoryDisplayName(l2Cat.name, l2Cat.id),
         path: categoryPath(level1, level2),
       });
     }
@@ -286,7 +307,7 @@ const buildBreadcrumbs = (categories, level1, level2, level3) => {
     if (l3Cat) {
       crumbs.push({
         id: l3Cat.id,
-        name: l3Cat.name,
+        name: categoryDisplayName(l3Cat.name, l3Cat.id),
         path: categoryPath(level1, level2, level3),
       });
     }
@@ -452,8 +473,36 @@ const RootCategoriesPage = ({ categories, scrollingDisabled, config, routeConfig
 
 // ── Component ──────────────────────────────────────────────────────────────
 
+/**
+ * True only when the category's listings query has finished successfully and
+ * returned nothing. Used to send `noindex, follow` for empty categories. Must be
+ * false while loading, before any search ran (pagination null), on a fetch error
+ * (the reducer also resets pagination to null then) and while a brand filter is
+ * active (an empty filtered view says nothing about the category itself).
+ */
+export const isCategoryConfirmedEmpty = ({
+  searchInProgress,
+  searchListingsError,
+  pagination,
+  listings,
+  hasBrandFilter,
+}) =>
+  !searchInProgress &&
+  !searchListingsError &&
+  !hasBrandFilter &&
+  pagination?.totalItems === 0 &&
+  (listings || []).length === 0;
+
 const CategoryPageComponent = props => {
-  const { listings, brandTiles = [], brandCarousel = [], scrollingDisabled, searchInProgress } = props;
+  const {
+    listings,
+    brandTiles = [],
+    brandCarousel = [],
+    scrollingDisabled,
+    searchInProgress,
+    searchListingsError,
+    pagination,
+  } = props;
 
   const config = useConfiguration();
   const routeConfiguration = useRouteConfiguration();
@@ -530,11 +579,12 @@ const CategoryPageComponent = props => {
   }
 
   const marketplaceName = config.marketplaceName;
+  const categoryName = categoryDisplayName(currentCategory.name, currentCategory.id);
   const pageTitle = intl.formatMessage(
     { id: 'CategoryPage.title' },
-    { categoryName: currentCategory.name, marketplaceName }
+    { categoryName, marketplaceName }
   );
-  const categoryContent = getCategoryContent(currentCategory.id, intl, currentCategory.name);
+  const categoryContent = getCategoryContent(currentCategory.id, intl, categoryName);
   const pageDescription = categoryContent.description;
 
   // Canonical URL — strip any search params from the category URL
@@ -563,7 +613,7 @@ const CategoryPageComponent = props => {
       author: organizationRef,
       mainEntity: {
         '@type': 'ItemList',
-        name: currentCategory.name,
+        name: categoryName,
         itemListElement: schemaListings,
       },
     },
@@ -592,6 +642,13 @@ const CategoryPageComponent = props => {
       scrollingDisabled={scrollingDisabled}
       published={CATEGORY_CONTENT_LAST_UPDATED}
       updated={CATEGORY_CONTENT_LAST_UPDATED}
+      noIndex={isCategoryConfirmedEmpty({
+        searchInProgress,
+        searchListingsError,
+        pagination,
+        listings,
+        hasBrandFilter: !!selectedBrandId,
+      })}
     >
       <LayoutSingleColumn
         topbar={<TopbarContainer />}
@@ -619,7 +676,7 @@ const CategoryPageComponent = props => {
 
           {/* Page header */}
           <header className={css.header}>
-            <h1 className={css.title}>{currentCategory.name}</h1>
+            <h1 className={css.title}>{categoryName}</h1>
             <p className={css.description}>{pageDescription}</p>
             <p className={css.byline}>Last reviewed {CATEGORY_CONTENT_LAST_UPDATED}</p>
           </header>
@@ -656,7 +713,7 @@ const CategoryPageComponent = props => {
                 <FormattedMessage
                   id="CategoryPage.brandCarouselTitle"
                   defaultMessage="Shop {categoryName} Brands"
-                  values={{ categoryName: breadcrumbs[0]?.name || currentCategory.name }}
+                  values={{ categoryName: breadcrumbs[0]?.name || categoryName }}
                 />
               </h2>
               <BrandCarousel
@@ -690,12 +747,12 @@ const CategoryPageComponent = props => {
                 {selectedBrandName ? (
                   <FormattedMessage
                     id="CategoryPage.gridHeadingFiltered"
-                    values={{ brandName: selectedBrandName, categoryName: currentCategory.name }}
+                    values={{ brandName: selectedBrandName, categoryName }}
                   />
                 ) : (
                   <FormattedMessage
                     id="CategoryPage.gridHeadingAll"
-                    values={{ categoryName: currentCategory.name }}
+                    values={{ categoryName }}
                   />
                 )}
               </h2>
@@ -720,7 +777,7 @@ const CategoryPageComponent = props => {
                 <p className={css.emptyText}>
                   <FormattedMessage
                     id="CategoryPage.noProducts"
-                    values={{ categoryName: currentCategory.name }}
+                    values={{ categoryName }}
                   />
                 </p>
                 <Link to={brandsPath} className={css.emptyLink}>
@@ -774,12 +831,19 @@ const CategoryPageComponent = props => {
 };
 
 const mapStateToProps = state => {
-  const { currentPageResultIds, searchInProgress } = state.SearchPage;
+  const {
+    currentPageResultIds,
+    searchInProgress,
+    searchListingsError,
+    pagination,
+  } = state.SearchPage;
   return {
     listings: getListingsById(state, currentPageResultIds),
     brandTiles: getCategoryBrandTiles(state),
     brandCarousel: getCategoryBrandCarousel(state),
     searchInProgress,
+    searchListingsError,
+    pagination,
     scrollingDisabled: isScrollingDisabled(state),
   };
 };

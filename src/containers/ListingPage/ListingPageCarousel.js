@@ -449,7 +449,11 @@ export const ListingPageComponent = props => {
               className={showListingImage ? css.mobileHeading : css.noListingImageHeadingProduct}
             >
               {showListingImage ? (
-                <H2 as="h1" className={css.orderPanelTitle}>
+                /* Semantic h2, not h1: the OrderPanel's desktop title (titleDesktop below) is the
+                    page's single h1. Both are always in the SSR HTML (CSS hides one per
+                    breakpoint), so only one may be an h1. The .h2 class sets every property
+                    the h1/h2 element rules do, so this renders identically. */
+                <H2 className={css.orderPanelTitle}>
                   <FormattedMessage id="ListingPage.orderTitle" values={{ title: richTitle }} />
                 </H2>
               ) : (
