@@ -273,6 +273,11 @@ describe('ListingPage variants', () => {
       // Has order title (rendered for )
       const orderTitle = queryAllByRole('heading', { name: 'ListingPage.orderTitle' });
       expect(orderTitle).toHaveLength(3);
+      // ...but exactly one of them is an <h1> (SEO: one h1 per page, the listing title)
+      expect(document.querySelectorAll('h1')).toHaveLength(1);
+      expect(queryAllByRole('heading', { level: 1 })[0]).toHaveTextContent(
+        'ListingPage.orderTitle'
+      );
 
       // Has details section title and selected category info
       expect(getByRole('heading', { name: 'ListingPage.detailsTitle' })).toBeInTheDocument();
@@ -325,6 +330,11 @@ describe('ListingPage variants', () => {
       // Has order title (rendered for )
       const orderTitle = queryAllByRole('heading', { name: 'ListingPage.orderTitle' });
       expect(orderTitle).toHaveLength(3);
+      // ...but exactly one of them is an <h1> (SEO: one h1 per page, the listing title)
+      expect(document.querySelectorAll('h1')).toHaveLength(1);
+      expect(queryAllByRole('heading', { level: 1 })[0]).toHaveTextContent(
+        'ListingPage.orderTitle'
+      );
 
       // Has details section title and selected category info
       expect(getByRole('heading', { name: 'ListingPage.detailsTitle' })).toBeInTheDocument();

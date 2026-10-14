@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import FAQ from './FAQ';
+import { BRAND_PARTNERSHIP_FAQ_ITEMS } from './faqItems';
 
 // Mock the components
 jest.mock('../../../../components', () => ({
@@ -88,5 +89,14 @@ describe('FAQ', () => {
     expect(screen.getByText(/this creates a unique window for forward-thinking brands/)).toBeInTheDocument();
     expect(screen.getByText(/build customer relationships/)).toBeInTheDocument();
     expect(screen.getByText(/minimal competition/)).toBeInTheDocument();
+  });
+
+  it('renders exactly the shared FAQ items that feed the FAQPage JSON-LD, in order', () => {
+    const { container } = render(<FAQ />);
+    const questions = Array.from(container.querySelectorAll('h4')).map(n => n.textContent);
+    expect(questions).toEqual(BRAND_PARTNERSHIP_FAQ_ITEMS.map(i => i.question));
+    BRAND_PARTNERSHIP_FAQ_ITEMS.forEach(item => {
+      expect(screen.getByText(item.answer)).toBeInTheDocument();
+    });
   });
 });
