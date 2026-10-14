@@ -10,7 +10,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { ConfigurationProvider } from '../../context/configurationContext';
 import { RouteConfigurationProvider } from '../../context/routeConfigurationContext';
 
-import CategoryPage from './CategoryPage';
+import CategoryPage, { SUBCATEGORY_DESCRIPTIONS } from './CategoryPage';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────
 
@@ -69,6 +69,16 @@ const mockCategories = [
     subcategories: [
       { id: 'Clothing', name: 'Clothing', subcategories: [] },
       { id: 'Footwear', name: 'Footwear', subcategories: [] },
+    ],
+  },
+  // Hosted config can carry the raw slug as the name (Lighting-Outdoor does on production)
+  {
+    id: 'Home-Kitchen',
+    name: 'Home & Kitchen',
+    subcategories: [
+      { id: 'Lighting-Outdoor', name: 'Lighting-Outdoor', subcategories: [] },
+      { id: 'Rugs-Floor-Coverings', name: 'Rugs-Floor-Coverings', subcategories: [] },
+      { id: 'Decor', name: 'Decor', subcategories: [] },
     ],
   },
 ];
@@ -247,8 +257,8 @@ describe('CategoryPage', () => {
     it('renders a "Browse →" CTA on each card', () => {
       renderRoot();
       const ctaLinks = screen.getAllByText('Browse →');
-      // One CTA per category (3 categories in mockCategories)
-      expect(ctaLinks.length).toBe(3);
+      // One CTA per category (4 categories in mockCategories)
+      expect(ctaLinks.length).toBe(4);
     });
 
     it('renders breadcrumb with Home and All Categories', () => {
@@ -310,6 +320,37 @@ describe('CategoryPage', () => {
       expect(
         screen.getByText('Discover authentic Indian Baby Clothing products.')
       ).toBeInTheDocument();
+    });
+  });
+
+  describe('subcategory title and meta', () => {
+    const metaOf = () => document.querySelector('meta[name="description"]')?.content;
+
+    it('uses a readable label instead of the raw slug in the title and H1', async () => {
+      renderAt('/categories/Home-Kitchen/Lighting-Outdoor');
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Lighting & Outdoor');
+      await waitFor(() => expect(document.title).toBe('Lighting & Outdoor — Mela'));
+    });
+
+    it('uses the per-subcategory description when one exists', async () => {
+      renderAt('/categories/Home-Kitchen/Lighting-Outdoor');
+      await waitFor(() =>
+        expect(metaOf()).toBe('Iron and glass lanterns from vetted Indian brands.')
+      );
+    });
+
+    it('keeps every subcategory description within 155 characters and free of unverified claims', () => {
+      Object.values(SUBCATEGORY_DESCRIPTIONS).forEach(text => {
+        expect(text.length).toBeLessThanOrEqual(155);
+        expect(text).not.toMatch(/days|50 states|duty|duties|sustainab|certif|\beco\b/i);
+      });
+    });
+
+    it('falls back to the generic template with a humanized name', async () => {
+      renderAt('/categories/Home-Kitchen/Rugs-Floor-Coverings');
+      await waitFor(() =>
+        expect(metaOf()).toBe('Discover authentic Indian Rugs & Floor Coverings products.')
+      );
     });
   });
 
