@@ -13,7 +13,9 @@ import css from './AboutPage.module.css';
 // claim-checked against the shipping transparency and footer legalese PRDs: no
 // shipping times, card acceptance, certifications, or "every brand" promises.
 // Mela is a personal, non-commercial project run by an individual; keep the
-// "Who's behind it" wording consistent with footer-legalese-prd.md.
+// "Who's behind it" wording consistent with footer-legalese-prd.md, and don't add
+// future-business language. "Brands don't pay to be featured" must change if any
+// brand ever pays.
 
 const CONTACT_EMAIL = 'shopatmela@gmail.com';
 
@@ -130,9 +132,7 @@ export const AboutPageComponent = props => {
                 Who's behind it
               </h2>
               <p className={css.paragraph}>
-                Mela is a personal, non-commercial project run by Sanjot Sawhney, not a company. It
-                isn't a store, and it doesn't earn commissions or get paid by the brands it
-                features. No brand pays to be on Mela.
+                Mela is a personal project by Sanjot Sawhney. Brands don't pay to be featured.
               </p>
             </section>
 

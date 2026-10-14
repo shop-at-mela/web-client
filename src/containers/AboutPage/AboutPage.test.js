@@ -30,7 +30,7 @@ describe('AboutPage', () => {
   it('names the operator and links the contact email', () => {
     render(<AboutPage />, { routeConfiguration: getRouteConfiguration() });
 
-    expect(screen.getByText(/run by Sanjot Sawhney/)).toBeInTheDocument();
+    expect(screen.getByText(/personal project by Sanjot Sawhney/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'shopatmela@gmail.com' })).toHaveAttribute(
       'href',
       'mailto:shopatmela@gmail.com'
