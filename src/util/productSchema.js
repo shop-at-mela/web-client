@@ -5,6 +5,8 @@
  * nothing here asserts that Mela sells, ships or prices the product.
  */
 
+import { pickTitleThatFits } from './seoTitles';
+
 const SEO_DESCRIPTION_MAX_CHARS = 160;
 const SEO_DESCRIPTION_SNIPPET_CHARS = 100;
 
@@ -60,7 +62,7 @@ export const getCanonicalProductUrl = (marketplaceRootURL, pathname) =>
  * Browser tab and search result title for a listing.
  * The product name leads, so a truncated mobile title still says what the page is. Listing
  * titles often already carry the brand name; it is only added when missing, so the title never
- * reads "Nicobar by Nicobar".
+ * reads "Nicobar by Nicobar". When the result is over 60 characters, "by <Brand>" is dropped.
  *
  * @param {Object} intl react-intl instance
  * @param {Object} args
@@ -72,9 +74,12 @@ export const getCanonicalProductUrl = (marketplaceRootURL, pathname) =>
 export const getListingSchemaTitle = (intl, { title, brandName, marketplaceName }) => {
   const brandAlreadyInTitle =
     !!brandName && String(title).toLowerCase().includes(brandName.toLowerCase());
-  const id =
-    brandName && !brandAlreadyInTitle
-      ? 'ListingPage.schemaTitleWithBrand'
-      : 'ListingPage.schemaTitleNoBrand';
-  return intl.formatMessage({ id }, { title, brand: brandName, marketplaceName });
+  const values = { title, brand: brandName, marketplaceName };
+  const plain = intl.formatMessage({ id: 'ListingPage.schemaTitleNoBrand' }, values);
+  if (!brandName || brandAlreadyInTitle) return plain;
+  // "by <Brand>" is dropped when it pushes the title past the limit. Never cut mid-word.
+  return pickTitleThatFits([
+    intl.formatMessage({ id: 'ListingPage.schemaTitleWithBrand' }, values),
+    plain,
+  ]);
 };
