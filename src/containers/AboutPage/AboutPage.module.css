@@ -1,0 +1,250 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  width: 100%;
+  background: var(--colorWhite);
+}
+
+/* Hero: same soft gradient band as BrandsPage on tablet and up */
+.hero {
+  padding: 36px 24px 30px 24px;
+  text-align: center;
+
+  @media (--viewportMedium) {
+    padding: 72px 24px 56px 24px;
+    background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorWhite) 100%);
+    border-bottom: 1px solid var(--colorGrey100);
+  }
+}
+
+.eyebrow {
+  margin: 0 0 12px 0;
+  padding: 0;
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--marketplaceColor);
+}
+
+.heroTitle {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0;
+  font-family: var(--fontFamilyDisplay);
+  font-size: 30px;
+  font-weight: var(--fontWeightMedium);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--colorGrey900);
+
+  @media (--viewportMedium) {
+    font-size: 48px;
+    line-height: 1.15;
+  }
+}
+
+.heroText {
+  max-width: 640px;
+  margin: 18px auto 0 auto;
+  padding: 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--colorGrey700);
+
+  @media (--viewportMedium) {
+    margin-top: 24px;
+    font-size: 19px;
+  }
+}
+
+.heroTagline {
+  margin: 18px 0 0 0;
+  padding: 0;
+  font-size: 17px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--marketplaceColor);
+
+  @media (--viewportMedium) {
+    margin-top: 24px;
+  }
+}
+
+/* Readable single column */
+.content {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 12px 24px 48px 24px;
+
+  @media (--viewportMedium) {
+    padding: 24px 24px 96px 24px;
+  }
+}
+
+.section {
+  padding: 30px 0 0 0;
+
+  @media (--viewportMedium) {
+    padding-top: 48px;
+  }
+}
+
+.sectionTitle {
+  margin: 0 0 12px 0;
+  padding: 0;
+  font-family: var(--fontFamilyDisplay);
+  font-size: 24px;
+  font-weight: var(--fontWeightMedium);
+  line-height: 1.25;
+  color: var(--colorGrey900);
+
+  @media (--viewportMedium) {
+    margin-bottom: 16px;
+    font-size: 30px;
+  }
+}
+
+.paragraph {
+  margin: 0 0 12px 0;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--colorGrey700);
+
+  @media (--viewportMedium) {
+    margin-bottom: 16px;
+    font-size: 17px;
+  }
+}
+
+/* How it works: numbered steps */
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+
+  @media (--viewportMedium) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+.step {
+  display: flex;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 12px;
+  background: var(--colorGrey50);
+
+  @media (--viewportMedium) {
+    flex-direction: column;
+    padding: 24px;
+  }
+}
+
+.stepNumber {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorWhite);
+  background: var(--marketplaceColor);
+
+  @media (--viewportMedium) {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.stepTitle {
+  margin: 0 0 6px 0;
+  padding: 0;
+  font-size: 17px;
+  font-weight: var(--fontWeightBold);
+  line-height: 1.3;
+  color: var(--colorGrey900);
+}
+
+.stepText {
+  margin: 0;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--colorGrey700);
+}
+
+.note {
+  margin: 18px 0 0 0;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--colorGrey600);
+
+  @media (--viewportMedium) {
+    margin-top: 24px;
+  }
+}
+
+/* Founder story: set apart from the factual sections */
+.storySection {
+  margin: 36px -24px 0 -24px;
+  padding: 30px 24px 18px 24px;
+  background: var(--colorGrey50);
+  border-left: 4px solid var(--marketplaceColor);
+
+  @media (--viewportMedium) {
+    margin: 56px 0 0 0;
+    padding: 40px 48px 24px 48px;
+    border-radius: 0 12px 12px 0;
+  }
+}
+
+.storyCloser {
+  margin: 6px 0 12px 0;
+  padding: 0;
+  font-family: var(--fontFamilyDisplay);
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--colorGrey900);
+
+  @media (--viewportMedium) {
+    margin-top: 8px;
+    font-size: 22px;
+  }
+}
+
+.link {
+  color: var(--marketplaceColor);
+  font-weight: var(--fontWeightSemiBold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cta {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 12px 24px;
+  border-radius: 6px;
+  background: var(--marketplaceColor);
+  color: var(--colorWhite);
+  font-size: 16px;
+  font-weight: var(--fontWeightSemiBold);
+  text-decoration: none;
+
+  &:hover {
+    background: var(--marketplaceColorDark);
+    text-decoration: none;
+  }
+
+  @media (--viewportMedium) {
+    margin-top: 16px;
+  }
+}
