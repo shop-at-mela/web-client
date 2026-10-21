@@ -249,4 +249,36 @@ describe('MelaHomePage', () => {
       );
     });
   });
+
+  describe('answer block', () => {
+    const answerText = () =>
+      render(
+        <TestWrapper>
+          <MelaHomePage {...defaultProps} />
+        </TestWrapper>
+      ).container.querySelector('p[class*="answerBlock"]').textContent;
+
+    it('renders the answer block as visible text directly after the hero', () => {
+      const { getByTestId } = render(
+        <TestWrapper>
+          <MelaHomePage {...defaultProps} />
+        </TestWrapper>
+      );
+      const heroSection = getByTestId('hero-section').closest('section');
+      const next = heroSection.nextElementSibling;
+      expect(next.querySelector('p[class*="answerBlock"]')).not.toBeNull();
+    });
+
+    it('is 40 to 60 words and says what Mela is, where you buy and US shipping', () => {
+      const text = answerText();
+      const words = text.split(/\s+/).filter(Boolean).length;
+      expect(words).toBeGreaterThanOrEqual(40);
+      expect(words).toBeLessThanOrEqual(60);
+      expect(text).toMatch(/curated marketplace of contemporary Indian brands/);
+      expect(text).toMatch(/fashion, home, beauty, jewelry and kids/);
+      expect(text).toMatch(/buy directly on each brand's own store/);
+      expect(text).toMatch(/ship to US addresses/);
+      expect(text).not.toMatch(/vendor|!/i);
+    });
+  });
 });

@@ -112,7 +112,10 @@ const defaultConfig = {
   // Facebook page is used in SEO schema (http://schema.org/Organization)
   siteFacebookPage: null, // e.g. 'https://www.facebook.com/Sharetribe/',
   // Instagram page is used in SEO schema (http://schema.org/Organization)
-  siteInstagramPage: null, // e.g. 'https://www.instagram.com/sharetribe/',
+  siteInstagramPage: 'https://www.instagram.com/shopatmela/',
+  // Pinterest and LinkedIn pages are used in SEO schema (http://schema.org/Organization)
+  sitePinterestPage: 'https://www.pinterest.com/shopatmela/',
+  siteLinkedInPage: 'https://www.linkedin.com/company/shopatmela',
   // Twitter handle is needed in meta tags (twitter:site). Start it with '@' character
   siteTwitterHandle: null, // e.g. '@sharetribe',
 

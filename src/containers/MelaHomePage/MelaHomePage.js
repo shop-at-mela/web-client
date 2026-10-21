@@ -17,6 +17,7 @@ import TrustAssurance from './sections/TrustAssurance/TrustAssurance';
 import SavedItemsModule from './sections/SavedItems/SavedItemsModule';
 import FAQSection from './sections/FAQSection/FAQSection';
 import { useConfiguration } from '../../context/configurationContext';
+import { FormattedMessage } from '../../util/reactIntl';
 // The card answer is shared with the other card copy in en.json; read directly so the visible
 // FAQ and the FAQPage JSON-LD built from FAQ_ITEMS stay identical.
 import enMessages from '../../translations/en.json';
@@ -152,6 +153,19 @@ const MelaHomePage = props => {
         {/* Hero Section - Product Showcase + Trust Signals */}
         <section className={css.heroSection}>
           <HeroSection />
+        </section>
+
+        {/* Answer block - one plain, server-rendered passage that says what Mela is,
+            so AI assistants have a self-contained 40-60 word lead to quote. */}
+        <section className={css.answerBlockSection}>
+          <div className={css.container}>
+            <p className={css.answerBlock}>
+              <FormattedMessage
+                id="MelaHomePage.answerBlock"
+                defaultMessage={enMessages['MelaHomePage.answerBlock']}
+              />
+            </p>
+          </div>
         </section>
 
         {/* Vetting Strip - P0.1 compressed trust band, above the first carousel */}

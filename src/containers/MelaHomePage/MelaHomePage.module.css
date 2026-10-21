@@ -21,6 +21,22 @@
   }
 }
 
+/* Answer block: quiet body-type paragraph under the hero, on the hero's cream so
+   it reads as part of the same band rather than a new section. */
+.answerBlockSection {
+  width: 100%;
+  padding: 0 0 1.5rem;
+  background: var(--colorSurfaceWarm);
+}
+
+.answerBlock {
+  max-width: 68ch;
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #4a5568;
+}
+
 /* Occasion Section — moved up from inside CategoryShowcase (P1.3) */
 .occasionSection {
   width: 100%;
