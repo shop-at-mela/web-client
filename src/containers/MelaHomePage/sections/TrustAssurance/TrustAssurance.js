@@ -12,31 +12,27 @@ const CERTIFICATIONS = [
   { id: 'eco_friendly',   name: 'Eco-Friendly' },
 ];
 
+// Copy lives in en.json (TrustAssurance.*). Brands ship and take payment, Mela does neither,
+// and card acceptance has not been checked per brand, so no tile may claim it.
 const SECURITY_FEATURES = [
-  {
-    icon: '🛍️',
-    title: 'Shop Directly With the Brand',
-  },
+  { icon: '🛍️', titleId: 'TrustAssurance.shopDirectTitle' },
   {
     icon: '📦',
-    title: 'Ships Directly to the US',
-    description: 'Orders ship straight from the brand to your US address.',
+    titleId: 'TrustAssurance.shippingTitle',
+    descriptionId: 'TrustAssurance.shippingDescription',
   },
-  {
-    icon: '↩️',
-    title: 'Brand Return Policies',
-  },
+  { icon: '↩️', titleId: 'TrustAssurance.returnsTitle' },
   {
     icon: '💳',
-    title: 'US Cards Accepted on Brand Stores',
-    description: 'Visa, Mastercard, Amex, and Discover accepted.',
+    titleId: 'TrustAssurance.cardsTitle',
+    descriptionId: 'TrustAssurance.cardsDescription',
   },
 ];
 
 const QUALITY_GUARANTEES = [
-  { title: 'Proven Track Record', icon: '✨' },
-  { title: 'Verified Indian Brands', icon: '🤝' },
-  { title: 'Sustainably Made', icon: '🌱' },
+  { titleId: 'TrustAssurance.trackRecordTitle', icon: '✨' },
+  { titleId: 'TrustAssurance.handVettedTitle', icon: '🤝' },
+  { titleId: 'TrustAssurance.sustainableTitle', icon: '🌱' },
 ];
 
 const TrustAssurance = () => {
@@ -65,7 +61,9 @@ const TrustAssurance = () => {
             {QUALITY_GUARANTEES.map((guarantee, index) => (
               <div key={index} className={css.guaranteeCard}>
                 <span className={css.guaranteeIcon}>{guarantee.icon}</span>
-                <h4 className={css.guaranteeTitle}>{guarantee.title}</h4>
+                <h4 className={css.guaranteeTitle}>
+                  <FormattedMessage id={guarantee.titleId} />
+                </h4>
               </div>
             ))}
           </div>
@@ -108,9 +106,13 @@ const TrustAssurance = () => {
               <div key={index} className={css.securityCard}>
                 <span className={css.securityIcon}>{feature.icon}</span>
                 <div className={css.securityInfo}>
-                  <h4 className={css.securityTitle}>{feature.title}</h4>
-                  {feature.description && (
-                    <p className={css.securityDescription}>{feature.description}</p>
+                  <h4 className={css.securityTitle}>
+                    <FormattedMessage id={feature.titleId} />
+                  </h4>
+                  {feature.descriptionId && (
+                    <p className={css.securityDescription}>
+                      <FormattedMessage id={feature.descriptionId} />
+                    </p>
                   )}
                 </div>
               </div>

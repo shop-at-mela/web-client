@@ -17,6 +17,9 @@ import TrustAssurance from './sections/TrustAssurance/TrustAssurance';
 import SavedItemsModule from './sections/SavedItems/SavedItemsModule';
 import FAQSection from './sections/FAQSection/FAQSection';
 import { useConfiguration } from '../../context/configurationContext';
+// The card answer is shared with the other card copy in en.json; read directly so the visible
+// FAQ and the FAQPage JSON-LD built from FAQ_ITEMS stay identical.
+import enMessages from '../../translations/en.json';
 
 import css from './MelaHomePage.module.css';
 
@@ -24,7 +27,7 @@ import css from './MelaHomePage.module.css';
 // copy below (title/description/FAQ) actually changes. Deliberately not derived from
 // any live data (e.g. newest listing), which would be a freshness-spam pattern AI
 // answer engines are tuned to discount.
-export const HOMEPAGE_LAST_UPDATED = '2026-10-06';
+export const HOMEPAGE_LAST_UPDATED = '2026-10-20';
 
 // Single source of truth for the homepage FAQ: rendered as visible copy by
 // <FAQSection> below AND used to build the FAQPage JSON-LD in `schema`, so the two
@@ -40,7 +43,7 @@ export const FAQ_ITEMS = [
   {
     question: 'Can I use my US credit card to shop on Mela?',
     answer:
-      "Yes. Mela is a discovery platform, so you purchase directly on each brand's own Shopify store, which accepts all major credit and debit cards issued in the US, including Visa, Mastercard, American Express, and Discover. No special international payment setup is needed.",
+      enMessages['MelaHomePage.faqCardsAnswer'],
   },
   {
     question: 'Are there customs duties or import taxes when ordering from India to the US?',

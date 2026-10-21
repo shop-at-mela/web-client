@@ -17,7 +17,7 @@ import { pushVettingStripView, pushVettingStripClick } from '../../../../util/an
 
 const mockMessages = {
   'VettingStrip.brandsVetted': '{count} brands, hand vetted',
-  'VettingStrip.cards': 'US cards verified',
+  'VettingStrip.cards': "You pay on the brand's own store",
   'VettingStrip.howWeVet': 'How we vet →',
 };
 
@@ -43,7 +43,9 @@ describe('VettingStrip', () => {
     // The blanket shipping claim was removed (false while a brand is live that does not ship to the US)
     expect(screen.queryByText(/50 states/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/ship/i)).not.toBeInTheDocument();
-    expect(screen.getByText('US cards verified')).toBeInTheDocument();
+    // Card acceptance has not been checked per brand, so the strip makes no card claim
+    expect(screen.queryByText(/verified|cards/i)).not.toBeInTheDocument();
+    expect(screen.getByText("You pay on the brand's own store")).toBeInTheDocument();
     expect(screen.getByText('How we vet →')).toBeInTheDocument();
   });
 

@@ -210,7 +210,7 @@ describe('MelaHomePage', () => {
 
     it('states the reviewed date as the bumped HOMEPAGE_LAST_UPDATED', () => {
       const { container } = renderPage();
-      expect(HOMEPAGE_LAST_UPDATED).toBe('2026-10-06');
+      expect(HOMEPAGE_LAST_UPDATED).toBe('2026-10-20');
       expect(container.textContent).toContain(`Last reviewed ${HOMEPAGE_LAST_UPDATED}`);
     });
 
@@ -224,10 +224,17 @@ describe('MelaHomePage', () => {
       expect(text).not.toMatch(/no surprises/i);
       expect(text).not.toMatch(/ships directly/i);
       expect(text).not.toMatch(/vets all partners/i);
+      expect(text).not.toMatch(/accepts all major|cards verified|cards accepted/i);
     });
 
     it('uses no dash characters in the FAQ answers', () => {
       FAQ_ITEMS.forEach(item => expect(item.answer).not.toMatch(/[-\u2013\u2014]/));
+    });
+
+    it('Q2 makes no card claim and uses the approved wording', () => {
+      expect(FAQ_ITEMS[1].answer).toBe(
+        "You pay on each brand's own store, not on Mela, so the payment options are the brand's. The brand's checkout shows which cards and payment methods it takes before you pay."
+      );
     });
 
     it('Q1, Q3 and Q4 use the approved P0 wording', () => {
