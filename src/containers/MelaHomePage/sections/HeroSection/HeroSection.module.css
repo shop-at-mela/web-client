@@ -166,41 +166,6 @@
   }
 }
 
-/* Trust Badges — flat credential row, not interactive pills */
-.trustBadges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  margin: 0 0 1.5rem;
-
-  @media (min-width: 768px) {
-    margin: 0 0 2rem;
-  }
-}
-
-.trustBadge {
-  /* Flat credential tag — intentionally NOT pill-shaped so it reads as a fact,
-     not an interactive button. Avoids confusion with clickable categoryPills. */
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #5a6472;
-
-  @media (min-width: 640px) {
-    font-size: 0.875rem;
-  }
-}
-
-.badgeIcon {
-  font-size: 1rem;
-}
-
-.badgeText {
-  white-space: nowrap;
-}
-
 .primaryCta {
   display: inline-flex;
   align-items: center;

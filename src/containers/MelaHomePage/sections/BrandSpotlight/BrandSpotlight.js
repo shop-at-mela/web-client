@@ -28,6 +28,9 @@ const HERO_IMAGE_TARGET_WIDTH = 1600;
  *
  * No outbound Shopify link here (decision 2026-07-26, matching BrandStorefront.js) —
  * the sole CTA is "See {Brand} on Mela".
+ *
+ * Homepage declutter v3 (2026-10-24): no description paragraph or rotation note, and the
+ * bestseller cards are image-only (bestseller badge and save button stay).
  */
 const BrandSpotlight = () => {
   const [brand, setBrand] = useState(null);
@@ -109,7 +112,7 @@ const BrandSpotlight = () => {
 
   if (isLoading || !brand) return null;
 
-  const { displayName, bio = '', publicData = {} } = brand.attributes?.profile || {};
+  const { displayName, publicData = {} } = brand.attributes?.profile || {};
   const { brandCraft, brandHeroImages } = publicData;
   const heroImageUrl = Array.isArray(brandHeroImages) && brandHeroImages.length > 0
     ? withExternalImageWidth(brandHeroImages[0], HERO_IMAGE_TARGET_WIDTH)
@@ -118,10 +121,6 @@ const BrandSpotlight = () => {
   const brandLinkProps = brandSlug
     ? { name: 'BrandPage', params: { brandSlug } }
     : { name: 'ProfilePage', params: { id: brandId } };
-
-  const tagline = publicData.brandTagline || bio.split('.')[0]?.trim();
-  const afterTagline = tagline ? bio.slice(bio.indexOf(tagline) + tagline.length).replace(/^[.\s]+/, '') : bio;
-  const storySentence = afterTagline.split('.')[0]?.trim();
 
   return (
     <section className={css.root} ref={rootRef}>
@@ -145,8 +144,6 @@ const BrandSpotlight = () => {
 
         {brandCraft && <span className={css.craftChip}>✦ {brandCraft}</span>}
 
-        {storySentence && <p className={css.story}>{storySentence}.</p>}
-
         <ProductCarousel
           title={intl.formatMessage(
             { id: 'BrandSpotlight.bestsellersTitle', defaultMessage: 'Bestsellers from {brand}' },
@@ -157,6 +154,7 @@ const BrandSpotlight = () => {
           viewAllLinkName={brandLinkProps.name}
           viewAllLinkParams={brandLinkProps.params}
           showInrPrice={false}
+          showCardInfo={false}
         />
 
         <div className={css.ctas}>
@@ -169,9 +167,6 @@ const BrandSpotlight = () => {
           </span>
         </div>
 
-        <p className={css.rotationNote}>
-          <FormattedMessage id="BrandSpotlight.rotationNote" />
-        </p>
       </div>
     </section>
   );

@@ -8,8 +8,21 @@ jest.mock('../../../../util/homepageSdk', () => ({
 }));
 
 jest.mock('../../../../components', () => ({
-  ProductCarousel: ({ title, subtitle, listings, onItemClick }) => (
-    <div>
+  ProductCarousel: ({
+    title,
+    subtitle,
+    listings,
+    onItemClick,
+    layout,
+    showAuthorInfo,
+    showVariantCount,
+  }) => (
+    <div
+      data-testid="product-carousel"
+      data-show-variant-count={String(showVariantCount)}
+      data-layout={layout || 'carousel'}
+      data-show-author-info={String(showAuthorInfo)}
+    >
       <h3>{title}</h3>
       {subtitle && <p>{subtitle}</p>}
       {listings.map(listing => (
@@ -66,6 +79,18 @@ describe('NewFromIndia', () => {
     await waitFor(() => expect(screen.getByTestId('listing-card')).toBeInTheDocument());
     expect(screen.getByText('New from India')).toBeInTheDocument();
     expect(screen.getByText('Fresh arrivals from the brands we vet')).toBeInTheDocument();
+  });
+
+  it('renders as a grid, not a sideways carousel, with the brand name shown', async () => {
+    denormalisedEntities.mockReturnValue([listing('l1')]);
+    renderInContext(<NewFromIndia />);
+    await waitFor(() => expect(screen.getByTestId('listing-card')).toBeInTheDocument());
+    expect(screen.getByTestId('product-carousel')).toHaveAttribute('data-layout', 'grid');
+    expect(screen.getByTestId('product-carousel')).toHaveAttribute('data-show-author-info', 'true');
+    expect(screen.getByTestId('product-carousel')).toHaveAttribute(
+      'data-show-variant-count',
+      'false'
+    );
   });
 
   it('caps the row at 2 products per brand, preserving recency order', async () => {

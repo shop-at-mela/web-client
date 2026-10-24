@@ -135,10 +135,10 @@ describe('HeroSection', () => {
       expect(cta).toHaveTextContent('Explore Brands');
     });
 
-    it('renders trust badges', () => {
+    it('does not render the removed trust badges', () => {
       renderHeroSection();
-      expect(screen.getByText('Ships Worldwide')).toBeInTheDocument();
-      expect(screen.getByText('Secure Checkout')).toBeInTheDocument();
+      expect(screen.queryByText('Ships Worldwide')).not.toBeInTheDocument();
+      expect(screen.queryByText('Secure Checkout')).not.toBeInTheDocument();
     });
 
     it('renders category pills', () => {

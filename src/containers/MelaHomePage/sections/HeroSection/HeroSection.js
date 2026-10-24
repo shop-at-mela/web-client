@@ -19,11 +19,6 @@ import { getAllBrandIds, getPopulatedCategoryCount } from '../../../../config/co
 
 import css from './HeroSection.module.css';
 
-const TRUST_BADGES = [
-  { icon: '🌍', text: 'Ships Worldwide' },
-  { icon: '💳', text: 'Secure Checkout' },
-];
-
 // Category ids map 1:1 to CategoryIcon glyphs (custom India-resonant line icons).
 const TOP_CATEGORY_PILLS = [
   { id: 'Baby-Kids',           label: 'Baby & Kids' },
@@ -257,14 +252,6 @@ const HeroSectionComponent = ({
           />
         </p>
       )}
-      <div className={css.trustBadges}>
-        {TRUST_BADGES.map((badge, index) => (
-          <div key={index} className={css.trustBadge}>
-            <span className={css.badgeIcon}>{badge.icon}</span>
-            <span className={css.badgeText}>{badge.text}</span>
-          </div>
-        ))}
-      </div>
       <NamedLink name="BrandsPage" className={css.primaryCta}>
         <FormattedMessage id="SectionMelaHero.shopNow" defaultMessage="Explore Brands" />
       </NamedLink>
