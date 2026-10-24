@@ -3,10 +3,12 @@
 process.env.REACT_APP_ENV = 'test';
 const { getAllBrandSlugs, getBrandIdBySlug, isBrandNoIndex } = require('./configBrands');
 
-describe('brand noIndex flag (temporary, Pluchi pending delist)', () => {
-  it('flags Pluchi as noIndex but keeps it configured', () => {
-    expect(getBrandIdBySlug('pluchi')).toBeTruthy();
-    expect(isBrandNoIndex('pluchi')).toBe(true);
+describe('brand noIndex flag', () => {
+  // Pluchi was the only noIndex brand. It was delisted on 2026-10-24 (does not ship to the
+  // US), so its config entry is commented out in configBrands.js.
+  it('no longer configures Pluchi', () => {
+    expect(getBrandIdBySlug('pluchi')).toBeFalsy();
+    expect(isBrandNoIndex('pluchi')).toBe(false);
   });
 
   it('does not flag other brands or unknown slugs', () => {

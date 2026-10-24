@@ -94,21 +94,22 @@ const brandConfigurationsByEnv = {
         '6a12a086-bbe5-4131-8c94-1ea206f8673c'
       ],
     },
-    '69f02a02-6330-4240-9035-fbc23bc568f0': {
-      // Pluchi
-      slug: 'pluchi',
-      category: 'baby_and_kids',
-      // TEMPORARY: Pluchi does not ship to the US. Hidden from Google (noindex + no
-      // sitemap entry) while the delisting decision is pending. Remove this flag if
-      // the brand is kept, or remove the brand entirely if it is delisted.
-      noIndex: true,
-      featuredProductIds: [
-        '69fea854-4cd3-453d-b346-7000b1bacba1',
-        '69fca349-4352-4d0b-83cf-f7701145261a',
-        '69faa8af-22b2-401a-aaa1-2788cea4b872',
-        '69fab050-5268-453d-a8ca-d246a46e320b'
-      ],
-    },
+    // Pluchi delisted 2026-10-24: does not ship to the US. Commented out, not deleted, so it can be restored.
+    // '69f02a02-6330-4240-9035-fbc23bc568f0': {
+    //   // Pluchi
+    //   slug: 'pluchi',
+    //   category: 'baby_and_kids',
+    //   // TEMPORARY: Pluchi does not ship to the US. Hidden from Google (noindex + no
+    //   // sitemap entry) while the delisting decision is pending. Remove this flag if
+    //   // the brand is kept, or remove the brand entirely if it is delisted.
+    //   noIndex: true,
+    //   featuredProductIds: [
+    //     '69fea854-4cd3-453d-b346-7000b1bacba1',
+    //     '69fca349-4352-4d0b-83cf-f7701145261a',
+    //     '69faa8af-22b2-401a-aaa1-2788cea4b872',
+    //     '69fab050-5268-453d-a8ca-d246a46e320b'
+    //   ],
+    // },
     '69f7bbc7-3b97-4244-9444-bc51ed8ec4e9': {
       // Gully Labs
       slug: 'gullylabs',
@@ -243,7 +244,7 @@ const allBrandIdsByEnv = {
     '68e58e66-4894-4ea8-b858-fc63a6bb85f6', // aagghhoo
     '69784c6e-cdf2-45e1-b76d-baad6ed1c776', // choosekind
     '697c1798-79e9-46e1-a104-c6c09a512c46', // superbottoms
-    '69f02a02-6330-4240-9035-fbc23bc568f0', // pluchi
+    // '69f02a02-6330-4240-9035-fbc23bc568f0', // pluchi (delisted 2026-10-24, does not ship to the US)
     '69f7bbc7-3b97-4244-9444-bc51ed8ec4e9', // gullylabs
     '697b81ea-9931-4a57-8b26-be04fe1daecf', // the-nesavu
     '69faa719-cc71-4e56-b6c3-48b0f510fecb', // banjaaran-studio
