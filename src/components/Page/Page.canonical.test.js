@@ -73,4 +73,37 @@ describe('Page canonical and og:url (server render)', () => {
     expect(meta).toContain('name="robots" content="noindex, follow"');
     expect(meta.match(/name="robots"/g)).toHaveLength(1);
   });
+
+  it('lists only the configured profile URLs in Organization sameAs', () => {
+    const sameAsConfig = {
+      ...config,
+      siteInstagramPage: 'https://www.instagram.com/shopatmela/',
+      sitePinterestPage: 'https://www.pinterest.com/shopatmela/',
+      siteLinkedInPage: 'https://www.linkedin.com/company/shopatmela',
+    };
+    const helmetContext = {};
+    renderToString(
+      <HelmetProvider context={helmetContext}>
+        <StaticRouter location="/" context={{}}>
+          <IntlProvider locale="en" messages={{}} onError={() => {}}>
+            <ConfigurationProvider value={sameAsConfig}>
+              <RouteConfigurationProvider value={routes}>
+                <Page title="t" description="d" scrollingDisabled={false}>
+                  <div />
+                </Page>
+              </RouteConfigurationProvider>
+            </ConfigurationProvider>
+          </IntlProvider>
+        </StaticRouter>
+      </HelmetProvider>
+    );
+    const script = helmetContext.helmet.script.toString();
+    const json = JSON.parse(script.replace(/^<script[^>]*>/, '').replace(/<\/script>$/, ''));
+    const org = json['@graph'].find(n => n['@type'] === 'Organization');
+    expect(org.sameAs).toEqual([
+      'https://www.instagram.com/shopatmela/',
+      'https://www.pinterest.com/shopatmela/',
+      'https://www.linkedin.com/company/shopatmela',
+    ]);
+  });
 });

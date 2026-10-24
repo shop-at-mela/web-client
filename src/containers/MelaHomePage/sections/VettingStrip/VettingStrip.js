@@ -52,6 +52,12 @@ const VettingStrip = ({ vettingSectionId = 'how-we-vet' }) => {
         <span className={css.check}>✓</span>{' '}
         <FormattedMessage id="VettingStrip.cards" />
       </span>
+      {/* Hedged on purpose: 7 of 19 live brands had no duties data, stale data or no US
+          shipping when checked (2026-10-24), so "every brand page" would be false. */}
+      <span className={`${css.item} ${css.itemWrap}`}>
+        <span className={css.check}>✓</span>{' '}
+        <FormattedMessage id="VettingStrip.shippingDuties" />
+      </span>
       <a className={css.how} href={`#${vettingSectionId}`} onClick={handleHowWeVetClick}>
         <FormattedMessage id="VettingStrip.howWeVet" />
       </a>

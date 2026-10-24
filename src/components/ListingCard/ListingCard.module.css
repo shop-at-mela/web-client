@@ -224,6 +224,13 @@
   font-weight: var(--fontWeightBold);
   color: var(--colorGrey700);
   margin: 0;
+
+  /* Two lines max, site-wide (homepage declutter v3) */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .brandName {

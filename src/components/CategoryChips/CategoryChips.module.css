@@ -1,0 +1,50 @@
+/* CategoryChips — chips wrap instead of scrolling off-screen. */
+
+.root {
+  width: 100%;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @media (min-width: 768px) {
+    gap: 10px;
+  }
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 7px 13px;
+  border: 1px solid var(--colorGrey100, #e5e5e6);
+  border-radius: 999px;
+  background: var(--colorGrey50, #fafafa);
+  color: var(--marketplaceColor);
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold, 600);
+  line-height: 1.2;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--marketplaceColor);
+    background: var(--colorWhite, #fff);
+    text-decoration: none;
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--colorAccent, #f0a030);
+    outline-offset: 2px;
+  }
+
+  @media (min-width: 768px) {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+}

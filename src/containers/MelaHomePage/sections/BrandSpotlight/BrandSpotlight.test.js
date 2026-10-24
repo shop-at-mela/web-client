@@ -26,10 +26,17 @@ jest.mock('../../../../util/analytics/homepageEditorial', () => ({
 // Real ListingCard/Money rendering isn't the point of these tests — stub the shared
 // carousel so assertions can read the props BrandSpotlight passed it directly.
 jest.mock('../../../../components/ProductCarousel/ProductCarousel', () => {
-  return function MockProductCarousel({ title, listings, viewAllLinkName, viewAllLinkParams }) {
+  return function MockProductCarousel({
+    title,
+    listings,
+    viewAllLinkName,
+    viewAllLinkParams,
+    showCardInfo,
+  }) {
     return (
       <div
         data-testid="product-carousel"
+        data-show-card-info={String(showCardInfo)}
         data-title={title}
         data-count={listings?.length ?? 0}
         data-view-all-name={viewAllLinkName}
@@ -110,7 +117,7 @@ describe('BrandSpotlight', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders the brand name, craft chip, and story sentence once loaded', async () => {
+  it('renders the brand name and craft chip, with no description or rotation note', async () => {
     sdk.users.show.mockResolvedValue(
       brandResponse({ brandCraft: 'juttis stitched by hand in Mumbai', brandHeroImages: ['https://example.com/hero.jpg'] })
     );
@@ -123,9 +130,12 @@ describe('BrandSpotlight', () => {
 
     await waitFor(() => expect(screen.getByText('Fizzy Goblet')).toBeInTheDocument());
     expect(screen.getByText('✦ juttis stitched by hand in Mumbai')).toBeInTheDocument();
-    expect(screen.getByText(/Every pair is stitched by hand/)).toBeInTheDocument();
-    // The tagline sentence itself should not repeat as the story sentence.
-    expect(screen.queryByText(/Handcrafted juttis for the modern wardrobe\./)).not.toBeInTheDocument();
+    expect(screen.getByText('Our Brands, Worth Knowing')).toBeInTheDocument();
+    expect(screen.getByText('Made in India')).toBeInTheDocument();
+    // Homepage declutter v3: the description paragraph and rotation note are gone
+    expect(screen.queryByText(/Every pair is stitched by hand/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Handcrafted juttis/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/featured each week/)).not.toBeInTheDocument();
   });
 
   it('renders a ProductCarousel of the brand\'s own bestsellers', async () => {
@@ -141,6 +151,8 @@ describe('BrandSpotlight', () => {
     );
 
     await waitFor(() => expect(screen.getByTestId('product-carousel')).toBeInTheDocument());
+    // Image-only cards: no price, title, variants pill or author
+    expect(screen.getByTestId('product-carousel')).toHaveAttribute('data-show-card-info', 'false');
     expect(sdk.listings.query).toHaveBeenCalledWith(
       expect.objectContaining({ author_id: 'brand-1', pub_isBestseller: true })
     );

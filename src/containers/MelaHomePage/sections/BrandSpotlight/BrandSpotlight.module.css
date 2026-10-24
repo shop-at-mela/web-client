@@ -78,13 +78,6 @@
   width: fit-content;
 }
 
-.story {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--colorGrey600);
-  margin: 0;
-}
-
 .ctas {
   display: flex;
   gap: 10px;
@@ -110,13 +103,6 @@
   background: var(--marketplaceColor);
   color: var(--colorWhite);
   box-shadow: 0 2px 6px rgba(38, 34, 97, 0.25);
-}
-
-.rotationNote {
-  font-size: 11px;
-  color: var(--colorGrey400);
-  text-align: center;
-  margin: 10px 0 0;
 }
 
 @media (--viewportMedium) {

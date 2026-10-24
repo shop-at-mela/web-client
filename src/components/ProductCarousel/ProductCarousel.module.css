@@ -147,6 +147,32 @@
   }
 }
 
+/* ── Grid layout (layout="grid") ──
+   2 columns, first 4 cards on phones; 4 columns, all cards on tablet/desktop. */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 10px;
+
+  & .card:nth-child(n + 5) {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem 1rem;
+
+    & .card:nth-child(n + 5) {
+      display: block;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    gap: 2rem 1.5rem;
+  }
+}
+
 /* ── Skeleton loading card ── */
 
 .skeleton {

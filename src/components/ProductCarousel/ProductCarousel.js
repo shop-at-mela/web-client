@@ -21,6 +21,11 @@
  * overrides for editorial modules that want a different ListingCard content mix (e.g.
  * NewFromIndia shows the brand name instead of badges).
  *
+ * `layout="grid"` renders the same cards as a wrapping grid instead of a sideways row
+ * (2 columns on phones, 4 on desktop). `showCardInfo={false}` gives image-only cards
+ * (badges and save button stay); `showVariantCount={false}` hides the "N variants" pill.
+ * All default to the carousel behavior above.
+ *
  * `title` is optional — omit it (and `viewAllLinkName`) to render just the scrollable
  * row with no header, for hosts that already render their own heading (e.g. OccasionCard's
  * gradient editorial header). Pass `renderSizes` when the carousel is nested in a
@@ -29,7 +34,7 @@
  */
 
 import React from 'react';
-import { arrayOf, bool, func, number, object, string } from 'prop-types';
+import { arrayOf, bool, func, number, object, oneOf, string } from 'prop-types';
 import { FormattedMessage } from '../../util/reactIntl';
 import { propTypes } from '../../util/types';
 import { NamedLink, ListingCard } from '../../components';
@@ -49,6 +54,9 @@ const ProductCarousel = ({
   showAuthorInfo = false,
   showTrustBadges = true,
   showConversionBadges = true,
+  showCardInfo = true,
+  showVariantCount = true,
+  layout = 'carousel',
   renderSizes = '(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw',
   onItemClick,
 }) => {
@@ -80,7 +88,7 @@ const ProductCarousel = ({
         </div>
       )}
 
-      <div className={css.carousel}>
+      <div className={layout === 'grid' ? css.grid : css.carousel}>
         {isLoading
           ? [1, 2, 3, 4].map(i => (
               <div key={i} className={`${css.card} ${css.skeleton}`} />
@@ -99,6 +107,8 @@ const ProductCarousel = ({
                   isBestseller={listing.attributes?.publicData?.isBestseller || false}
                   renderSizes={renderSizes}
                   showInrPrice={showInrPrice}
+                  showCardInfo={showCardInfo}
+                  showVariantCount={showVariantCount}
                 />
               </div>
             ))}
@@ -121,6 +131,9 @@ ProductCarousel.propTypes = {
   showAuthorInfo: bool,
   showTrustBadges: bool,
   showConversionBadges: bool,
+  showCardInfo: bool,
+  showVariantCount: bool,
+  layout: oneOf(['carousel', 'grid']),
   renderSizes: string,
   onItemClick: func,
 };

@@ -99,3 +99,68 @@ export const getListingCardTranslations = (listing, config, intl) => {
     cardAriaLabel,
   };
 };
+
+const escapeRegExp = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Words a brand name often carries in one place and drops in the other
+// ("Banjaaran" vs "Banjaaran Studio", "Vilvah" vs "Vilvah Store").
+const GENERIC_BRAND_SUFFIXES = ['studio', 'store', 'official', 'india'];
+
+const brandNameVariants = brand => {
+  const base = brand.trim().replace(/\s+/g, ' ');
+  const variants = new Set([base]);
+  const withoutThe = base.replace(/^the\s+/i, '');
+  if (withoutThe) variants.add(withoutThe);
+  [base, withoutThe].forEach(name => {
+    const words = name.split(' ');
+    const last = words[words.length - 1].toLowerCase();
+    if (words.length > 1 && GENERIC_BRAND_SUFFIXES.includes(last)) {
+      variants.add(words.slice(0, -1).join(' '));
+    } else {
+      GENERIC_BRAND_SUFFIXES.forEach(suffix => variants.add(`${name} ${suffix}`));
+    }
+  });
+  // Longest first, so "Banjaaran Studio" is stripped whole rather than leaving "Banjaaran"
+  return [...variants].sort((a, b) => b.length - a.length);
+};
+
+/**
+ * Display-only: drops the brand name that ingested listing titles end with
+ * ("Cotton Kurta in Yellow Ankid" -> "Cotton Kurta in Yellow"), since the card already
+ * shows the brand. Case-insensitive, tolerates a leading "by" and partial names
+ * ("Banjaaran" vs "Banjaaran Studio"). Returns the title unchanged when nothing matches
+ * or when stripping would leave nothing.
+ *
+ * @param {string} title listing title
+ * @param {string?} brand brand name (publicData.brand)
+ * @returns {string}
+ */
+export const stripTrailingBrand = (title, brand) => {
+  if (typeof title !== 'string' || typeof brand !== 'string' || !brand.trim()) return title;
+  for (const variant of brandNameVariants(brand)) {
+    const pattern = new RegExp(`[\\s,|·–—-]+(?:by\\s+)?${escapeRegExp(variant)}\\s*$`, 'i');
+    if (pattern.test(title)) {
+      const stripped = title.replace(pattern, '').trim();
+      return stripped || title;
+    }
+  }
+  return title;
+};
+
+const normalizeBrandName = name =>
+  (name || '')
+    .toLowerCase()
+    .replace(/^the\s+/, '')
+    .replace(/[^a-z0-9]/g, '');
+
+/**
+ * True when two names refer to the same brand: equal ignoring case, spacing,
+ * punctuation and a leading "The", or one is the start of the other
+ * ("Banjaaran" / "Banjaaran Studio").
+ */
+export const isSameBrandName = (a, b) => {
+  const na = normalizeBrandName(a);
+  const nb = normalizeBrandName(b);
+  if (!na || !nb) return false;
+  return na === nb || na.startsWith(nb) || nb.startsWith(na);
+};

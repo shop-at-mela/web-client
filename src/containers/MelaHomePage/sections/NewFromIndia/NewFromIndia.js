@@ -32,6 +32,7 @@ const capPerBrand = (sortedListings, maxPerBrand, limit) => {
  * Module B: New from India (homepage-editorial-modules.md).
  * Recency as curation — the 8 most recent listings across all categories, capped at
  * 2 per brand so one ingestion run can't flood the row. Entirely automatic: no CMS.
+ * Rendered as a 2-column grid on phones (first 4) and 4 columns on desktop (all 8).
  */
 const NewFromIndia = () => {
   const intl = useIntl();
@@ -87,6 +88,8 @@ const NewFromIndia = () => {
       showTrustBadges={false}
       showConversionBadges={false}
       showInrPrice={false}
+      layout="grid"
+      showVariantCount={false}
       onItemClick={listing => pushNewFromIndiaClick(listing.author?.id?.uuid, listing.id.uuid)}
     />
   );

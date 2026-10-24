@@ -8,15 +8,19 @@ import FooterContainer from '../FooterContainer/FooterContainer';
 import HeroSection from './sections/HeroSection/HeroSection';
 import VettingStrip from './sections/VettingStrip/VettingStrip';
 import BrandSpotlight from './sections/BrandSpotlight/BrandSpotlight';
-import { OccasionStrip } from './sections/CategoryShowcase/CategoryShowcase';
-import CategoryTiles from '../../components/CategoryTiles/CategoryTiles';
+import { OccasionMosaic } from './sections/CategoryShowcase/CategoryShowcase';
+import CategoryChips from '../../components/CategoryChips/CategoryChips';
 import NewFromIndia from './sections/NewFromIndia/NewFromIndia';
 import CraftStories from './sections/CraftStories/CraftStories';
 import EarnedItsPlaceContainer from './sections/EarnedItsPlace/EarnedItsPlaceContainer';
-import TrustAssurance from './sections/TrustAssurance/TrustAssurance';
+import HowWeVet from './sections/HowWeVet/HowWeVet';
 import SavedItemsModule from './sections/SavedItems/SavedItemsModule';
 import FAQSection from './sections/FAQSection/FAQSection';
 import { useConfiguration } from '../../context/configurationContext';
+import { FormattedMessage } from '../../util/reactIntl';
+// The card answer is shared with the other card copy in en.json; read directly so the visible
+// FAQ and the FAQPage JSON-LD built from FAQ_ITEMS stay identical.
+import enMessages from '../../translations/en.json';
 
 import css from './MelaHomePage.module.css';
 
@@ -24,7 +28,7 @@ import css from './MelaHomePage.module.css';
 // copy below (title/description/FAQ) actually changes. Deliberately not derived from
 // any live data (e.g. newest listing), which would be a freshness-spam pattern AI
 // answer engines are tuned to discount.
-export const HOMEPAGE_LAST_UPDATED = '2026-10-06';
+export const HOMEPAGE_LAST_UPDATED = '2026-10-24';
 
 // Single source of truth for the homepage FAQ: rendered as visible copy by
 // <FAQSection> below AND used to build the FAQPage JSON-LD in `schema`, so the two
@@ -40,7 +44,7 @@ export const FAQ_ITEMS = [
   {
     question: 'Can I use my US credit card to shop on Mela?',
     answer:
-      "Yes. Mela is a discovery platform, so you purchase directly on each brand's own Shopify store, which accepts all major credit and debit cards issued in the US, including Visa, Mastercard, American Express, and Discover. No special international payment setup is needed.",
+      enMessages['MelaHomePage.faqCardsAnswer'],
   },
   {
     question: 'Are there customs duties or import taxes when ordering from India to the US?',
@@ -151,28 +155,41 @@ const MelaHomePage = props => {
           <HeroSection />
         </section>
 
+        {/* Answer block - one plain, server-rendered passage that says what Mela is,
+            so AI assistants have a self-contained 40-60 word lead to quote. */}
+        <section className={css.answerBlockSection}>
+          <div className={css.container}>
+            <p className={css.answerBlock}>
+              <FormattedMessage
+                id="MelaHomePage.answerBlock"
+                defaultMessage={enMessages['MelaHomePage.answerBlock']}
+              />
+            </p>
+          </div>
+        </section>
+
         {/* Vetting Strip - P0.1 compressed trust band, above the first carousel */}
         <VettingStrip vettingSectionId="how-we-vet" />
 
         {/* Saved Items Module — shows only for authenticated users with saves */}
         <SavedItemsModule />
 
-        {/* Module A: Brand Spotlight — P1.3 revised order, position 3 */}
-        <BrandSpotlight />
-
-        {/* Shop by Occasion — moved up from inside CategoryShowcase (P1.3): the
-            strongest existing curation, previously buried mid-page */}
-        <div className={css.occasionSection}>
-          <OccasionStrip config={config} />
-        </div>
-
-        {/* Shop by Category — compact category tiles (tightened from the Fashion/Baby
-            product carousels to six tap-in entry points; homepage-redesign 2026-07-31) */}
-        <section className={css.categorySection}>
-          <CategoryTiles />
+        {/* Shop by occasion — photo mosaic of the in-season occasions (no product rows),
+            then category chips that wrap (homepage declutter v3, 2026-10-24). Replaces
+            OccasionStrip + CategoryTiles here; both stay in the repo (OccasionStrip is
+            still used on CategoryPage). */}
+        <section className={css.browseSection}>
+          <div className={css.container}>
+            <OccasionMosaic />
+            <CategoryChips className={css.categoryChips} />
+          </div>
         </section>
 
-        {/* Module B: New from India — recency as curation */}
+        {/* Module A: Brand Spotlight — trimmed: no description or rotation note, and
+            image-only bestseller cards */}
+        <BrandSpotlight />
+
+        {/* Module B: New from India — recency as curation, as a 2-column grid */}
         <div className={css.newFromIndiaSection}>
           <NewFromIndia />
         </div>
@@ -186,15 +203,14 @@ const MelaHomePage = props => {
           <EarnedItsPlaceContainer />
         </section>
 
-        {/* Trust & Quality Assurance - Certifications */}
-        <section id="how-we-vet" className={css.trustSection}>
-          <TrustAssurance />
-        </section>
+        {/* How we vet — one navy band, three points (replaces TrustAssurance on the
+            homepage). Keeps id="how-we-vet" for VettingStrip's scroll link. */}
+        <HowWeVet id="how-we-vet" />
 
         {/* FAQ Section — visible counterpart to the FAQPage JSON-LD above. Kept low on
-            the page (reference content, not a discovery surface); every question and
-            answer is always expanded in the server-rendered HTML, so answer engines and
-            the JSON-LD see the same text. */}
+            the page (reference content, not a discovery surface). An accordion with the
+            first item open; every answer is still in the server-rendered HTML, so answer
+            engines and the JSON-LD see the same text. */}
         <FAQSection id="faq" items={FAQ_ITEMS} lastUpdated={HOMEPAGE_LAST_UPDATED} />
       </div>
       <FooterContainer />
