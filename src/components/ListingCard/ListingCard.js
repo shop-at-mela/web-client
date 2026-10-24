@@ -28,7 +28,11 @@ import {
   SavedListingButton,
 } from '../../components';
 
-import { getListingCardTranslations } from './ListingCard.helpers';
+import {
+  getListingCardTranslations,
+  stripTrailingBrand,
+  isSameBrandName,
+} from './ListingCard.helpers';
 
 import css from './ListingCard.module.css';
 
@@ -315,6 +319,10 @@ const ListingCardImage = props => {
  * @param {number?} props.stockCount remaining stock for urgency display (default: null)
  * @param {boolean?} props.isNew whether product is newly listed (default: false)
  * @param {boolean?} props.showInrPrice whether to show the "~₹" INR equivalent under the price (default: true)
+ * @param {boolean?} props.showVariantCount whether to show the "N variants" pill (default: true)
+ * @param {boolean?} props.showCardInfo whether to show the price/title/variants/author block
+ *   under the image (default: true). false gives an image-only card; badges and the save
+ *   button stay, and the image link keeps the listing title as its alt text.
  * @param {Function?} props.onShopNow when provided, renders a stock-aware "Shop on {brand} →" /
  *   "View on {brand} →" CTA for listings with brand + productUrl (used on SavedPage — see
  *   add-to-cart-restoration-prd.md §6). Called with { url, brandName, isVerified, isOutOfStock, trackingParams }.
@@ -341,6 +349,8 @@ export const ListingCard = props => {
     isNew = false,
     lazyLoadImage = true,
     showInrPrice = true,
+    showCardInfo = true,
+    showVariantCount = true,
     onShopNow,
   } = props;
 
@@ -374,6 +384,12 @@ export const ListingCard = props => {
 
   // Extract brand and certifications from publicData
   const brand = publicData?.brand || null;
+  const authorDisplayName = author?.attributes?.profile?.displayName;
+  // Titles from ingestion end with the brand name; the card already shows the brand.
+  const displayTitle = stripTrailingBrand(title, brand || authorDisplayName);
+  // brand and author are usually the same name ("Banjaaran Studio" / "Banjaaran"), so the
+  // author line only shows when it names someone else.
+  const showAuthorName = !brand || !isSameBrandName(brand, authorDisplayName);
   const productUrl = publicData?.productUrl || null;
   const certifications = publicData?.certification || [];
 
@@ -440,7 +456,12 @@ export const ListingCard = props => {
     <div className={classes}>
       {/* imageWrapper gives the save button a shared positioning parent with the image */}
       <div className={css.imageWrapper}>
-        <NamedLink className={css.imageLink} name="ListingPage" params={{ id, slug }}>
+        <NamedLink
+          className={css.imageLink}
+          name="ListingPage"
+          params={{ id, slug }}
+          ariaLabel={showCardInfo ? null : title}
+        >
           <div className={css.imageContainer}>
             {showListingImage ? (
               <ListingCardImage
@@ -478,45 +499,47 @@ export const ListingCard = props => {
           className={css.saveButton}
         />
       </div>
-      <NamedLink className={css.infoLink} name="ListingPage" params={{ id, slug }}>
-        <div className={css.info}>
-          <PriceMaybe
-            price={price}
-            publicData={publicData}
-            config={config}
-            intl={intl}
-            listingTypeConfig={foundListingTypeConfig}
-            showInrPrice={showInrPrice}
-          />
-          <div className={css.mainInfo}>
-            {showListingImage && (
-              <div className={css.title}>
-                {richText(title, {
-                  longWordMinLength: MIN_LENGTH_FOR_LONG_WORDS,
-                  longWordClass: css.longWord,
-                })}
-              </div>
-            )}
-            {publicData?.variantCount > 1 && (
-              <div className={css.variantPill}>
-                {publicData.variantCount} variants
-              </div>
-            )}
-            {showAuthorInfo ? (
-              <div className={css.authorInfo}>
-                {brand && (
-                  <div className={css.brandName}>
-                    <FormattedMessage id="ListingCard.brand" values={{ brandName: brand }} />
-                  </div>
-                )}
-                <div className={css.author}>
-                  <FormattedMessage id="ListingCard.author" values={{ authorName }} />
+      {showCardInfo ? (
+        <NamedLink className={css.infoLink} name="ListingPage" params={{ id, slug }}>
+          <div className={css.info}>
+            <PriceMaybe
+              price={price}
+              publicData={publicData}
+              config={config}
+              intl={intl}
+              listingTypeConfig={foundListingTypeConfig}
+              showInrPrice={showInrPrice}
+            />
+            <div className={css.mainInfo}>
+              {showListingImage && (
+                <div className={css.title}>
+                  {richText(displayTitle, {
+                    longWordMinLength: MIN_LENGTH_FOR_LONG_WORDS,
+                    longWordClass: css.longWord,
+                  })}
                 </div>
-              </div>
-            ) : null}
+              )}
+              {showVariantCount && publicData?.variantCount > 1 && (
+                <div className={css.variantPill}>{publicData.variantCount} variants</div>
+              )}
+              {showAuthorInfo ? (
+                <div className={css.authorInfo}>
+                  {brand && (
+                    <div className={css.brandName}>
+                      <FormattedMessage id="ListingCard.brand" values={{ brandName: brand }} />
+                    </div>
+                  )}
+                  {showAuthorName ? (
+                    <div className={css.author}>
+                      <FormattedMessage id="ListingCard.author" values={{ authorName }} />
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
           </div>
-        </div>
-      </NamedLink>
+        </NamedLink>
+      ) : null}
       {showShopCta ? (
         <button type="button" className={css.shopCta} onClick={handleShopClick}>
           <FormattedMessage
@@ -528,11 +551,7 @@ export const ListingCard = props => {
         // Card is rendered in a Shop-CTA context (SavedPage) but has no brand/productUrl
         // to route through — a defined fallback instead of an unexplained gap next to
         // cards that do have a Shop CTA (add-to-cart-restoration-prd.md §13.1 fix #9, P2).
-        <NamedLink
-          className={css.shopCtaFallback}
-          name="ListingPage"
-          params={{ id, slug }}
-        >
+        <NamedLink className={css.shopCtaFallback} name="ListingPage" params={{ id, slug }}>
           <FormattedMessage id="ListingCard.viewListingFallback" />
         </NamedLink>
       ) : null}

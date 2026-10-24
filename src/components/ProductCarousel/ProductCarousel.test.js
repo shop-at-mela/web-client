@@ -14,6 +14,8 @@ jest.mock('../../components', () => ({
     showAuthorInfo,
     showTrustBadges,
     showConversionBadges,
+    showCardInfo,
+    showVariantCount,
     renderSizes,
   }) => (
     <div
@@ -24,6 +26,8 @@ jest.mock('../../components', () => ({
       data-show-trust-badges={String(!!showTrustBadges)}
       data-show-conversion-badges={String(!!showConversionBadges)}
       data-render-sizes={renderSizes}
+      data-show-card-info={String(showCardInfo)}
+      data-show-variant-count={String(showVariantCount)}
     />
   ),
 }));
@@ -254,6 +258,50 @@ describe('ProductCarousel', () => {
       renderCarousel({ listings });
 
       expect(() => screen.getAllByTestId('listing-card')[0].click()).not.toThrow();
+    });
+  });
+
+  describe('showCardInfo', () => {
+    it('defaults to true on every card', () => {
+      renderCarousel({ listings: [makeListing('a'), makeListing('b')] });
+      screen
+        .getAllByTestId('listing-card')
+        .forEach(card => expect(card).toHaveAttribute('data-show-card-info', 'true'));
+    });
+
+    it('passes false through to every ListingCard for image-only cards', () => {
+      renderCarousel({ listings: [makeListing('a'), makeListing('b')], showCardInfo: false });
+      screen
+        .getAllByTestId('listing-card')
+        .forEach(card => expect(card).toHaveAttribute('data-show-card-info', 'false'));
+    });
+  });
+
+  describe('showVariantCount', () => {
+    it('defaults to true and passes false through', () => {
+      const { unmount } = renderCarousel({ listings: [makeListing('a')], minItems: 1 });
+      expect(screen.getByTestId('listing-card')).toHaveAttribute('data-show-variant-count', 'true');
+      unmount();
+      renderCarousel({ listings: [makeListing('a')], minItems: 1, showVariantCount: false });
+      expect(screen.getByTestId('listing-card')).toHaveAttribute('data-show-variant-count', 'false');
+    });
+  });
+
+  describe('layout', () => {
+    it('renders a sideways carousel by default', () => {
+      const { container } = renderCarousel({ listings: [makeListing('a'), makeListing('b')] });
+      expect(container.querySelector('.carousel')).toBeInTheDocument();
+      expect(container.querySelector('.grid')).not.toBeInTheDocument();
+    });
+
+    it('renders a grid when layout="grid"', () => {
+      const { container } = renderCarousel({
+        listings: [makeListing('a'), makeListing('b')],
+        layout: 'grid',
+      });
+      expect(container.querySelector('.grid')).toBeInTheDocument();
+      expect(container.querySelector('.carousel')).not.toBeInTheDocument();
+      expect(container.querySelectorAll('.grid > .card')).toHaveLength(2);
     });
   });
 });
