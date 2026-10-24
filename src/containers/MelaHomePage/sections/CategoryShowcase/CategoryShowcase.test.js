@@ -7,6 +7,8 @@ import '@testing-library/jest-dom';
 import { ConfigurationProvider } from '../../../../context/configurationContext';
 import CategoryShowcase, {
   OccasionStrip,
+  OccasionMosaic,
+  pickMosaicImages,
   AgeNavigation,
   EXCLUDED_DISCOVERY_BRAND_SLUGS,
   getActiveSeasonOccasion,
@@ -620,5 +622,174 @@ describe('OccasionStrip', () => {
       expect(options.length).toBeLessThanOrEqual(3);
       expect(options).toContain('gifting');
     });
+  });
+});
+
+// ── OccasionMosaic ─────────────────────────────────────────────────────────────
+
+const makeMosaicListing = (id, occasionTag, { authorId = 'brand-1', withImage = true } = {}) => ({
+  ...makeListing(id, { occasionTag }),
+  author: { id: { uuid: authorId } },
+  images: withImage
+    ? [
+        {
+          attributes: {
+            variants: {
+              'scaled-medium': { url: `https://img.test/${id}-750.jpg` },
+              'scaled-large': { url: `https://img.test/${id}-1024.jpg` },
+            },
+          },
+        },
+      ]
+    : [],
+});
+
+describe('OccasionMosaic', () => {
+  // Late October 2026: Karva Chauth and Diwali are in season, so
+  // getActiveSeasonOccasion() returns ['karva_chauth', 'diwali', 'gifting'].
+  const IN_SEASON_DATE = new Date('2026-10-24');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockQuery.mockResolvedValue(emptyQueryResponse());
+    denormalisedEntities.mockReturnValue([]);
+  });
+
+  const mockOccasionResults = (...resultsInOrder) => {
+    resultsInOrder.forEach(result => denormalisedEntities.mockReturnValueOnce(result));
+  };
+
+  it('makes one marketplace-wide query per active occasion, not a per-brand fan-out', async () => {
+    renderInContext(<OccasionMosaic date={IN_SEASON_DATE} />);
+
+    await waitFor(() => expect(mockQuery).toHaveBeenCalledTimes(3));
+    const occasions = mockQuery.mock.calls.map(([p]) => p.pub_occasion);
+    expect(occasions).toEqual([
+      'has_any:karva_chauth',
+      'has_any:diwali,diwali-festivals',
+      'has_any:gifting',
+    ]);
+    mockQuery.mock.calls.forEach(([params]) => {
+      expect(params.author_id).toBeUndefined();
+      expect(params.include).toContain('images');
+    });
+  });
+
+  it('renders the first active occasion as the large tile, then the rest, with labels and search links', async () => {
+    mockOccasionResults(
+      [makeMosaicListing('k1', 'karva_chauth')],
+      [makeMosaicListing('d1', 'diwali')],
+      [makeMosaicListing('g1', 'gifting')]
+    );
+    const { container } = renderInContext(<OccasionMosaic date={IN_SEASON_DATE} />);
+
+    await waitFor(() => expect(container.querySelectorAll('img')).toHaveLength(3));
+
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Shop by Occasion');
+    const tiles = screen.getAllByTestId('link-SearchPage');
+    expect(tiles.map(t => t.textContent)).toEqual(['Karva Chauth', 'Diwali & Festivals', 'Gifting']);
+    expect(tiles[0].className).toContain('mosaicTileLarge');
+    expect(tiles[1].className).not.toContain('mosaicTileLarge');
+    expect(tiles[0]).toHaveAttribute('href', '?pub_occasion=has_any%3Akarva_chauth');
+    expect(container.querySelector('[data-count]')).toHaveAttribute('data-count', '3');
+    // Decorative photo: the white label is the link's accessible name
+    expect(tiles[0].querySelector('img')).toHaveAttribute('alt', '');
+    expect(tiles[0].querySelector('img')).toHaveAttribute('src', 'https://img.test/k1-750.jpg');
+  });
+
+  it('shows no product row under any occasion', async () => {
+    mockOccasionResults(
+      [makeMosaicListing('k1', 'karva_chauth')],
+      [makeMosaicListing('d1', 'diwali')],
+      [makeMosaicListing('g1', 'gifting')]
+    );
+    renderInContext(<OccasionMosaic date={IN_SEASON_DATE} />);
+    await waitFor(() => expect(screen.getAllByTestId('link-SearchPage')).toHaveLength(3));
+    expect(screen.queryByTestId('listing-card')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('product-carousel')).not.toBeInTheDocument();
+  });
+
+  it('keeps every tile as a placeholder while loading', () => {
+    mockQuery.mockReturnValue(new Promise(() => {}));
+    const { container } = renderInContext(<OccasionMosaic date={IN_SEASON_DATE} />);
+    expect(screen.getAllByTestId('link-SearchPage')).toHaveLength(3);
+    expect(container.querySelectorAll('img')).toHaveLength(0);
+  });
+
+  it('drops a tile whose occasion has no usable listing, leaving 2 tiles', async () => {
+    mockOccasionResults(
+      [], // karva_chauth: nothing tagged
+      [makeMosaicListing('d1', 'diwali')],
+      [makeMosaicListing('g1', 'gifting')]
+    );
+    const { container } = renderInContext(<OccasionMosaic date={IN_SEASON_DATE} />);
+
+    await waitFor(() => expect(screen.getAllByTestId('link-SearchPage')).toHaveLength(2));
+    const tiles = screen.getAllByTestId('link-SearchPage');
+    expect(tiles[0]).toHaveTextContent('Diwali & Festivals');
+    expect(tiles[0].className).toContain('mosaicTileLarge');
+    expect(container.querySelector('[data-count]')).toHaveAttribute('data-count', '2');
+  });
+
+  it('shows 1 tile when only one occasion is active (off-season, gifting only has listings)', async () => {
+    // Mid-March: ['gifting', 'raksha_bandhan']
+    mockOccasionResults([makeMosaicListing('g1', 'gifting')], []);
+    const { container } = renderInContext(<OccasionMosaic date={new Date('2026-03-15')} />);
+
+    await waitFor(() => expect(screen.getAllByTestId('link-SearchPage')).toHaveLength(1));
+    expect(screen.getByTestId('link-SearchPage')).toHaveTextContent('Gifting');
+    expect(container.querySelector('[data-count]')).toHaveAttribute('data-count', '1');
+  });
+
+  it('renders nothing when no occasion has a usable listing', async () => {
+    const { container } = renderInContext(<OccasionMosaic date={IN_SEASON_DATE} />);
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+  });
+
+  it('ignores listings without the occasion tag, without an image, or from excluded brands', async () => {
+    mockOccasionResults(
+      [
+        makeMosaicListing('wrong-tag', 'gifting'),
+        makeMosaicListing('no-image', 'karva_chauth', { withImage: false }),
+        makeMosaicListing('not-configured', 'karva_chauth', { authorId: 'brand-x' }),
+      ],
+      [makeMosaicListing('d1', 'diwali')],
+      [makeMosaicListing('g1', 'gifting')]
+    );
+    renderInContext(<OccasionMosaic date={IN_SEASON_DATE} />);
+    await waitFor(() => expect(screen.getAllByTestId('link-SearchPage')).toHaveLength(2));
+    expect(screen.queryByText('Karva Chauth')).not.toBeInTheDocument();
+  });
+
+  it('hides a tile whose query fails', async () => {
+    mockQuery
+      .mockRejectedValueOnce(new Error('429'))
+      .mockResolvedValue(emptyQueryResponse());
+    mockOccasionResults([makeMosaicListing('d1', 'diwali')], [makeMosaicListing('g1', 'gifting')]);
+    renderInContext(<OccasionMosaic date={IN_SEASON_DATE} />);
+    await waitFor(() => expect(screen.getAllByTestId('link-SearchPage')).toHaveLength(2));
+    expect(screen.queryByText('Karva Chauth')).not.toBeInTheDocument();
+  });
+});
+
+describe('pickMosaicImages', () => {
+  it('never shows the same listing photo on two tiles', () => {
+    const shared = { listingId: 'shared', url: 'a', url2x: 'a2' };
+    const other = { listingId: 'other', url: 'b', url2x: 'b2' };
+    const picks = pickMosaicImages([{ option: 'diwali' }, { option: 'gifting' }], {
+      diwali: [shared],
+      gifting: [shared, other],
+    });
+    expect(picks.diwali).toBe(shared);
+    expect(picks.gifting).toBe(other);
+  });
+
+  it('returns null for a tile with no unused candidate', () => {
+    const shared = { listingId: 'shared', url: 'a', url2x: 'a2' };
+    const picks = pickMosaicImages([{ option: 'diwali' }, { option: 'gifting' }], {
+      diwali: [shared],
+      gifting: [shared],
+    });
+    expect(picks.gifting).toBeNull();
   });
 });

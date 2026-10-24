@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FormattedMessage } from '../../../../util/reactIntl';
-import { ProductCarousel } from '../../../../components';
+import { ProductCarousel, NamedLink } from '../../../../components';
 import OccasionCard from '../../../../components/OccasionCard/OccasionCard';
 import { useConfiguration } from '../../../../context/configurationContext';
 import { denormalisedEntities, updatedEntities, pickBrandDiverse } from '../../../../util/data';
@@ -405,6 +405,140 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
               ctaLabel={occasion.cta}
               viewAllSearch={viewAllSearch}
             />
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ── OccasionMosaic ─────────────────────────────────────────────────────────
+// Homepage "Shop by occasion" (homepage declutter v3, 2026-10-24): a photo mosaic of the
+// same occasions OccasionStrip would show, with no product row under each one. The first
+// active occasion is the large tile; the rest are smaller tiles side by side.
+// Each tile's photo is the first image of a recent listing tagged with that occasion,
+// from one marketplace-wide query per occasion (not the per-brand fan-out OccasionStrip
+// uses, which is 19 requests per occasion).
+
+const MOSAIC_CANDIDATES_PER_OCCASION = 12;
+
+// Same client-side guard as OccasionStrip: the pub_occasion filter is silently ignored if
+// the search index isn't set up, so re-check the tag on each listing.
+const listingHasOccasion = (listing, matchValues) => {
+  const occasions = listing.attributes?.publicData?.occasion;
+  const tags = Array.isArray(occasions) ? occasions : occasions ? [occasions] : [];
+  return tags.some(tag => matchValues.includes(tag));
+};
+
+const occasionSearch = matchValues =>
+  '?' + new URLSearchParams({ pub_occasion: `has_any:${matchValues.join(',')}` }).toString();
+
+/**
+ * Picks one image per tile in display order, skipping a listing an earlier tile already
+ * uses, so two occasions that share a listing don't show the same photo.
+ * @param {Array<{option: string}>} occasions in display order
+ * @param {Object<string, Array<{listingId: string, url: string, url2x: string}>>} candidatesByOption
+ * @returns {Object<string, {url: string, url2x: string}|null>}
+ */
+export const pickMosaicImages = (occasions, candidatesByOption) => {
+  const used = new Set();
+  return occasions.reduce((acc, { option }) => {
+    const pick = (candidatesByOption[option] || []).find(c => !used.has(c.listingId)) || null;
+    if (pick) used.add(pick.listingId);
+    return { ...acc, [option]: pick };
+  }, {});
+};
+
+export const OccasionMosaic = ({ date }) => {
+  // Fixed at mount, like OccasionStrip.
+  const [orderedOccasions] = useState(() =>
+    getActiveSeasonOccasion(date)
+      .map(option => OCCASIONS.find(o => o.option === option))
+      .filter(Boolean)
+  );
+  // option -> array of image candidates once loaded; undefined while loading
+  const [candidatesByOption, setCandidatesByOption] = useState({});
+
+  useEffect(() => {
+    let cancelled = false;
+    orderedOccasions.forEach(({ option, matchValues }) => {
+      (async () => {
+        let candidates = [];
+        try {
+          const response = await sdk.listings.query({
+            pub_occasion: `has_any:${matchValues.join(',')}`,
+            perPage: MOSAIC_CANDIDATES_PER_OCCASION,
+            include: ['images', 'author'],
+            'fields.listing': ['title', 'publicData'],
+            'fields.image': ['variants.scaled-medium', 'variants.scaled-large'],
+            'fields.user': ['profile.displayName'],
+            'limit.images': 1,
+          });
+          const entities = updatedEntities({}, response.data);
+          const refs = response.data.data.map(l => ({ id: l.id, type: 'listing' }));
+          candidates = denormalisedEntities(entities, refs, false)
+            .filter(l => listingHasOccasion(l, matchValues))
+            .filter(l => DISCOVERY_BRAND_IDS.includes(l.author?.id?.uuid))
+            .map(l => {
+              const variants = l.images?.[0]?.attributes?.variants || {};
+              const url = variants['scaled-medium']?.url;
+              return url
+                ? {
+                    listingId: l.id.uuid,
+                    url,
+                    url2x: variants['scaled-large']?.url || url,
+                  }
+                : null;
+            })
+            .filter(Boolean);
+        } catch {
+          // A failed query hides that tile, same as an occasion with no tagged listings.
+        }
+        if (!cancelled) setCandidatesByOption(prev => ({ ...prev, [option]: candidates }));
+      })();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // A tile stays (with a placeholder) while loading and drops out once its occasion has
+  // no usable listing, so it never links to an empty search.
+  const visibleOccasions = orderedOccasions.filter(
+    ({ option }) => !candidatesByOption[option] || candidatesByOption[option].length > 0
+  );
+  if (visibleOccasions.length === 0) return null;
+
+  const images = pickMosaicImages(visibleOccasions, candidatesByOption);
+
+  return (
+    <div className={css.mosaicSection}>
+      <h2 className={css.mosaicTitle}>
+        <FormattedMessage id="MelaHomePage.shopByOccasion" defaultMessage="Shop by Occasion" />
+      </h2>
+      <div className={css.mosaic} data-count={visibleOccasions.length}>
+        {visibleOccasions.map((occasion, index) => {
+          const image = images[occasion.option];
+          const isLarge = index === 0;
+          return (
+            <NamedLink
+              key={occasion.option}
+              name="SearchPage"
+              to={{ search: occasionSearch(occasion.matchValues) }}
+              className={isLarge ? `${css.mosaicTile} ${css.mosaicTileLarge}` : css.mosaicTile}
+            >
+              {image ? (
+                <img
+                  className={css.mosaicImage}
+                  src={image.url}
+                  srcSet={`${image.url} 750w, ${image.url2x} 1024w`}
+                  sizes={isLarge ? '(min-width: 1024px) 66vw, 100vw' : '(min-width: 1024px) 33vw, 50vw'}
+                  alt=""
+                  loading={isLarge ? 'eager' : 'lazy'}
+                />
+              ) : null}
+              <span className={css.mosaicLabel}>{occasion.label}</span>
+            </NamedLink>
           );
         })}
       </div>

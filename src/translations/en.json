@@ -122,6 +122,7 @@
   "BookingTimeForm.seatsPlaceholder": "Select…",
   "BookingTimeForm.seatsTitle": "Number of seats",
   "BookingTimeForm.timeSlotsError": "We encountered an error when loading the available dates. Please refresh the page.",
+  "CategoryChips.label": "Shop by category",
   "CheckoutPage.bookingTimeNotAvailableMessage": "Unfortunately, the requested time has just been booked.",
   "CheckoutPage.chargeDisabledMessage": "The transaction can't move forward because the provider's payout information is incomplete. Please contact support.",
   "CheckoutPage.correctQuantityInformationMissing": "The order data is missing correct quantity information",
