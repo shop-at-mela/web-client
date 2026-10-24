@@ -1,11 +1,16 @@
 import React from 'react';
 import classNames from 'classnames';
+import { useSelector } from 'react-redux';
 import { LinkedLogo } from '../../../../components';
+import { useConfiguration } from '../../../../context/configurationContext';
+import { useRouteConfiguration } from '../../../../context/routeConfigurationContext';
+import { pathByRouteName } from '../../../../util/routes';
 
 import Field from '../../Field';
 import BlockBuilder from '../../BlockBuilder';
 
 import SectionContainer from '../SectionContainer';
+import { removeFooterLinksTo, showPostListingLinkInFooter } from './footerLinks';
 import css from './SectionFooter.module.css';
 
 // The number of columns (numberOfColumns) affects styling
@@ -84,6 +89,17 @@ const SectionFooter = props => {
     linkLogoToExternalSite,
   } = props;
 
+  // Mela: the Console footer's "Post a new listing" link (matched by its route, not its
+  // label) only shows to signed-in brand (provider) accounts. currentUser is not loaded
+  // during SSR, so the server HTML never includes it.
+  const config = useConfiguration();
+  const routeConfiguration = useRouteConfiguration();
+  const currentUser = useSelector(state => state.user?.currentUser);
+  const newListingPath = pathByRouteName('NewListingPage', routeConfiguration);
+  const visibleBlocks = showPostListingLinkInFooter(config, currentUser)
+    ? blocks
+    : removeFooterLinksTo(blocks, newListingPath);
+
   // If external mapping has been included for fields
   // E.g. { h1: { component: MyAwesomeHeader } }
   const fieldComponents = options?.fieldComponents;
@@ -139,7 +155,7 @@ const SectionFooter = props => {
             <Field data={copyright} className={css.copyright} />
           </div>
           <div className={classNames(css.grid, getGridCss(numberOfColumns))}>
-            <BlockBuilder blocks={blocks} sectionId={sectionId} options={options} />
+            <BlockBuilder blocks={visibleBlocks} sectionId={sectionId} options={options} />
           </div>
         </div>
       </div>
