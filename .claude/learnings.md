@@ -338,6 +338,14 @@ const categoryPath = (level1, level2, level3) => {
 - **Chrome tool**: `resize_window` reports success but the viewport stays 1420 x 746 (outerWidth 0); a stale `yarn dev-server` on port 4000 serves an old build and `yarn build` overwrites what it serves, so stop it before building.
 - **zsh**: `echo =====` fails with "= not found" (`=` expansion); quote it.
 
+### Homepage declutter v3 patterns (2026-10-24)
+- **NamedLink takes `ariaLabel`, not `aria-label`.** A raw `aria-label` prop is dropped. Image-only `ListingCard`s (`showCardInfo={false}`) set it so the image link always has a name.
+- **The `<img>` inside `ListingImage` is lazy and does not render in jsdom.** Assert the link's `aria-label`, not the img alt.
+- **Filtering a Console footer link**: footer blocks are markdown (`- [Label](/l/new)`). Match by link target (`pathByRouteName('NewListingPage', routes)`), never by label, and drop the whole list line (`SectionFooter/footerLinks.js`). `showCreateListingLinkForUser` returns true for signed-out users, so add an explicit `currentUser?.id` check.
+- **Occasion photos**: one marketplace-wide `listings.query` per occasion (`limit.images: 1`, `scaled-medium`/`scaled-large`) instead of `fetchListingsAcrossBrands` (19 requests per occasion). De-duplicate across tiles (`pickMosaicImages`) and hide a tile with no tagged listing (Karva Chauth had none on 2026-10-24).
+- **Ingested titles end with the brand, and `publicData.brand` and the author display name often differ** ("Banjaaran Studio" vs "Banjaaran", "Vilvah Store" vs "Vilvah", "Superbottoms" vs the typo "Supper Bottoms"). Use `stripTrailingBrand` and `isSameBrandName` from `ListingCard.helpers.js`; the typo still shows as a separate author line.
+- **Phone-width visual check when the Chrome window cannot resize**: replace the page with a same-origin `<iframe src="/" style="width:390px">`. Media queries and layout follow the iframe; use `zoom` with a region inside the 746px viewport for screenshots. Port 3000 (`scripts/start.js`) is client-only, so check SSR HTML against `yarn build` + `node server/index.js` on another port.
+
 ## Session Log
 2024-10-10: Fixed CategoryProducts to display proper category names + product filtering improvements
 2025-10-10: Implemented HeroProducts with real API integration, randomization, and comprehensive testing
@@ -351,3 +359,4 @@ const categoryPath = (level1, level2, level3) => {
 2026-08-25: gifting-festival-traffic-prd.md Day 2 — entry_source/utm attribution, GiftingPage (/gifts + /occasions/:slug) with price/recipient/occasion chips, OccasionStrip generalized to a 7-occasion season selector (getActiveSeasonOccasion), gifting-context bestseller-aware sort. Found the Console-vs-local-listingFields gap (see Patterns above) live-verifying OccasionStrip. 151/151 suites green.
 2026-10-07: International shipping transparency Stages 0 to 2 — P0 false claim removal, util/brandShipping + util/productSchema, Product JSON-LD seller fix, duties_type analytics. Branch feat/us-shipping-transparency. 166 suites green.
 2026-10-07: International shipping transparency Stage 3 — ListingShippingTerms, InfoTooltip, DDP chip, trust sheet with full data, brand hero line, Shipping to the US section, FAQPage JSON-LD. Branch feat/us-shipping-stage3.
+2026-10-24: Homepage declutter v3 (branch homepage/declutter-v3) — hero badges removed, hedged VettingStrip shipping line, OccasionMosaic + CategoryChips, image-only Spotlight cards (ProductCarousel showCardInfo), NewFromIndia grid (ProductCarousel layout="grid", showVariantCount=false), ListingCard 2-line titles + stripTrailingBrand + author dedupe, HowWeVet band, FAQ <details> accordion, footer Post-a-listing filter, 46-word answer block. 181 suites green.
