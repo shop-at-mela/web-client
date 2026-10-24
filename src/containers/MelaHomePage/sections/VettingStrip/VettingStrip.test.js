@@ -19,6 +19,8 @@ const mockMessages = {
   'VettingStrip.brandsVetted': '{count} brands, hand vetted',
   'VettingStrip.cards': "You pay on the brand's own store",
   'VettingStrip.howWeVet': 'How we vet →',
+  'VettingStrip.shippingDuties':
+    'Brand pages show US shipping and duties where the brand publishes them',
 };
 
 const TestWrapper = ({ children }) => (
@@ -42,7 +44,13 @@ describe('VettingStrip', () => {
     expect(screen.getByText('19 brands, hand vetted')).toBeInTheDocument();
     // The blanket shipping claim was removed (false while a brand is live that does not ship to the US)
     expect(screen.queryByText(/50 states/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/ship/i)).not.toBeInTheDocument();
+    // Only the hedged shipping-terms line mentions shipping; no "ships to the US" claim
+    expect(screen.getAllByText(/ship/i)).toHaveLength(1);
+    expect(screen.queryByText(/ships? to/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Brand pages show US shipping and duties where the brand publishes them')
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/every brand/i)).not.toBeInTheDocument();
     // Card acceptance has not been checked per brand, so the strip makes no card claim
     expect(screen.queryByText(/verified|cards/i)).not.toBeInTheDocument();
     expect(screen.getByText("You pay on the brand's own store")).toBeInTheDocument();

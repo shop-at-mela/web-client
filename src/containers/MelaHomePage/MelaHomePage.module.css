@@ -37,34 +37,27 @@
   color: #4a5568;
 }
 
-/* Occasion Section — moved up from inside CategoryShowcase (P1.3) */
-.occasionSection {
+/* Shop by occasion mosaic + category chips (homepage declutter v3) */
+.browseSection {
   width: 100%;
-  padding: 1.5rem 0;
+  padding: 30px 0 26px;
   background: #ffffff;
 
   @media (min-width: 768px) {
-    padding: 2rem 0;
+    padding: 2.5rem 0;
   }
 }
 
-/* Category Section */
-.categorySection {
-  width: 100%;
-  padding: 1.5rem 0;
-  background: #ffffff;
+.categoryChips {
+  margin-top: 16px;
 
   @media (min-width: 768px) {
-    padding: 2rem 0;
-  }
-
-  @media (min-width: 1024px) {
-    padding: 2rem 0;
+    margin-top: 20px;
   }
 }
 
 /* New from India — bare ProductCarousel, no section wrapper of its own.
-   Vertical padding matches .occasionSection/.categorySection/.brandsSection's
+   Vertical padding matches .brandsSection's
    double-sided rhythm (see history). Horizontal padding + centering max-width
    matches this file's own .container / EarnedItsPlace's .container — ProductCarousel
    itself has zero horizontal inset (unlike every other placement of it, which
@@ -122,22 +115,6 @@
 
   @media (min-width: 1024px) {
     padding: 3rem 0;
-  }
-}
-
-/* Trust Assurance Section */
-.trustSection {
-  width: 100%;
-  padding: 2rem 0 3rem;
-  background: #f8fffe;
-  border-top: 1px solid #e7f4f1;
-
-  @media (min-width: 768px) {
-    padding: 2.5rem 0 3rem;
-  }
-
-  @media (min-width: 1024px) {
-    padding: 3rem 0 4rem;
   }
 }
 

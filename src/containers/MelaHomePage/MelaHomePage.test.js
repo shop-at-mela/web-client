@@ -25,10 +25,19 @@ jest.mock('./sections/CategoryShowcase/CategoryShowcase', () => {
   const OccasionStrip = function OccasionStrip() {
     return <div data-testid="occasion-strip">Occasion Strip</div>;
   };
+  const OccasionMosaic = function OccasionMosaic() {
+    return <div data-testid="occasion-mosaic">Occasion Mosaic</div>;
+  };
   const AgeNavigation = function AgeNavigation() {
     return <div data-testid="age-navigation">Age Navigation</div>;
   };
-  return { __esModule: true, default: CategoryShowcase, OccasionStrip, AgeNavigation };
+  return {
+    __esModule: true,
+    default: CategoryShowcase,
+    OccasionStrip,
+    OccasionMosaic,
+    AgeNavigation,
+  };
 });
 
 jest.mock('./sections/BrandSpotlight/BrandSpotlight', () => {
@@ -61,6 +70,28 @@ jest.mock('./sections/EarnedItsPlace/EarnedItsPlaceContainer', () => {
 jest.mock('./sections/TrustAssurance/TrustAssurance', () => {
   return function TrustAssurance() {
     return <div data-testid="trust-assurance">Trust Assurance</div>;
+  };
+});
+
+jest.mock('./sections/VettingStrip/VettingStrip', () => {
+  return function VettingStrip() {
+    return <div data-testid="vetting-strip">Vetting Strip</div>;
+  };
+});
+
+jest.mock('./sections/HowWeVet/HowWeVet', () => {
+  return function HowWeVet({ id }) {
+    return (
+      <section id={id} data-testid="how-we-vet">
+        How We Vet
+      </section>
+    );
+  };
+});
+
+jest.mock('../../components/CategoryChips/CategoryChips', () => {
+  return function CategoryChips() {
+    return <div data-testid="category-chips">Category Chips</div>;
   };
 });
 
@@ -173,9 +204,62 @@ describe('MelaHomePage', () => {
 
     expect(getByTestId('hero-section')).toBeTruthy();
     expect(getByTestId('saved-items-module')).toBeTruthy();
-    expect(getByTestId('category-tiles')).toBeTruthy();
+    expect(getByTestId('occasion-mosaic')).toBeTruthy();
+    expect(getByTestId('category-chips')).toBeTruthy();
     expect(getByTestId('earned-its-place')).toBeTruthy();
-    expect(getByTestId('trust-assurance')).toBeTruthy();
+    expect(getByTestId('how-we-vet')).toBeTruthy();
+  });
+
+  it('renders the sections in the declutter v3 order', () => {
+    const { container } = render(
+      <TestWrapper>
+        <MelaHomePage {...defaultProps} />
+      </TestWrapper>
+    );
+    const order = Array.from(container.querySelectorAll('[data-testid]'))
+      .map(n => n.getAttribute('data-testid'))
+      .filter(id =>
+        [
+          'hero-section',
+          'vetting-strip',
+          'saved-items-module',
+          'occasion-mosaic',
+          'category-chips',
+          'brand-spotlight',
+          'new-from-india',
+          'craft-stories',
+          'earned-its-place',
+          'how-we-vet',
+        ].includes(id)
+      );
+    expect(order).toEqual([
+      'hero-section',
+      'vetting-strip',
+      'saved-items-module',
+      'occasion-mosaic',
+      'category-chips',
+      'brand-spotlight',
+      'new-from-india',
+      'craft-stories',
+      'earned-its-place',
+      'how-we-vet',
+    ]);
+    // FAQ comes last, after How we vet
+    const howWeVet = container.querySelector('[data-testid="how-we-vet"]');
+    const faq = container.querySelector('section#faq');
+    expect(howWeVet.compareDocumentPosition(faq) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('unmounts the removed sections but keeps the how-we-vet anchor', () => {
+    const { queryByTestId, container } = render(
+      <TestWrapper>
+        <MelaHomePage {...defaultProps} />
+      </TestWrapper>
+    );
+    expect(queryByTestId('trust-assurance')).toBeNull();
+    expect(queryByTestId('category-tiles')).toBeNull();
+    expect(queryByTestId('occasion-strip')).toBeNull();
+    expect(container.querySelectorAll('#how-we-vet')).toHaveLength(1);
   });
 
   it('includes structured data schema', () => {
@@ -202,15 +286,19 @@ describe('MelaHomePage', () => {
       const faqPage = schema.find(node => node['@type'] === 'FAQPage');
       expect(faqPage.mainEntity).toHaveLength(FAQ_ITEMS.length);
 
-      const visibleQuestions = Array.from(container.querySelectorAll('h3')).map(n => n.textContent);
-      const visibleAnswers = Array.from(container.querySelectorAll('h3 + p')).map(n => n.textContent);
+      const visibleQuestions = Array.from(container.querySelectorAll('details summary h3')).map(
+        n => n.textContent
+      );
+      const visibleAnswers = Array.from(container.querySelectorAll('details > p')).map(
+        n => n.textContent
+      );
       expect(visibleQuestions).toEqual(faqPage.mainEntity.map(q => q.name));
       expect(visibleAnswers).toEqual(faqPage.mainEntity.map(q => q.acceptedAnswer.text));
     });
 
     it('states the reviewed date as the bumped HOMEPAGE_LAST_UPDATED', () => {
       const { container } = renderPage();
-      expect(HOMEPAGE_LAST_UPDATED).toBe('2026-10-20');
+      expect(HOMEPAGE_LAST_UPDATED).toBe('2026-10-24');
       expect(container.textContent).toContain(`Last reviewed ${HOMEPAGE_LAST_UPDATED}`);
     });
 

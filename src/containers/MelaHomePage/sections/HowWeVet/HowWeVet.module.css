@@ -1,0 +1,86 @@
+/* HowWeVet — navy band, numbered points. Mobile-first. */
+
+.root {
+  width: 100%;
+  background: var(--marketplaceColor);
+  color: var(--colorWhite, #fff);
+  padding: 28px 20px;
+  /* VettingStrip scrolls here; leave room for the sticky topbar */
+  scroll-margin-top: 72px;
+
+  @media (min-width: 768px) {
+    padding: 40px 32px;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 56px 32px;
+  }
+}
+
+.inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.title {
+  font-family: var(--fontFamilyDisplay);
+  font-weight: var(--fontWeightMedium, 500);
+  color: var(--colorWhite, #fff);
+  font-size: 23px;
+  line-height: 1.2;
+  margin: 0;
+
+  @media (min-width: 768px) {
+    font-size: 28px;
+  }
+}
+
+.points {
+  list-style: none;
+  counter-reset: vet;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.point {
+  counter-increment: vet;
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 14.5px;
+  line-height: 1.45;
+
+  &::before {
+    content: counter(vet);
+    flex: none;
+    width: 16px;
+    font-family: var(--fontFamilyDisplay);
+    font-size: 20px;
+    line-height: 1;
+    color: var(--colorAccent, #f0a030);
+  }
+
+  @media (min-width: 768px) {
+    font-size: 16px;
+    padding: 14px 0;
+  }
+}
+
+.link {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--colorAccent, #f0a030);
+  font-weight: var(--fontWeightBold, 700);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--colorAccent, #f0a030);
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--colorAccent, #f0a030);
+    outline-offset: 3px;
+  }
+}

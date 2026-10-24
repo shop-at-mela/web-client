@@ -21,6 +21,14 @@
   white-space: nowrap;
 }
 
+.itemWrap {
+  /* The longest item: wraps at 390px instead of overflowing. Block (not inline-flex) so the
+     check mark flows with the first line of text instead of sitting apart from it. */
+  display: block;
+  white-space: normal;
+  text-align: center;
+}
+
 .check {
   color: var(--colorAccent);
   font-weight: var(--fontWeightBold);
