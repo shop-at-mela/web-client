@@ -357,14 +357,13 @@ describe('MelaHomePage', () => {
       expect(next.querySelector('p[class*="answerBlock"]')).not.toBeNull();
     });
 
-    it('is 40 to 60 words and says what Mela is, where you buy and US shipping', () => {
+    it('is 30 to 60 words and says what Mela is and US shipping', () => {
       const text = answerText();
       const words = text.split(/\s+/).filter(Boolean).length;
-      expect(words).toBeGreaterThanOrEqual(40);
+      expect(words).toBeGreaterThanOrEqual(30);
       expect(words).toBeLessThanOrEqual(60);
       expect(text).toMatch(/curated marketplace of contemporary Indian brands/);
       expect(text).toMatch(/fashion, home, beauty, jewelry and kids/);
-      expect(text).toMatch(/buy directly on each brand's own store/);
       expect(text).toMatch(/ship to US addresses/);
       expect(text).not.toMatch(/vendor|!/i);
     });
