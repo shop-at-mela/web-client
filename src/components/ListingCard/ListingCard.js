@@ -110,6 +110,10 @@ const OccasionChips = props => {
   );
 };
 
+// Bestseller badge switched off on every listing card (2026-10-27). Flip back to true to
+// restore it. Only the badge is hidden: isBestseller still drives sort order elsewhere.
+const SHOW_BESTSELLER_BADGE = false;
+
 /**
  * ConversionBadges
  * Component to render conversion-focused badges that drive purchase decisions.
@@ -127,7 +131,7 @@ const ConversionBadges = props => {
   let badgeContent = null;
   let badgeClass = css.conversionBadge;
 
-  if (isBestseller) {
+  if (SHOW_BESTSELLER_BADGE && isBestseller) {
     badgeContent = <FormattedMessage id="ListingCard.bestseller" />;
   } else if (stockCount !== null && stockCount <= 5 && stockCount > 0) {
     badgeContent = <FormattedMessage id="ListingCard.lowStock" values={{ count: stockCount }} />;
