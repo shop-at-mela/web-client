@@ -12,16 +12,16 @@ import css from './AboutPage.module.css';
 // Code-owned replacement for the Sharetribe Console "about" CMS page. The copy is
 // claim-checked against the shipping transparency and footer legalese PRDs: no
 // shipping times, card acceptance, certifications, or "every brand" promises.
-// Mela is a personal, non-commercial project run by an individual; keep the
-// "Who's behind it" wording consistent with footer-legalese-prd.md, and don't add
+// Mela is a personal, non-commercial project (no revenue, no business entity); keep
+// the "Who's behind it" wording consistent with footer-legalese-prd.md, and don't add
 // future-business language. "Brands don't pay to be featured" must change if any
 // brand ever pays.
 
 const CONTACT_EMAIL = 'shopatmela@gmail.com';
 
-export const PAGE_TITLE = 'About Mela | Modern Indian Brands, Found for You';
+export const PAGE_TITLE = 'About Mela | Curated Modern Indian Brands';
 export const PAGE_DESCRIPTION =
-  "Mela is a curated home for proven Indian brands with real export experience. Discover them here, then buy on each brand's own store.";
+  'Mela curates proven Indian brands in fashion, home, beauty, jewelry and kids, chosen for real export experience. Discover them here, buy from the brand.';
 
 const STEPS = [
   {
@@ -39,14 +39,14 @@ const STEPS = [
 ];
 
 const STORY = [
-  'I buy a lot from India. Most of it still reaches me the old way: packed into a suitcase on the way back from a visit home.',
-  "It isn't because the brands aren't good. India's independent labels are making some of the most beautiful, modern things anywhere right now. But reaching shoppers on the other side of the world is hard for a small brand. I've watched friends spend real money on Instagram ads and see almost nothing come back.",
-  'And when a shopper does find one of these brands, the name rarely sticks. Ask my friends where they got a kurta they love, and the answer is often "some small brand on Instagram." They loved it. They can\'t find it again.',
-  'Mela is my answer to both problems: one place to discover modern Indian brands, and to find them again. Along the way, I want to learn what actually helps these brands reach US shoppers, and share it openly.',
+  'We buy a lot from India. Most of it still reaches us the old way: packed into a suitcase on the way back from a visit home.',
+  "It isn't because the brands aren't good. India's independent labels are making some of the most beautiful, modern things anywhere right now. But reaching shoppers on the other side of the world is hard for a small brand. We've watched friends spend real money on Instagram ads and see almost nothing come back.",
+  'And when a shopper does find one of these brands, the name rarely sticks. Ask our friends where they got a kurta they love, and the answer is often "some small brand on Instagram." They loved it. They can\'t find it again.',
+  'Mela is our answer to both problems: one place to discover modern Indian brands, and to find them again. Along the way, we want to learn what actually helps these brands reach US shoppers, and share it openly.',
 ];
 
 const STORY_CLOSER =
-  'You probably know where to look for something handmade. I want Mela to be the place you go for modern Indian brands.';
+  'You probably know where to look for something handmade. We want Mela to be the place you go for modern Indian brands.';
 
 export const AboutPageComponent = props => {
   const { scrollingDisabled } = props;
@@ -66,14 +66,15 @@ export const AboutPageComponent = props => {
       <LayoutSingleColumn topbar={<TopbarContainer />} footer={<FooterContainer />}>
         <div className={css.root}>
           <header className={css.hero}>
-            <p className={css.eyebrow}>About Mela</p>
-            <h1 className={css.heroTitle}>Indian brands, found for you</h1>
+            <h1 className={css.heroTitle}>About Mela</h1>
             <p className={css.heroText}>
-              Mela is a curated home for proven Indian brands with real export experience. We look
-              for the labels India already loves, across fashion, home, beauty, jewelry and kids,
-              and bring them together in one place for shoppers in the US.
+              Mela is a curated home for US shoppers who want to buy from India's contemporary,
+              independent brands. We bring together proven labels across fashion, home decor,
+              beauty, jewelry and kids, each one chosen for its real export experience.
             </p>
-            <p className={css.heroTagline}>Browse them here. Buy from the brand itself.</p>
+            <p className={css.heroTagline}>
+              Rooted in Indian culture. Made for the way you live now.
+            </p>
           </header>
 
           <div className={css.content}>
@@ -99,7 +100,7 @@ export const AboutPageComponent = props => {
 
             <section className={css.section} aria-labelledby="about-check">
               <h2 id="about-check" className={css.sectionTitle}>
-                What we check
+                How brands are vetted
               </h2>
               <p className={css.paragraph}>
                 We look for brands that are proven in India and have real export experience: they
@@ -132,7 +133,8 @@ export const AboutPageComponent = props => {
                 Who's behind it
               </h2>
               <p className={css.paragraph}>
-                Mela is a personal project by Sanjot Sawhney. Brands don't pay to be featured.
+                Mela is a personal project by Sanjot Sawhney and Parin Jogani. It's non-commercial:
+                Mela earns nothing, and brands don't pay to be featured.
               </p>
             </section>
 
