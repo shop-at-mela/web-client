@@ -218,6 +218,12 @@ const brandConfigurationsByEnv = {
       category: 'baby_and_kids',
       featuredProductIds: [],
     },
+    '6ad838df-d3be-4550-a597-ef819f0cdba6': {
+      // Suta
+      slug: 'suta',
+      category: 'fashion',
+      featuredProductIds: [],
+    },
     '68d8a4e9-533c-4b9c-914d-8b21edb8ee2d': {
       // mela-admin (Test) — no public slug; admin account
       featuredProductIds: [],
@@ -258,6 +264,7 @@ const allBrandIdsByEnv = {
     '6a5cd41e-d645-4d56-9956-7ceafe8566b6', // kaunteya
     '6a5f8047-d395-4673-87dd-895338cb10f8', // house-of-chikankari
     '6a5f8100-30a0-4134-8869-2616a1669b56', // ankid
+    '6ad838df-d3be-4550-a597-ef819f0cdba6', // suta
   ],
   production: [
     // Add production brand UUIDs here
