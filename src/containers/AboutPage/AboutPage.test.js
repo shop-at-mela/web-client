@@ -18,19 +18,19 @@ describe('AboutPage', () => {
     render(<AboutPage />, { routeConfiguration: getRouteConfiguration() });
 
     expect(document.querySelectorAll('h1')).toHaveLength(1);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Indian brands, found for you'
-    );
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('About Mela');
     await waitFor(() => {
       expect(document.title).toBe(PAGE_TITLE);
       expect(document.querySelector('meta[name="description"]')?.content).toBe(PAGE_DESCRIPTION);
     });
   });
 
-  it('names the operator and links the contact email', () => {
+  it('names the founders and links the contact email', () => {
     render(<AboutPage />, { routeConfiguration: getRouteConfiguration() });
 
-    expect(screen.getByText(/personal project by Sanjot Sawhney/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/personal project by Sanjot Sawhney and Parin Jogani/)
+    ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'shopatmela@gmail.com' })).toHaveAttribute(
       'href',
       'mailto:shopatmela@gmail.com'

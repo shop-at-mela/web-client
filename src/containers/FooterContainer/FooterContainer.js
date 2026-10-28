@@ -3,6 +3,14 @@ import { useConfiguration } from '../../context/configurationContext';
 import loadable from '@loadable/component';
 import SentimentSheet from '../../components/SentimentSheet/SentimentSheet';
 
+// Mela: code-owned copyright line, replacing the Console template's "© 2024 Your marketplace".
+// Wording from mela-docs footer-legalese-prd.md.
+export const FOOTER_COPYRIGHT = {
+  fieldType: 'text',
+  content:
+    "© 2026 Mela. A curated directory of Indian brands. Mela is not a retailer — clicking through takes you to each brand's own store.",
+};
+
 const SectionBuilder = loadable(
   () => import(/* webpackChunkName: "SectionBuilder" */ '../PageBuilder/PageBuilder'),
   {
@@ -26,6 +34,7 @@ const FooterComponent = () => {
     sectionId: 'footer',
     sectionType: 'footer',
     linkLogoToExternalSite: topbar?.logoLink,
+    copyright: FOOTER_COPYRIGHT,
   };
 
   return (
