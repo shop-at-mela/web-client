@@ -17,16 +17,6 @@
   }
 }
 
-.eyebrow {
-  margin: 0 0 12px 0;
-  padding: 0;
-  font-size: 13px;
-  font-weight: var(--fontWeightSemiBold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--marketplaceColor);
-}
-
 .heroTitle {
   max-width: 720px;
   margin: 0 auto;
