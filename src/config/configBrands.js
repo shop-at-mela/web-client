@@ -539,6 +539,13 @@ const BRAND_SCORES = {
   'choosekind':          { indiaShout: 1, aspiration: 5, diasporaPull: 1 },
   'polite-society':      { indiaShout: 1, aspiration: 3, diasporaPull: 1 },
   'ankid':               { indiaShout: 5, aspiration: 4, diasporaPull: 4 },
+  'needledust':          { indiaShout: 5, aspiration: 3, diasporaPull: 4 },
+  'suta':                { indiaShout: 5, aspiration: 4, diasporaPull: 4 },
+  'hemant-and-nandita':  { indiaShout: 2, aspiration: 4, diasporaPull: 2 },
+  'saphed':              { indiaShout: 2, aspiration: 4, diasporaPull: 3 },
+  'house-of-chikankari': { indiaShout: 4, aspiration: 3, diasporaPull: 4 },
+  'kaunteya':            { indiaShout: 4, aspiration: 4, diasporaPull: 3 },
+  'daughters-of-india':  { indiaShout: 3, aspiration: 3, diasporaPull: 2 },
 };
 
 // Neutral default for any brand not yet scored, so new/unscored brands render
