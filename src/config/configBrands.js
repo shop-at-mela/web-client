@@ -224,6 +224,30 @@ const brandConfigurationsByEnv = {
       category: 'fashion',
       featuredProductIds: [],
     },
+    '6ae5daf4-1c22-4caa-a544-4d9289fb1009': {
+      // Saphed
+      slug: 'saphed',
+      category: 'fashion',
+      featuredProductIds: [],
+    },
+    '6ae5dc01-6ba9-4351-9efb-b75facaa23e3': {
+      // Needledust
+      slug: 'needledust',
+      category: 'fashion',
+      featuredProductIds: [],
+    },
+    '6ae5dd31-8ec4-49ca-8f6d-ccb896458799': {
+      // Hemant & Nandita
+      slug: 'hemant-and-nandita',
+      category: 'fashion',
+      featuredProductIds: [],
+    },
+    '6ae5dfcf-2f73-4110-a00b-8a06fa56f695': {
+      // Daughters of India
+      slug: 'daughters-of-india',
+      category: 'fashion',
+      featuredProductIds: [],
+    },
     '68d8a4e9-533c-4b9c-914d-8b21edb8ee2d': {
       // mela-admin (Test) — no public slug; admin account
       featuredProductIds: [],
@@ -265,6 +289,10 @@ const allBrandIdsByEnv = {
     '6a5f8047-d395-4673-87dd-895338cb10f8', // house-of-chikankari
     '6a5f8100-30a0-4134-8869-2616a1669b56', // ankid
     '6ad838df-d3be-4550-a597-ef819f0cdba6', // suta
+    '6ae5daf4-1c22-4caa-a544-4d9289fb1009', // saphed
+    '6ae5dc01-6ba9-4351-9efb-b75facaa23e3', // needledust
+    '6ae5dd31-8ec4-49ca-8f6d-ccb896458799', // hemant-and-nandita
+    '6ae5dfcf-2f73-4110-a00b-8a06fa56f695', // daughters-of-india
   ],
   production: [
     // Add production brand UUIDs here
@@ -511,6 +539,13 @@ const BRAND_SCORES = {
   'choosekind':          { indiaShout: 1, aspiration: 5, diasporaPull: 1 },
   'polite-society':      { indiaShout: 1, aspiration: 3, diasporaPull: 1 },
   'ankid':               { indiaShout: 5, aspiration: 4, diasporaPull: 4 },
+  'needledust':          { indiaShout: 5, aspiration: 3, diasporaPull: 4 },
+  'suta':                { indiaShout: 5, aspiration: 4, diasporaPull: 4 },
+  'hemant-and-nandita':  { indiaShout: 2, aspiration: 4, diasporaPull: 2 },
+  'saphed':              { indiaShout: 2, aspiration: 4, diasporaPull: 3 },
+  'house-of-chikankari': { indiaShout: 4, aspiration: 3, diasporaPull: 4 },
+  'kaunteya':            { indiaShout: 4, aspiration: 4, diasporaPull: 3 },
+  'daughters-of-india':  { indiaShout: 3, aspiration: 3, diasporaPull: 2 },
 };
 
 // Neutral default for any brand not yet scored, so new/unscored brands render

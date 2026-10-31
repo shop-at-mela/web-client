@@ -39,14 +39,14 @@ const STEPS = [
 ];
 
 const STORY = [
-  'I buy a lot from India. Most of it still reaches me the old way: packed into a suitcase on the way back from a visit home.',
-  "It isn't because the brands aren't good. India's independent labels are making some of the most beautiful, modern things anywhere right now. But reaching shoppers on the other side of the world is hard for a small brand. I've watched friends spend real money on Instagram ads and see almost nothing come back.",
-  'And when a shopper does find one of these brands, the name rarely sticks. Ask my friends where they got a kurta they love, and the answer is often "some small brand on Instagram." They loved it. They can\'t find it again.',
-  'Mela is my answer to both problems: one place to discover modern Indian brands, and to find them again. Along the way, I want to learn what actually helps these brands reach US shoppers, and share it openly.',
+  'We buy a lot from India. Most of it still reaches us the old way: packed into a suitcase on the way back from a visit home.',
+  "It isn't because the brands aren't good. India's independent labels are making some of the most beautiful, modern things anywhere right now. But reaching shoppers on the other side of the world is hard for a small brand. We've watched friends spend real money on Instagram ads and see almost nothing come back.",
+  'And when a shopper does find one of these brands, the name rarely sticks. Ask our friends where they got a kurta they love, and the answer is often "some small brand on Instagram." They loved it. They can\'t find it again.',
+  'Mela is our answer to both problems: one place to discover modern Indian brands, and to find them again. Along the way, we want to learn what actually helps these brands reach US shoppers, and share it openly.',
 ];
 
 const STORY_CLOSER =
-  'You probably know where to look for something handmade. I want Mela to be the place you go for modern Indian brands.';
+  'You probably know where to look for something handmade. We want Mela to be the place you go for modern Indian brands.';
 
 export const AboutPageComponent = props => {
   const { scrollingDisabled } = props;
