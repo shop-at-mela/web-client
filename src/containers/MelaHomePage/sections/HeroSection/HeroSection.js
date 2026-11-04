@@ -230,7 +230,7 @@ const HeroSectionComponent = ({
       <p className={css.subheadline}>
         <FormattedMessage
           id="SectionMelaHero.heroSubheadline"
-          defaultMessage="Independent Indian brands worth knowing: modern design, real makers, from brands that ship to the US."
+          defaultMessage="Mela is a curated marketplace of independent Indian brands: modern design, real makers, from brands that ship to the US."
         />
       </p>
     </div>

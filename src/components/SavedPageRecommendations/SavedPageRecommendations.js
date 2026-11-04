@@ -60,7 +60,7 @@ const SavedPageRecommendations = ({
     const fetchRecommended = async () => {
       try {
         const response = await sdk.listings.query({
-          sort: '-createdAt',
+          sort: 'createdAt', // newest first; '-createdAt' is OLDEST first in Sharetribe
           perPage: FETCH_POOL_SIZE,
           include: ['images', 'author'],
           'fields.listing': ['title', 'price', 'publicData', 'createdAt'],

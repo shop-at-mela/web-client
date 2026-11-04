@@ -3,11 +3,16 @@ import { useIntl } from '../../../../util/reactIntl';
 import { ProductCarousel } from '../../../../components';
 import { denormalisedEntities, updatedEntities } from '../../../../util/data';
 import { pushNewFromIndiaClick } from '../../../../util/analytics/homepageEditorial';
+import { newFromIndiaListingIds } from '../../../../config/configBrands';
 import sdk from '../../../../util/homepageSdk';
 
 const DISPLAY_COUNT = 8;
 const MAX_PER_BRAND = 2;
 const FETCH_POOL_SIZE = 30; // over-fetch so the per-brand cap still yields 8 after filtering
+// Listings older than this are not "new" (createdAt is the date Mela ingested the listing).
+const FRESH_WINDOW_DAYS = 30;
+// Below this the section hides rather than show a thin or stale row; 4 fills the phone grid.
+const MIN_FRESH_COUNT = 4;
 
 /**
  * Caps `sortedListings` (already sorted by recency) at `maxPerBrand` per author,
@@ -29,9 +34,35 @@ const capPerBrand = (sortedListings, maxPerBrand, limit) => {
 };
 
 /**
+ * Keeps the listings whose id is in `ids`, in the order of `ids`, that were created inside the
+ * freshness window. `ids` queries may not return the requested order, and a stale baked list must shrink
+ * (and eventually hide the section) instead of showing old listings as new.
+ */
+const freshInIdOrder = (listings, ids) => {
+  const cutoff = Date.now() - FRESH_WINDOW_DAYS * 86400000;
+  const position = id => ids.indexOf(id);
+  return listings
+    .filter(
+      l => position(l.id.uuid) !== -1 && new Date(l.attributes?.createdAt).getTime() >= cutoff
+    )
+    .sort((a, b) => position(a.id.uuid) - position(b.id.uuid));
+};
+
+const QUERY_FIELDS = {
+  include: ['images', 'author'],
+  'fields.listing': ['title', 'price', 'publicData', 'createdAt'],
+  'fields.image': ['variants.square-small', 'variants.square-small2x'],
+  'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
+};
+
+/**
  * Module B: New from India (homepage-editorial-modules.md).
- * Recency as curation — the 8 most recent listings across all categories, capped at
- * 2 per brand so one ingestion run can't flood the row. Entirely automatic: no CMS.
+ * Recency as curation: up to 8 of the newest listings across brands, at most 2 per brand, so
+ * one ingestion run can't flood the row. The listing ids come from configBrands.js
+ * (newFromIndiaListingIds, harvested by scripts/harvest-new-from-india-ids.js); only those
+ * from the last FRESH_WINDOW_DAYS are shown, and the section hides below MIN_FRESH_COUNT.
+ * With no baked ids it falls back to a live newest-first query (note `sort: 'createdAt'` is
+ * newest first in Sharetribe; '-createdAt' is oldest first).
  * Rendered as a 2-column grid on phones (first 4) and 4 columns on desktop (all 8).
  */
 const NewFromIndia = () => {
@@ -44,14 +75,16 @@ const NewFromIndia = () => {
 
     const fetchRecent = async () => {
       try {
-        const response = await sdk.listings.query({
-          sort: '-createdAt',
-          perPage: FETCH_POOL_SIZE,
-          include: ['images', 'author'],
-          'fields.listing': ['title', 'price', 'publicData', 'createdAt'],
-          'fields.image': ['variants.square-small', 'variants.square-small2x'],
-          'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
-        });
+        const useBakedIds = newFromIndiaListingIds.length > 0;
+        const response = await sdk.listings.query(
+          useBakedIds
+            ? {
+                ids: newFromIndiaListingIds,
+                perPage: newFromIndiaListingIds.length,
+                ...QUERY_FIELDS,
+              }
+            : { sort: 'createdAt', perPage: FETCH_POOL_SIZE, ...QUERY_FIELDS }
+        );
 
         if (response?.data) {
           const entities = updatedEntities({}, response.data);
@@ -59,7 +92,14 @@ const NewFromIndia = () => {
           const denormalised = denormalisedEntities(entities, refs, false);
 
           if (!cancelled) {
-            setListings(capPerBrand(denormalised, MAX_PER_BRAND, DISPLAY_COUNT));
+            const next = useBakedIds
+              ? capPerBrand(
+                  freshInIdOrder(denormalised, newFromIndiaListingIds),
+                  MAX_PER_BRAND,
+                  DISPLAY_COUNT
+                )
+              : capPerBrand(denormalised, MAX_PER_BRAND, DISPLAY_COUNT);
+            setListings(useBakedIds && next.length < MIN_FRESH_COUNT ? [] : next);
           }
         }
       } catch {

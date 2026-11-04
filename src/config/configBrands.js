@@ -13,6 +13,10 @@
  * 4. Set a unique `slug` (lowercase-hyphenated) — this becomes the permanent /brands/:slug URL
  * 5. Set `category` to one of the BRAND_CATEGORIES ids
  * 6. Ensure the user has userType='provider' in Sharetribe Console
+ * 7. Insert the slug in CURATED_BRAND_SLUG_ORDER below (homepage hero + featured order)
+ * 8. Set hero images with product-listing-integration/scripts/update-brand-hero-image.js
+ *    (add the brand to its LIVE_BRANDS array); without them the brand is skipped by the
+ *    hero carousel and Craft Stories
  *
  * IMPORTANT: Slugs are permanent. Once a brand page is indexed by Google, changing
  * the slug without a redirect will cause a 404 and lose SEO value.
@@ -305,6 +309,32 @@ export const brandConfigurations = brandConfigurationsByEnv[currentEnv];
 export const allBrandIds = allBrandIdsByEnv[currentEnv];
 
 /**
+ * Listing IDs shown by the homepage "New from India" module, harvested per brand by
+ * scripts/harvest-new-from-india-ids.js (newest listings, one then two per brand, last 30 days).
+ * Why baked: one `createdAt` query is dominated by whichever brand was ingested last, and a
+ * query per brand on each page view would exceed the Dev rate limit. NewFromIndia.js fetches
+ * these in one `ids` query, drops any older than the freshness window, and hides itself when
+ * too few remain, so a stale list degrades to "section hidden", never to old listings
+ * labelled new. An empty list (e.g. production until it is populated) falls back to a live
+ * newest-first query. Re-run the script after each ingestion batch.
+ * Harvested 2026-11-01.
+ */
+const newFromIndiaListingIdsByEnv = {
+  development: [
+    '6ae61ea0-5840-4631-abad-2f4bcb2223fd',
+    '6ae60913-970f-4e10-bbd1-ce06dce598e4',
+    '6ae5f40d-62ae-47be-88c1-028840f436ca',
+    '6ae08638-1409-4e44-ba27-4aa4e243ff30',
+    '6ae61e94-0519-4410-9974-0e61500d66da',
+    '6ae60909-7b42-4b54-9e95-37bac10f98d5',
+    '6ae5f401-e8bc-43c3-b9f7-9a8b48cfaa19',
+    '6ae08630-3ff7-47da-8d56-5d505bd2a688',
+  ],
+  production: [],
+};
+export const newFromIndiaListingIds = newFromIndiaListingIdsByEnv[currentEnv];
+
+/**
  * Get all brand IDs
  * @returns {Array<string>} Array of all brand UUIDs
  */
@@ -363,29 +393,36 @@ export const getRandomBrandIds = count => {
  *     styling. Isharya demoted to the breadth-builder tier.
  *
  * NOTE: this is the *display* order among live brands, distinct from §12A's
- * *onboarding/supply* order. Not-yet-ingested first-fold brands — Suta (#2),
- * Kaunteya (#6), House of Chikankari (#8) — are absent until they land. Unlisted
- * brands are appended in config order so nothing is ever dropped.
+ * *onboarding/supply* order. Every brand in allBrandIds must appear here (enforced by
+ * configBrands.test.js); unlisted brands would still be appended in config order, but
+ * that lands them past the featured top 10. Delisted brands (Pluchi) are removed.
  */
-const CURATED_BRAND_SLUG_ORDER = [
-  // First fold — self-evident India-shout in a no-copy thumbnail (§12A.1)
+export const CURATED_BRAND_SLUG_ORDER = [
+  // First fold: self-evident India-shout in a no-copy thumbnail (§12A.1)
   'fizzy-goblet',        // §12A #1
+  'suta',                // §12A.1 #2; needs hero images (update-brand-hero-image.js) to show in the hero
   'tarinika',            // resolves Open decisions #5 (2026-07-15): jewelry slot, temple-inspired India-shout
   'the-nesavu',          // §12A.1 first-fold (replaces Baby Forest as the baby visual)
-  'ankid',               // added 2026-07-21: indiaShout:5 (hand block-print, bandhgala/sharara sets) — same visual-craft logic as The Nesavu
-  'nicobar',             // §12A.1 first-fold, demoted — never the isolated lead slide
+  'ankid',               // added 2026-07-21: indiaShout:5 (hand block-print, bandhgala/sharara sets)
+  'nicobar',             // §12A.1 first-fold, demoted: never the isolated lead slide
+  'kaunteya',            // §12A.1 first-fold (landed; indiaShout:4)
   'banjaaran-studio',    // §12A #7
-  // Breadth builders — craft-legible but not first-fold visual proof
+  'house-of-chikankari', // §12A.1 first-fold (landed; indiaShout:4, diasporaPull:4)
+  // Newer craft-legible brands: placement here is editorial judgment, not from the PRD
+  'needledust',
+  'daughters-of-india',
+  // Breadth builders: craft-legible but not first-fold visual proof
   'baby-forest',         // §12A #5, pulled from the fold (§12A.1); lead breadth-builder
-  'isharya',             // demoted from jewelry slot (Open decisions #5, 2026-07-15) — global-editorial styling reads generic without copy
+  'isharya',             // demoted from jewelry slot (Open decisions #5, 2026-07-15)
+  'saphed',
+  'hemant-and-nandita',
   'gullylabs',           // §12A #21
   'vilvah-store',        // §12A #26
   'aagghhoo',            // §12A #29
   'masilo',              // §12A #33
   'the-alternate-india', // §12A #34
-  // Tier 4 — Western-styled; featuring in the first fold reinforces F-002
+  // Tier 4: Western-styled; featuring in the first fold reinforces F-002
   'superbottoms',        // §12A #44
-  'pluchi',              // §12A #45
   'choosekind',          // §12A #46
   'polite-society',      // §12A #47
 ];
@@ -707,19 +744,17 @@ export const getBrandSlugById = brandId => {
 /**
  * ================ Homepage editorial modules (P1.3) ================
  * homepage-editorial-modules.md Module A: Brand Spotlight — deterministic weekly
- * rotation through the 5 flagship brands (P1.1's fully-populated brands, so the
+ * rotation through the flagship brands (P1.1's fully-populated brands, so the
  * spotlight always has story/craft/hero-image content to show).
  */
 export const FLAGSHIP_BRAND_SLUGS = [
-  'fizzy-goblet',
-  'house-of-chikankari',
-  'ankid',
-  'vilvah-store',
   'kaunteya',
+  'house-of-chikankari',
+  'isharya',
 ];
 
 /**
- * Deterministic weekly rotation (ISO week number modulo 5) through the flagship
+ * Deterministic weekly rotation (ISO week number modulo the flagship count) through the flagship
  * brands — stable for everyone for a week, then moves on, same rotation
  * mechanism as getOrderedSectionBrandIds's weekSeed above.
  * @returns {string|null} Flagship brand UUID for the current week, or null if

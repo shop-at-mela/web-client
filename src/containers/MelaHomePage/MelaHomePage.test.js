@@ -89,12 +89,6 @@ jest.mock('./sections/HowWeVet/HowWeVet', () => {
   };
 });
 
-jest.mock('../../components/CategoryChips/CategoryChips', () => {
-  return function CategoryChips() {
-    return <div data-testid="category-chips">Category Chips</div>;
-  };
-});
-
 jest.mock('./sections/SavedItems/SavedItemsModule', () => {
   return function SavedItemsModule() {
     return <div data-testid="saved-items-module">Saved Items</div>;
@@ -196,7 +190,7 @@ describe('MelaHomePage', () => {
   });
 
   it('renders all homepage sections', () => {
-    const { getByTestId } = render(
+    const { getByTestId, queryByTestId } = render(
       <TestWrapper>
         <MelaHomePage {...defaultProps} />
       </TestWrapper>
@@ -205,7 +199,7 @@ describe('MelaHomePage', () => {
     expect(getByTestId('hero-section')).toBeTruthy();
     expect(getByTestId('saved-items-module')).toBeTruthy();
     expect(getByTestId('occasion-mosaic')).toBeTruthy();
-    expect(getByTestId('category-chips')).toBeTruthy();
+    expect(queryByTestId('category-chips')).toBeNull();
     expect(getByTestId('earned-its-place')).toBeTruthy();
     expect(getByTestId('how-we-vet')).toBeTruthy();
   });
@@ -224,7 +218,6 @@ describe('MelaHomePage', () => {
           'vetting-strip',
           'saved-items-module',
           'occasion-mosaic',
-          'category-chips',
           'brand-spotlight',
           'new-from-india',
           'craft-stories',
@@ -237,7 +230,6 @@ describe('MelaHomePage', () => {
       'vetting-strip',
       'saved-items-module',
       'occasion-mosaic',
-      'category-chips',
       'brand-spotlight',
       'new-from-india',
       'craft-stories',
@@ -298,7 +290,7 @@ describe('MelaHomePage', () => {
 
     it('states the reviewed date as the bumped HOMEPAGE_LAST_UPDATED', () => {
       const { container } = renderPage();
-      expect(HOMEPAGE_LAST_UPDATED).toBe('2026-10-24');
+      expect(HOMEPAGE_LAST_UPDATED).toBe('2026-11-01');
       expect(container.textContent).toContain(`Last reviewed ${HOMEPAGE_LAST_UPDATED}`);
     });
 
@@ -319,53 +311,39 @@ describe('MelaHomePage', () => {
       FAQ_ITEMS.forEach(item => expect(item.answer).not.toMatch(/[-\u2013\u2014]/));
     });
 
-    it('Q2 makes no card claim and uses the approved wording', () => {
-      expect(FAQ_ITEMS[1].answer).toBe(
+    it('leads with a What is Mela? answer that names Mela and where shoppers buy', () => {
+      expect(FAQ_ITEMS[0].question).toBe('What is Mela?');
+      expect(FAQ_ITEMS[0].answer).toMatch(/^Mela is a curated marketplace of independent Indian brands/);
+      expect(FAQ_ITEMS[0].answer).toMatch(/buy on the brand's own store/);
+    });
+
+    it('the card answer makes no card claim and uses the approved wording', () => {
+      expect(FAQ_ITEMS[2].answer).toBe(
         "You pay on each brand's own store, not on Mela, so the payment options are the brand's. The brand's checkout shows which cards and payment methods it takes before you pay."
       );
     });
 
-    it('Q1, Q3 and Q4 use the approved P0 wording', () => {
-      expect(FAQ_ITEMS[0].answer).toBe(
+    it('the shipping, duties and returns answers use the approved P0 wording', () => {
+      expect(FAQ_ITEMS[1].answer).toBe(
         "Shipping costs and delivery times are set by each brand; each brand page shows that brand's US shipping cost and whether its prices include import duties."
       );
-      expect(FAQ_ITEMS[2].answer).toBe(
+      expect(FAQ_ITEMS[3].answer).toBe(
         'It depends on the brand. Some brands include US import duties in their prices. For others, the courier collects duties before delivery. Each brand page and product page says which applies.'
       );
-      expect(FAQ_ITEMS[3].answer).toBe(
+      expect(FAQ_ITEMS[4].answer).toBe(
         "Each brand sets its own return policy, including whether it accepts returns from the US. Check the brand's policy before you buy."
       );
     });
   });
 
-  describe('answer block', () => {
-    const answerText = () =>
-      render(
-        <TestWrapper>
-          <MelaHomePage {...defaultProps} />
-        </TestWrapper>
-      ).container.querySelector('p[class*="answerBlock"]').textContent;
-
-    it('renders the answer block as visible text directly after the hero', () => {
-      const { getByTestId } = render(
+  describe('answer block removal', () => {
+    it('renders no answer block between the hero and the vetting strip', () => {
+      const { container } = render(
         <TestWrapper>
           <MelaHomePage {...defaultProps} />
         </TestWrapper>
       );
-      const heroSection = getByTestId('hero-section').closest('section');
-      const next = heroSection.nextElementSibling;
-      expect(next.querySelector('p[class*="answerBlock"]')).not.toBeNull();
-    });
-
-    it('is 30 to 60 words and says what Mela is and US shipping', () => {
-      const text = answerText();
-      const words = text.split(/\s+/).filter(Boolean).length;
-      expect(words).toBeGreaterThanOrEqual(30);
-      expect(words).toBeLessThanOrEqual(60);
-      expect(text).toMatch(/curated marketplace of contemporary Indian brands/);
-      expect(text).toMatch(/fashion, home, beauty, jewelry and kids/);
-      expect(text).toMatch(/ship to US addresses/);
-      expect(text).not.toMatch(/vendor|!/i);
+      expect(container.querySelector('[class*="answerBlock"]')).toBeNull();
     });
   });
 });

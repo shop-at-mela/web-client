@@ -18,7 +18,7 @@ const HERO_IMAGE_TARGET_WIDTH = 1600;
 
 /**
  * Module A: Brand Spotlight (homepage-editorial-modules.md).
- * Deterministic weekly rotation through the 5 flagship brands — one brand treated the
+ * Deterministic weekly rotation through the flagship brands (FLAGSHIP_BRAND_SLUGS) — one brand treated the
  * way a magazine would treat it. Everything it needs (brandHeroImages, brandCraft, bio,
  * hero listing ids) is already seeded (P1.1b); no new backend.
  *

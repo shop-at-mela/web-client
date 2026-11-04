@@ -38,6 +38,14 @@ jest.mock('../../../../components', () => ({
   ),
 }));
 
+// Mutable so each test picks the baked-ids path (non-empty) or the live fallback (empty).
+const mockBaked = { ids: [] };
+jest.mock('../../../../config/configBrands', () => ({
+  get newFromIndiaListingIds() {
+    return mockBaked.ids;
+  },
+}));
+
 jest.mock('../../../../util/data', () => ({
   updatedEntities: jest.fn(),
   denormalisedEntities: jest.fn(),
@@ -70,6 +78,7 @@ const listing = (id, { author, createdAt } = {}) => ({
 describe('NewFromIndia', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockBaked.ids = [];
     sdk.listings.query.mockResolvedValue({ data: { data: [], included: [] } });
   });
 
@@ -143,5 +152,70 @@ describe('NewFromIndia', () => {
     const { container } = renderInContext(<NewFromIndia />);
 
     await waitFor(() => expect(container.firstChild).toBeNull());
+  });
+  it('falls back to a live query sorted newest first (createdAt, not -createdAt)', async () => {
+    denormalisedEntities.mockReturnValue([listing('l1')]);
+    renderInContext(<NewFromIndia />);
+    await waitFor(() => expect(screen.getByTestId('listing-card')).toBeInTheDocument());
+    const params = sdk.listings.query.mock.calls[0][0];
+    expect(params.sort).toBe('createdAt');
+    expect(params.ids).toBeUndefined();
+  });
+
+  describe('with baked listing ids', () => {
+    const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString();
+    const ids = ['n1', 'n2', 'n3', 'n4', 'n5'];
+
+    beforeEach(() => {
+      mockBaked.ids = ids;
+    });
+
+    it('fetches them in one ids query, with no sort', async () => {
+      denormalisedEntities.mockReturnValue(
+        ids.slice(0, 4).map(id => listing(id, { author: id, createdAt: daysAgo(1) }))
+      );
+      renderInContext(<NewFromIndia />);
+      await waitFor(() => expect(screen.getAllByTestId('listing-card')).toHaveLength(4));
+      expect(sdk.listings.query).toHaveBeenCalledTimes(1);
+      const params = sdk.listings.query.mock.calls[0][0];
+      expect(params.ids).toEqual(ids);
+      expect(params.sort).toBeUndefined();
+    });
+
+    it('shows them in the baked order even if the API returns another order', async () => {
+      denormalisedEntities.mockReturnValue(
+        ['n4', 'n2', 'n1', 'n3'].map(id => listing(id, { author: id, createdAt: daysAgo(2) }))
+      );
+      renderInContext(<NewFromIndia />);
+      await waitFor(() => {
+        const titles = screen.getAllByTestId('listing-card').map(el => el.textContent);
+        expect(titles).toEqual(['Product n1', 'Product n2', 'Product n3', 'Product n4']);
+      });
+    });
+
+    it('drops listings older than 30 days instead of calling them new', async () => {
+      denormalisedEntities.mockReturnValue([
+        listing('n1', { author: 'a', createdAt: daysAgo(1) }),
+        listing('n2', { author: 'b', createdAt: daysAgo(2) }),
+        listing('n3', { author: 'c', createdAt: daysAgo(3) }),
+        listing('n4', { author: 'd', createdAt: daysAgo(4) }),
+        listing('n5', { author: 'e', createdAt: daysAgo(400) }), // stale
+      ]);
+      renderInContext(<NewFromIndia />);
+      await waitFor(() => expect(screen.getAllByTestId('listing-card')).toHaveLength(4));
+      expect(screen.queryByText('Product n5')).toBeNull();
+    });
+
+    it('hides the section when fewer than 4 fresh listings remain', async () => {
+      denormalisedEntities.mockReturnValue([
+        listing('n1', { author: 'a', createdAt: daysAgo(1) }),
+        listing('n2', { author: 'b', createdAt: daysAgo(2) }),
+        listing('n3', { author: 'c', createdAt: daysAgo(3) }),
+        listing('n4', { author: 'd', createdAt: daysAgo(200) }),
+      ]);
+      const { container } = renderInContext(<NewFromIndia />);
+      await waitFor(() => expect(sdk.listings.query).toHaveBeenCalled());
+      await waitFor(() => expect(container).toBeEmptyDOMElement());
+    });
   });
 });

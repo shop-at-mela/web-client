@@ -542,9 +542,11 @@
   }
 }
 /* ── OccasionMosaic (homepage declutter v3) ──────────────────────────────────
-   Mobile: one large tile on top, two smaller tiles side by side under it.
-   Desktop (1024px+): large tile on the left spanning both rows, the two smaller
-   tiles stacked on the right. data-count handles 1 or 2 active occasions. */
+   Equal portrait (4:5) tiles — listing photos are mostly portrait, so wide tiles
+   cropped the product away. Mobile: a horizontal snap-scroll strip, tiles 44% wide so
+   the next one clearly peeks in. 768px+: one column per tile (--tile-count, set inline, max 4)
+   at a fixed row height, so a short row fills the width and the final tile count never changes
+   the row's height (no layout shift between loading and loaded). */
 
 .mosaicSection {
   width: 100%;
@@ -566,42 +568,37 @@
 }
 
 .mosaic {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 200px 130px;
+  display: flex;
   gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   @media (min-width: 768px) {
-    grid-template-rows: 280px 180px;
+    display: grid;
+    grid-template-columns: repeat(var(--tile-count, 4), minmax(0, 1fr));
     gap: 12px;
+    overflow: visible;
   }
 
   @media (min-width: 1024px) {
-    grid-template-columns: 2fr 1fr;
-    grid-template-rows: 180px 180px;
     gap: 14px;
-  }
-}
-
-.mosaic[data-count='1'] {
-  grid-template-columns: 1fr;
-  grid-template-rows: 200px;
-
-  @media (min-width: 768px) {
-    grid-template-rows: 280px;
-  }
-
-  @media (min-width: 1024px) {
-    grid-template-rows: 320px;
   }
 }
 
 .mosaicTile {
   position: relative;
   display: block;
+  flex: 0 0 44%;
+  aspect-ratio: 4 / 5;
+  scroll-snap-align: start;
   overflow: hidden;
   border-radius: 12px;
-  /* Placeholder while the photo loads, or when the listing has no usable image */
+  /* Placeholder while the photos load */
   background: var(--marketplaceColorDark, #1a1a4e);
   text-decoration: none;
 
@@ -613,28 +610,16 @@
     text-decoration: none;
   }
 
+  /* Inset: the strip scrolls, so an outline outside the tile would be clipped */
   &:focus-visible {
     outline: 3px solid var(--colorAccent, #f0a030);
-    outline-offset: 2px;
+    outline-offset: -3px;
   }
-}
 
-.mosaicTileLarge {
-  grid-column: 1 / -1;
-
-  @media (min-width: 1024px) {
-    grid-column: 1;
-    grid-row: 1 / 3;
-  }
-}
-
-/* Two occasions: the second tile takes the full row on mobile, both rows on desktop */
-.mosaic[data-count='2'] .mosaicTile:not(.mosaicTileLarge) {
-  grid-column: 1 / -1;
-
-  @media (min-width: 1024px) {
-    grid-column: 2;
-    grid-row: 1 / 3;
+  @media (min-width: 768px) {
+    flex: initial;
+    aspect-ratio: auto;
+    height: clamp(300px, 28vw, 400px);
   }
 }
 
@@ -651,22 +636,40 @@
 
 .mosaicLabel {
   position: absolute;
-  left: 10px;
-  bottom: 10px;
+  left: 8px;
+  bottom: 8px;
   background: var(--colorWhite, #fff);
   color: var(--marketplaceColor);
   font-weight: var(--fontWeightBold, 700);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.2;
-  padding: 6px 10px;
+  padding: 5px 8px;
   border-radius: 8px;
-  max-width: calc(100% - 20px);
+  max-width: calc(100% - 16px);
 
   @media (min-width: 768px) {
     left: 14px;
     bottom: 14px;
     font-size: 15px;
     padding: 8px 12px;
+  }
+}
+
+.mosaicLabelText::after {
+  content: '›';
+  margin-left: 6px;
+  font-weight: var(--fontWeightBold, 700);
+}
+
+.mosaicSubtitle {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: var(--fontWeightMedium, 500);
+  opacity: 0.75;
+
+  @media (min-width: 768px) {
+    font-size: 12px;
   }
 }
 

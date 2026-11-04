@@ -21,7 +21,7 @@ const FAQSection = ({ id, items, lastUpdated }) => {
   return (
     <section id={id} className={css.root}>
       <div className={css.inner}>
-        <h2 className={css.title}>Shipping, Payment & Returns for US Shoppers</h2>
+        <h2 className={css.title}>Questions from US Shoppers</h2>
         <div className={css.list}>
           {items.map((item, index) => (
             <details key={item.question} className={css.item} open={index === 0}>

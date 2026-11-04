@@ -8,6 +8,10 @@ import { denormalisedEntities, updatedEntities, pickBrandDiverse } from '../../.
 import { fetchListingsAcrossBrands } from '../../../../util/bestsellerCarousel';
 import { allBrandIds, getBrandSlugById } from '../../../../config/configBrands';
 import sdk from '../../../../util/homepageSdk';
+import {
+  pushMosaicImpression,
+  pushMosaicTileClick,
+} from '../../../../util/analytics/occasionMosaic';
 // Re-exported for discoverability (ListingCard's occasion chips, GiftingPage) — implemented
 // in util/occasionLabels.js rather than here to avoid a circular import: this file pulls in
 // the `components` barrel below (for ProductCarousel), which re-exports ListingCard.
@@ -72,6 +76,8 @@ export const OCCASIONS = [
     description: 'Gifts for Bhai Dooj',
     cta: 'Shop Bhai Dooj',
     colorTheme: 'festive',
+    // Shown under the label on the homepage mosaic tile, for shoppers who don't know the festival
+    tileSubtitle: 'Gifts for siblings',
     matchValues: ['bhai_dooj'],
   },
   {
@@ -84,16 +90,28 @@ export const OCCASIONS = [
   },
 ];
 
-// Festival dates as month/day only — annual recurrence lets the season math below ignore
-// year-to-year drift for this specific set, which never crosses the Dec 31 → Jan 1 boundary
-// (Raksha Bandhan in August through Bhai Dooj in November). Verify against a panchang each
-// year — see gifting-festival-traffic-prd.md's Timing note; these are 2026 estimates.
-const FESTIVAL_MONTH_DAY = {
-  raksha_bandhan: { month: 8, day: 28 },
-  navratri: { month: 10, day: 11 },
-  karva_chauth: { month: 10, day: 29 },
-  diwali: { month: 11, day: 8 },
-  bhai_dooj: { month: 11, day: 10 },
+// Festival dates, keyed by year because the lunar-calendar festivals move every year. The
+// season math below never crosses the Dec 31 → Jan 1 boundary (Raksha Bandhan in August
+// through Bhai Dooj in November). Verify against a panchang and add the next year's entry
+// before January — a test fails once the current year has no entry. Until then a year with no
+// entry reuses the latest known year's dates, which are only approximately right.
+// See gifting-festival-traffic-prd.md's Timing note; the 2026 values are estimates.
+export const FESTIVAL_DATES_BY_YEAR = {
+  2026: {
+    raksha_bandhan: { month: 8, day: 28 },
+    navratri: { month: 10, day: 11 },
+    karva_chauth: { month: 10, day: 29 },
+    diwali: { month: 11, day: 8 },
+    bhai_dooj: { month: 11, day: 10 },
+  },
+};
+
+const FESTIVAL_OPTIONS = Object.keys(FESTIVAL_DATES_BY_YEAR[2026]);
+
+const festivalDatesForYear = year => {
+  if (FESTIVAL_DATES_BY_YEAR[year]) return FESTIVAL_DATES_BY_YEAR[year];
+  const latest = Math.max(...Object.keys(FESTIVAL_DATES_BY_YEAR).map(Number));
+  return FESTIVAL_DATES_BY_YEAR[latest];
 };
 
 // Shoppers plan gifting occasions weeks ahead on Pinterest (Shopper-behavior model:
@@ -109,7 +127,7 @@ const dayOfYear = date => {
 };
 
 const festivalDayOfYear = (option, year) => {
-  const { month, day } = FESTIVAL_MONTH_DAY[option];
+  const { month, day } = festivalDatesForYear(year)[option];
   return Math.round((Date.UTC(year, month - 1, day) - Date.UTC(year, 0, 1)) / 86400000);
 };
 
@@ -125,6 +143,13 @@ const isFestivalInSeason = (option, date) => {
 
 const isWeddingSeason = date => [11, 12, 1, 2].includes(date.getMonth() + 1);
 
+// Every dated festival currently in season, plus 'wedding' during wedding season — uncapped,
+// unlike getActiveSeasonOccasion(), so the mosaic can rotate through all of them.
+const getInSeasonOccasions = date => {
+  const inSeasonDated = FESTIVAL_OPTIONS.filter(option => isFestivalInSeason(option, date));
+  return isWeddingSeason(date) ? [...inSeasonDated, 'wedding'] : inSeasonDated;
+};
+
 /**
  * Picks which occasion options OccasionStrip should render "today", in display order:
  * when a festival is in season (or it's wedding season, Nov-Feb), that festival leads —
@@ -135,9 +160,8 @@ const isWeddingSeason = date => [11, 12, 1, 2].includes(date.getMonth() + 1);
  * @returns {Array<string>} OCCASIONS option keys, in display order.
  */
 export const getActiveSeasonOccasion = (date = new Date()) => {
-  const datedOptions = Object.keys(FESTIVAL_MONTH_DAY);
-  const inSeasonDated = datedOptions.filter(option => isFestivalInSeason(option, date));
-  const inSeason = isWeddingSeason(date) ? [...inSeasonDated, 'wedding'] : inSeasonDated;
+  const datedOptions = FESTIVAL_OPTIONS;
+  const inSeason = getInSeasonOccasions(date);
 
   if (inSeason.length > 0) {
     return [...inSeason.slice(0, 2), 'gifting'];
@@ -413,14 +437,28 @@ export const OccasionStrip = ({ config, additionalQueryParams = {} }) => {
 };
 
 // ── OccasionMosaic ─────────────────────────────────────────────────────────
-// Homepage "Shop by occasion" (homepage declutter v3, 2026-10-24): a photo mosaic of the
-// same occasions OccasionStrip would show, with no product row under each one. The first
-// active occasion is the large tile; the rest are smaller tiles side by side.
-// Each tile's photo is the first image of a recent listing tagged with that occasion,
-// from one marketplace-wide query per occasion (not the per-brand fan-out OccasionStrip
-// uses, which is 19 requests per occasion).
+// Homepage "Shop by occasion" (homepage declutter v3, 2026-10-24): a photo mosaic of
+// occasions with no product row under each one. Up to 4 tiles: the 2 occasions nearest in
+// time always show (first), the remaining slots are filled at random from the other
+// occasions that have enough inventory. Each tile's photo is a random listing tagged with
+// that occasion. The chosen tiles are kept for the rest of the browser session so the page
+// doesn't reshuffle on Back-navigation (and the listing queries aren't repeated).
+// Photos come from one marketplace-wide query per occasion (not the per-brand fan-out
+// OccasionStrip uses, which is 19 requests per occasion).
 
+// One cheap request per occasion (a single image variant pair per listing); the tile photo
+// is picked at random from these.
 const MOSAIC_CANDIDATES_PER_OCCASION = 12;
+// An occasion needs at least this many usable photos (right brand, has an image) out of the
+// candidates above to be eligible. Low enough that an occasion whose newest listings include
+// excluded brands still qualifies; high enough that a tile doesn't show the same one or two
+// products on every visit.
+const MOSAIC_MIN_INVENTORY = 5;
+const MOSAIC_MAX_TILES = 4;
+// This many of the nearest occasions are always shown; the rest of the slots are random.
+const MOSAIC_FIXED_TILES = 2;
+const MOSAIC_QUERY_TIMEOUT_MS = 6000;
+const MOSAIC_SESSION_KEY = 'melaOccasionMosaic:v1';
 
 // Same client-side guard as OccasionStrip: the pub_occasion filter is silently ignored if
 // the search index isn't set up, so re-check the tag on each listing.
@@ -433,114 +471,271 @@ const listingHasOccasion = (listing, matchValues) => {
 const occasionSearch = matchValues =>
   '?' + new URLSearchParams({ pub_occasion: `has_any:${matchValues.join(',')}` }).toString();
 
+// Fisher-Yates on a copy; `random` is a param for testability.
+export const shuffle = (items, random = Math.random) => {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+};
+
 /**
- * Picks one image per tile in display order, skipping a listing an earlier tile already
- * uses, so two occasions that share a listing don't show the same photo.
+ * Occasions the mosaic may draw from "today", nearest first: in-season festivals by how soon
+ * they fall (festivals that just passed, still in their lag window, sort last among them),
+ * then wedding season, then the evergreen 'gifting'. Off-season, falls back to
+ * getActiveSeasonOccasion()'s gifting + nearest-upcoming pair so the pool is never just one
+ * occasion.
+ * @param {Date} [date]
+ * @returns {Array<string>} OCCASIONS option keys
+ */
+export const getMosaicOccasionPool = (date = new Date()) => {
+  const inSeasonDated = FESTIVAL_OPTIONS.filter(option => isFestivalInSeason(option, date));
+  if (inSeasonDated.length === 0 && !isWeddingSeason(date)) return getActiveSeasonOccasion(date);
+
+  const rank = option => {
+    const distance = daysUntilFestival(option, date);
+    return distance < 0 ? distance + 1000 : distance;
+  };
+  const dated = [...inSeasonDated].sort((a, b) => rank(a) - rank(b));
+  return [...dated, ...(isWeddingSeason(date) ? ['wedding'] : []), 'gifting'];
+};
+
+/**
+ * Chooses which occasions get a tile, from a pool already in priority order. Only occasions
+ * with sizeable inventory are eligible; the first MOSAIC_FIXED_TILES eligible ones are always
+ * kept and the remaining slots are drawn at random from the rest. If fewer than 2 occasions
+ * clear the inventory bar (e.g. off-season), falls back to any occasion with at least one
+ * usable photo rather than showing a near-empty section.
+ * @param {Array<string>} pool - OCCASIONS option keys, nearest/most important first
+ * @param {Object<string, Array>} candidatesByOption - usable photo candidates per option
+ * @param {Function} [random]
+ * @returns {Array<string>} chosen option keys, in pool (priority) order
+ */
+export const selectMosaicOccasions = (pool, candidatesByOption, random = Math.random) => {
+  const count = option => (candidatesByOption[option] || []).length;
+  let eligible = pool.filter(option => count(option) >= MOSAIC_MIN_INVENTORY);
+  if (eligible.length < 2) eligible = pool.filter(option => count(option) > 0);
+
+  const fixed = eligible.slice(0, MOSAIC_FIXED_TILES);
+  const random_ = shuffle(eligible.slice(MOSAIC_FIXED_TILES), random).slice(
+    0,
+    MOSAIC_MAX_TILES - fixed.length
+  );
+  const chosen = new Set([...fixed, ...random_]);
+  return pool.filter(option => chosen.has(option));
+};
+
+/**
+ * Picks one image per tile in display order. A listing an earlier tile already uses is
+ * skipped, so two occasions that share a listing don't show the same photo. A brand an earlier
+ * tile already uses is skipped too when another brand is available, because the newest
+ * listings are often one brand's drop (e.g. all footwear) and the mosaic should look varied.
  * @param {Array<{option: string}>} occasions in display order
- * @param {Object<string, Array<{listingId: string, url: string, url2x: string}>>} candidatesByOption
+ * @param {Object<string, Array<{listingId: string, brandId?: string, url: string, url2x: string}>>} candidatesByOption
  * @returns {Object<string, {url: string, url2x: string}|null>}
  */
 export const pickMosaicImages = (occasions, candidatesByOption) => {
-  const used = new Set();
+  const usedListings = new Set();
+  const usedBrands = new Set();
   return occasions.reduce((acc, { option }) => {
-    const pick = (candidatesByOption[option] || []).find(c => !used.has(c.listingId)) || null;
-    if (pick) used.add(pick.listingId);
+    const unused = (candidatesByOption[option] || []).filter(c => !usedListings.has(c.listingId));
+    const pick = unused.find(c => !c.brandId || !usedBrands.has(c.brandId)) || unused[0] || null;
+    if (pick) {
+      usedListings.add(pick.listingId);
+      if (pick.brandId) usedBrands.add(pick.brandId);
+    }
     return { ...acc, [option]: pick };
   }, {});
 };
 
+// Resolves to `fallback` if the query is still pending after `ms`, so one hung request
+// can't keep the whole section on its skeleton.
+const withTimeout = (promise, ms, fallback) => {
+  let timer;
+  const timeout = new Promise(resolve => {
+    timer = setTimeout(() => resolve(fallback), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+};
+
+const fetchMosaicCandidates = async ({ matchValues }) => {
+  try {
+    const response = await sdk.listings.query({
+      pub_occasion: `has_any:${matchValues.join(',')}`,
+      perPage: MOSAIC_CANDIDATES_PER_OCCASION,
+      include: ['images', 'author'],
+      'fields.listing': ['title', 'publicData'],
+      'fields.image': ['variants.scaled-medium', 'variants.scaled-large'],
+      'fields.user': ['profile.displayName'],
+      'limit.images': 1,
+    });
+    const entities = updatedEntities({}, response.data);
+    const refs = response.data.data.map(l => ({ id: l.id, type: 'listing' }));
+    return denormalisedEntities(entities, refs, false)
+      .filter(l => listingHasOccasion(l, matchValues))
+      .filter(l => DISCOVERY_BRAND_IDS.includes(l.author?.id?.uuid))
+      .map(l => {
+        const variants = l.images?.[0]?.attributes?.variants || {};
+        const url = variants['scaled-medium']?.url;
+        return url
+          ? {
+              listingId: l.id.uuid,
+              brandId: l.author.id.uuid,
+              url,
+              url2x: variants['scaled-large']?.url || url,
+            }
+          : null;
+      })
+      .filter(Boolean);
+  } catch {
+    // A failed query counts as an occasion with no usable listings.
+    return [];
+  }
+};
+
+// The session cache stores plain data (option key + photo), keyed by calendar day so a
+// stored pick never outlives the day's festival calendar. Storage can be unavailable
+// (private mode, SSR) — every access is guarded.
+const dayKey = date => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+
+const readSessionTiles = date => {
+  try {
+    const stored = JSON.parse(window.sessionStorage.getItem(MOSAIC_SESSION_KEY));
+    if (!stored || stored.day !== dayKey(date) || !Array.isArray(stored.tiles)) return null;
+    const tiles = stored.tiles
+      .map(({ option, image }) => ({ occasion: OCCASIONS.find(o => o.option === option), image }))
+      .filter(tile => tile.occasion && tile.image?.url);
+    return tiles.length > 0 ? tiles : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeSessionTiles = (date, tiles) => {
+  try {
+    window.sessionStorage.setItem(
+      MOSAIC_SESSION_KEY,
+      JSON.stringify({
+        day: dayKey(date),
+        tiles: tiles.map(({ occasion, image }) => ({ option: occasion.option, image })),
+      })
+    );
+  } catch {
+    // Not persisting just means the next page view re-picks.
+  }
+};
+
 export const OccasionMosaic = ({ date }) => {
-  // Fixed at mount, like OccasionStrip.
-  const [orderedOccasions] = useState(() =>
-    getActiveSeasonOccasion(date)
+  // Fixed at mount. The pool is deterministic (no randomness), so server and client render
+  // the same labelled placeholder tiles from it.
+  const [pool] = useState(() =>
+    getMosaicOccasionPool(date)
       .map(option => OCCASIONS.find(o => o.option === option))
       .filter(Boolean)
   );
-  // option -> array of image candidates once loaded; undefined while loading
-  const [candidatesByOption, setCandidatesByOption] = useState({});
+  // null while loading. Randomness lives in the effect (client only), never in render.
+  const [tiles, setTiles] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
-    orderedOccasions.forEach(({ option, matchValues }) => {
-      (async () => {
-        let candidates = [];
-        try {
-          const response = await sdk.listings.query({
-            pub_occasion: `has_any:${matchValues.join(',')}`,
-            perPage: MOSAIC_CANDIDATES_PER_OCCASION,
-            include: ['images', 'author'],
-            'fields.listing': ['title', 'publicData'],
-            'fields.image': ['variants.scaled-medium', 'variants.scaled-large'],
-            'fields.user': ['profile.displayName'],
-            'limit.images': 1,
-          });
-          const entities = updatedEntities({}, response.data);
-          const refs = response.data.data.map(l => ({ id: l.id, type: 'listing' }));
-          candidates = denormalisedEntities(entities, refs, false)
-            .filter(l => listingHasOccasion(l, matchValues))
-            .filter(l => DISCOVERY_BRAND_IDS.includes(l.author?.id?.uuid))
-            .map(l => {
-              const variants = l.images?.[0]?.attributes?.variants || {};
-              const url = variants['scaled-medium']?.url;
-              return url
-                ? {
-                    listingId: l.id.uuid,
-                    url,
-                    url2x: variants['scaled-large']?.url || url,
-                  }
-                : null;
-            })
-            .filter(Boolean);
-        } catch {
-          // A failed query hides that tile, same as an occasion with no tagged listings.
-        }
-        if (!cancelled) setCandidatesByOption(prev => ({ ...prev, [option]: candidates }));
-      })();
-    });
+    const now = date || new Date();
+
+    const cached = readSessionTiles(now);
+    if (cached) {
+      setTiles(cached);
+      return undefined;
+    }
+
+    Promise.all(
+      pool.map(occasion =>
+        withTimeout(fetchMosaicCandidates(occasion), MOSAIC_QUERY_TIMEOUT_MS, [])
+      )
+    )
+      .then(results => {
+        if (cancelled) return;
+        // Shuffle each occasion's candidates so pickMosaicImages' first-unused pick is random.
+        const candidatesByOption = pool.reduce(
+          (acc, { option }, i) => ({ ...acc, [option]: shuffle(results[i]) }),
+          {}
+        );
+        const chosen = selectMosaicOccasions(
+          pool.map(o => o.option),
+          candidatesByOption
+        ).map(option => OCCASIONS.find(o => o.option === option));
+        const images = pickMosaicImages(chosen, candidatesByOption);
+        const picked = chosen
+          .map(occasion => ({ occasion, image: images[occasion.option] }))
+          .filter(tile => tile.image);
+        if (picked.length > 0) writeSessionTiles(now, picked);
+        setTiles(picked);
+      })
+      .catch(() => {
+        if (!cancelled) setTiles([]);
+      });
+
     return () => {
       cancelled = true;
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // A tile stays (with a placeholder) while loading and drops out once its occasion has
-  // no usable listing, so it never links to an empty search.
-  const visibleOccasions = orderedOccasions.filter(
-    ({ option }) => !candidatesByOption[option] || candidatesByOption[option].length > 0
-  );
-  if (visibleOccasions.length === 0) return null;
+  // One impression per tile each time a set of tiles is shown.
+  useEffect(() => {
+    if (!tiles) return;
+    tiles.forEach(({ occasion, image }, index) =>
+      pushMosaicImpression(occasion.option, index + 1, tiles.length, image.listingId)
+    );
+  }, [tiles]);
 
-  const images = pickMosaicImages(visibleOccasions, candidatesByOption);
+  // Empty result: nothing to link to, so the section drops out entirely.
+  if (tiles && tiles.length === 0) return null;
+
+  // While loading, show the first MOSAIC_MAX_TILES pool occasions as labelled, linked
+  // placeholders — real links in the server-rendered HTML for crawlers. The columns follow
+  // the tile count so a short row still fills the width; tile height is fixed in CSS
+  // (not derived from width), so the final count never changes the row's height.
+  const shown = tiles || pool.slice(0, MOSAIC_MAX_TILES).map(occasion => ({ occasion }));
 
   return (
     <div className={css.mosaicSection}>
       <h2 className={css.mosaicTitle}>
         <FormattedMessage id="MelaHomePage.shopByOccasion" defaultMessage="Shop by Occasion" />
       </h2>
-      <div className={css.mosaic} data-count={visibleOccasions.length}>
-        {visibleOccasions.map((occasion, index) => {
-          const image = images[occasion.option];
-          const isLarge = index === 0;
-          return (
-            <NamedLink
-              key={occasion.option}
-              name="SearchPage"
-              to={{ search: occasionSearch(occasion.matchValues) }}
-              className={isLarge ? `${css.mosaicTile} ${css.mosaicTileLarge}` : css.mosaicTile}
-            >
-              {image ? (
-                <img
-                  className={css.mosaicImage}
-                  src={image.url}
-                  srcSet={`${image.url} 750w, ${image.url2x} 1024w`}
-                  sizes={isLarge ? '(min-width: 1024px) 66vw, 100vw' : '(min-width: 1024px) 33vw, 50vw'}
-                  alt=""
-                  loading={isLarge ? 'eager' : 'lazy'}
-                />
+      <div
+        className={css.mosaic}
+        role="group"
+        aria-label="Occasions"
+        style={{ '--tile-count': Math.min(shown.length, MOSAIC_MAX_TILES) }}
+      >
+        {shown.map(({ occasion, image }, index) => (
+          <NamedLink
+            key={occasion.option}
+            name="SearchPage"
+            to={{ search: occasionSearch(occasion.matchValues) }}
+            className={css.mosaicTile}
+            onClick={() =>
+              pushMosaicTileClick(occasion.option, index + 1, shown.length, image?.listingId)
+            }
+          >
+            {image ? (
+              <img
+                className={css.mosaicImage}
+                src={image.url}
+                srcSet={`${image.url} 750w, ${image.url2x} 1024w`}
+                sizes="(min-width: 768px) 25vw, 44vw"
+                alt=""
+                loading={index < 2 ? 'eager' : 'lazy'}
+              />
+            ) : null}
+            <span className={css.mosaicLabel}>
+              <span className={css.mosaicLabelText}>{occasion.label}</span>
+              {occasion.tileSubtitle ? (
+                <span className={css.mosaicSubtitle}>{occasion.tileSubtitle}</span>
               ) : null}
-              <span className={css.mosaicLabel}>{occasion.label}</span>
-            </NamedLink>
-          );
-        })}
+            </span>
+          </NamedLink>
+        ))}
       </div>
     </div>
   );
