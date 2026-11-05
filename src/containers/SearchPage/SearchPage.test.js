@@ -294,6 +294,7 @@ const getSearchParams = config => {
       'publicData.cardStyle',
       'publicData.certification',
       'publicData.isBestseller',
+      'publicData.priceInINR',
       // These help rendering of 'purchase' listings,
       // when transitioning from search page to listing page
       'publicData.pickupEnabled',

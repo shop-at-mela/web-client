@@ -91,10 +91,10 @@
 
 .faqCard {
   /* Mobile: Properly constrained card */
-  background: #fafbfc;
-  border-radius: 12px;
+  background: var(--colorGrey50);
+  border-radius: var(--borderRadiusLarge);
   padding: 1.25rem;
-  border: 1px solid #e1e8f0;
+  border: 1px solid var(--colorGrey100);
   position: relative;
   transition: all 0.3s ease;
   width: 100%;
@@ -124,12 +124,12 @@
 
 .faqCard.featured {
   /* Enhanced featured styling with better contrast */
-  background: linear-gradient(135deg, rgba(93, 43, 192, 0.05) 0%, #fafbfc 100%);
+  background: linear-gradient(135deg, rgba(38, 34, 97, 0.05) 0%, var(--colorGrey50) 100%);
   border: 2px solid var(--marketplaceColor);
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(93, 43, 192, 0.12);
+    box-shadow: 0 12px 30px rgba(38, 34, 97, 0.12);
     border-color: var(--marketplaceColorDark);
   }
 }
@@ -142,7 +142,7 @@
   background: var(--marketplaceColor);
   color: white;
   padding: 0.25rem 0.75rem;
-  border-radius: 12px;
+  border-radius: var(--borderRadiusLarge);
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -165,7 +165,7 @@
 .faqQuestion {
   /* Mobile: Readable question text */
   margin-bottom: 0.75rem;
-  color: #1f2937; /* Fixed dark color instead of CSS variable */
+  color: var(--colorGrey800); /* Fixed dark color instead of CSS variable */
   font-weight: 600;
   font-size: 1rem;
   line-height: 1.4;
@@ -191,7 +191,7 @@
 }
 
 .faqCard.featured .faqQuestion {
-  color: #5d2bc0; /* Fixed marketplace color */
+  color: var(--marketplaceColor); /* Fixed marketplace color */
   font-weight: 700;
 }
 
@@ -200,7 +200,7 @@
   margin: 0;
   font-size: 0.875rem;
   line-height: 1.6;
-  color: #374151; /* Fixed gray color for better contrast */
+  color: var(--colorGrey700); /* Fixed gray color for better contrast */
   font-weight: 400;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -219,7 +219,7 @@
 
 .faqCard.featured .faqAnswer {
   font-weight: 500;
-  color: #1f2937; /* Darker text for featured cards */
+  color: var(--colorGrey800); /* Darker text for featured cards */
 }
 
 /* Ensure better touch targets for mobile */

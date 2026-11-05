@@ -20,7 +20,7 @@
   background-color: var(--marketplaceColor);
   color: var(--colorWhite);
   border: none;
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -75,7 +75,7 @@
   color: var(--colorGrey300);
   padding: 4px 10px;
   border: 1px solid var(--colorGrey300);
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   background: transparent;
   cursor: pointer;
   font-size: 13px;

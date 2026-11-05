@@ -6,6 +6,7 @@ import { renderWithProviders as render } from '../../util/testHelpers';
 import { createUser, createListing } from '../../util/testData';
 
 import { ListingCardMini } from './ListingCardMini';
+import { setInitialInrToUsdRate } from '../../util/liveInrRate';
 
 // Base listing — no INR data
 const listing = createListing('listing1', {}, { author: createUser('user1') });
@@ -131,6 +132,10 @@ describe('ListingCardMini', () => {
   });
 
   describe('INR equivalent price (with showPrice=true)', () => {
+    beforeAll(() => {
+      setInitialInrToUsdRate(0.0105);
+    });
+
     it('shows INR price line when priceInINR is in publicData', () => {
       const { getByText } = render(<ListingCardMini listing={listingWithINR} showPrice />);
       // The INR span renders ~{formattedINRPrice} inline (no FormattedMessage)

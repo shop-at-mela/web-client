@@ -1,5 +1,6 @@
 import { displayPrice, isPriceVariationsEnabled } from '../../util/configHelpers';
 import { formatMoney } from '../../util/currency';
+import { getDisplayMoney } from '../../util/liveInrRate';
 import { richText } from '../../util/richText';
 import { isBookingProcessAlias } from '../../transactions/transaction';
 
@@ -42,7 +43,7 @@ const priceData = (price, currency, intl) => {
  *   - cardAriaLabel: ready-to-use aria-label for the card link (listing title + price line when shown)
  *   - authorName: "ListingCard.author" string containing author's display name
  */
-export const getListingCardTranslations = (listing, config, intl) => {
+export const getListingCardTranslations = (listing, config, intl, inrToUsdRate) => {
   const { title = '', price, publicData } = listing?.attributes || {};
 
   const authorDisplayName = listing?.author?.attributes?.profile?.displayName;
@@ -56,7 +57,11 @@ export const getListingCardTranslations = (listing, config, intl) => {
   const listingTypeConfig = validListingTypes.find(conf => conf.listingType === listingType);
 
   const showPrice = displayPrice(listingTypeConfig);
-  const { formattedPrice, priceTooltip } = priceData(price, config.currency, intl);
+  const { formattedPrice, priceTooltip } = priceData(
+    getDisplayMoney(price, publicData, inrToUsdRate),
+    config.currency,
+    intl
+  );
 
   const isPriceVariationsInUse = isPriceVariationsEnabled(publicData, listingTypeConfig);
   const hasMultiplePriceVariants = isPriceVariationsInUse && publicData?.priceVariants?.length > 1;

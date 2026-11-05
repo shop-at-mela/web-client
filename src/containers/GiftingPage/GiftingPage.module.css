@@ -9,12 +9,12 @@
   flex-wrap: wrap;
   gap: 2px;
   font-size: 13px;
-  color: var(--colorTextSecondary, #6b7280);
+  color: var(--colorGrey600);
   margin-bottom: 20px;
 }
 
 .breadcrumbLink {
-  color: var(--colorTextSecondary, #6b7280);
+  color: var(--colorGrey600);
   text-decoration: none;
 }
 
@@ -23,12 +23,12 @@
 }
 
 .breadcrumbSep {
-  color: var(--colorTextSecondary, #9ca3af);
+  color: var(--colorGrey400);
   margin: 0 2px;
 }
 
 .breadcrumbCurrent {
-  color: var(--colorTextPrimary, #111827);
+  color: var(--colorGrey900);
   font-weight: 500;
 }
 
@@ -40,14 +40,14 @@
 .title {
   font-size: 24px;
   font-weight: 700;
-  color: var(--colorTextPrimary, #111827);
+  color: var(--colorGrey900);
   margin: 0 0 8px;
   line-height: 1.2;
 }
 
 .description {
   font-size: 15px;
-  color: var(--colorTextSecondary, #6b7280);
+  color: var(--colorGrey600);
   margin: 0;
   max-width: 640px;
 }
@@ -63,19 +63,19 @@
 .chip {
   display: inline-block;
   padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid var(--colorBorder, #e5e7eb);
+  border-radius: var(--borderRadiusPill);
+  border: 1px solid var(--colorGrey100);
   font-size: 13px;
   font-weight: 500;
-  color: var(--colorTextPrimary, #374151);
+  color: var(--colorGrey700);
   text-decoration: none;
-  background: var(--colorBackground, #fff);
+  background: var(--colorWhite);
   transition: background 0.15s, border-color 0.15s;
 }
 
 .chip:hover {
-  background: var(--colorBackgroundHover, #f9fafb);
-  border-color: var(--colorBorderHover, #d1d5db);
+  background: var(--colorGrey50);
+  border-color: var(--colorGrey200);
 }
 
 /* ── Products ── */
@@ -88,7 +88,7 @@
 .empty {
   padding: 48px 0;
   text-align: center;
-  color: var(--colorTextSecondary, #6b7280);
+  color: var(--colorGrey600);
 }
 
 .emptyText {
@@ -99,9 +99,9 @@
 .emptyLink {
   display: inline-block;
   padding: 10px 24px;
-  background: var(--marketplaceColor, #4f46e5);
-  color: #fff;
-  border-radius: 6px;
+  background: var(--marketplaceColor);
+  color: var(--colorWhite);
+  border-radius: var(--borderRadiusMedium);
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;

@@ -60,7 +60,7 @@
   /* Mobile: Clear title */
   font-size: 1.75rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--colorGrey800);
   margin-bottom: 1rem;
   line-height: 1.2;
 
@@ -84,7 +84,7 @@
 .subtitle {
   /* Mobile: Readable subtitle */
   font-size: 1.125rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   line-height: 1.5;
   margin: 0;
 
@@ -109,7 +109,7 @@
   /* Mobile: Carousel container */
   position: relative;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   margin-bottom: 1rem;
   width: 100%;
   box-sizing: border-box;
@@ -127,10 +127,10 @@
   /* Mobile: Individual benefit card - each card takes full container width */
   width: 100vw;
   max-width: calc(100vw - 2rem); /* Account for container padding */
-  background: linear-gradient(135deg, #f8fafe 0%, #ffffff 100%);
+  background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorWhite) 100%);
   padding: 1.5rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 16px;
+  border: 2px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusLarge);
   text-align: center;
   min-height: 400px;
   display: flex;
@@ -179,7 +179,7 @@
   /* Mobile: Card title */
   font-size: 1.375rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--colorGrey800);
   margin-bottom: 0.75rem;
   line-height: 1.2;
 
@@ -208,7 +208,7 @@
 .cardDescription {
   /* Mobile: Card description */
   font-size: 1rem;
-  color: #374151;
+  color: var(--colorGrey700);
   line-height: 1.6;
   margin-bottom: 1.5rem;
 
@@ -227,7 +227,7 @@
 
   li {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: var(--colorGrey600);
     padding: 0.5rem 0;
     position: relative;
     padding-left: 1.5rem;
@@ -293,7 +293,7 @@
   }
 
   &:focus {
-    outline: 2px solid #5d2bc0;
+    outline: 2px solid var(--marketplaceColor);
     outline-offset: 2px;
   }
 
@@ -331,7 +331,7 @@
   height: 6px;
   border-radius: 50%;
   border: none;
-  background: #d1d5db;
+  background: var(--colorGrey200);
   cursor: pointer;
   transition: all 0.3s ease;
   flex-shrink: 0;
@@ -347,7 +347,7 @@
   }
 
   &:focus {
-    outline: 2px solid #5d2bc0;
+    outline: 2px solid var(--marketplaceColor);
     outline-offset: 2px;
   }
 
@@ -367,7 +367,7 @@
   /* Mobile: Card counter */
   text-align: center;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   font-weight: 500;
 }
 
@@ -392,10 +392,10 @@
 
 .desktopBenefitCard {
   /* Tablet: Desktop card styling */
-  background: linear-gradient(135deg, #f8fafe 0%, #ffffff 100%);
+  background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorWhite) 100%);
   padding: 2rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 16px;
+  border: 2px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusLarge);
   text-align: center;
   transition: all 0.3s ease;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -437,7 +437,7 @@
   /* Tablet: Desktop title */
   font-size: 1.25rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--colorGrey800);
   margin-bottom: 0.75rem;
   line-height: 1.2;
 
@@ -465,7 +465,7 @@
 .desktopCardDescription {
   /* Tablet: Desktop description */
   font-size: 1rem;
-  color: #374151;
+  color: var(--colorGrey700);
   line-height: 1.6;
   margin-bottom: 1.5rem;
 
@@ -484,7 +484,7 @@
 
   li {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: var(--colorGrey600);
     padding: 0.5rem 0;
     position: relative;
     padding-left: 1.5rem;
@@ -518,9 +518,9 @@
 
 .ctaCard {
   /* Mobile: CTA card */
-  background: linear-gradient(135deg, #5d2bc0 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--marketplaceColor) 0%, var(--marketplaceColorLight) 100%);
   color: white;
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   padding: 2rem;
   text-align: center;
   display: flex;

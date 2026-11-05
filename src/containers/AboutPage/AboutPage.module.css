@@ -126,7 +126,7 @@
   gap: 12px;
   padding: 18px;
   border: 1px solid var(--colorGrey100);
-  border-radius: 12px;
+  border-radius: var(--borderRadiusLarge);
   background: var(--colorGrey50);
 
   @media (--viewportMedium) {
@@ -193,7 +193,7 @@
   @media (--viewportMedium) {
     margin: 56px 0 0 0;
     padding: 40px 48px 24px 48px;
-    border-radius: 0 12px 12px 0;
+    border-radius: 0 var(--borderRadiusLarge) var(--borderRadiusLarge) 0;
   }
 }
 
@@ -222,7 +222,7 @@
   display: inline-block;
   margin-top: 12px;
   padding: 12px 24px;
-  border-radius: 6px;
+  border-radius: var(--borderRadiusMedium);
   background: var(--marketplaceColor);
   color: var(--colorWhite);
   font-size: 16px;

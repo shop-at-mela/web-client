@@ -24,7 +24,7 @@
 
 .subtitle {
   font-size: 1rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   line-height: 1.5;
   margin: 0 0 1.5rem 0;
   max-width: 400px;
@@ -57,8 +57,8 @@
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusMedium);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
 
@@ -69,7 +69,7 @@
 
   @media (--viewportMedium) {
     padding: 1rem 1.25rem;
-    border-radius: 10px;
+    border-radius: var(--borderRadiusMedium);
   }
 }
 
@@ -94,14 +94,14 @@
 }
 
 .socialProof {
-  background: rgba(93, 43, 192, 0.1);
-  border-radius: 8px;
+  background: var(--colorPrimaryButtonLight);
+  border-radius: var(--borderRadiusMedium);
   padding: 0.75rem 1rem;
   margin-top: 1rem;
 
   @media (--viewportMedium) {
     padding: 1rem 1.25rem;
-    border-radius: 10px;
+    border-radius: var(--borderRadiusMedium);
   }
 }
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { FormattedMessage } from '../../util/reactIntl';
+import { getDisplayMoney } from '../../util/liveInrRate';
 import { types as sdkTypes } from '../../util/sdkLoader';
 import { LISTING_STATE_CLOSED } from '../../util/types';
 import { createResourceLocatorString, findRouteByRouteName } from '../../util/routes';
@@ -164,6 +165,7 @@ export const getDerivedRenderData = ({
   longWordMinLength,
   longWordClassName,
   payoutDetailsWarningClassName,
+  inrToUsdRate,
 }) => {
   const listingConfig = config.listing;
   const listingId = new UUID(rawParams.id);
@@ -243,7 +245,11 @@ export const getDerivedRenderData = ({
   ) : null;
 
   const authorDisplayName = userDisplayNameAsString(ensuredAuthor, '');
-  const { formattedPrice } = priceData(price, config.currency, intl);
+  const { formattedPrice } = priceData(
+    getDisplayMoney(price, publicData, inrToUsdRate),
+    config.currency,
+    intl
+  );
 
   const facebookImages = listingImages(currentListing, 'facebook');
   const twitterImages = listingImages(currentListing, 'twitter');

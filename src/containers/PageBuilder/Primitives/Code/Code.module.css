@@ -6,7 +6,7 @@
   white-space: nowrap;
   background-color: var(--colorGrey100);
   border: 1px solid var(--colorGrey300);
-  border-radius: 4px;
+  border-radius: var(--borderRadius);
 }
 
 .codeBlock {
@@ -15,7 +15,7 @@
   padding: 8px;
   background-color: var(--colorGrey100);
   border: 1px solid var(--colorGrey300);
-  border-radius: 4px;
+  border-radius: var(--borderRadius);
   overflow-x: auto;
 
   & .code {

@@ -1,5 +1,5 @@
 .root {
-  background: #f8fffe;
+  background: var(--colorGrey50);
   padding: 2rem 1rem;
 
   @media (min-width: 640px) {
@@ -19,7 +19,7 @@
 .title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #1a202c;
+  color: var(--colorGrey900);
   text-align: center;
   margin: 0 0 1.25rem;
 
@@ -38,11 +38,11 @@
 }
 
 .item {
-  border-bottom: 1px solid var(--colorGrey100, #e5e5e6);
+  border-bottom: 1px solid var(--colorGrey100);
   padding: 13px 2px;
 
   &:first-child {
-    border-top: 1px solid var(--colorGrey100, #e5e5e6);
+    border-top: 1px solid var(--colorGrey100);
   }
 
   @media (min-width: 768px) {
@@ -65,7 +65,7 @@
   &:focus-visible {
     outline: 2px solid var(--marketplaceColor);
     outline-offset: 4px;
-    border-radius: 4px;
+    border-radius: var(--borderRadius);
   }
 }
 
@@ -98,8 +98,8 @@
     top: 6px;
     width: 14px;
     height: 2px;
-    border-radius: 1px;
-    background: var(--colorGrey500, #7c7c83);
+    border-radius: var(--borderRadius);
+    background: var(--colorGrey500);
   }
 
   &::after {
@@ -114,7 +114,7 @@
 
 .answer {
   font-size: 0.875rem;
-  color: #4a5568;
+  color: var(--colorGrey700);
   margin: 8px 0 0;
   line-height: 1.6;
 
@@ -131,7 +131,7 @@
 
 .byline {
   font-size: 0.75rem;
-  color: #718096;
+  color: var(--colorGrey500);
   text-align: center;
   margin: 1.25rem 0 0;
 }

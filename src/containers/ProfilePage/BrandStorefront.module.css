@@ -21,7 +21,7 @@
   padding: 8px 16px;
   background: var(--colorWhite);
   border: 1px solid var(--colorGrey200);
-  border-radius: 6px;
+  border-radius: var(--borderRadiusMedium);
   color: var(--colorGrey700);
   font-size: 14px;
   font-weight: var(--fontWeightSemiBold);
@@ -46,7 +46,7 @@
    =============================================== */
 .brandHeader {
   width: 100%;
-  background: #fdfaf5;
+  background: var(--colorSurfaceWarm);
   border-bottom: 1px solid var(--colorGrey100);
   margin-bottom: 32px;
 }
@@ -67,7 +67,7 @@
 .heroImgFallback {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, var(--colorAccentLight) 0%, #fdfaf5 100%);
+  background: linear-gradient(135deg, var(--colorAccentLight) 0%, var(--colorSurfaceWarm) 100%);
 }
 
 .madeInIndia {
@@ -82,7 +82,7 @@
   letter-spacing: 1.1px;
   text-transform: uppercase;
   padding: 5px 10px;
-  border-radius: 4px;
+  border-radius: var(--borderRadius);
 }
 
 .logoContainer {
@@ -96,7 +96,7 @@
 .brandLogo {
   width: 64px;
   height: 64px;
-  border-radius: 12px;
+  border-radius: var(--borderRadiusLarge);
   object-fit: cover;
   border: 2px solid var(--colorWhite);
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
@@ -105,7 +105,7 @@
 .logoPlaceholder {
   width: 64px;
   height: 64px;
-  border-radius: 12px;
+  border-radius: var(--borderRadiusLarge);
   background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorGrey100) 100%);
   display: flex;
   align-items: center;
@@ -141,7 +141,7 @@
   letter-spacing: 0.4px;
   text-transform: uppercase;
   padding: 4px 11px;
-  border-radius: 20px;
+  border-radius: var(--borderRadiusPill);
 }
 
 .vettedBadge svg {
@@ -244,7 +244,7 @@
   font-weight: var(--fontWeightSemiBold);
   line-height: 1.45;
   padding: 7px 11px;
-  border-radius: 6px;
+  border-radius: var(--borderRadiusMedium);
   width: fit-content;
 }
 
@@ -265,7 +265,7 @@
   font-weight: var(--fontWeightSemiBold);
   min-height: 48px;
   padding: 13px 22px;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   text-decoration: none;
   border: none;
   cursor: pointer;
@@ -492,7 +492,7 @@
 .brandMission {
   padding: 24px;
   background: var(--colorGrey50);
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   border-left: 4px solid var(--marketplaceColor);
 }
 
@@ -523,7 +523,7 @@
   gap: 6px;
   padding: 8px 14px;
   border: 1px solid var(--colorGrey100);
-  border-radius: 20px;
+  border-radius: var(--borderRadiusPill);
   background: var(--colorWhite);
   color: var(--colorGrey700);
   font-size: 13px;
@@ -547,7 +547,7 @@
 .certificationDetail {
   background: var(--colorWhite);
   border: 1px solid var(--colorGrey100);
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   padding: 20px;
   transition: box-shadow 0.2s ease;
 }
@@ -617,7 +617,7 @@
 .certificationProof {
   padding: 12px;
   background: var(--colorGrey50);
-  border-radius: 6px;
+  border-radius: var(--borderRadiusMedium);
   margin-bottom: 12px;
 }
 
@@ -692,14 +692,14 @@
   padding: 24px;
   background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorWhite) 100%);
   border: 2px dashed var(--colorGrey200);
-  border-radius: 12px;
+  border-radius: var(--borderRadiusLarge);
   margin: 16px 0;
   transition: all 0.3s ease;
 }
 
 .placeholder:hover {
   border-color: var(--marketplaceColor);
-  background: linear-gradient(135deg, #f8fffe 0%, var(--colorWhite) 100%);
+  background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorWhite) 100%);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -734,7 +734,7 @@
   padding: 8px 16px;
   background: var(--marketplaceColor);
   color: var(--colorWhite);
-  border-radius: 6px;
+  border-radius: var(--borderRadiusMedium);
   font-size: 14px;
   font-weight: var(--fontWeightSemiBold);
   text-decoration: none;

@@ -771,7 +771,7 @@
   /* Static map: dimensions are 640px */
   max-width: 640px;
   max-height: 640px;
-  background-color: #eee;
+  background-color: var(--colorGrey100);
   padding: 0;
   border: 0;
   cursor: pointer;
@@ -877,7 +877,7 @@
 .video {
   position: relative;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
 }
 .iframe {
   position: absolute;

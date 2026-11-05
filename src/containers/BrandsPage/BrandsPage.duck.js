@@ -1,4 +1,4 @@
-import { storableError } from '../../util/errors';
+import { isNotFoundError, isTooManyRequestsError, storableError } from '../../util/errors';
 import { pickRandom } from '../../util/listings';
 import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 import {
@@ -22,6 +22,24 @@ import { showBrandProfileDoc } from '../../util/brandProfileCache';
 // per brand; throttling keeps a cold /brands load (24 brands) under
 // Sharetribe's ~1 req/sec Dev rate limit. See util/concurrencyLimit.js.
 const BRAND_FETCH_CONCURRENCY = 5;
+
+// Waits between retries of a rate-limited (429) request.
+const RATE_LIMIT_RETRY_DELAYS_MS = [1000, 2000];
+
+/**
+ * Runs an SDK call, waiting and retrying if it's rate limited. Browser only: holding a server
+ * render open for retries would slow every visitor, and the browser can repair a partial result.
+ */
+const retryOnRateLimit = (call, attempt = 0) =>
+  call().catch(error => {
+    const delay = RATE_LIMIT_RETRY_DELAYS_MS[attempt];
+    if (typeof window === 'undefined' || !isTooManyRequestsError(error) || delay === undefined) {
+      throw error;
+    }
+    return new Promise(resolve => setTimeout(resolve, delay)).then(() =>
+      retryOnRateLimit(call, attempt + 1)
+    );
+  });
 
 // How many bestseller ids to pull from a brand's cached pool per load. We
 // over-fetch a small buffer beyond the 4 shown so closed/out-of-stock ids
@@ -107,9 +125,9 @@ const fetchHeroListings = (sdk, brandUsers) => {
     });
 };
 
-const fetchBestsellerListingsForBrand = (sdk, brandId) => {
-  return sdk.listings
-    .query({
+const fetchBestsellerListingsForBrand = (sdk, brandId, onFailure) => {
+  return retryOnRateLimit(() =>
+    sdk.listings.query({
       'fields.listing': ['title', 'price', 'publicData', 'images'],
       'fields.image': ['variants.square-small', 'variants.square-small2x'],
       'imageVariant.square-small': 'w:400;h:300;fit:crop',
@@ -119,12 +137,14 @@ const fetchBestsellerListingsForBrand = (sdk, brandId) => {
       pub_isBestseller: true,
       perPage: 20,
     })
+  )
     .then(response => {
       const { data = [], included = [] } = response.data || {};
       return { data, included };
     })
     .catch(error => {
       console.warn(`Failed to fetch bestseller listings for brand ${brandId}:`, error);
+      if (onFailure) onFailure();
       return { data: [], included: [] };
     });
 };
@@ -144,9 +164,9 @@ const chunkArray = (arr, size) => {
  * (harvested from a pub_isBestseller query), and closed/out-of-stock ids are
  * silently dropped by the ids filter (hence the over-fetch buffer upstream).
  */
-const queryBestsellersByIds = (sdk, ids) => {
-  return sdk.listings
-    .query({
+const queryBestsellersByIds = (sdk, ids, onFailure) => {
+  return retryOnRateLimit(() =>
+    sdk.listings.query({
       ids,
       include: ['author', 'images'],
       'fields.listing': ['title', 'price', 'publicData', 'images'],
@@ -155,12 +175,14 @@ const queryBestsellersByIds = (sdk, ids) => {
       'imageVariant.square-small2x': 'w:800;h:600;fit:crop',
       perPage: LISTINGS_IDS_PER_QUERY,
     })
+  )
     .then(response => {
       const { data = [], included = [] } = response.data || {};
       return { data, included };
     })
     .catch(error => {
       console.warn('Failed to batch-fetch bestseller listings:', error);
+      if (onFailure) onFailure();
       return { data: [], included: [] };
     });
 };
@@ -176,7 +198,7 @@ const queryBestsellersByIds = (sdk, ids) => {
  * `author_id + pub_isBestseller` query (the production path), throttled so the
  * fallback fan-out can't spike the rate limit either.
  */
-export const fetchBestsellersForBrands = (sdk, brandIds) => {
+export const fetchBestsellersForBrands = (sdk, brandIds, onFailure) => {
   const cachedBrandIds = [];
   const uncachedBrandIds = [];
   brandIds.forEach(id => {
@@ -197,7 +219,7 @@ export const fetchBestsellersForBrands = (sdk, brandIds) => {
     selectedIds.length === 0
       ? Promise.resolve([])
       : Promise.all(
-          chunkArray(selectedIds, LISTINGS_IDS_PER_QUERY).map(ids => queryBestsellersByIds(sdk, ids))
+          chunkArray(selectedIds, LISTINGS_IDS_PER_QUERY).map(ids => queryBestsellersByIds(sdk, ids, onFailure))
         ).then(chunks => {
           const allData = chunks.flatMap(c => c.data);
           const allIncluded = chunks.flatMap(c => c.included);
@@ -222,7 +244,7 @@ export const fetchBestsellersForBrands = (sdk, brandIds) => {
 
   // --- Uncached / production path: per-brand author_id query, throttled. ---
   const uncachedPromise = mapWithConcurrency(uncachedBrandIds, BRAND_FETCH_CONCURRENCY, brandId =>
-    fetchBestsellerListingsForBrand(sdk, brandId).then(result => ({ brandId, ...result }))
+    fetchBestsellerListingsForBrand(sdk, brandId, onFailure).then(result => ({ brandId, ...result }))
   );
 
   return Promise.all([cachedPromise, uncachedPromise]).then(([cached, uncached]) => [
@@ -237,10 +259,12 @@ export const fetchBestsellersForBrands = (sdk, brandIds) => {
  * input order — the same shape the inline `sdk.users.show(...).then(...)` maps
  * used to produce, so callers' downstream filtering is unchanged.
  */
-export const fetchBrandProfiles = (sdk, brandIds) =>
+export const fetchBrandProfiles = (sdk, brandIds, onFailure) =>
   mapWithConcurrency(brandIds, BRAND_FETCH_CONCURRENCY, brandId =>
-    showBrandProfileDoc(sdk, brandId).catch(error => {
+    retryOnRateLimit(() => showBrandProfileDoc(sdk, brandId)).catch(error => {
       console.error(`Failed to fetch brand ${brandId}:`, error);
+      // A 404 is a brand that doesn't exist, so fetching again wouldn't help.
+      if (onFailure && !isNotFoundError(error)) onFailure();
       return null;
     })
   );
@@ -270,6 +294,8 @@ const initialState = {
   pagination: null,
   fetchBrandsInProgress: false,
   fetchBrandsError: null,
+  // True when the last load lost data to a failure that a later load could repair.
+  brandsLoadIncomplete: false,
   fetchFeaturedBrandsInProgress: false,
   fetchFeaturedBrandsError: null,
   fetchHeroBrandsInProgress: false,
@@ -288,14 +314,13 @@ export default function brandsPageReducer(state = initialState, action = {}) {
       };
 
     case FETCH_BRANDS_SUCCESS:
-      // Append brand IDs on pagination, replace on first page
-      const shouldAppend = payload.pagination.page > 1;
+      // Keep brands already loaded. A failed request means we don't know about a brand, not that
+      // it's gone, so a later load must never remove one from the page.
       return {
         ...state,
-        brandIds: shouldAppend
-          ? [...state.brandIds, ...payload.brandIds]
-          : payload.brandIds,
+        brandIds: [...new Set([...state.brandIds, ...payload.brandIds])],
         pagination: payload.pagination,
+        brandsLoadIncomplete: !!payload.incomplete,
         fetchBrandsInProgress: false,
       };
 
@@ -351,7 +376,7 @@ export default function brandsPageReducer(state = initialState, action = {}) {
     case SET_BESTSELLER_PRODUCTS:
       return {
         ...state,
-        bestsellerProductsByBrand: payload,
+        bestsellerProductsByBrand: { ...state.bestsellerProductsByBrand, ...payload },
       };
 
     default:
@@ -365,9 +390,9 @@ export const fetchBrandsRequest = () => ({
   type: FETCH_BRANDS_REQUEST,
 });
 
-export const fetchBrandsSuccess = (brandIds, pagination) => ({
+export const fetchBrandsSuccess = (brandIds, pagination, incomplete = false) => ({
   type: FETCH_BRANDS_SUCCESS,
-  payload: { brandIds, pagination },
+  payload: { brandIds, pagination, incomplete },
 });
 
 export const fetchBrandsError = error => ({
@@ -419,9 +444,22 @@ export const setBestsellerProducts = bestsellersByBrand => ({
  * Also batch-fetches featured products for all brands in one query (performance optimization)
  */
 export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
+  const { page = 1, perPage = 24 } = params;
+
+  // The browser re-runs loadData right after a server render. Refetching all that data again
+  // wastes the API rate limit and is what used to shrink the page, so reuse a complete result.
+  const { brandIds: loadedBrandIds, brandsLoadIncomplete, pagination: loadedPagination } =
+    getState().BrandsPage;
+  if (loadedBrandIds.length > 0 && !brandsLoadIncomplete && loadedPagination?.page === page) {
+    return Promise.resolve();
+  }
+
   dispatch(fetchBrandsRequest());
 
-  const { page = 1, perPage = 24 } = params;
+  let incomplete = false;
+  const markIncomplete = () => {
+    incomplete = true;
+  };
 
   // Get brand IDs from config
   const { brandIds, totalPages, totalItems } = getPaginatedBrandIds(page, perPage);
@@ -441,21 +479,22 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
 
   // Fetch brand profiles (throttled + TTL-cached) and bestseller listings
   // (batched by cached ids where available, else the live author_id query).
-  const brandsPromise = fetchBrandProfiles(sdk, brandIds);
-  const bestsellersPromise = fetchBestsellersForBrands(sdk, brandIds);
+  const brandsPromise = fetchBrandProfiles(sdk, brandIds, markIncomplete);
+  const bestsellersPromise = fetchBestsellersForBrands(sdk, brandIds, markIncomplete);
 
   // Batch fetch ALL featured products for these brands in ONE query (performance optimization)
   const allProductIds = getFeaturedProductIds(brandIds);
   const productsPromise =
     allProductIds.length > 0
-      ? sdk.listings
-          .query({
+      ? retryOnRateLimit(() =>
+          sdk.listings.query({
             ids: allProductIds,
             include: ['images'],
             'fields.listing': ['title', 'price', 'publicData'],
             'fields.image': ['variants.square-small', 'variants.square-small2x'],
             perPage: 100, // Fetch up to 100 products (4 per brand * 24 brands = 96 max)
           })
+        )
           .then(response => {
             if (response && response.data) {
               return response.data;
@@ -465,6 +504,7 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
           })
           .catch(error => {
             console.error('Failed to fetch featured products:', error);
+            markIncomplete();
             return { data: [], included: [] };
           })
       : Promise.resolve({ data: [], included: [] });
@@ -614,12 +654,16 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
       // Store brand IDs, bestseller products info, and pagination
       const successfulBrandIds = validUsers.map(user => user.id.uuid);
       dispatch(
-        fetchBrandsSuccess(successfulBrandIds, {
-          page,
-          perPage,
-          totalPages,
-          totalItems,
-        })
+        fetchBrandsSuccess(
+          successfulBrandIds,
+          {
+            page,
+            perPage,
+            totalPages,
+            totalItems,
+          },
+          incomplete
+        )
       );
 
       // Store bestseller products metadata for selector to use

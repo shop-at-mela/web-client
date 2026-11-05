@@ -127,19 +127,22 @@
   --spacingUnitDesktop: 8px;
 
   /* Shadows */
-  --boxShadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
-  --boxShadowTop: 0 -2px 4px 0 rgba(0, 0, 0, 0.1);
-  --boxShadowLight: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
-  --boxShadowPopup: 0 8px 16px 0 rgba(0, 0, 0, 0.3);
-  --boxShadowPopupLight: 0 3px 6px 0 rgba(0, 0, 0, 0.2);
-  --boxShadowBreakdown: 0 3px 6px 0 rgba(0, 0, 0, 0.2);
-  --boxShadowButton: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
-  --boxShadowListingCard: 0 0 50px 0 rgba(0, 0, 0, 0.1);
-  --boxShadowFeaturedListingCard: 0 0 30px 0px rgba(0, 0, 0, 0.1);
-  --boxShadowNotFoundPageSearch: 0 2px 4px 0 rgba(0, 0, 0, 0.5);
-  --boxShadowSectionLocationHover: 0 10px 30px 0 rgba(0, 0, 0, 0.1);
-  --boxShadowBottomForm: 0 -2px 4px 0 rgba(0, 0, 0, 0.05);
-  --boxShadowFilterButton: 0 4px 16px 0 rgba(0, 0, 0, 0.2);
+  /* Three-level, brand-navy tinted scale.
+   * low: cards, light surfaces | medium: buttons, sticky bars | high: popups, sheets.
+   * Top / BottomForm cast upward (bars pinned to the bottom edge). */
+  --boxShadow: 0 2px 8px 0 rgba(38, 34, 97, 0.08);
+  --boxShadowTop: 0 -4px 12px 0 rgba(38, 34, 97, 0.14);
+  --boxShadowLight: 0 2px 8px 0 rgba(38, 34, 97, 0.08);
+  --boxShadowPopup: 0 12px 32px 0 rgba(38, 34, 97, 0.22);
+  --boxShadowPopupLight: 0 4px 12px 0 rgba(38, 34, 97, 0.14);
+  --boxShadowBreakdown: 0 2px 8px 0 rgba(38, 34, 97, 0.08);
+  --boxShadowButton: 0 4px 12px 0 rgba(38, 34, 97, 0.14);
+  --boxShadowListingCard: 0 2px 8px 0 rgba(38, 34, 97, 0.08);
+  --boxShadowFeaturedListingCard: 0 2px 8px 0 rgba(38, 34, 97, 0.08);
+  --boxShadowNotFoundPageSearch: 0 4px 12px 0 rgba(38, 34, 97, 0.14);
+  --boxShadowSectionLocationHover: 0 4px 12px 0 rgba(38, 34, 97, 0.14);
+  --boxShadowBottomForm: 0 -2px 8px 0 rgba(38, 34, 97, 0.08);
+  --boxShadowFilterButton: 0 4px 12px 0 rgba(38, 34, 97, 0.14);
 
   /* ================ Z-index base levels ================ */
 
@@ -154,8 +157,10 @@
 
   /* ================ Border radius ================ */
 
-  --borderRadius: 2px;
-  --borderRadiusMedium: 4px;
+  --borderRadius: 4px;
+  --borderRadiusMedium: 8px;
+  --borderRadiusLarge: 16px;
+  --borderRadiusPill: 999px;
 
   /* ================ Transition styles ================ */
 
@@ -500,11 +505,11 @@ select {
 
   /* 6 + 24 + 4 + borders are divisible by 6 */
   padding: 6px 12px 4px 12px;
-  background-color: #fff;
+  background-color: var(--colorWhite);
 
   /* Borders */
-  border-radius: 6px;
-  border: 1px solid #d8dce6;
+  border-radius: var(--borderRadiusMedium);
+  border: 1px solid var(--colorGrey100);
   outline: none;
 
   /* Transition */
@@ -533,12 +538,12 @@ select {
 }
 /* Effects */
 select:hover {
-  border: 1px solid #b8bfd1;
+  border: 1px solid var(--colorGrey200);
   transition: all ease-in-out 100ms;
 }
 select:focus {
-  background-color: #fff;
-  border-color: #80bdff;
+  background-color: var(--colorWhite);
+  border-color: var(--marketplaceColor);
   box-shadow: 0 0 0 0.2rem rgb(0 123 255 / 25%);
   transition: all ease-in-out 100ms;
 }
@@ -561,11 +566,11 @@ textarea {
 
   /* 6 + 24 + 4 + borders are divisible by 6 */
   padding: 6px 12px 4px 12px;
-  background-color: #fff;
+  background-color: var(--colorWhite);
 
   /* Borders */
-  border-radius: 6px;
-  border: 1px solid #d8dce6;
+  border-radius: var(--borderRadiusMedium);
+  border: 1px solid var(--colorGrey100);
   outline: none;
 
   /* Transition */
@@ -584,13 +589,13 @@ textarea {
 /* Effects */
 input:hover,
 textarea:hover {
-  border: 1px solid #b8bfd1;
+  border: 1px solid var(--colorGrey200);
   transition: all ease-in-out 100ms;
 }
 input:focus,
 textarea:focus {
-  background-color: #fff;
-  border-color: #80bdff;
+  background-color: var(--colorWhite);
+  border-color: var(--marketplaceColor);
   box-shadow: 0 0 0 0.2rem rgb(0 123 255 / 25%);
   transition: all ease-in-out 100ms;
 }
@@ -908,11 +913,11 @@ textarea {
 
   /* 6 + 24 + 4 + borders are divisible by 6 */
   padding: 6px 12px 4px 12px;
-  background-color: #fff;
+  background-color: var(--colorWhite);
 
   /* Borders */
-  border-radius: 6px;
-  border: 1px solid #d8dce6;
+  border-radius: var(--borderRadiusMedium);
+  border: 1px solid var(--colorGrey100);
   outline: none;
 
   /* Transition */
@@ -930,12 +935,12 @@ textarea {
 }
 /* Effects */
 .marketplaceInputStyles:hover {
-  border: 1px solid #b8bfd1;
+  border: 1px solid var(--colorGrey200);
   transition: all ease-in-out 100ms;
 }
 .marketplaceInputStyles:focus {
-  background-color: #fff;
-  border-color: #80bdff;
+  background-color: var(--colorWhite);
+  border-color: var(--marketplaceColor);
   box-shadow: 0 0 0 0.2rem rgb(0 123 255 / 25%);
   transition: all ease-in-out 100ms;
 }

@@ -290,7 +290,7 @@ describe('MelaHomePage', () => {
 
     it('states the reviewed date as the bumped HOMEPAGE_LAST_UPDATED', () => {
       const { container } = renderPage();
-      expect(HOMEPAGE_LAST_UPDATED).toBe('2026-11-01');
+      expect(HOMEPAGE_LAST_UPDATED).toBe('2026-11-04');
       expect(container.textContent).toContain(`Last reviewed ${HOMEPAGE_LAST_UPDATED}`);
     });
 
@@ -313,7 +313,7 @@ describe('MelaHomePage', () => {
 
     it('leads with a What is Mela? answer that names Mela and where shoppers buy', () => {
       expect(FAQ_ITEMS[0].question).toBe('What is Mela?');
-      expect(FAQ_ITEMS[0].answer).toMatch(/^Mela is a curated marketplace of independent Indian brands/);
+      expect(FAQ_ITEMS[0].answer).toMatch(/^Mela is a curation of independent Indian brands/);
       expect(FAQ_ITEMS[0].answer).toMatch(/buy on the brand's own store/);
     });
 

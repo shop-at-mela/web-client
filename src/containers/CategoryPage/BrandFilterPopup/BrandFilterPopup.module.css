@@ -64,7 +64,7 @@
   cursor: pointer;
   padding: 6px 8px;
   margin: 0 -8px;
-  border-radius: 6px;
+  border-radius: var(--borderRadiusMedium);
 }
 
 .optionBtn:hover {

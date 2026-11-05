@@ -7,7 +7,7 @@
   padding: 6px 10px;
   background: var(--colorWhite);
   border: 1px solid var(--colorGrey100);
-  border-radius: 6px;
+  border-radius: var(--borderRadiusMedium);
   font-size: 11px;
   font-weight: var(--fontWeightSemiBold);
   color: var(--colorGrey700);
@@ -35,7 +35,7 @@
 
 .icon-only {
   padding: 4px;
-  border-radius: 4px;
+  border-radius: var(--borderRadius);
 }
 
 /* Hover effect for tooltips */
@@ -69,7 +69,7 @@
   background: var(--colorGrey700);
   color: var(--colorWhite);
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: var(--borderRadiusMedium);
   font-size: 12px;
   font-weight: var(--fontWeightRegular);
   text-align: center;

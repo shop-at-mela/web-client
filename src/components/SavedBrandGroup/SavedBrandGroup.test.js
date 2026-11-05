@@ -7,6 +7,7 @@ import { types as sdkTypes } from '../../util/sdkLoader';
 import { createListing, createStock } from '../../util/testData';
 
 import SavedBrandGroup from './SavedBrandGroup';
+import { setInitialInrToUsdRate } from '../../util/liveInrRate';
 
 const { Money } = sdkTypes;
 
@@ -86,6 +87,22 @@ describe('SavedBrandGroup', () => {
       ],
     });
     expect(screen.getByText('$35')).toBeInTheDocument();
+  });
+
+  it('totals INR-sourced items at the live rate, never their stored price', () => {
+    setInitialInrToUsdRate(0.0105);
+    const listing = createListing(
+      'l1',
+      {
+        title: 'l1 title',
+        price: new Money(4651, 'USD'),
+        publicData: { brand: 'Nicobar', productUrl: 'https://nicobar.example/p', priceInINR: 3860 },
+      },
+      { author: { id: { uuid: 'Nicobar-author' } } }
+    );
+    renderGroup({ brandName: 'Nicobar', listings: [listing] });
+    expect(screen.getByText('$41')).toBeInTheDocument();
+    expect(screen.queryByText('$47')).not.toBeInTheDocument();
   });
 
   it('suppresses the subtotal when currencies differ', () => {

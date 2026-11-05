@@ -25,10 +25,10 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
-  border-top: 1px solid #e2e8f0;
+  background: var(--colorWhite);
+  border-top: 1px solid var(--colorGrey100);
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
-  border-radius: 16px 16px 0 0;
+  border-radius: var(--borderRadiusLarge) var(--borderRadiusLarge) 0 0;
   z-index: 999;
   display: flex;
   flex-direction: column;
@@ -54,8 +54,8 @@
     right: auto;
     transform: translateX(-50%);
     width: 480px;
-    border-left: 1px solid #e2e8f0;
-    border-right: 1px solid #e2e8f0;
+    border-left: 1px solid var(--colorGrey100);
+    border-right: 1px solid var(--colorGrey100);
   }
 
   .sheet.expanded {
@@ -69,8 +69,8 @@
 .handle {
   width: 36px;
   height: 4px;
-  background: #e2e8f0;
-  border-radius: 2px;
+  background: var(--colorGrey100);
+  border-radius: var(--borderRadius);
   margin: 12px auto 0;
   flex-shrink: 0;
 }
@@ -84,7 +84,7 @@
 .trustHeading {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #1a202c;
+  color: var(--colorGrey900);
   margin-bottom: 0.625rem;
   line-height: 1.4;
 }
@@ -100,7 +100,7 @@
 
 .trustList li {
   font-size: 0.875rem;
-  color: #4a5568;
+  color: var(--colorGrey700);
   line-height: 1.4;
 }
 
@@ -108,7 +108,7 @@
 
 .divider {
   height: 1px;
-  background: #f0f0f0;
+  background: var(--colorGrey50);
   margin: 0;
   flex-shrink: 0;
 }
@@ -126,7 +126,7 @@
 .sentimentPrompt {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #2d3748;
+  color: var(--colorGrey800);
   flex: 1;
 }
 
@@ -139,8 +139,8 @@
 
 .thumbBtn {
   background: none;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1.5px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusMedium);
   width: 40px;
   height: 36px;
   font-size: 1.125rem;
@@ -153,12 +153,12 @@
 }
 
 .thumbBtn:hover {
-  border-color: var(--marketplaceColor, #262261);
+  border-color: var(--marketplaceColor);
   background: rgba(38, 34, 97, 0.04);
 }
 
 .thumbBtn.thumbSelected {
-  border-color: var(--marketplaceColor, #262261);
+  border-color: var(--marketplaceColor);
   background: rgba(38, 34, 97, 0.08);
 }
 
@@ -176,17 +176,17 @@
 .textPrompt {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #1a202c;
+  color: var(--colorGrey900);
   margin: 0;
 }
 
 .textarea {
   width: 100%;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1.5px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusMedium);
   padding: 0.625rem 0.75rem;
   font-size: 0.875rem;
-  color: #2d3748;
+  color: var(--colorGrey800);
   resize: none;
   font-family: inherit;
   line-height: 1.5;
@@ -196,11 +196,11 @@
 
 .textarea:focus {
   outline: none;
-  border-color: var(--marketplaceColor, #262261);
+  border-color: var(--marketplaceColor);
 }
 
 .textarea::placeholder {
-  color: #a0aec0;
+  color: var(--colorGrey400);
 }
 
 .emailField {
@@ -212,16 +212,16 @@
 .emailLabel {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #4a5568;
+  color: var(--colorGrey700);
 }
 
 .emailInput {
   width: 100%;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1.5px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusMedium);
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
-  color: #2d3748;
+  color: var(--colorGrey800);
   font-family: inherit;
   transition: border-color 0.15s;
   box-sizing: border-box;
@@ -229,11 +229,11 @@
 
 .emailInput:focus {
   outline: none;
-  border-color: var(--marketplaceColor, #262261);
+  border-color: var(--marketplaceColor);
 }
 
 .emailInput::placeholder {
-  color: #a0aec0;
+  color: var(--colorGrey400);
 }
 
 .emailInputError {
@@ -256,10 +256,10 @@
 }
 
 .submitBtn {
-  background: var(--marketplaceColor, #262261);
-  color: #fff;
+  background: var(--marketplaceColor);
+  color: var(--colorWhite);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
@@ -269,21 +269,21 @@
 }
 
 .submitBtn:hover {
-  background: var(--marketplaceColorDark, #1a1744);
+  background: var(--marketplaceColorDark);
 }
 
 .skipBtn {
   background: none;
   border: none;
   font-size: 0.875rem;
-  color: #718096;
+  color: var(--colorGrey500);
   cursor: pointer;
   padding: 0;
   text-decoration: underline;
 }
 
 .skipBtn:hover {
-  color: #2d3748;
+  color: var(--colorGrey800);
 }
 
 /* ── Thank-you ── */
@@ -292,7 +292,7 @@
   padding: 0.75rem 1.25rem;
   font-size: 0.9375rem;
   font-weight: 500;
-  color: #2d3748;
+  color: var(--colorGrey800);
 }
 
 /* ── CTA row — always pinned at bottom ── */
@@ -303,15 +303,15 @@
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
-  background: #fff;
+  background: var(--colorWhite);
 }
 
 .continueBtn {
   flex: 1;
-  background: var(--marketplaceColor, #262261);
-  color: #fff;
+  background: var(--marketplaceColor);
+  color: var(--colorWhite);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   padding: 0.75rem 1rem;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -322,7 +322,7 @@
 }
 
 .continueBtn:hover {
-  background: var(--marketplaceColorDark, #1a1744);
+  background: var(--marketplaceColorDark);
 }
 
 .continueBtnDisabled {
@@ -333,7 +333,7 @@
 }
 
 .continueBtnDisabled:hover {
-  background: var(--marketplaceColor, #262261);
+  background: var(--marketplaceColor);
   opacity: 0.5;
 }
 
@@ -353,11 +353,11 @@
 
 .dismissBtn {
   background: none;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1.5px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusMedium);
   padding: 0 0.875rem;
   font-size: 0.875rem;
-  color: #718096;
+  color: var(--colorGrey500);
   cursor: pointer;
   height: 48px;
   white-space: nowrap;
@@ -365,8 +365,8 @@
 }
 
 .dismissBtn:hover {
-  border-color: #a0aec0;
-  color: #2d3748;
+  border-color: var(--colorGrey300);
+  color: var(--colorGrey800);
 }
 
 /* Visually hidden, still readable by screen readers — announces the Continue button's

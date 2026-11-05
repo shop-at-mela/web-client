@@ -3,9 +3,9 @@
 .root {
   display: flex;
   flex-direction: column;
-  background: var(--colorWhite, #fff);
-  border: 1px solid var(--colorGrey100, #eae6dd);
-  border-radius: 16px;
+  background: var(--colorWhite);
+  border: 1px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusLarge);
   overflow: hidden;
   box-shadow: 0 2px 14px rgba(38, 34, 97, 0.07);
 }
@@ -21,9 +21,9 @@
   z-index: 2;
   width: 34px;
   height: 34px;
-  border-radius: 9px;
+  border-radius: var(--borderRadiusMedium);
   background: var(--marketplaceColor);
-  color: #fff;
+  color: var(--colorWhite);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -58,14 +58,14 @@
   display: flex;
   gap: 6px;
   padding: 8px;
-  background: var(--colorGrey50, #f7f5f0);
+  background: var(--colorGrey50);
 }
 
 .thumb {
   flex: 1;
   padding: 0;
   border: 2px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   overflow: hidden;
   background: none;
   cursor: pointer;
@@ -79,7 +79,7 @@
 }
 
 .thumbActive {
-  border-color: var(--colorAccent, #f0a030);
+  border-color: var(--colorAccent);
 }
 
 .info {
@@ -95,7 +95,7 @@
   font-weight: var(--fontWeightSemiBold, 600);
   font-size: 16px;
   line-height: 1.2;
-  color: var(--colorGrey900, #23233f);
+  color: var(--colorGrey900);
   margin: 0;
 }
 
@@ -103,6 +103,6 @@
   font-family: var(--fontFamilyBody);
   font-size: 12.5px;
   line-height: 1.4;
-  color: var(--colorGrey500, #6a6a80);
+  color: var(--colorGrey500);
   margin: 4px 0 0;
 }

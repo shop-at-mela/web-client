@@ -62,7 +62,7 @@
   border-style: dashed;
   border-color: var(--colorGrey100);
   border-width: 2px;
-  border-radius: 2px;
+  border-radius: var(--borderRadius);
 
   /* Behaviour */
   cursor: pointer;

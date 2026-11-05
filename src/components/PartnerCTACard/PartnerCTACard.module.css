@@ -4,8 +4,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #f8fffe 0%, #ffffff 100%);
+  border-radius: var(--borderRadiusLarge);
+  background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorWhite) 100%);
   border: 2px dashed var(--marketplaceColor);
   overflow: hidden;
   transition: all 0.3s ease;
@@ -58,7 +58,7 @@
   padding: 12px 24px;
   background: transparent;
   border: 2px solid var(--marketplaceColor);
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   color: var(--marketplaceColor);
   font-size: 15px;
   font-weight: var(--fontWeightSemiBold);

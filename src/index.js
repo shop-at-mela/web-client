@@ -46,6 +46,7 @@ import { initAnonSaved } from './ducks/savedListings.duck';
 import routeConfiguration from './routing/routeConfiguration';
 // App it self
 import { ClientApp, renderApp } from './app';
+import { setInitialInrToUsdRate } from './util/liveInrRate';
 
 const render = (store, shouldHydrate) => {
   // If the server already loaded the auth information, render the app
@@ -136,7 +137,9 @@ if (typeof window !== 'undefined') {
   // first hit. Canonical/og:url drop tracking params in canonicalRoutePath instead.
 
   const preloadedState = window.__PRELOADED_STATE__ || '{}';
-  const initialState = JSON.parse(preloadedState, sdkTypes.reviver);
+  const { inrToUsdRate, ...initialState } = JSON.parse(preloadedState, sdkTypes.reviver);
+  // Before the first render, so hydration uses the same rate the server rendered with.
+  setInitialInrToUsdRate(inrToUsdRate);
   // `sdk` (imported above) is the single shared browser SDK instance — do not create
   // a second `createInstance(...)` here. Two independent SDK clients built from
   // identical config default to the same cookie-backed token store (keyed only by

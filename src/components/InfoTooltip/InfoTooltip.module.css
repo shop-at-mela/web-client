@@ -61,7 +61,7 @@
   z-index: 20;
   box-sizing: border-box;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   background-color: var(--colorGrey700);
   color: var(--colorWhite);
   box-shadow: var(--boxShadowPopup);

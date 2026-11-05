@@ -2,7 +2,7 @@
 
 .root {
   position: relative;
-  background: #fdfaf5;
+  background: var(--colorSurfaceWarm);
   border-top: 1px solid var(--colorGrey100);
   /* Top padding matches the other bordered sections' rhythm (.comingSoonSection,
      .trustSection in MelaHomePage.module.css) so the title doesn't sit flush
@@ -40,7 +40,7 @@
 .tile {
   position: relative;
   height: 110px;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   overflow: hidden;
   display: flex;
   align-items: flex-end;

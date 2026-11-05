@@ -61,7 +61,7 @@
 .categoryPill {
   flex-shrink: 0;
   padding: 7px 16px;
-  border-radius: 20px;
+  border-radius: var(--borderRadiusPill);
   border: 1.5px solid var(--colorGrey200);
   background: var(--colorWhite);
   color: var(--colorGrey700);

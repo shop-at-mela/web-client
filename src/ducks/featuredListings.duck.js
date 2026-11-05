@@ -60,6 +60,7 @@ const fetchFeaturedListingsPayloadCreator = async (arg, thunkAPI) => {
           'deleted',
           'state',
           'publicData.listingType',
+          'publicData.priceInINR',
           'publicData.transactionProcessAlias',
           'publicData.unitType',
           'publicData.cardStyle',

@@ -5,7 +5,7 @@
 .section {
   /* Mobile: Comfortable section spacing */
   padding: 3rem 0;
-  background: #fafbfc;
+  background: var(--colorGrey50);
 
   /* Tablet: More spacing */
   @media (--viewportMedium) {
@@ -60,7 +60,7 @@
   /* Mobile: Clear title */
   font-size: 1.75rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--colorGrey800);
   margin-bottom: 1rem;
   line-height: 1.2;
 
@@ -84,7 +84,7 @@
 .subtitle {
   /* Mobile: Readable subtitle */
   font-size: 1.125rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   line-height: 1.5;
   margin: 0;
 
@@ -108,7 +108,7 @@
 .stepCard {
   /* Mobile: Card-based step */
   background: white;
-  border-radius: 12px;
+  border-radius: var(--borderRadiusLarge);
   margin-bottom: 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -117,8 +117,8 @@
   box-sizing: border-box;
 
   &.active {
-    box-shadow: 0 4px 20px rgba(93, 43, 192, 0.15);
-    border: 2px solid #5d2bc0;
+    box-shadow: 0 4px 20px rgba(38, 34, 97, 0.15);
+    border: 2px solid var(--marketplaceColor);
   }
 }
 
@@ -137,7 +137,7 @@
   box-sizing: border-box;
 
   &:focus {
-    outline: 2px solid #5d2bc0;
+    outline: 2px solid var(--marketplaceColor);
     outline-offset: 2px;
   }
 
@@ -152,7 +152,7 @@
   /* Mobile: Prominent step number */
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #5d2bc0 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--marketplaceColor) 0%, var(--marketplaceColorLight) 100%);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -173,7 +173,7 @@
   /* Mobile: Bold step title */
   font-size: 1.125rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--colorGrey800);
   margin-bottom: 0.25rem;
   line-height: 1.3;
 }
@@ -181,7 +181,7 @@
 .stepShortDesc {
   /* Mobile: Brief description */
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   line-height: 1.4;
 }
 
@@ -194,7 +194,7 @@
 .expandIcon {
   /* Mobile: Expand/collapse indicator */
   font-size: 1.25rem;
-  color: #5d2bc0;
+  color: var(--marketplaceColor);
   font-weight: 700;
   flex-shrink: 0;
   width: 24px;
@@ -221,7 +221,7 @@
 .stepFullDesc {
   /* Mobile: Full description */
   font-size: 1rem;
-  color: #374151;
+  color: var(--colorGrey700);
   line-height: 1.6;
   margin-bottom: 1rem;
 }
@@ -234,9 +234,9 @@
 
   li {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: var(--colorGrey600);
     padding: 0.5rem 0;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--colorGrey50);
     position: relative;
     padding-left: 1.5rem;
 
@@ -293,7 +293,7 @@
   /* Tablet: Large step number */
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #5d2bc0 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--marketplaceColor) 0%, var(--marketplaceColorLight) 100%);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -329,7 +329,7 @@
   /* Tablet: Step title */
   font-size: 1.375rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--colorGrey800);
   margin-bottom: 1rem;
 
   /* Desktop: Optimized title */
@@ -342,7 +342,7 @@
 .desktopStepDesc {
   /* Tablet: Step description */
   font-size: 1.125rem;
-  color: #374151;
+  color: var(--colorGrey700);
   line-height: 1.6;
   margin-bottom: 1.5rem;
 
@@ -368,7 +368,7 @@
 
   li {
     font-size: 1rem;
-    color: #6b7280;
+    color: var(--colorGrey600);
     position: relative;
     padding-left: 1.5rem;
 
@@ -394,7 +394,7 @@
   top: 80px;
   width: 2px;
   height: 60px;
-  background: linear-gradient(180deg, #5d2bc0 0%, #e5e7eb 100%);
+  background: linear-gradient(180deg, var(--marketplaceColor) 0%, var(--colorGrey100) 100%);
 
   /* Desktop: Adjusted position */
   @media (--viewportLarge) {
@@ -421,8 +421,8 @@
   align-items: center;
   gap: 1rem;
   background: linear-gradient(135deg, rgba(38, 34, 97, 0.05) 0%, rgba(240, 160, 48, 0.05) 100%);
-  border: 2px solid #262261;
-  border-radius: 16px;
+  border: 2px solid var(--marketplaceColor);
+  border-radius: var(--borderRadiusLarge);
   padding: 1.25rem;
 
   /* Tablet: More padding */

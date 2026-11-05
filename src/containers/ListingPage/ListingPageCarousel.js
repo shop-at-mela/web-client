@@ -39,6 +39,7 @@ import {
   ensureUser,
   userDisplayNameAsString,
 } from '../../util/data';
+import { getDisplayMoney, useLiveInrToUsdRate } from '../../util/liveInrRate';
 import { richText } from '../../util/richText';
 import { getItemSpecificsAttributes, getItemAspectsForSEO } from '../../util/itemAspectsHelpers';
 import { getBrandUsShipping, getDutiesTypeForAnalytics } from '../../util/brandShipping';
@@ -126,6 +127,7 @@ import css from './ListingPage.module.css';
 const MIN_LENGTH_FOR_LONG_WORDS_IN_TITLE = 16;
 
 export const ListingPageComponent = props => {
+  const inrToUsdRate = useLiveInrToUsdRate();
   const [inquiryModalOpen, setInquiryModalOpen] = useState(
     props.inquiryModalOpenForListingId === props.params.id
   );
@@ -175,6 +177,7 @@ export const ListingPageComponent = props => {
   } = props;
 
   const derivedData = getDerivedRenderData({
+    inrToUsdRate,
     rawParams,
     getListing,
     getOwnListing,
@@ -377,7 +380,7 @@ export const ListingPageComponent = props => {
     : currentStock > 0
     ? 'https://schema.org/InStock'
     : 'https://schema.org/OutOfStock';
-  const schemaOffer = priceForSchemaMaybe(price);
+  const schemaOffer = priceForSchemaMaybe(getDisplayMoney(price, publicData, inrToUsdRate));
 
   return (
     <Page

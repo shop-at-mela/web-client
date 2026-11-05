@@ -509,6 +509,7 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
         'publicData.cardStyle',
         'publicData.certification',
         'publicData.isBestseller',
+        'publicData.priceInINR',
         // These help rendering of 'purchase' listings,
         // when transitioning from search page to listing page
         'publicData.pickupEnabled',

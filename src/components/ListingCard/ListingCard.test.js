@@ -8,6 +8,7 @@ import { types as sdkTypes } from '../../util/sdkLoader';
 
 import { ListingCard } from './ListingCard';
 import { stripTrailingBrand, isSameBrandName } from './ListingCard.helpers';
+import { setInitialInrToUsdRate } from '../../util/liveInrRate';
 
 const { Money } = sdkTypes;
 
@@ -153,6 +154,10 @@ describe('ListingCard', () => {
   });
 
   describe('INR equivalent price', () => {
+    beforeAll(() => {
+      setInitialInrToUsdRate(0.0105);
+    });
+
     it('shows INR price when priceInINR is in publicData', () => {
       const listing = createListing(
         'listing1',

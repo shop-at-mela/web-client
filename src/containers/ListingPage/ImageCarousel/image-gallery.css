@@ -5,7 +5,7 @@
  * Spacing: 2, 4, 8, 12, 16, 20, 24, 32, 48, 64, 80, 96, 120px
  * 
  * CSS Custom Properties for theming:
- * --ig-primary-color: Primary/accent color (default: #337ab7)
+ * --ig-primary-color: Primary/accent color (default: var(--marketplaceColor))
  * --ig-white: Icon and text color (default: #fff)
  * --ig-black: Background color in fullscreen (default: #000)
  * --ig-background-overlay: Overlay background (default: rgba(0, 0, 0, 0.4))
@@ -18,7 +18,9 @@
  */
 
  :root {
-  --ig-primary-color: #337ab7;
+  --ig-primary-color: var(--marketplaceColor);
+  /* Navy is unreadable over photos; icons/bullets on the image use amber / a white ring */
+  --ig-on-image-accent: var(--colorAccent);
   --ig-white: #fff;
   --ig-black: #000;
   --ig-background-overlay: rgba(0, 0, 0, 0.4);
@@ -49,7 +51,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .image-gallery-icon:hover {
-    color: var(--ig-primary-color, #337ab7);
+    color: var(--ig-on-image-accent);
   }
   .image-gallery-icon:hover .image-gallery-svg {
     transform: scale(1.1);
@@ -57,7 +59,7 @@
 }
 
 .image-gallery-icon:focus {
-  outline: 2px solid var(--ig-primary-color, #337ab7);
+  outline: 2px solid var(--ig-on-image-accent);
 }
 
 .image-gallery-using-mouse .image-gallery-icon:focus {
@@ -437,8 +439,8 @@
 
 .image-gallery-bullets .image-gallery-bullet:focus {
   transform: scale(1.2);
-  background: var(--ig-primary-color, #337ab7);
-  border: 1px solid var(--ig-primary-color, #337ab7);
+  background: var(--ig-primary-color);
+  border: 1px solid var(--ig-white, #fff);
 }
 
 .image-gallery-bullets .image-gallery-bullet.active {
@@ -449,11 +451,11 @@
 
 @media (hover: hover) and (pointer: fine) {
   .image-gallery-bullets .image-gallery-bullet:hover {
-    background: var(--ig-primary-color, #337ab7);
-    border: 1px solid var(--ig-primary-color, #337ab7);
+    background: var(--ig-primary-color);
+    border: 1px solid var(--ig-white, #fff);
   }
   .image-gallery-bullets .image-gallery-bullet.active:hover {
-    background: var(--ig-primary-color, #337ab7);
+    background: var(--ig-primary-color);
   }
 }
 
@@ -627,14 +629,14 @@
 .image-gallery-thumbnail:focus {
   outline: none;
   border: var(--ig-thumbnail-border-width, 4px) solid
-    var(--ig-primary-color, #337ab7);
+    var(--ig-primary-color);
 }
 
 @media (max-width: 768px) {
   .image-gallery-thumbnail.active,
   .image-gallery-thumbnail:focus {
     border: var(--ig-thumbnail-border-width-small, 3px) solid
-      var(--ig-primary-color, #337ab7);
+      var(--ig-primary-color);
   }
 }
 
@@ -642,14 +644,14 @@
   .image-gallery-thumbnail:hover {
     outline: none;
     border: var(--ig-thumbnail-border-width, 4px) solid
-      var(--ig-primary-color, #337ab7);
+      var(--ig-primary-color);
   }
 }
 
 @media (hover: hover) and (pointer: fine) and (max-width: 768px) {
   .image-gallery-thumbnail:hover {
     border: var(--ig-thumbnail-border-width-small, 3px) solid
-      var(--ig-primary-color, #337ab7);
+      var(--ig-primary-color);
   }
 }
 

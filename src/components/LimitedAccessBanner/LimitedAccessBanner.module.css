@@ -7,7 +7,7 @@
 .text {
   margin: 0;
   display: inline-block;
-  color: #fff;
+  color: var(--colorWhite);
   font-size: 16px;
   margin-bottom: 16px;
   line-height: 20px;
@@ -19,7 +19,7 @@
   padding: 8px 16px;
   border-radius: var(--borderRadiusMedium);
   font-size: 14px;
-  color: #fff;
+  color: var(--colorWhite);
   border: 0;
 
   &:hover {

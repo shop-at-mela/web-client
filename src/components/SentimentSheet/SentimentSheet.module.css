@@ -15,10 +15,10 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
-  border-top: 1px solid #e2e8f0;
+  background: var(--colorWhite);
+  border-top: 1px solid var(--colorGrey100);
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.10);
-  border-radius: 16px 16px 0 0;
+  border-radius: var(--borderRadiusLarge) var(--borderRadiusLarge) 0 0;
   z-index: 900;
   overflow: hidden;
 
@@ -59,8 +59,8 @@
     right: auto;
     transform: translateX(-50%);
     width: 480px;
-    border-left: 1px solid #e2e8f0;
-    border-right: 1px solid #e2e8f0;
+    border-left: 1px solid var(--colorGrey100);
+    border-right: 1px solid var(--colorGrey100);
   }
 }
 
@@ -78,7 +78,7 @@
 .collapsedPrompt {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #2d3748;
+  color: var(--colorGrey800);
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -94,8 +94,8 @@
 
 .thumbBtn {
   background: none;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1.5px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusMedium);
   width: 40px;
   height: 36px;
   font-size: 1.125rem;
@@ -108,12 +108,12 @@
 }
 
 .thumbBtn:hover {
-  border-color: var(--marketplaceColor, #262261);
+  border-color: var(--marketplaceColor);
   background: rgba(38, 34, 97, 0.04);
 }
 
 .thumbBtn.thumbSelected {
-  border-color: var(--marketplaceColor, #262261);
+  border-color: var(--marketplaceColor);
   background: rgba(38, 34, 97, 0.08);
 }
 
@@ -121,7 +121,7 @@
   background: none;
   border: none;
   font-size: 1.25rem;
-  color: #a0aec0;
+  color: var(--colorGrey400);
   cursor: pointer;
   padding: 0;
   line-height: 1;
@@ -133,7 +133,7 @@
   justify-content: center;
 
   &:hover {
-    color: #4a5568;
+    color: var(--colorGrey700);
   }
 }
 
@@ -149,17 +149,17 @@
 .textPrompt {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #1a202c;
+  color: var(--colorGrey900);
   margin: 0;
 }
 
 .textarea {
   width: 100%;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1.5px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusMedium);
   padding: 0.625rem 0.75rem;
   font-size: 0.875rem;
-  color: #2d3748;
+  color: var(--colorGrey800);
   resize: none;
   font-family: inherit;
   line-height: 1.5;
@@ -168,11 +168,11 @@
 
   &:focus {
     outline: none;
-    border-color: var(--marketplaceColor, #262261);
+    border-color: var(--marketplaceColor);
   }
 
   &::placeholder {
-    color: #a0aec0;
+    color: var(--colorGrey400);
   }
 }
 
@@ -183,10 +183,10 @@
 }
 
 .submitBtn {
-  background: var(--marketplaceColor, #262261);
-  color: #fff;
+  background: var(--marketplaceColor);
+  color: var(--colorWhite);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   padding: 0.625rem 1.25rem;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -195,7 +195,7 @@
   transition: background 0.15s;
 
   &:hover {
-    background: var(--marketplaceColorDark, #1a1744);
+    background: var(--marketplaceColorDark);
   }
 }
 
@@ -203,13 +203,13 @@
   background: none;
   border: none;
   font-size: 0.875rem;
-  color: #718096;
+  color: var(--colorGrey500);
   cursor: pointer;
   padding: 0;
   text-decoration: underline;
 
   &:hover {
-    color: #2d3748;
+    color: var(--colorGrey800);
   }
 }
 
@@ -224,27 +224,27 @@
 .emailLabel {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #4a5568;
+  color: var(--colorGrey700);
 }
 
 .emailInput {
   width: 100%;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1.5px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusMedium);
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
-  color: #2d3748;
+  color: var(--colorGrey800);
   font-family: inherit;
   transition: border-color 0.15s;
   box-sizing: border-box;
 
   &:focus {
     outline: none;
-    border-color: var(--marketplaceColor, #262261);
+    border-color: var(--marketplaceColor);
   }
 
   &::placeholder {
-    color: #a0aec0;
+    color: var(--colorGrey400);
   }
 }
 
@@ -270,6 +270,6 @@
   justify-content: center;
   font-size: 0.9375rem;
   font-weight: 500;
-  color: #2d3748;
+  color: var(--colorGrey800);
   padding: 0 1rem;
 }

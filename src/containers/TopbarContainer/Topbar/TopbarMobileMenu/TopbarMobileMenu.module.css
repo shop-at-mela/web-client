@@ -308,7 +308,7 @@
 .brandLogo {
   aspect-ratio: 1;
   background-color: var(--colorGrey50);
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   border: 1px solid var(--colorGrey100);
 }
 

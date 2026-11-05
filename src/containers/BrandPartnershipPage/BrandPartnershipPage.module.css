@@ -136,7 +136,7 @@
   padding: 1rem 1.5rem;
   font-size: 1rem;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   transition: all 0.3s ease;
   text-align: center;
   cursor: pointer;
@@ -179,7 +179,7 @@
   padding: 1rem 1.5rem;
   font-size: 0.95rem;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   transition: all 0.3s ease;
   text-align: center;
   cursor: pointer;

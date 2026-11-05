@@ -4,7 +4,7 @@
 
 .section {
   padding: 3rem 0;
-  background: #f8fafe;
+  background: var(--colorGrey50);
 
   @media (--viewportMedium) {
     padding: 4rem 0;
@@ -69,7 +69,7 @@
 
 .sectionSubtitle {
   font-size: 1rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   line-height: 1.5;
   margin: 0;
 
@@ -120,7 +120,7 @@
 
 .desktopCard {
   background: white;
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   border: 2px solid transparent;
@@ -135,21 +135,21 @@
 
   @media (--viewportLarge) {
     padding: 2rem;
-    border-radius: 20px;
+    border-radius: var(--borderRadiusLarge);
   }
 }
 
 .carouselContainer {
   position: relative;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   margin-bottom: 1rem;
   width: 100%;
   box-sizing: border-box;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 
   @media (--viewportMedium) {
-    border-radius: 20px;
+    border-radius: var(--borderRadiusLarge);
   }
 }
 
@@ -164,9 +164,9 @@
   font-weight: 600;
   color: var(--marketplaceColor);
   margin-bottom: 1rem;
-  background: rgba(93, 43, 192, 0.1);
+  background: var(--colorPrimaryButtonLight);
   padding: 0.5rem 1rem;
-  border-radius: 20px;
+  border-radius: var(--borderRadiusPill);
   display: inline-block;
   width: 100%;
   box-sizing: border-box;
@@ -183,7 +183,7 @@
   width: 100%;
   flex-shrink: 0;
   background: white;
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   padding: 2rem 1.5rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   text-align: center;
@@ -196,7 +196,7 @@
 
   @media (--viewportMedium) {
     padding: 3rem 2.5rem;
-    border-radius: 20px;
+    border-radius: var(--borderRadiusLarge);
   }
 }
 
@@ -233,8 +233,8 @@
   gap: 0.75rem;
   margin-bottom: 2rem;
   padding: 1.25rem;
-  background: #f9fafb;
-  border-radius: 12px;
+  background: var(--colorGrey50);
+  border-radius: var(--borderRadiusLarge);
   text-align: left;
 
   @media (--viewportMedium) {
@@ -284,7 +284,7 @@
   gap: 0.75rem;
   font-size: 0.875rem;
   line-height: 1.5;
-  color: #374151;
+  color: var(--colorGrey700);
 
   @media (--viewportSmall) {
     font-size: 0.9375rem;
@@ -382,7 +382,7 @@
   height: 6px;
   border-radius: 50%;
   border: none;
-  background: #d1d5db;
+  background: var(--colorGrey200);
   cursor: pointer;
   transition: all 0.3s ease;
   flex-shrink: 0;
@@ -406,7 +406,7 @@
 /* Stats Section */
 .statsSection {
   background: white;
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   padding: 2rem 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   margin-bottom: 3rem;
@@ -417,7 +417,7 @@
 
   @media (--viewportMedium) {
     padding: 3rem 2.5rem;
-    border-radius: 20px;
+    border-radius: var(--borderRadiusLarge);
     margin-bottom: 4rem;
   }
 }
@@ -452,8 +452,8 @@
 .statCard {
   text-align: center;
   padding: 1.5rem 1rem;
-  border: 2px solid #f3f4f6;
-  border-radius: 12px;
+  border: 2px solid var(--colorGrey50);
+  border-radius: var(--borderRadiusLarge);
   transition: all 0.3s ease;
 
   &:hover {
@@ -495,7 +495,7 @@
 .statLabel {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--colorGrey600);
   line-height: 1.3;
 
   @media (--viewportSmall) {
@@ -511,7 +511,7 @@
 .visionSection {
   background: linear-gradient(135deg, var(--marketplaceColor) 0%, var(--marketplaceColorDark) 100%);
   color: white;
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   padding: 2rem 1.5rem;
   text-align: center;
 
@@ -521,7 +521,7 @@
 
   @media (--viewportMedium) {
     padding: 3rem 2.5rem;
-    border-radius: 20px;
+    border-radius: var(--borderRadiusLarge);
   }
 }
 
@@ -583,7 +583,7 @@
 .pathStep {
   background: rgba(255, 255, 255, 0.2);
   padding: 0.5rem 1rem;
-  border-radius: 20px;
+  border-radius: var(--borderRadiusPill);
   font-size: 0.875rem;
   font-weight: 600;
   white-space: nowrap;

@@ -168,7 +168,7 @@
   height: 16px;
   padding: 0 4px;
   margin-left: 4px;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
 
   background-color: var(--marketplaceColor);
   color: var(--colorWhite);

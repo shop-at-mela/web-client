@@ -50,7 +50,7 @@
 
   box-shadow: var(--boxShadow);
   background-color: var(--colorWhite);
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   display: flex;
   /* max-width: 420px; */
   padding: var(--spacing-md, 8px) var(--spacing-lg, 12px);

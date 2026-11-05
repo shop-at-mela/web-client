@@ -24,7 +24,7 @@
 .title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--colorGrey900);
   margin: 0 0 0.5rem;
 
   @media (min-width: 768px) {
@@ -34,7 +34,7 @@
 
 .subtitle {
   font-size: 1rem;
-  color: #555;
+  color: var(--colorGrey700);
   margin: 0;
   max-width: 520px;
   margin-left: auto;
@@ -58,9 +58,9 @@
 }
 
 .featureCard {
-  background: #ffffff;
+  background: var(--colorWhite);
   border: 1px solid #e8e2db;
-  border-radius: 12px;
+  border-radius: var(--borderRadiusLarge);
   padding: 1.25rem 1rem;
   display: flex;
   flex-direction: column;
@@ -82,7 +82,7 @@
   font-family: var(--fontFamilyBody);
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--colorGrey900);
   margin: 0;
 
   @media (min-width: 768px) {
@@ -92,7 +92,7 @@
 
 .featureDescription {
   font-size: 0.8125rem;
-  color: #666;
+  color: var(--colorGrey600);
   margin: 0;
   line-height: 1.5;
 
@@ -111,14 +111,14 @@
   color: #c07d3a;
   background: #fef3e2;
   border: 1px solid #f5d9a8;
-  border-radius: 20px;
+  border-radius: var(--borderRadiusPill);
   padding: 0.2rem 0.6rem;
 }
 
 .currentNote {
   text-align: center;
   font-size: 0.8125rem;
-  color: #888;
+  color: var(--colorGrey500);
   margin: 0;
   font-style: italic;
 }

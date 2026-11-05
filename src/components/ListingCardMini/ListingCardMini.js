@@ -38,7 +38,9 @@ export const ListingCardMini = props => {
 
   // Format price
   const { displayPrice, formattedINRPrice } = useDisplayPrice(price, publicData, intl);
-  const formattedPrice = displayPrice ? formatMoney(intl, displayPrice) : null;
+  // With no live rate the INR price is the only price shown.
+  const formattedPrice = displayPrice ? formatMoney(intl, displayPrice) : formattedINRPrice;
+  const secondaryINRPrice = displayPrice ? formattedINRPrice : null;
 
   const firstImage = currentListing.images?.[0];
   const imageUrl = firstImage?.attributes?.variants?.['square-small']?.url || '';

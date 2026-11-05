@@ -133,7 +133,7 @@
 }
 
 .blockedDateLabel {
-  background-color: #f3f3f3;
+  background-color: var(--colorGrey50);
   background-color: var(--colorGrey50);
   color: var(--colorGrey600);
 }
@@ -251,7 +251,7 @@
 }
 
 .blockedDate {
-  background-color: #f3f3f3;
+  background-color: var(--colorGrey50);
   background-color: var(--colorGrey50);
   color: var(--colorGrey600);
 

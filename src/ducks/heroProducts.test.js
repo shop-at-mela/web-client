@@ -162,6 +162,7 @@ describe('heroProducts.duck', () => {
           'price',
           'publicData.brand',
           'publicData.sku',
+          'publicData.priceInINR',
         ],
         'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
         'fields.image': ['variants.listing-card', 'variants.listing-card-2x'],

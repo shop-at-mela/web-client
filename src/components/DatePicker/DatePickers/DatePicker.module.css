@@ -7,7 +7,7 @@
   border-right: 1px solid var(--datepickerBorderColor);
   border-bottom: 1px solid var(--datepickerBorderColor);
   border-left: 1px solid var(--datepickerBorderColor);
-  border-radius: 0 0 6px 6px;
+  border-radius: 0 0 var(--borderRadiusMedium) var(--borderRadiusMedium);
   color: var(--datepickerFgColor);
   background-color: var(--datepickerBgColor);
 }
@@ -68,7 +68,7 @@
 
   .dateSelected:hover > * {
     color: var(--colorWhite);
-    background-color: #0000ff;
+    background-color: var(--marketplaceColorDark);
   }
 }
 
@@ -106,7 +106,7 @@
   justify-content: center;
   align-items: center;
   border: none;
-  border-radius: 2px;
+  border-radius: var(--borderRadius);
   background-color: transparent;
   cursor: pointer;
 
@@ -348,7 +348,7 @@
 .todayButton {
   color: var(--datepickerFgColor);
   padding: 4px 8px;
-  border-radius: 2px;
+  border-radius: var(--borderRadius);
 
   &:focus {
     outline: var(--datepickerButtonOutlineColor) solid 1px;

@@ -4,7 +4,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   background: var(--colorWhite);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   overflow: hidden;
@@ -43,7 +43,7 @@
 .smallLogo {
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -52,7 +52,7 @@
   position: relative;
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   background: linear-gradient(
     135deg,
     var(--marketplaceColor),
@@ -113,7 +113,7 @@
   color: var(--colorAlert);
   background: #FFF3E0;
   padding: 2px 6px;
-  border-radius: 3px;
+  border-radius: var(--borderRadius);
   border: 1px dashed var(--colorAlert);
   margin: 0 0 4px 0;
   font-style: italic;
@@ -142,7 +142,7 @@
   color: var(--colorAlert);
   background: #FFF3E0;
   padding: 2px 6px;
-  border-radius: 3px;
+  border-radius: var(--borderRadius);
   border: 1px dashed var(--colorAlert);
   margin: 0;
   font-style: italic;
@@ -182,7 +182,7 @@
   aspect-ratio: 1;
   background: var(--colorWhite);
   border: 2px dashed var(--colorGrey100);
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   display: flex;
   align-items: center;
   justify-content: center;

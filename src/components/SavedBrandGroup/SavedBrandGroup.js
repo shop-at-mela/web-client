@@ -11,6 +11,7 @@ import { types as sdkTypes } from '../../util/sdkLoader';
 import { ListingCard } from '../../components';
 
 import css from './SavedBrandGroup.module.css';
+import { getDisplayMoney, useLiveInrToUsdRate } from '../../util/liveInrRate';
 
 const { Money } = sdkTypes;
 
@@ -32,8 +33,10 @@ const isOutOfStock = listing => {
 
 // A group's subtotal is only ever shown when it's unambiguous — every item priced,
 // all in the same currency. Mixed or missing prices fall back to count-only (no invented total).
-const computeSubtotal = listings => {
-  const prices = listings.map(listing => listing.attributes?.price).filter(Boolean);
+const computeSubtotal = (listings, rate) => {
+  const prices = listings
+    .map(({ attributes }) => getDisplayMoney(attributes?.price, attributes?.publicData, rate))
+    .filter(Boolean);
   if (prices.length === 0 || prices.length !== listings.length) return null;
 
   const currency = prices[0].currency;
@@ -56,7 +59,8 @@ const firstShoppableListing = listings =>
 const SavedBrandGroup = ({ brandName, listings, onShopNow, renderSizes }) => {
   const intl = useIntl();
 
-  const subtotal = computeSubtotal(listings);
+  const rate = useLiveInrToUsdRate();
+  const subtotal = computeSubtotal(listings, rate);
   const shoppableListing = brandName ? firstShoppableListing(listings) : null;
 
   const handleGroupShopClick = e => {

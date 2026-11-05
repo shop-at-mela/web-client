@@ -33,7 +33,7 @@
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1;
-  border-radius: 20px;
+  border-radius: var(--borderRadiusPill);
   padding: 5px 10px;
   flex-shrink: 0;
 }

@@ -12,7 +12,7 @@ import {
   requireListingImage,
 } from '../../util/configHelpers';
 import { formatMoney } from '../../util/currency';
-import { useDisplayPrice } from '../../util/liveInrRate';
+import { useDisplayPrice, useLiveInrToUsdRate } from '../../util/liveInrRate';
 import { ensureListing, ensureUser } from '../../util/data';
 import { richText } from '../../util/richText';
 import { createSlug } from '../../util/urlHelpers';
@@ -186,7 +186,10 @@ const PriceMaybe = props => {
   const hasMultiplePriceVariants = isPriceVariationsInUse && publicData?.priceVariants?.length > 1;
 
   const isBookable = isBookingProcessAlias(publicData?.transactionProcessAlias);
-  const { formattedPrice, priceTitle } = priceData(computedDisplayPrice, config.currency, intl);
+  // With no live rate the INR price is the only price shown, never a USD figure from a frozen rate.
+  const { formattedPrice, priceTitle } = computedDisplayPrice
+    ? priceData(computedDisplayPrice, config.currency, intl)
+    : { formattedPrice: inrPriceForDisplay, priceTitle: inrPriceForDisplay };
 
   const priceValue = <span className={css.priceValue}>{formattedPrice}</span>;
   const pricePerUnit = isBookable ? (
@@ -197,7 +200,7 @@ const PriceMaybe = props => {
     ''
   );
 
-  const formattedINRPrice = formattedPrice && showInrPrice ? inrPriceForDisplay : null;
+  const formattedINRPrice = computedDisplayPrice && showInrPrice ? inrPriceForDisplay : null;
 
   return (
     <div className={css.price} title={priceTitle}>
@@ -358,7 +361,8 @@ export const ListingCard = props => {
     onShopNow,
   } = props;
 
-  const translations = getListingCardTranslations(listing, config, intl);
+  const inrToUsdRate = useLiveInrToUsdRate();
+  const translations = getListingCardTranslations(listing, config, intl, inrToUsdRate);
   const {
     titlePlain,
     titleFormatted,

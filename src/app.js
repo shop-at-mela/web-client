@@ -36,6 +36,7 @@ import Routes from './routing/Routes';
 
 // Sharetribe Web Template uses English translations as default translations.
 import defaultMessages from './translations/en.json';
+import { setInitialInrToUsdRate } from './util/liveInrRate';
 
 // If you want to change the language of default (fallback) translations,
 // change the imports to match the wanted locale:
@@ -362,7 +363,9 @@ export const renderApp = (
   // Don't pass an SDK instance since we're only rendering the
   // component tree with the preloaded store state and components
   // shouldn't do any SDK calls in the (server) rendering lifecycle.
-  const store = configureStore({ initialState: preloadedState });
+  const { inrToUsdRate, ...initialState } = preloadedState;
+  setInitialInrToUsdRate(inrToUsdRate);
+  const store = configureStore({ initialState });
 
   const helmetContext = {};
 

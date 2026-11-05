@@ -7,7 +7,7 @@
      white brand card floats over the loud band and text stays on cream. */
   background:
     radial-gradient(rgba(178, 106, 0, 0.08) 1px, transparent 1.7px) 0 0 / 18px 18px,
-    linear-gradient(135deg, #fdfaf5 0%, #f7f1e8 100%);
+    linear-gradient(135deg, var(--colorSurfaceWarm) 0%, #f7f1e8 100%);
   padding: 1rem 0;
 
   @media (min-width: 768px) {
@@ -18,18 +18,18 @@
       radial-gradient(rgba(178, 106, 0, 0.09) 1px, transparent 1.7px) 0 0 / 18px 18px,
       linear-gradient(
         107deg,
-        #fdfaf5 0%,
-        #fdfaf5 46%,
+        var(--colorSurfaceWarm) 0%,
+        var(--colorSurfaceWarm) 46%,
         #f8edd6 46%,
         #f8edd6 56%,
         rgba(240, 160, 48, 0.42) 56%,
         rgba(240, 160, 48, 0.42) 66%,
-        #f0a030 66%,
-        #f0a030 76%,
-        #d98e22 76%,
-        #d98e22 86%,
-        #262261 86%,
-        #262261 100%
+        var(--colorAccent) 66%,
+        var(--colorAccent) 76%,
+        var(--colorAccentDark) 76%,
+        var(--colorAccentDark) 86%,
+        var(--marketplaceColor) 86%,
+        var(--marketplaceColor) 100%
       );
   }
 }
@@ -129,7 +129,7 @@
 .subheadline {
   font-size: 1rem;
   line-height: 1.6;
-  color: #4a5568;
+  color: var(--colorGrey700);
   margin: 0 0 1.5rem;
 
   @media (min-width: 640px) {
@@ -157,7 +157,7 @@
 .trustCallout {
   font-size: 0.8125rem;
   line-height: 1.4;
-  color: #5a6472;
+  color: var(--colorGrey600);
   margin: 0 0 1rem;
   max-width: 44ch;
 
@@ -172,9 +172,9 @@
   justify-content: center;
   padding: 0.875rem 2rem;
   background: var(--colorPrimaryButton);
-  color: #ffffff;
+  color: var(--colorWhite);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   font-size: 1rem;
   font-weight: 600;
   text-decoration: none;
@@ -306,7 +306,7 @@
 .brandSkeleton {
   width: 100%;
   aspect-ratio: 1;
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   background: linear-gradient(
     90deg,
     var(--colorGrey50) 25%,
@@ -369,7 +369,7 @@
   height: 12px;
   border-radius: 50%;
   border: none;
-  background: #cbd5e0;
+  background: var(--colorGrey200);
   cursor: pointer;
   transition: background 0.2s ease;
   /* Invisible tap zone: 44×44px minimum touch target */
@@ -378,7 +378,7 @@
   background-clip: content-box;
 
   &:hover {
-    background: #a0aec0;
+    background: var(--colorGrey300);
     background-clip: content-box;
   }
 }
@@ -398,7 +398,7 @@
   position: relative;
   margin-top: 1.5rem;
   background: rgba(38, 34, 97, 0.04);
-  border-radius: 12px;
+  border-radius: var(--borderRadiusLarge);
   padding: 0.75rem 1rem;
 
   @media (min-width: 768px) {
@@ -413,7 +413,7 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #718096;
+  color: var(--colorGrey500);
   margin-bottom: 0.625rem;
 }
 
@@ -437,7 +437,7 @@
   padding: 0.5rem 0.875rem;
   background: rgba(38, 34, 97, 0.05);
   border: 1px solid rgba(38, 34, 97, 0.15);
-  border-radius: 20px;
+  border-radius: var(--borderRadiusPill);
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--marketplaceColor);
@@ -449,7 +449,7 @@
   &:hover {
     background: var(--marketplaceColor);
     border-color: var(--marketplaceColor);
-    color: #ffffff;
+    color: var(--colorWhite);
     box-shadow: 0 2px 8px rgba(38, 34, 97, 0.25);
     transform: translateY(-1px);
   }

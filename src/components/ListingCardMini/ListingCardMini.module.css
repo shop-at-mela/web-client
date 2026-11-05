@@ -4,7 +4,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   overflow: hidden;
   background: var(--colorWhite);
   transition: background 0.2s ease;
@@ -32,7 +32,7 @@
   background: #f7f5f2;
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
 }
 
 .image {

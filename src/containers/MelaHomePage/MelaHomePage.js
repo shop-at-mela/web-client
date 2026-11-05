@@ -27,7 +27,7 @@ import css from './MelaHomePage.module.css';
 // copy below (title/description/FAQ) actually changes. Deliberately not derived from
 // any live data (e.g. newest listing), which would be a freshness-spam pattern AI
 // answer engines are tuned to discount.
-export const HOMEPAGE_LAST_UPDATED = '2026-11-01';
+export const HOMEPAGE_LAST_UPDATED = '2026-11-04';
 
 // Single source of truth for the homepage FAQ: rendered as visible copy by
 // <FAQSection> below AND used to build the FAQPage JSON-LD in `schema`, so the two
@@ -92,11 +92,11 @@ const MelaHomePage = props => {
           '@context': 'http://schema.org',
           '@type': 'WebPage',
           name: pageTitle,
-          description: 'Curated marketplace for independent Indian brands: fashion, home, beauty, jewelry, and kids',
+          description: 'A curation of independent Indian brands: fashion, home, beauty, jewelry, and kids',
           mainEntity: {
             '@type': 'Store',
             name: 'Mela',
-            description: 'Curated marketplace for independent Indian brands',
+            description: 'A curation of independent Indian brands',
             currenciesAccepted: 'USD',
             areaServed: {
               '@type': 'Country',

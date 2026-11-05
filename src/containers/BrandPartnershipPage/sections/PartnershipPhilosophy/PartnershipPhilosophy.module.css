@@ -68,7 +68,7 @@
 
 .sectionSubtitle {
   font-size: 1rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   line-height: 1.5;
   margin: 0;
 
@@ -118,19 +118,19 @@
 }
 
 .comparisonCard {
-  background: #fafbfc;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  background: var(--colorGrey50);
+  border: 1px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusLarge);
   overflow: hidden;
   transition: all 0.3s ease;
 
   &.expanded {
     border-color: var(--marketplaceColor);
-    box-shadow: 0 4px 20px rgba(93, 43, 192, 0.1);
+    box-shadow: 0 4px 20px rgba(38, 34, 97, 0.1);
   }
 
   @media (--viewportMedium) {
-    border-radius: 16px;
+    border-radius: var(--borderRadiusLarge);
   }
 }
 
@@ -224,7 +224,7 @@
 }
 
 .arrow {
-  color: #6b7280;
+  color: var(--colorGrey600);
   font-weight: 700;
   font-size: 1rem;
   flex-shrink: 0;
@@ -256,7 +256,7 @@
 
 .comparisonDetail {
   padding: 0 1.25rem 1.25rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--colorGrey100);
   margin-top: 1rem;
 
   @media (--viewportSmall) {
@@ -271,7 +271,7 @@
     margin: 1rem 0 0;
     font-size: 0.875rem;
     line-height: 1.5;
-    color: #374151;
+    color: var(--colorGrey700);
 
     @media (--viewportMedium) {
       font-size: 1rem;
@@ -313,7 +313,7 @@
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: 25px;
+  border-radius: var(--borderRadiusPill);
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
@@ -358,9 +358,9 @@
 }
 
 .commitmentCard {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  background: var(--colorGrey50);
+  border: 1px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusLarge);
   padding: 1.25rem;
   display: flex;
   gap: 1rem;
@@ -369,12 +369,12 @@
   &:hover {
     border-color: var(--marketplaceColor);
     transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(93, 43, 192, 0.1);
+    box-shadow: 0 4px 20px rgba(38, 34, 97, 0.1);
   }
 
   @media (--viewportMedium) {
     padding: 1.5rem;
-    border-radius: 16px;
+    border-radius: var(--borderRadiusLarge);
   }
 }
 
@@ -407,7 +407,7 @@
 .commitmentDescription {
   font-size: 0.875rem;
   line-height: 1.4;
-  color: #6b7280;
+  color: var(--colorGrey600);
   margin: 0;
 
   @media (--viewportMedium) {
@@ -435,8 +435,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem;
-  background: rgba(93, 43, 192, 0.05);
-  border-radius: 8px;
+  background: rgba(38, 34, 97, 0.05);
+  border-radius: var(--borderRadiusMedium);
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--matterColor);
@@ -452,14 +452,14 @@
 
 /* Trust Section */
 .trustSection {
-  background: linear-gradient(135deg, rgba(93, 43, 192, 0.05) 0%, white 100%);
+  background: linear-gradient(135deg, rgba(38, 34, 97, 0.05) 0%, white 100%);
   border: 2px solid var(--marketplaceColor);
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   padding: 1.5rem;
 
   @media (--viewportMedium) {
     padding: 2rem;
-    border-radius: 20px;
+    border-radius: var(--borderRadiusLarge);
   }
 }
 
@@ -523,7 +523,7 @@
 
 .trustText {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   font-weight: 500;
 
   @media (--viewportMedium) {

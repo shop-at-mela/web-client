@@ -181,9 +181,16 @@ const PriceMaybe = props => {
   }
 
   // Get formatted price or currency code if the currency does not match with marketplace currency
-  const { formattedPrice, priceTitle } = priceData(computedDisplayPrice, marketplaceCurrency, intl);
+  // With no live rate the INR price is the only price shown, never a USD figure from a frozen rate.
+  const { formattedPrice, priceTitle } = computedDisplayPrice
+    ? priceData(computedDisplayPrice, marketplaceCurrency, intl)
+    : { formattedPrice: formattedINRPrice, priceTitle: formattedINRPrice };
   const priceValue = (
-    <span className={css.priceValue}>{formatMoneyIfSupportedCurrency(computedDisplayPrice, intl)}</span>
+    <span className={css.priceValue}>
+      {computedDisplayPrice
+        ? formatMoneyIfSupportedCurrency(computedDisplayPrice, intl)
+        : formattedINRPrice}
+    </span>
   );
   const pricePerUnit = (
     <span className={css.perUnit}>
@@ -214,7 +221,7 @@ const PriceMaybe = props => {
         loaded={shippingLoaded}
         usShipping={usShipping}
         brand={publicData?.brand}
-        inrPrice={formattedINRPrice}
+        inrPrice={computedDisplayPrice ? formattedINRPrice : null}
         variant="desktop"
       />
     </div>

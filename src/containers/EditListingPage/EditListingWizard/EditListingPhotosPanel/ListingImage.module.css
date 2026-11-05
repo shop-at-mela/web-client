@@ -22,7 +22,7 @@
   background-color: rgba(0, 0, 0, 0.5);
   border: none;
   border-radius: 0;
-  border-bottom-left-radius: 2px;
+  border-bottom-left-radius: var(--borderRadius);
   cursor: pointer;
 
   & svg {

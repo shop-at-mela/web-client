@@ -101,6 +101,7 @@ export const fetchCategoryProducts = (categoryLevel, categoryName, config, exclu
       'geolocation',
       'price',
       'publicData.brand',
+      'publicData.priceInINR',
       'publicData.sku',
       'publicData.certification',
     ],

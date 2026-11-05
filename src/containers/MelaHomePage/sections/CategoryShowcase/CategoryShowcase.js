@@ -229,45 +229,6 @@ const getShowcaseCategories = (categoryConfig) => {
   return showcaseCategories.slice(0, 3);
 };
 
-// ── Structured data for SEO ────────────────────────────────────────────────
-
-const generateStructuredData = (categories, categoryProducts) => {
-  const itemListElements = categories.flatMap((category, categoryIndex) => {
-    const products = categoryProducts[category.id] || [];
-    return products.map((product, productIndex) => {
-      const currentStock = product.currentStock?.attributes?.quantity || 0;
-      const schemaAvailability = !product.currentStock
-        ? 'https://schema.org/InStock'
-        : currentStock > 0
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock';
-
-      return {
-        '@type': 'ListItem',
-        position: categoryIndex * 4 + productIndex + 1,
-        item: {
-          '@type': 'Product',
-          name: product.attributes.title,
-          image: product.images?.[0]?.attributes?.variants?.default?.url || '',
-          description: product.attributes.description || `Sustainable ${category.name.toLowerCase()} for babies`,
-          offers: {
-            '@type': 'Offer',
-            price: product.attributes.price?.amount / 100 || 0,
-            priceCurrency: product.attributes.price?.currency || 'USD',
-            availability: schemaAvailability,
-          },
-        },
-      };
-    });
-  });
-
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    itemListElement: itemListElements,
-  };
-};
-
 // ProductCarouselSection has been extracted to src/components/ProductCarousel/ProductCarousel.js
 // AgeNavigation (below) uses the shared ProductCarousel component directly.
 

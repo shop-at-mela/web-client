@@ -7,7 +7,7 @@
 
 .root {
   flex-grow: 1;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(135deg, var(--colorGrey50) 0%, var(--colorGrey50) 100%);
   min-height: calc(100vh - 120px);
 }
 
@@ -24,7 +24,7 @@
 
 .content {
   background: white;
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   padding: 2rem;
   max-width: 500px;
@@ -52,7 +52,7 @@
   text-align: center;
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--colorGrey100);
 
   @media (--viewportMedium) {
     margin-top: 2.5rem;
@@ -64,20 +64,20 @@
   text-align: center;
   margin: 1.5rem 0;
   padding: 1rem;
-  background: #f9fafb;
-  border: 1px solid #f3f4f6;
-  border-radius: 8px;
+  background: var(--colorGrey50);
+  border: 1px solid var(--colorGrey50);
+  border-radius: var(--borderRadiusMedium);
 
   @media (--viewportMedium) {
     margin: 2rem 0;
     padding: 1.25rem;
-    border-radius: 10px;
+    border-radius: var(--borderRadiusMedium);
   }
 }
 
 .loginText {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   margin-right: 0.5rem;
 
   @media (--viewportMedium) {
@@ -112,7 +112,7 @@
   composes: marketplaceModalPasswordMargins from global;
   background: #fef2f2;
   border: 1px solid #fecaca;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   padding: 1rem;
   margin-bottom: 1.5rem;
   color: #dc2626;
@@ -146,7 +146,7 @@
 .backButton {
   background: none;
   border: none;
-  color: #6b7280;
+  color: var(--colorGrey600);
   font-size: 0.875rem;
   cursor: pointer;
   padding: 0.5rem 0;
@@ -165,9 +165,9 @@
 /* ================ Provider CTA ================ */
 
 .providerCta {
-  background: rgba(93, 43, 192, 0.05);
-  border: 1px solid rgba(93, 43, 192, 0.1);
-  border-radius: 12px;
+  background: rgba(38, 34, 97, 0.05);
+  border: 1px solid var(--colorPrimaryButtonLight);
+  border-radius: var(--borderRadiusLarge);
   padding: 1.5rem;
   margin-top: 2rem;
   text-align: center;
@@ -192,7 +192,7 @@
 
 .providerCtaDescription {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   line-height: 1.5;
   margin: 0 0 1.25rem 0;
 
@@ -205,7 +205,7 @@
 .providerCtaButton {
   background: linear-gradient(135deg, var(--marketplaceColor) 0%, var(--marketplaceColorDark) 100%);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   color: white;
   font-size: 0.875rem;
   font-weight: 600;
@@ -215,7 +215,7 @@
 
   &:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(93, 43, 192, 0.3);
+    box-shadow: 0 4px 12px rgba(38, 34, 97, 0.3);
   }
 
   &:active:not(:disabled) {
@@ -225,7 +225,7 @@
   @media (--viewportMedium) {
     font-size: 1rem;
     padding: 1rem 2rem;
-    border-radius: 10px;
+    border-radius: var(--borderRadiusMedium);
   }
 }
 

@@ -108,12 +108,17 @@ export const ListingPriceAndShippingTerms = props => {
 
   return (
     <div className={[css.mobileBlock, className].filter(Boolean).join(' ')}>
-      {displayPrice ? <p className={css.price}>{formatPrice(displayPrice, intl)}</p> : null}
+      {/* With no live rate the INR price is the only price shown. */}
+      {displayPrice || formattedINRPrice ? (
+        <p className={css.price}>
+          {displayPrice ? formatPrice(displayPrice, intl) : formattedINRPrice}
+        </p>
+      ) : null}
       <ListingShippingTerms
         loaded={loaded}
         usShipping={usShipping}
         brand={brand}
-        inrPrice={formattedINRPrice}
+        inrPrice={displayPrice ? formattedINRPrice : null}
         variant="mobile"
       />
     </div>

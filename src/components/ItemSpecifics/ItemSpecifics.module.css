@@ -132,8 +132,8 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  background: #fff;
-  border-radius: 16px 16px 0 0;
+  background: var(--colorWhite);
+  border-radius: var(--borderRadiusLarge) var(--borderRadiusLarge) 0 0;
   max-height: 75vh;
   display: flex;
   flex-direction: column;
@@ -152,16 +152,16 @@
     right: auto;
     transform: translateX(-50%);
     width: 520px;
-    border-left: 1px solid #e2e8f0;
-    border-right: 1px solid #e2e8f0;
+    border-left: 1px solid var(--colorGrey100);
+    border-right: 1px solid var(--colorGrey100);
   }
 }
 
 .sheetHandle {
   width: 36px;
   height: 4px;
-  background: #e2e8f0;
-  border-radius: 2px;
+  background: var(--colorGrey100);
+  border-radius: var(--borderRadius);
   margin: 12px auto 0;
   flex-shrink: 0;
 }
@@ -171,7 +171,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.25rem 0.75rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--colorGrey50);
   flex-shrink: 0;
 }
 
@@ -185,7 +185,7 @@
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: #a0aec0;
+  color: var(--colorGrey400);
   cursor: pointer;
   padding: 0;
   width: 2rem;

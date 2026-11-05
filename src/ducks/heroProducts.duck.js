@@ -82,7 +82,7 @@ export const fetchHeroProducts = (config) => (dispatch, getState, sdk) => {
 
   const baseParams = {
     include: ['author', 'images'],
-    'fields.listing': ['title', 'geolocation', 'price', 'publicData.brand', 'publicData.sku'],
+    'fields.listing': ['title', 'geolocation', 'price', 'publicData.brand', 'publicData.sku', 'publicData.priceInINR'],
     'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
     'fields.image': ['variants.listing-card', 'variants.listing-card-2x'],
     'imageVariant.listing-card': 'w:400;h:300;fit:crop',

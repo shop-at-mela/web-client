@@ -4,7 +4,7 @@
 
 .section {
   padding: 3rem 0;
-  background: #f8fafe;
+  background: var(--colorGrey50);
 
   @media (--viewportMedium) {
     padding: 4rem 0;
@@ -69,7 +69,7 @@
 
 .sectionSubtitle {
   font-size: 1rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   line-height: 1.5;
   margin: 0;
 
@@ -98,7 +98,7 @@
 
 .previewText {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   font-weight: 500;
   margin: 0;
 }
@@ -115,8 +115,8 @@
   flex-direction: column;
   align-items: center;
   padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  border: 2px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusLarge);
   background: white;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -131,7 +131,7 @@
 
   &.previewCardActive {
     border-color: var(--marketplaceColor);
-    background: rgba(93, 43, 192, 0.05);
+    background: rgba(38, 34, 97, 0.05);
   }
 }
 
@@ -189,7 +189,7 @@
 
 .desktopCard {
   background: white;
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   border: 2px solid transparent;
@@ -206,7 +206,7 @@
 
   @media (--viewportLarge) {
     padding: 2rem;
-    border-radius: 20px;
+    border-radius: var(--borderRadiusLarge);
   }
 }
 
@@ -216,9 +216,9 @@
   font-weight: 600;
   color: var(--marketplaceColor);
   margin-bottom: 1rem;
-  background: rgba(93, 43, 192, 0.1);
+  background: var(--colorPrimaryButtonLight);
   padding: 0.5rem 1rem;
-  border-radius: 20px;
+  border-radius: var(--borderRadiusPill);
   display: inline-block;
   width: 100%;
   box-sizing: border-box;
@@ -233,13 +233,13 @@
 
 .carousel {
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   background: white;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   position: relative;
 
   @media (--viewportMedium) {
-    border-radius: 20px;
+    border-radius: var(--borderRadiusLarge);
   }
 }
 
@@ -301,8 +301,8 @@
   gap: 0.75rem;
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: #f9fafb;
-  border-radius: 12px;
+  background: var(--colorGrey50);
+  border-radius: var(--borderRadiusLarge);
 
   @media (--viewportMedium) {
     gap: 1rem;
@@ -347,7 +347,7 @@
   gap: 0.75rem;
   font-size: 0.875rem;
   line-height: 1.5;
-  color: #374151;
+  color: var(--colorGrey700);
 
   @media (--viewportSmall) {
     font-size: 0.9375rem;
@@ -436,7 +436,7 @@
 .statsSection {
   background: white;
   padding: 2rem 1rem;
-  border-radius: 16px;
+  border-radius: var(--borderRadiusLarge);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   text-align: center;
 
@@ -446,7 +446,7 @@
 
   @media (--viewportMedium) {
     padding: 3rem 2rem;
-    border-radius: 20px;
+    border-radius: var(--borderRadiusLarge);
   }
 }
 
@@ -479,8 +479,8 @@
 
 .statCard {
   padding: 1rem;
-  border: 2px solid #f3f4f6;
-  border-radius: 12px;
+  border: 2px solid var(--colorGrey50);
+  border-radius: var(--borderRadiusLarge);
   transition: all 0.3s ease;
 
   &:hover {
@@ -512,7 +512,7 @@
 .statLabel {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--colorGrey600);
   line-height: 1.2;
 
   @media (--viewportMedium) {

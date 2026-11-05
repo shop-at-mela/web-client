@@ -1,6 +1,6 @@
 import * as configBrands from '../../config/configBrands';
 import { clearBrandProfileCache } from '../../util/brandProfileCache';
-import { fetchBestsellersForBrands, fetchBrandProfiles } from './BrandsPage.duck';
+import { fetchBestsellersForBrands, fetchBrandProfiles, fetchBrands } from './BrandsPage.duck';
 
 const listingsResponse = ids => ({
   data: {
@@ -114,6 +114,84 @@ describe('BrandsPage rate-limit batching', () => {
       const result = await fetchBrandProfiles(sdk, ['good', 'bad']);
       expect(result[0].data.id.uuid).toBe('good');
       expect(result[1]).toBeNull();
+    });
+  });
+
+  describe('rate limiting', () => {
+    const rateLimited = () => Object.assign(new Error('Too many'), { status: 429 });
+
+    beforeEach(() => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('retries a rate-limited brand profile instead of dropping the brand', async () => {
+      sdk.users.show
+        .mockImplementationOnce(() => Promise.reject(rateLimited()))
+        .mockImplementationOnce(() => Promise.reject(rateLimited()));
+      const onFailure = jest.fn();
+
+      const pending = fetchBrandProfiles(sdk, ['brand-a'], onFailure);
+      await jest.advanceTimersByTimeAsync(3000);
+
+      expect((await pending)[0].data.id.uuid).toBe('brand-a');
+      expect(sdk.users.show).toHaveBeenCalledTimes(3);
+      expect(onFailure).not.toHaveBeenCalled();
+    });
+
+    it('reports a failure that outlasts the retries, so a later load can repair it', async () => {
+      sdk.users.show.mockImplementation(() => Promise.reject(rateLimited()));
+      const onFailure = jest.fn();
+
+      const pending = fetchBrandProfiles(sdk, ['brand-a'], onFailure);
+      await jest.advanceTimersByTimeAsync(3000);
+
+      expect(await pending).toEqual([null]);
+      expect(onFailure).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not treat a 404 as repairable', async () => {
+      sdk.users.show.mockImplementation(() =>
+        Promise.reject(Object.assign(new Error('Gone'), { status: 404 }))
+      );
+      const onFailure = jest.fn();
+
+      expect(await fetchBrandProfiles(sdk, ['brand-a'], onFailure)).toEqual([null]);
+      expect(sdk.users.show).toHaveBeenCalledTimes(1);
+      expect(onFailure).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('fetchBrands after a server render', () => {
+    const loadedState = extra => ({
+      BrandsPage: { brandIds: ['brand-a'], pagination: { page: 1 }, brandsLoadIncomplete: false, ...extra },
+    });
+
+    it('reuses a complete result with no API calls', async () => {
+      const dispatch = jest.fn();
+      await fetchBrands({ page: 1 })(dispatch, () => loadedState(), sdk);
+      expect(dispatch).not.toHaveBeenCalled();
+      expect(sdk.users.show).not.toHaveBeenCalled();
+      expect(sdk.listings.query).not.toHaveBeenCalled();
+    });
+
+    it('fetches again when the earlier load was incomplete', async () => {
+      const dispatch = jest.fn();
+      const getState = () => loadedState({ brandsLoadIncomplete: true });
+      jest.spyOn(configBrands, 'getPaginatedBrandIds').mockReturnValue({
+        brandIds: ['brand-a'],
+        totalPages: 1,
+        totalItems: 1,
+      });
+      jest.spyOn(configBrands, 'getBestsellerProductIds').mockReturnValue([]);
+      jest.spyOn(configBrands, 'getFeaturedProductIds').mockReturnValue([]);
+      await fetchBrands({ page: 1 })(dispatch, getState, sdk);
+      expect(dispatch).toHaveBeenCalled();
+      expect(sdk.users.show).toHaveBeenCalled();
     });
   });
 });

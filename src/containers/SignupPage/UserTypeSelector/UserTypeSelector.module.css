@@ -24,7 +24,7 @@
 
 .subtitle {
   font-size: 1rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   line-height: 1.5;
   margin: 0 0 1.5rem 0;
 
@@ -50,8 +50,8 @@
   display: flex;
   align-items: center;
   padding: 1.25rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  border: 2px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusLarge);
   background: white;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -61,7 +61,7 @@
   &:hover {
     border-color: var(--marketplaceColor);
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(93, 43, 192, 0.1);
+    box-shadow: 0 4px 15px rgba(38, 34, 97, 0.1);
   }
 
   @media (--viewportMedium) {
@@ -75,8 +75,8 @@
 
 .optionSelected {
   border-color: var(--marketplaceColor);
-  background: rgba(93, 43, 192, 0.05);
-  box-shadow: 0 4px 15px rgba(93, 43, 192, 0.15);
+  background: rgba(38, 34, 97, 0.05);
+  box-shadow: 0 4px 15px rgba(38, 34, 97, 0.15);
 }
 
 .optionIcon {
@@ -109,7 +109,7 @@
 
 .optionDescription {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   line-height: 1.4;
 
   @media (--viewportMedium) {

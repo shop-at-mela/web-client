@@ -52,11 +52,11 @@
   justify-content: center;
   gap: 8px;
   padding: 14px 8px;
-  background: var(--colorWhite, #fff);
-  border: 1px solid var(--colorGrey100, #eae6dd);
-  border-radius: 14px;
+  background: var(--colorWhite);
+  border: 1px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusLarge);
   text-decoration: none;
-  color: var(--colorGrey900, #23233f);
+  color: var(--colorGrey900);
   transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -69,7 +69,7 @@
 .iconWrap {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--borderRadiusLarge);
   background: var(--colorAccentLight, rgba(240, 160, 48, 0.14));
   display: flex;
   align-items: center;

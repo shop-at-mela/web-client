@@ -13,6 +13,7 @@ import { TIME_SLOT_TIME } from '../../util/types';
 
 import enMessages from '../../translations/en.json';
 import OrderPanel from './OrderPanel';
+import { setInitialInrToUsdRate } from '../../util/liveInrRate';
 
 const { screen, waitFor } = testingLibrary;
 
@@ -532,6 +533,10 @@ describe('OrderPanel', () => {
       );
       return { ...commonProps, author, listing, isOwnListing: false, validListingTypes };
     };
+    beforeAll(() => {
+      setInitialInrToUsdRate(0.0105);
+    });
+
     const renderPanel = props =>
       render(<OrderPanel {...props} />, { config, routeConfiguration, messages: enMessages });
 

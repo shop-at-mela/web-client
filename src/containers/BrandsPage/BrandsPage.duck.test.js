@@ -141,6 +141,7 @@ describe('BrandsPage Duck', () => {
       pagination: null,
       fetchBrandsInProgress: false,
       fetchBrandsError: null,
+      brandsLoadIncomplete: false,
       fetchFeaturedBrandsInProgress: false,
       fetchFeaturedBrandsError: null,
       fetchHeroBrandsInProgress: false,
@@ -199,13 +200,13 @@ describe('BrandsPage Duck', () => {
         expect(state.brandIds).toEqual(['existing-1', 'existing-2', 'brand-3', 'brand-4']);
       });
 
-      it('should replace brand IDs on first page', () => {
+      it('should keep already loaded brands when a later first-page load returns fewer', () => {
         const existingState = {
           ...initialState,
           brandIds: ['old-1', 'old-2'],
         };
 
-        const newBrandIds = ['new-1', 'new-2'];
+        const newBrandIds = ['old-2', 'new-1'];
         const pagination = { page: 1, perPage: 24 };
 
         const state = brandsPageReducer(existingState, {
@@ -213,7 +214,7 @@ describe('BrandsPage Duck', () => {
           payload: { brandIds: newBrandIds, pagination },
         });
 
-        expect(state.brandIds).toEqual(newBrandIds);
+        expect(state.brandIds).toEqual(['old-1', 'old-2', 'new-1']);
       });
     });
 
@@ -644,7 +645,7 @@ describe('BrandsPage Duck', () => {
     };
 
     const mockDispatch = jest.fn();
-    const mockGetState = jest.fn();
+    const mockGetState = () => ({ BrandsPage: { brandIds: [], pagination: null } });
 
     beforeEach(() => {
       jest.clearAllMocks();

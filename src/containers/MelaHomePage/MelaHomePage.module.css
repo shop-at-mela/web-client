@@ -25,7 +25,7 @@
 .browseSection {
   width: 100%;
   padding: 30px 0 26px;
-  background: #ffffff;
+  background: var(--colorWhite);
 
   @media (min-width: 768px) {
     padding: 2.5rem 0;

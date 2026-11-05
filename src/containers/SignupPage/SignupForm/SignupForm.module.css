@@ -51,9 +51,9 @@
 }
 
 .helpText {
-  background: rgba(93, 43, 192, 0.05);
-  border: 1px solid rgba(93, 43, 192, 0.2);
-  border-radius: 8px;
+  background: rgba(38, 34, 97, 0.05);
+  border: 1px solid rgba(38, 34, 97, 0.2);
+  border-radius: var(--borderRadiusMedium);
   padding: 0.875rem 1rem;
   margin-bottom: 1.5rem;
   font-size: 0.875rem;
@@ -77,7 +77,7 @@
   font-size: 1.125rem;
   font-weight: 600;
   padding: 1rem 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--borderRadiusMedium);
   background: linear-gradient(135deg, var(--marketplaceColor) 0%, var(--marketplaceColorDark) 100%);
   border: none;
   color: white;
@@ -87,7 +87,7 @@
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(93, 43, 192, 0.3);
+    box-shadow: 0 6px 20px rgba(38, 34, 97, 0.3);
   }
 
   &:active:not(:disabled) {
@@ -103,13 +103,13 @@
   @media (--viewportMedium) {
     font-size: 1.25rem;
     padding: 1.125rem 2rem;
-    border-radius: 10px;
+    border-radius: var(--borderRadiusMedium);
   }
 }
 
 .terms {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--colorGrey600);
   line-height: 1.4;
   max-width: 400px;
   margin: 0 auto;

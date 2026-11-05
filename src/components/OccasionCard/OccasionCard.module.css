@@ -4,9 +4,9 @@
 .card {
   display: flex;
   flex-direction: column;
-  background: var(--colorWhite, #fff);
-  border: 1px solid var(--colorGrey100, #eae6dd);
-  border-radius: 18px;
+  background: var(--colorWhite);
+  border: 1px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusLarge);
   overflow: hidden;
   box-shadow: 0 2px 14px rgba(38, 34, 97, 0.07);
 }
@@ -31,12 +31,12 @@
 
 /* Gifting → indigo gradient */
 .gifting .bg {
-  background: linear-gradient(150deg, var(--marketplaceColorLight, #3d3485), var(--marketplaceColor, #262261));
+  background: linear-gradient(150deg, var(--marketplaceColorLight), var(--marketplaceColor));
 }
 
 /* Festive → marigold gradient */
 .festive .bg {
-  background: linear-gradient(150deg, #f0a030, #d98e22);
+  background: linear-gradient(150deg, var(--colorAccent), var(--colorAccentDark));
 }
 
 .scrim {
@@ -47,7 +47,7 @@
 
 .etext {
   position: relative;
-  color: #fff;
+  color: var(--colorWhite);
 }
 
 .title {
@@ -100,8 +100,8 @@
 
 .peekSkeleton {
   aspect-ratio: 3 / 4;
-  border-radius: 12px;
-  background: linear-gradient(90deg, #f0f0f0 0%, #f8f8f8 50%, #f0f0f0 100%);
+  border-radius: var(--borderRadiusLarge);
+  background: linear-gradient(90deg, var(--colorGrey50) 0%, var(--colorGrey50) 50%, var(--colorGrey50) 100%);
   background-size: 200% 100%;
   animation: occasionLoading 1.5s ease-in-out infinite;
 }
@@ -131,7 +131,7 @@
 }
 
 .gifting .cta {
-  color: var(--marketplaceColor, #262261);
+  color: var(--marketplaceColor);
 }
 
 /* Dark marigold for readable contrast on the white CTA row */

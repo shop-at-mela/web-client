@@ -47,6 +47,7 @@ const { generateCSPNonce, csp } = require('./csp');
 const sdkUtils = require('./api-util/sdk');
 const { getSDKProxy } = require('./api-util/sdkCacheProxy');
 const profoundAnalytics = require('./profoundAnalytics');
+const { getInrToUsdRate } = require('./fxRate');
 
 const buildPath = path.resolve(__dirname, '..', 'build');
 const dev = process.env.REACT_APP_ENV === 'development';
@@ -359,12 +360,16 @@ app.get('/{*splat}', async (req, res) => {
   // flows through the .finally(releaseRenderSlot) below, rather than
   // escaping the chain entirely and leaking the render slot.
   Promise.resolve()
-    .then(() => dataLoader.loadData(req.url, sdk, appInfo))
-    .then(data => {
+    .then(() => Promise.all([dataLoader.loadData(req.url, sdk, appInfo), getInrToUsdRate()]))
+    .then(([data, inrToUsdRate]) => {
       res.locals.timestampAfterLoadData = Date.now();
       const cspNonce = cspEnabled ? res.locals.cspNonce : null;
+      const dataWithRate = {
+        ...data,
+        preloadedState: { ...data.preloadedState, inrToUsdRate },
+      };
 
-      return renderer.render(req.url, context, data, renderApp, webExtractor, cspNonce);
+      return renderer.render(req.url, context, dataWithRate, renderApp, webExtractor, cspNonce);
     })
     .finally(releaseRenderSlot)
     .then(html => {
