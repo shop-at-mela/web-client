@@ -199,7 +199,7 @@ describe('CategoryShowcase', () => {
 
   it('renders the section heading', () => {
     renderInContext(<CategoryShowcase />);
-    expect(screen.getByText('Discover South Asian Design')).toBeInTheDocument();
+    expect(screen.getByText('Discover Indian Design')).toBeInTheDocument();
   });
 
   it('renders Browse All Categories link', () => {
@@ -290,7 +290,7 @@ describe('AllCategoryCarousels', () => {
   it('renders both category carousels with correct titles after load', async () => {
     await renderAndWaitForLoad(<CategoryShowcase />);
     const titles = screen.getAllByTestId('product-carousel').map(el => el.getAttribute('data-title'));
-    expect(titles).toEqual(expect.arrayContaining(['South Asian Fashion', 'Baby & Kids']));
+    expect(titles).toEqual(expect.arrayContaining(['Indian Fashion', 'Baby & Kids']));
     expect(titles).toHaveLength(2);
   });
 });

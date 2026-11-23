@@ -210,7 +210,7 @@ const TOP_AGE_GROUPS = [
 // ("eight product carousels become two"). Order matches the spec's row 5→6 (Fashion,
 // then Baby & Kids).
 const ALL_CATEGORIES = [
-  { id: 'Fashion',   label: 'South Asian Fashion', viewAllSearch: '?pub_categoryLevel1=Fashion' },
+  { id: 'Fashion',   label: 'Indian Fashion', viewAllSearch: '?pub_categoryLevel1=Fashion' },
   { id: 'Baby-Kids', label: 'Baby & Kids',    viewAllSearch: '?pub_categoryLevel1=Baby-Kids' },
 ];
 
@@ -870,7 +870,7 @@ const CategoryShowcase = () => {
           <h2 className={css.title}>
             <FormattedMessage
               id="MelaHomePage.categoryTitle"
-              defaultMessage="Discover South Asian Design"
+              defaultMessage="Discover Indian Design"
             />
           </h2>
         </div>

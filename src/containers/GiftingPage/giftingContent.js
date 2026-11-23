@@ -16,50 +16,50 @@
 export const OCCASION_LANDING_CONTENT = {
   diwali: {
     heading: 'Diwali Gifts',
-    subheading: 'Curated Diwali gifts from independent brands: diyas to festive wear.',
+    subheading: 'Curated Diwali gifts from independent Indian brands: diyas to festive wear.',
     metaDescription:
-      "Shop Diwali gifts from independent brands: home décor, festive fashion, and gourmet hampers, ethically made.",
+      "Shop Diwali gifts from independent Indian brands: home décor, festive fashion, and gourmet hampers, ethically made.",
   },
   'diwali-festivals': {
     heading: 'Diwali & Festival Gifts',
     subheading: 'Festive wear, décor, and gifts for Diwali and the festival season.',
     metaDescription:
-      'Shop Diwali and festival-season gifts from independent brands.',
+      'Shop Diwali and festival-season gifts from independent Indian brands.',
   },
   navratri: {
     heading: 'Navratri Gifts',
-    subheading: 'Vibrant Navratri-ready fashion and gifting picks from independent designers.',
+    subheading: 'Vibrant Navratri-ready fashion and gifting picks from independent Indian designers.',
     metaDescription:
-      'Shop Navratri gifts and festive fashion from independent brands.',
+      'Shop Navratri gifts and festive fashion from independent Indian brands.',
   },
   karva_chauth: {
     heading: 'Karva Chauth Gifts',
     subheading: 'Thoughtful Karva Chauth gifts: jewelry, fashion, and self-care from Indian brands.',
-    metaDescription: 'Shop Karva Chauth gifts from independent brands.',
+    metaDescription: 'Shop Karva Chauth gifts from independent Indian brands.',
   },
   raksha_bandhan: {
     heading: 'Raksha Bandhan Gifts',
-    subheading: 'Gifts for siblings this Raksha Bandhan, from independent brands.',
-    metaDescription: 'Shop Raksha Bandhan gifts from independent brands.',
+    subheading: 'Gifts for siblings this Raksha Bandhan, from independent Indian brands.',
+    metaDescription: 'Shop Raksha Bandhan gifts from independent Indian brands.',
   },
   bhai_dooj: {
     heading: 'Bhai Dooj Gifts',
-    subheading: 'Gifts for Bhai Dooj, from independent brands.',
-    metaDescription: 'Shop Bhai Dooj gifts from independent brands.',
+    subheading: 'Gifts for Bhai Dooj, from independent Indian brands.',
+    metaDescription: 'Shop Bhai Dooj gifts from independent Indian brands.',
   },
   wedding: {
     heading: 'Wedding Gifts',
-    subheading: 'Wedding and wedding-guest gifts from independent brands.',
-    metaDescription: 'Shop wedding gifts from independent brands.',
+    subheading: 'Wedding and wedding-guest gifts from independent Indian brands.',
+    metaDescription: 'Shop wedding gifts from independent Indian brands.',
   },
 };
 
 // Fallback for /gifts (no occasionSlug) — the broad, always-on gifting landing.
 export const DEFAULT_GIFTING_CONTENT = {
   heading: 'Gifts',
-  subheading: 'Curated gifts from independent brands, for every celebration.',
+  subheading: 'Curated gifts from independent Indian brands, for every celebration.',
   metaDescription:
-    'Shop curated gifts from independent brands: home décor, fashion, jewelry, and more.',
+    'Shop curated gifts from independent Indian brands: home décor, fashion, jewelry, and more.',
 };
 
 // "Under $X" price bands — value is the `price` query param (min,max in whole currency
@@ -98,7 +98,7 @@ export const getGiftingContent = (occasionSlug, getLabel) => {
   const label = getLabel(occasionSlug);
   return {
     heading: `${label} Gifts`,
-    subheading: `Curated ${label} gifts from independent brands.`,
-    metaDescription: `Shop ${label} gifts from independent brands.`,
+    subheading: `Curated ${label} gifts from independent Indian brands.`,
+    metaDescription: `Shop ${label} gifts from independent Indian brands.`,
   };
 };

@@ -72,6 +72,10 @@ export const AboutPageComponent = props => {
               independent brands. We bring together proven labels across fashion, home decor,
               beauty, jewelry and kids, each one chosen for its real export experience.
             </p>
+            <p className={css.heroText}>
+              We're starting with brands from India and growing across South Asia: Bangladesh,
+              India, Nepal, Pakistan and Sri Lanka.
+            </p>
             <p className={css.heroTagline}>
               Rooted in South Asian culture. Made for the way you live now.
             </p>
