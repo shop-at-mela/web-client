@@ -269,7 +269,7 @@ describe('CategoryPage', () => {
 
     it('renders the root description text', () => {
       renderRoot();
-      expect(screen.getByText(/Mela is a marketplace for independent Indian brands/i)).toBeInTheDocument();
+      expect(screen.getByText(/Mela is a marketplace for independent brands/i)).toBeInTheDocument();
     });
   });
 
@@ -335,7 +335,7 @@ describe('CategoryPage', () => {
     it('uses the per-subcategory description when one exists', async () => {
       renderAt('/categories/Home-Kitchen/Lighting-Outdoor');
       await waitFor(() =>
-        expect(metaOf()).toBe('Iron and glass lanterns from vetted Indian brands.')
+        expect(metaOf()).toBe('Iron and glass lanterns from vetted South Asian brands.')
       );
     });
 
