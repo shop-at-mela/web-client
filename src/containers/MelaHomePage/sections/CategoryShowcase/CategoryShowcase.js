@@ -63,7 +63,7 @@ export const OCCASIONS = [
   {
     option: 'diwali',
     label: 'Diwali & Festivals',
-    description: 'Indian festive wear, artisan toys, and gifts for every celebration',
+    description: 'Festive wear, artisan toys, and gifts for every celebration',
     cta: 'Shop for Diwali',
     colorTheme: 'festive',
     // 'diwali-festivals' is the legacy pre-broadened-enum value already tagged on existing
@@ -83,7 +83,7 @@ export const OCCASIONS = [
   {
     option: 'wedding',
     label: 'Wedding Season',
-    description: 'Wedding and wedding-guest gifts from independent Indian brands',
+    description: 'Wedding and wedding-guest gifts from independent brands',
     cta: 'Shop Wedding Gifts',
     colorTheme: 'festive',
     matchValues: ['wedding'],
@@ -210,7 +210,7 @@ const TOP_AGE_GROUPS = [
 // ("eight product carousels become two"). Order matches the spec's row 5→6 (Fashion,
 // then Baby & Kids).
 const ALL_CATEGORIES = [
-  { id: 'Fashion',   label: 'Indian Fashion', viewAllSearch: '?pub_categoryLevel1=Fashion' },
+  { id: 'Fashion',   label: 'South Asian Fashion', viewAllSearch: '?pub_categoryLevel1=Fashion' },
   { id: 'Baby-Kids', label: 'Baby & Kids',    viewAllSearch: '?pub_categoryLevel1=Baby-Kids' },
 ];
 
@@ -870,7 +870,7 @@ const CategoryShowcase = () => {
           <h2 className={css.title}>
             <FormattedMessage
               id="MelaHomePage.categoryTitle"
-              defaultMessage="Discover Indian Design"
+              defaultMessage="Discover South Asian Design"
             />
           </h2>
         </div>

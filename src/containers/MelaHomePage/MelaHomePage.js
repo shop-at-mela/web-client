@@ -40,7 +40,7 @@ export const FAQ_ITEMS = [
     answer: enMessages['MelaHomePage.faqWhatIsMelaAnswer'],
   },
   {
-    question: 'Do Indian brands on Mela ship to the United States, and how long does it take?',
+    question: 'Do South Asian brands on Mela ship to the United States, and how long does it take?',
     answer:
       "Shipping costs and delivery times are set by each brand; each brand page shows that brand's US shipping cost and whether its prices include import duties.",
   },
@@ -66,10 +66,10 @@ const MelaHomePage = props => {
   const config = useConfiguration();
 
   // SEO-optimized meta title targeting primary keywords
-  const pageTitle = "Discover India's Most Loved Brands | Fashion, Home, Beauty & Kids | Mela";
+  const pageTitle = "Discover South Asia's Most Loved Brands | Fashion, Home, Beauty & Kids | Mela";
 
   // SEO-optimized meta description with target keywords
-  const pageDescription = "Mela is a curated home for proven Indian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store.";
+  const pageDescription = "Mela is a curated home for proven South Asian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store.";
 
   // Reference (not duplicate) the Organization entity Page.js already injects into
   // every page's JSON-LD @graph, so AI engines can attribute this page's editorial
@@ -92,11 +92,11 @@ const MelaHomePage = props => {
           '@context': 'http://schema.org',
           '@type': 'WebPage',
           name: pageTitle,
-          description: 'A curation of independent Indian brands: fashion, home, beauty, jewelry, and kids',
+          description: 'A curation of independent South Asian brands: fashion, home, beauty, jewelry, and kids',
           mainEntity: {
             '@type': 'Store',
             name: 'Mela',
-            description: 'A curation of independent Indian brands',
+            description: 'A curation of independent South Asian brands',
             currenciesAccepted: 'USD',
             areaServed: {
               '@type': 'Country',
@@ -104,7 +104,7 @@ const MelaHomePage = props => {
             },
             hasOfferCatalog: {
               '@type': 'OfferCatalog',
-              name: 'Indian Design & Sustainable Fashion',
+              name: 'South Asian Design & Sustainable Fashion',
               itemListElement: [
                 {
                   '@type': 'Offer',
@@ -118,7 +118,7 @@ const MelaHomePage = props => {
                   '@type': 'Offer',
                   itemOffered: {
                     '@type': 'Product',
-                    name: 'Indian Fashion',
+                    name: 'South Asian Fashion',
                     category: 'Fashion'
                   }
                 },
@@ -126,7 +126,7 @@ const MelaHomePage = props => {
                   '@type': 'Offer',
                   itemOffered: {
                     '@type': 'Product',
-                    name: 'Indian Home Goods',
+                    name: 'South Asian Home Goods',
                     category: 'Home & Kitchen'
                   }
                 }
@@ -179,7 +179,7 @@ const MelaHomePage = props => {
             image-only bestseller cards */}
         <BrandSpotlight />
 
-        {/* Module B: New from India — recency as curation, as a 2-column grid */}
+        {/* Module B: New from South Asia — recency as curation, as a 2-column grid */}
         <div className={css.newFromIndiaSection}>
           <NewFromIndia />
         </div>
