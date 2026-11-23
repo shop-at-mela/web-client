@@ -122,6 +122,7 @@ const CategoryProducts = loadable(() =>
 );
 
 import css from './ListingPage.module.css';
+import { getBrandCountry } from '../../util/brandOrigin';
 
 const MIN_LENGTH_FOR_LONG_WORDS_IN_TITLE = 16;
 
@@ -434,7 +435,7 @@ export const ListingPageComponent = props => {
         image: schemaImages, // Product images for rich snippets
         sku: publicData.sku, // Product SKU for identification
         material: publicData.material, // Material from itemAspects (consumer-friendly)
-        countryOfOrigin: 'India', // Country of origin for cultural context
+        countryOfOrigin: getBrandCountry(ensuredAuthor?.attributes?.profile?.publicData), // The brand's own country (India unless set)
         brand: brandName ? {
           '@type': 'Brand',
           name: brandName // Helps Google show brand in search results

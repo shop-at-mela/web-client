@@ -7,6 +7,7 @@ import { NamedLink } from '../../components';
 import { ListingCardMini } from '../ListingCardMini/ListingCardMini';
 import CertificationBadge from '../CertificationBadge/CertificationBadge';
 import { getBrandSlugById } from '../../config/configBrands';
+import { getBrandOriginLine } from '../../util/brandOrigin';
 
 import css from './BrandCardHome.module.css';
 
@@ -94,15 +95,8 @@ const BrandCardHome = props => {
   );
   const brandInfo = brandInfoParts.length > 0 ? brandInfoParts.join(' · ') : null;
 
-  // Craft-origin cue (hero context) — a legible "made in India" signal built from
-  // the existing location config, always resolving to India (all Mela brands are Indian).
-  const craftLocale = publicData?.brandCity
-    ? `${publicData.brandCity}, India`
-    : brandOrigin
-    ? /india/i.test(brandOrigin)
-      ? brandOrigin
-      : `${brandOrigin}, India`
-    : 'India';
+  // Craft-origin cue (hero context): the brand's city and country, India when none is set.
+  const craftLocale = getBrandOriginLine(publicData, { fallbackToCountry: true });
 
   const brandSlug = getBrandSlugById(brand.id.uuid);
   const brandLinkProps = brandSlug
