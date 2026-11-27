@@ -48,7 +48,7 @@ jest.mock('./sections/BrandSpotlight/BrandSpotlight', () => {
 
 jest.mock('./sections/NewFromIndia/NewFromIndia', () => {
   return function NewFromIndia() {
-    return <div data-testid="new-from-india">New from India</div>;
+    return <div data-testid="new-from-india">New from South Asia</div>;
   };
 });
 
@@ -159,7 +159,7 @@ describe('MelaHomePage', () => {
     );
 
     expect(getByTestId('page-title').textContent).toBe(
-      "Discover India's Most Loved Brands | Fashion, Home, Beauty & Kids | Mela"
+      "Discover South Asia's Most Loved Brands | Fashion, Home, Beauty & Kids | Mela"
     );
   });
 
@@ -171,7 +171,7 @@ describe('MelaHomePage', () => {
     );
 
     expect(getByTestId('page-description').textContent).toBe(
-      "Mela is a curated home for proven Indian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store."
+      "Mela is a curated home for proven South Asian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store."
     );
   });
 
@@ -288,6 +288,14 @@ describe('MelaHomePage', () => {
       expect(visibleAnswers).toEqual(faqPage.mainEntity.map(q => q.acceptedAnswer.text));
     });
 
+    it('emits no Product node without offers (Google product snippets)', () => {
+      const { getByTestId } = renderPage();
+      const raw = getByTestId('page-schema').textContent;
+      const schema = JSON.parse(raw);
+      expect(schema.find(node => node['@type'] === 'WebPage')).toBeTruthy();
+      expect(raw).not.toMatch(/"@type":"(Product|Store|OfferCatalog)"/);
+    });
+
     it('states the reviewed date as the bumped HOMEPAGE_LAST_UPDATED', () => {
       const { container } = renderPage();
       expect(HOMEPAGE_LAST_UPDATED).toBe('2026-11-04');
@@ -313,7 +321,7 @@ describe('MelaHomePage', () => {
 
     it('leads with a What is Mela? answer that names Mela and where shoppers buy', () => {
       expect(FAQ_ITEMS[0].question).toBe('What is Mela?');
-      expect(FAQ_ITEMS[0].answer).toMatch(/^Mela is a curation of independent Indian brands/);
+      expect(FAQ_ITEMS[0].answer).toMatch(/^Mela is a curation of independent South Asian brands/);
       expect(FAQ_ITEMS[0].answer).toMatch(/buy on the brand's own store/);
     });
 

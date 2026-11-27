@@ -10,6 +10,7 @@ import NamedLink from '../NamedLink/NamedLink';
 import ResponsiveImage from '../ResponsiveImage/ResponsiveImage';
 import { getBrandSlugById } from '../../config/configBrands';
 import { withExternalImageWidth } from '../../util/images';
+import { getBrandOriginLine } from '../../util/brandOrigin';
 
 import css from './BrandHeroCard.module.css';
 
@@ -139,21 +140,10 @@ const BrandHeroCard = props => {
   const firstSentence = bio ? bio.split('.')[0].trim() : '';
   const tagline = publicData?.brandTagline || firstSentence || null;
 
-  // Place dateline ("{city}, India") — an honest origin cue, not a craft
+  // Place dateline ("{city}, {country}") — an honest origin cue, not a craft
   // claim: part of the catalog is manufactured CPG where "Handcrafted" would
-  // be inaccurate (UXR pass 2026-07-24). Always resolves to India.
-  const brandOrigin =
-    publicData?.brandOrigin ||
-    (publicData?.brandCity && publicData?.brandCountry
-      ? `${publicData.brandCity}, ${publicData.brandCountry}`
-      : publicData?.brandCountry || null);
-  const dateline = publicData?.brandCity
-    ? `${publicData.brandCity}, India`
-    : brandOrigin
-    ? /india/i.test(brandOrigin)
-      ? brandOrigin
-      : `${brandOrigin}, India`
-    : null;
+  // be inaccurate (UXR pass 2026-07-24). Country comes from brandCountry, default India.
+  const dateline = getBrandOriginLine(publicData);
 
   const logoSrc =
     publicData?.brandLogoUrl ||

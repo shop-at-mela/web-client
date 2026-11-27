@@ -33,8 +33,8 @@ describe('HowWeVet', () => {
     const region = screen.getByRole('region', { name: 'How we vet every brand' });
     const points = region.querySelectorAll('ol > li');
     expect(Array.from(points).map(p => p.textContent)).toEqual([
-      'Independent Indian brands with a proven track record',
-      'Each one has real experience shipping outside India',
+      'Independent South Asian brands with a proven track record',
+      'Each one has real experience shipping outside their home country',
       "You check out on the brand's own store",
     ]);
   });

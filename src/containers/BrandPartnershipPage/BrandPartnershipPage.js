@@ -82,8 +82,8 @@ const BrandPartnershipPageComponent = () => {
   const schemaTitle = 'Partner with Mela: Export Your Brand to the US';
   const schemaDescription = 'Join Mela as a founding partner. Build the US export marketplace together. Zero listing fees, performance-based partnership. Baby clothing & accessories brands apply now.';
 
-  // SEO keywords for the Indian brand export market (updated with tariff resilience)
-  const keywords = 'Indian brand export, US marketplace partnership, Indian brands USA, brand export partnership, performance-based partnership, zero listing fees, export partnership program, tariff resilient marketplace, global expansion platform, regulatory uncertainty partnership';
+  // SEO keywords for the South Asian brand export market (updated with tariff resilience)
+  const keywords = 'South Asian brand export, US marketplace partnership, South Asian brands USA, brand export partnership, performance-based partnership, zero listing fees, export partnership program, tariff resilient marketplace, global expansion platform, regulatory uncertainty partnership';
 
   return (
     <Page
@@ -102,14 +102,14 @@ const BrandPartnershipPageComponent = () => {
           mainEntity: {
             '@type': 'Organization',
             name: 'Mela',
-            description: 'Curated marketplace for Indian brands in the USA'
+            description: 'Curated marketplace for South Asian brands in the USA'
           }
         },
         {
           '@context': 'http://schema.org',
           '@type': 'Service',
           name: 'Mela Brand Partnership Program',
-          description: 'Export partnership program for Indian brands to reach US shoppers',
+          description: 'Export partnership program for South Asian brands to reach US shoppers',
           provider: {
             '@type': 'Organization',
             name: 'Mela'

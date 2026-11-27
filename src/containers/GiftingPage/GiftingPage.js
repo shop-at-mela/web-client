@@ -7,17 +7,23 @@ import { useConfiguration } from '../../context/configurationContext';
 import { useRouteConfiguration } from '../../context/routeConfigurationContext';
 import { useIntl } from '../../util/reactIntl';
 import { createResourceLocatorString } from '../../util/routes';
-import { parse } from '../../util/urlHelpers';
+import { parse, createSlug } from '../../util/urlHelpers';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
-import { getOccasionLabel } from '../../util/occasionLabels';
+import { getOccasionLabel, OCCASION_LABELS } from '../../util/occasionLabels';
 
 import { Page, LayoutSingleColumn } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
+import NotFoundPage from '../NotFoundPage/NotFoundPage';
 import SearchResultsPanel from '../SearchPage/SearchResultsPanel/SearchResultsPanel';
 
-import { getGiftingContent, GIFT_PRICE_BANDS, GIFT_RECIPIENT_CHIPS } from './giftingContent';
+import {
+  getGiftingContent,
+  GIFT_PRICE_BANDS,
+  GIFT_RECIPIENT_CHIPS,
+  isUnknownOccasionSlug,
+} from './giftingContent';
 
 import css from './GiftingPage.module.css';
 
@@ -64,7 +70,9 @@ const GiftingPageComponent = props => {
         itemListElement: listings.map((l, i) => ({
           '@type': 'ListItem',
           position: i + 1,
-          url: `${config.marketplaceRootURL}/l/${l.id.uuid}`,
+          url: `${config.marketplaceRootURL}/l/${createSlug(l.attributes.title || '')}/${
+            l.id.uuid
+          }`,
           name: l.attributes.title,
         })),
       },
@@ -77,6 +85,12 @@ const GiftingPageComponent = props => {
   // added to SearchResultsPanel.js for GiftingPage's sake.
   const paginationPageName = occasionSlug ? 'OccasionPage' : 'GiftsPage';
   const paginationPathParams = occasionSlug ? { occasionSlug } : {};
+
+  // A slug that is neither an occasion value nor curated copy is not a page: 404 rather
+  // than a generic "<slug> Gifts" page that Google reports as a soft 404.
+  if (isUnknownOccasionSlug(occasionSlug, OCCASION_LABELS)) {
+    return <NotFoundPage staticContext={props.staticContext} />;
+  }
 
   return (
     <Page
@@ -106,7 +120,10 @@ const GiftingPageComponent = props => {
           {/* Gift filter chips — presentational: price bands reuse the built-in price
               filter, recipient chips light up once Day 1's `flex-cli search set --key
               recipient` has run (gifting-festival-traffic-prd.md §1G) */}
-          <div className={css.chipRow} aria-label={intl.formatMessage({ id: 'GiftingPage.priceChipsLabel' })}>
+          <div
+            className={css.chipRow}
+            aria-label={intl.formatMessage({ id: 'GiftingPage.priceChipsLabel' })}
+          >
             {GIFT_PRICE_BANDS.map(band => (
               <Link
                 key={band.priceParam}

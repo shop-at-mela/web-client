@@ -40,19 +40,18 @@ export const FAQ_ITEMS = [
     answer: enMessages['MelaHomePage.faqWhatIsMelaAnswer'],
   },
   {
-    question: 'Do Indian brands on Mela ship to the United States, and how long does it take?',
+    question: 'Do South Asian brands on Mela ship to the United States, and how long does it take?',
     answer:
       "Shipping costs and delivery times are set by each brand; each brand page shows that brand's US shipping cost and whether its prices include import duties.",
   },
   {
     question: 'Can I use my US credit card to shop on Mela?',
-    answer:
-      enMessages['MelaHomePage.faqCardsAnswer'],
+    answer: enMessages['MelaHomePage.faqCardsAnswer'],
   },
   {
     question: 'Are there customs duties or import taxes when ordering from India to the US?',
     answer:
-      "It depends on the brand. Some brands include US import duties in their prices. For others, the courier collects duties before delivery. Each brand page and product page says which applies.",
+      'It depends on the brand. Some brands include US import duties in their prices. For others, the courier collects duties before delivery. Each brand page and product page says which applies.',
   },
   {
     question: 'What is the return policy for brands on Mela?',
@@ -66,10 +65,11 @@ const MelaHomePage = props => {
   const config = useConfiguration();
 
   // SEO-optimized meta title targeting primary keywords
-  const pageTitle = "Discover India's Most Loved Brands | Fashion, Home, Beauty & Kids | Mela";
+  const pageTitle = "Discover South Asia's Most Loved Brands | Fashion, Home, Beauty & Kids | Mela";
 
   // SEO-optimized meta description with target keywords
-  const pageDescription = "Mela is a curated home for proven Indian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store.";
+  const pageDescription =
+    "Mela is a curated home for proven South Asian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store.";
 
   // Reference (not duplicate) the Organization entity Page.js already injects into
   // every page's JSON-LD @graph, so AI engines can attribute this page's editorial
@@ -92,47 +92,12 @@ const MelaHomePage = props => {
           '@context': 'http://schema.org',
           '@type': 'WebPage',
           name: pageTitle,
-          description: 'A curation of independent Indian brands: fashion, home, beauty, jewelry, and kids',
-          mainEntity: {
-            '@type': 'Store',
-            name: 'Mela',
-            description: 'A curation of independent Indian brands',
-            currenciesAccepted: 'USD',
-            areaServed: {
-              '@type': 'Country',
-              name: 'United States',
-            },
-            hasOfferCatalog: {
-              '@type': 'OfferCatalog',
-              name: 'Indian Design & Sustainable Fashion',
-              itemListElement: [
-                {
-                  '@type': 'Offer',
-                  itemOffered: {
-                    '@type': 'Product',
-                    name: 'Organic Baby Clothing',
-                    category: 'Baby & Kids'
-                  }
-                },
-                {
-                  '@type': 'Offer',
-                  itemOffered: {
-                    '@type': 'Product',
-                    name: 'Indian Fashion',
-                    category: 'Fashion'
-                  }
-                },
-                {
-                  '@type': 'Offer',
-                  itemOffered: {
-                    '@type': 'Product',
-                    name: 'Indian Home Goods',
-                    category: 'Home & Kitchen'
-                  }
-                }
-              ]
-            }
-          }
+          description:
+            'A curation of independent South Asian brands: fashion, home, beauty, jewelry, and kids',
+          // No Store/OfferCatalog/Product nodes: Mela sells nothing on this page, and a
+          // Product without offers is invalid for Google's product snippets
+          // (search-console-indexing-fixes-prd.md R1-3). Organization and WebSite come
+          // from Page.js.
         },
         {
           '@context': 'http://schema.org',
@@ -179,7 +144,7 @@ const MelaHomePage = props => {
             image-only bestseller cards */}
         <BrandSpotlight />
 
-        {/* Module B: New from India — recency as curation, as a 2-column grid */}
+        {/* Module B: New from South Asia — recency as curation, as a 2-column grid */}
         <div className={css.newFromIndiaSection}>
           <NewFromIndia />
         </div>

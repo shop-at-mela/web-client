@@ -103,6 +103,9 @@ import {
   priceForSchemaMaybe,
   pinterestAvailability,
   getDerivedRenderData,
+  markPermanentRedirect,
+  markUnavailable,
+  isMalformedListingId,
 } from './ListingPage.shared';
 import SectionHero from './SectionHero';
 import SectionReviews from './SectionReviews';
@@ -115,13 +118,18 @@ import ListingPageAccessWrapper from './ListingPageAccessWrapper';
 
 // Lazy-loaded components
 const RecommendedProducts = loadable(() =>
-  import(/* webpackChunkName: "RecommendedProducts" */ '../../components/RecommendedProducts/RecommendedProducts')
+  import(
+    /* webpackChunkName: "RecommendedProducts" */ '../../components/RecommendedProducts/RecommendedProducts'
+  )
 );
 const CategoryProducts = loadable(() =>
-  import(/* webpackChunkName: "CategoryProducts" */ '../../components/CategoryProducts/CategoryProducts')
+  import(
+    /* webpackChunkName: "CategoryProducts" */ '../../components/CategoryProducts/CategoryProducts'
+  )
 );
 
 import css from './ListingPage.module.css';
+import { getBrandCountry } from '../../util/brandOrigin';
 
 const MIN_LENGTH_FOR_LONG_WORDS_IN_TITLE = 16;
 
@@ -197,6 +205,7 @@ export const ListingPageComponent = props => {
     isVariant,
     currentListing,
     listingSlug,
+    canonicalSlug,
     params,
     listingPathParamType,
     listingTab,
@@ -258,24 +267,35 @@ export const ListingPageComponent = props => {
 
   const topbar = <TopbarContainer />;
 
-  if (showListingError && showListingError.status === 404) {
-    // 404 listing not found
+  const isNotFoundListing =
+    showListingError &&
+    ([400, 404].includes(showListingError.status) || isMalformedListingId(rawParams.id));
+  if (isNotFoundListing) {
+    // 404 listing not found; 400 or a non-UUID id is a malformed listing id, also not found
     return <NotFoundPage staticContext={props.staticContext} />;
   } else if (showListingError) {
-    // Other error in fetching listing
+    // Other error in fetching listing (rate limit, API 5xx, network): temporary, so the
+    // server answers 503 + Retry-After instead of an indexable 200 (soft 404).
+    markUnavailable(props.staticContext);
     return <ErrorPage topbar={topbar} scrollingDisabled={scrollingDisabled} intl={intl} />;
+  } else if (!currentListing.id && props.staticContext && isMalformedListingId(rawParams.id)) {
+    // Server render of a non-UUID id whose load failed before any error was stored
+    return <NotFoundPage staticContext={props.staticContext} />;
   } else if (!currentListing.id) {
-    // Still loading the listing
+    // Still loading the listing. On the server this means the data load failed.
+    markUnavailable(props.staticContext);
     return <LoadingPage topbar={topbar} scrollingDisabled={scrollingDisabled} intl={intl} />;
   }
 
-  if (!rawParams.slug && currentListing.id) {
-    // Preserve the query string (e.g. UTM params) through the canonical-slug
-    // redirect so campaign attribution survives the /l/:id -> /l/:slug/:id hop.
+  if (!isVariant && currentListing.id && rawParams.slug !== canonicalSlug) {
+    // /l/:id, or an old or wrong slug: 301 to the canonical /l/:slug/:id URL
+    // (search-console-indexing-fixes-prd.md R1-1). Preserve the query string (e.g. UTM
+    // params) so campaign attribution survives the hop.
+    markPermanentRedirect(props.staticContext);
     return (
       <NamedRedirect
         name="ListingPage"
-        params={{ slug: listingSlug, id: rawParams.id }}
+        params={{ slug: canonicalSlug, id: rawParams.id }}
         search={location.search}
       />
     );
@@ -285,7 +305,10 @@ export const ListingPageComponent = props => {
   const recommendedProductSKUs = useMemo(() => {
     if (!publicData.recommendedProducts) return null;
     return typeof publicData.recommendedProducts === 'string'
-      ? publicData.recommendedProducts.split(',').map(sku => sku.trim()).filter(Boolean)
+      ? publicData.recommendedProducts
+          .split(',')
+          .map(sku => sku.trim())
+          .filter(Boolean)
       : Array.isArray(publicData.recommendedProducts)
       ? publicData.recommendedProducts
       : null;
@@ -347,7 +370,6 @@ export const ListingPageComponent = props => {
     }
   };
 
-
   const handleShopNow = url => {
     const trackingParams = {
       brandName: publicData.brand,
@@ -375,7 +397,10 @@ export const ListingPageComponent = props => {
     getSeoDescriptionFallback(intl, { title, brandName, description, marketplaceName });
 
   const currentStock = currentListing.currentStock?.attributes?.quantity || 0;
-  const schemaAvailability = !currentListing.currentStock
+  const isClosedListing = currentListing.attributes.state === LISTING_STATE_CLOSED;
+  const schemaAvailability = isClosedListing
+    ? 'https://schema.org/OutOfStock'
+    : !currentListing.currentStock
     ? 'https://schema.org/InStock'
     : currentStock > 0
     ? 'https://schema.org/InStock'
@@ -423,49 +448,59 @@ export const ListingPageComponent = props => {
       productPriceCurrency={schemaOffer.priceCurrency}
       productAvailability={pinterestAvailability(schemaAvailability)}
       {...noIndexMaybe}
-      schema={{
-        // SEO ONLY: JSON-LD structured data for search engines (Google, Bing, etc.)
-        // This is invisible to users but helps search engines understand the product
-        // Appears as <script type="application/ld+json"> in page head
-        '@context': 'https://schema.org',
-        '@type': 'Product',
-        name: title, // Product name for structured data
-        description: seoDescription, // SEO description for structured data
-        image: schemaImages, // Product images for rich snippets
-        sku: publicData.sku, // Product SKU for identification
-        material: publicData.material, // Material from itemAspects (consumer-friendly)
-        countryOfOrigin: 'India', // Country of origin for cultural context
-        brand: brandName ? {
-          '@type': 'Brand',
-          name: brandName // Helps Google show brand in search results
-        } : undefined,
-        category: publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3, // Product category for search engines
+      canonicalURL={isVariant ? undefined : productURL}
+      schema={
+        !schemaOffer.price
+          ? undefined
+          : {
+              // SEO ONLY: JSON-LD structured data for search engines (Google, Bing, etc.)
+              // This is invisible to users but helps search engines understand the product
+              // Appears as <script type="application/ld+json"> in page head
+              '@context': 'https://schema.org',
+              '@type': 'Product',
+              name: title, // Product name for structured data
+              description: seoDescription, // SEO description for structured data
+              image: schemaImages, // Product images for rich snippets
+              sku: publicData.sku, // Product SKU for identification
+              material: publicData.material, // Material from itemAspects (consumer-friendly)
+              countryOfOrigin: getBrandCountry(ensuredAuthor?.attributes?.profile?.publicData), // The brand's own country (India unless set)
+              brand: brandName
+                ? {
+                    '@type': 'Brand',
+                    name: brandName, // Helps Google show brand in search results
+                  }
+                : undefined,
+              category:
+                publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3, // Product category for search engines
 
-        // The seller is the brand. No shippingDetails: Mela does not ship, and per-offer
-        // shipping data is blocked on the price accuracy check (PRD P2.1).
-        offers: {
-          '@type': 'Offer',
-          url: productURL,
-          ...schemaOffer, // Price for Google Shopping/rich snippets
-          availability: schemaAvailability, // Stock status for search engines (always required)
+              // The seller is the brand. No shippingDetails: Mela does not ship, and per-offer
+              // shipping data is blocked on the price accuracy check (PRD P2.1).
+              offers: {
+                '@type': 'Offer',
+                url: productURL,
+                ...schemaOffer, // Price for Google Shopping/rich snippets
+                availability: schemaAvailability, // Stock status for search engines (always required)
 
-          seller: getOfferSeller(
-            brandName,
-            ensuredAuthor?.attributes?.profile?.publicData?.brandStoreUrl
-          ),
-        },
+                seller: getOfferSeller(
+                  brandName,
+                  ensuredAuthor?.attributes?.profile?.publicData?.brandStoreUrl
+                ),
+              },
 
-        // Consumer search synonyms — machine-readable for AI answer engines (AEO)
-        ...(publicData.searchSynonyms?.length > 0 && {
-          keywords: publicData.searchSynonyms,
-        }),
+              // Consumer search synonyms — machine-readable for AI answer engines (AEO)
+              ...(publicData.searchSynonyms?.length > 0 && {
+                keywords: publicData.searchSynonyms,
+              }),
 
-        // ENHANCEMENT: Parsed item aspects with benefits from itemAspectsParser
-        additionalProperty: [
-          // Parse benefit-enriched Item_Aspects from publicData
-          ...(publicData.itemAspects ? getAspectsForSchema(publicData.itemAspects, true) : []),
-        ]
-      }}
+              // ENHANCEMENT: Parsed item aspects with benefits from itemAspectsParser
+              additionalProperty: [
+                // Parse benefit-enriched Item_Aspects from publicData
+                ...(publicData.itemAspects
+                  ? getAspectsForSchema(publicData.itemAspects, true)
+                  : []),
+              ],
+            }
+      }
     >
       <LayoutSingleColumn className={css.pageRoot} topbar={topbar} footer={<FooterContainer />}>
         {showListingImage ? (
@@ -533,14 +568,20 @@ export const ListingPageComponent = props => {
             <ItemSpecifics
               attributes={getItemSpecificsAttributes(publicData)}
               categoryBreadcrumb={
-                (publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3) && (() => {
+                (publicData.categoryLevel1 ||
+                  publicData.categoryLevel2 ||
+                  publicData.categoryLevel3) &&
+                (() => {
                   const categoryIds = {
                     level1: publicData.categoryLevel1,
                     level2: publicData.categoryLevel2,
-                    level3: publicData.categoryLevel3
+                    level3: publicData.categoryLevel3,
                   };
 
-                  const categoryNames = resolveCategoryNames(categoryIds, config.categoryConfiguration?.categories);
+                  const categoryNames = resolveCategoryNames(
+                    categoryIds,
+                    config.categoryConfiguration?.categories
+                  );
                   return (
                     <CategoryBreadcrumb
                       category={categoryNames}
@@ -568,7 +609,9 @@ export const ListingPageComponent = props => {
             {/* This DOES appear on the visible product page as clickable links */}
             {/* Benefits: SEO link juice + user discovery of related products */}
             <div className={css.seoLinksContainer}>
-              {(publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3) && (
+              {(publicData.categoryLevel1 ||
+                publicData.categoryLevel2 ||
+                publicData.categoryLevel3) && (
                 <div className={css.categoryLink}>
                   {/* Shows: "Shop more in [Category Name]" as clickable link */}
                   <FormattedMessage id="ListingPage.exploreCategory" />
@@ -576,14 +619,22 @@ export const ListingPageComponent = props => {
                     name="SearchPage"
                     to={{
                       search: [
-                        publicData.categoryLevel1 && `pub_categoryLevel1=${encodeURIComponent(publicData.categoryLevel1)}`,
-                        publicData.categoryLevel2 && `pub_categoryLevel2=${encodeURIComponent(publicData.categoryLevel2)}`,
-                        publicData.categoryLevel3 && `pub_categoryLevel3=${encodeURIComponent(publicData.categoryLevel3)}`
-                      ].filter(Boolean).join('&').replace(/^/, '?')
+                        publicData.categoryLevel1 &&
+                          `pub_categoryLevel1=${encodeURIComponent(publicData.categoryLevel1)}`,
+                        publicData.categoryLevel2 &&
+                          `pub_categoryLevel2=${encodeURIComponent(publicData.categoryLevel2)}`,
+                        publicData.categoryLevel3 &&
+                          `pub_categoryLevel3=${encodeURIComponent(publicData.categoryLevel3)}`,
+                      ]
+                        .filter(Boolean)
+                        .join('&')
+                        .replace(/^/, '?'),
                     }}
                     className={css.internalLink}
                   >
-                    {publicData.categoryLevel3 || publicData.categoryLevel2 || publicData.categoryLevel1}
+                    {publicData.categoryLevel3 ||
+                      publicData.categoryLevel2 ||
+                      publicData.categoryLevel1}
                   </NamedLink>
                 </div>
               )}
@@ -654,14 +705,15 @@ export const ListingPageComponent = props => {
             currentListingId={currentListing?.id?.uuid}
           />
         )}
-        {publicData.categoryLevel1 && publicData.categoryLevel1 !== publicData.categoryLevel2 && publicData.categoryLevel1 !== publicData.categoryLevel3 && (
-          <CategoryProducts
-            categoryLevel="categoryLevel1"
-            categoryName={publicData.categoryLevel1}
-            currentListingId={currentListing?.id?.uuid}
-          />
-        )}
-
+        {publicData.categoryLevel1 &&
+          publicData.categoryLevel1 !== publicData.categoryLevel2 &&
+          publicData.categoryLevel1 !== publicData.categoryLevel3 && (
+            <CategoryProducts
+              categoryLevel="categoryLevel1"
+              categoryName={publicData.categoryLevel1}
+              currentListingId={currentListing?.id?.uuid}
+            />
+          )}
       </LayoutSingleColumn>
 
       {/* Pre-redirect trust sheet — shown first CTA click per session */}

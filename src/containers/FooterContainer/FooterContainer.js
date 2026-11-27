@@ -8,7 +8,7 @@ import SentimentSheet from '../../components/SentimentSheet/SentimentSheet';
 export const FOOTER_COPYRIGHT = {
   fieldType: 'text',
   content:
-    "© 2026 Mela. A curated directory of Indian brands. Mela is not a retailer — clicking through takes you to each brand's own store.",
+    "© 2026 Mela. A curated directory of South Asian brands. Mela is not a retailer — clicking through takes you to each brand's own store.",
 };
 
 const SectionBuilder = loadable(

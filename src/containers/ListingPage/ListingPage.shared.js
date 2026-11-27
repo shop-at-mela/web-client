@@ -177,7 +177,10 @@ export const getDerivedRenderData = ({
       ? ensureOwnListing(getOwnListing(listingId))
       : ensureListing(getListing(listingId));
 
-  const listingSlug = rawParams.slug || createSlug(currentListing.attributes.title || '');
+  // The slug of the current title. The canonical listing URL is /l/:canonicalSlug/:id;
+  // /l/:id and old or wrong slugs 301 to it (search-console-indexing-fixes-prd.md R1-1).
+  const canonicalSlug = createSlug(currentListing.attributes.title || '');
+  const listingSlug = rawParams.slug || canonicalSlug;
   const params = { slug: listingSlug, ...rawParams };
 
   const listingPathParamType = isDraftVariant
@@ -263,8 +266,12 @@ export const getDerivedRenderData = ({
     { title, price: formattedPrice, marketplaceName }
   );
 
-  // Path only: a query string or hash would carry UTM parameters into the Product JSON-LD.
-  const productURL = getCanonicalProductUrl(config.marketplaceRootURL, location.pathname);
+  // The canonical slug URL, path only: a query string or hash would carry UTM parameters
+  // into the Product JSON-LD. Used for both <link rel="canonical"> and offers.url.
+  const productURL = getCanonicalProductUrl(
+    config.marketplaceRootURL,
+    `/l/${canonicalSlug}/${rawParams.id}`
+  );
   const currentStock = currentListing.currentStock?.attributes?.quantity || 0;
   const schemaAvailability = !currentListing.currentStock
     ? null
@@ -282,6 +289,7 @@ export const getDerivedRenderData = ({
     isVariant,
     currentListing,
     listingSlug,
+    canonicalSlug,
     params,
     listingPathParamType,
     listingTab,
@@ -570,3 +578,26 @@ export const LoadingPage = props => {
     </PlainPage>
   );
 };
+
+/**
+ * Server-side rendering flags read by server/index.js (search-console-indexing-fixes-prd.md).
+ * `staticContext` only exists on the server, so these are no-ops in the browser.
+ */
+// The next <Redirect> is permanent: answer 301 instead of 302.
+export const markPermanentRedirect = staticContext => {
+  if (staticContext) {
+    staticContext.permanentRedirect = true;
+  }
+};
+
+// The page could not load for a temporary reason: answer 503 + Retry-After + noindex.
+export const markUnavailable = staticContext => {
+  if (staticContext) {
+    staticContext.unavailable = true;
+  }
+};
+
+// Listing ids are UUIDs. Anything else (e.g. /l/not-a-uuid) can never be a listing, so it is
+// a 404, even when the load fails before reaching the API and leaves no error status.
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const isMalformedListingId = id => typeof id !== 'string' || !UUID_PATTERN.test(id);

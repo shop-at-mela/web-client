@@ -63,7 +63,7 @@ export const OCCASIONS = [
   {
     option: 'diwali',
     label: 'Diwali & Festivals',
-    description: 'Indian festive wear, artisan toys, and gifts for every celebration',
+    description: 'Festive wear, artisan toys, and gifts for every celebration',
     cta: 'Shop for Diwali',
     colorTheme: 'festive',
     // 'diwali-festivals' is the legacy pre-broadened-enum value already tagged on existing
@@ -83,7 +83,7 @@ export const OCCASIONS = [
   {
     option: 'wedding',
     label: 'Wedding Season',
-    description: 'Wedding and wedding-guest gifts from independent Indian brands',
+    description: 'Wedding and wedding-guest gifts from independent brands',
     cta: 'Shop Wedding Gifts',
     colorTheme: 'festive',
     matchValues: ['wedding'],
