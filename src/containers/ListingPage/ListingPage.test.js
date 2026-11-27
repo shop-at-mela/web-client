@@ -361,8 +361,12 @@ describe('ListingPage variants', () => {
       // There are two SavedListingButton instances on this page: one overlaid on the gallery
       // (SectionGallery, css.gallerySaveButton) and one in the content flow (css.listingPageSaveButton)
       // — target the content-flow one specifically.
-      const saveButtons = screen.getAllByRole('button', { name: 'SavedListingButton.saveAriaLabel' });
-      const saveButton = saveButtons.find(button => button.className.includes('listingPageSaveButton'));
+      const saveButtons = screen.getAllByRole('button', {
+        name: 'SavedListingButton.saveAriaLabel',
+      });
+      const saveButton = saveButtons.find(button =>
+        button.className.includes('listingPageSaveButton')
+      );
       const orderPanelTitle = queryAllByRole('heading', { name: 'ListingPage.orderTitle' })[0];
       expect(saveButton).toBeInTheDocument();
       expect(
@@ -685,23 +689,26 @@ describe('Duck', () => {
       return render(
         <>
           <Component {...props} />
-          <Route render={({ location }) => <div data-testid="loc">{`${location.pathname}${location.search}`}</div>} />
+          <Route
+            render={({ location }) => (
+              <div data-testid="loc">{`${location.pathname}${location.search}`}</div>
+            )}
+          />
         </>,
         { config, routeConfiguration: getRouteConfiguration() }
       );
     };
 
-    [
-      ['carousel', ListingPageComponent],
-      ['coverPhoto', ListingPageCoverPhotoComponent],
-    ].forEach(([variantType, Component]) => {
-      it(`keeps the query string through the redirect (${variantType})`, () => {
-        renderRedirect(Component, variantType);
-        expect(testingLibrary.screen.getByTestId('loc').textContent).toEqual(
-          `/l/nice-listing/listing-no-slug${search}`
-        );
-      });
-    });
+    [['carousel', ListingPageComponent], ['coverPhoto', ListingPageCoverPhotoComponent]].forEach(
+      ([variantType, Component]) => {
+        it(`keeps the query string through the redirect (${variantType})`, () => {
+          renderRedirect(Component, variantType);
+          expect(testingLibrary.screen.getByTestId('loc').textContent).toEqual(
+            `/l/nice-listing/listing-no-slug${search}`
+          );
+        });
+      }
+    );
   });
 
   // CategoryBreadcrumb integration tests
@@ -715,11 +722,11 @@ describe('Duck', () => {
             listingType: 'rent-bicycles-daily',
             transactionProcessAlias: 'default-booking/release-1',
             unitType: 'day',
-          }
+          },
         },
         {
           author: createUser('user1'),
-          currentStock: 1
+          currentStock: 1,
         }
       );
 
@@ -759,7 +766,7 @@ describe('Duck', () => {
 
       return render(<ListingPageComponent {...props} />, {
         config,
-        routeConfiguration: getRouteConfiguration()
+        routeConfiguration: getRouteConfiguration(),
       });
     };
 
@@ -767,7 +774,7 @@ describe('Duck', () => {
       const categoryData = {
         categoryLevel1: 'Baby-Products',
         categoryLevel2: 'Clothing',
-        categoryLevel3: 'Organic-Cotton'
+        categoryLevel3: 'Organic-Cotton',
       };
       const { container } = renderListingPageWithCategory(categoryData, 'coverPhoto');
 
@@ -783,7 +790,7 @@ describe('Duck', () => {
       const categoryData = {
         categoryLevel1: 'Toys',
         categoryLevel2: 'Educational',
-        categoryLevel3: 'STEM-Learning'
+        categoryLevel3: 'STEM-Learning',
       };
       const { container } = renderListingPageWithCategory(categoryData, 'carousel');
 
@@ -803,11 +810,11 @@ describe('Duck', () => {
             listingType: 'rent-bicycles-daily',
             transactionProcessAlias: 'default-booking/release-1',
             unitType: 'day',
-          }
+          },
         },
         {
           author: createUser('user1'),
-          currentStock: 1
+          currentStock: 1,
         }
       );
 
@@ -845,7 +852,7 @@ describe('Duck', () => {
 
       render(<ListingPageComponent {...props} />, {
         config,
-        routeConfiguration: getRouteConfiguration()
+        routeConfiguration: getRouteConfiguration(),
       });
 
       // CategoryBreadcrumb should not be present (no category levels defined)
@@ -856,19 +863,24 @@ describe('Duck', () => {
       const categoryData = {
         categoryLevel1: 'Baby',
         categoryLevel2: 'Clothing',
-        categoryLevel3: 'Organic'
+        categoryLevel3: 'Organic',
       };
       renderListingPageWithCategory(categoryData);
 
       // ItemSpecifics renders both a desktop and mobile layout simultaneously
       // (CSS-driven visibility only), so each breadcrumb link appears twice in the DOM.
-      const homeLink = testingLibrary.screen.getAllByRole('link', { name: 'CategoryBreadcrumb.home' })[0];
+      const homeLink = testingLibrary.screen.getAllByRole('link', {
+        name: 'CategoryBreadcrumb.home',
+      })[0];
       const babyLink = testingLibrary.screen.getAllByRole('link', { name: 'Baby' })[0];
       const clothingLink = testingLibrary.screen.getAllByRole('link', { name: 'Clothing' })[0];
 
       expect(homeLink).toHaveAttribute('href', '/s');
       expect(babyLink).toHaveAttribute('href', '/s?pub_categoryLevel1=Baby');
-      expect(clothingLink).toHaveAttribute('href', '/s?pub_categoryLevel1=Baby&pub_categoryLevel2=Clothing');
+      expect(clothingLink).toHaveAttribute(
+        'href',
+        '/s?pub_categoryLevel1=Baby&pub_categoryLevel2=Clothing'
+      );
 
       // Last category level should not be a link
       expect(testingLibrary.screen.getAllByText('Organic')[0]).not.toHaveAttribute('href');

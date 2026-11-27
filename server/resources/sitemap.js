@@ -201,7 +201,8 @@ const sitemapDefault = (req, res, rootUrl, isPrivateMarketplace, sdk) => {
 
   categoryPathsPromise
     .then(categoryEntries => {
-      const dynamicLoaded = isPrivateMarketplace || (brandPaths !== null && categoryEntries !== null);
+      const dynamicLoaded =
+        isPrivateMarketplace || (brandPaths !== null && categoryEntries !== null);
       const paths = [
         ...Object.values(defaultPublicPaths),
         ...(isPrivateMarketplace ? [] : Object.values(publicDirectoryPaths)),

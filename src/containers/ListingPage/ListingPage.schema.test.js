@@ -140,7 +140,6 @@ const getConfig = variantType => {
   };
 };
 
-
 const SEARCH = '?utm_source=pinterest&utm_medium=social&utm_campaign=brand_w1';
 const HASH = '#reviews';
 
@@ -219,82 +218,82 @@ const readProductSchema = async () => {
   return product;
 };
 
-describe.each([
-  ['carousel', CarouselComponent],
-  ['coverPhoto', CoverPhotoComponent],
-])('Product JSON-LD (%s layout)', (variantType, Component) => {
-  afterEach(() => {
-    document.head.innerHTML = '';
-  });
-
-  it('makes the brand the seller, with its own store URL when present', async () => {
-    renderPage(
-      Component,
-      variantType,
-      brandListing({ brand: 'Nicobar', brandStoreUrl: 'https://global.nicobar.com' })
-    );
-    const product = await readProductSchema();
-    expect(product.offers.seller).toEqual({
-      '@type': 'Organization',
-      name: 'Nicobar',
-      url: 'https://global.nicobar.com',
+describe.each([['carousel', CarouselComponent], ['coverPhoto', CoverPhotoComponent]])(
+  'Product JSON-LD (%s layout)',
+  (variantType, Component) => {
+    afterEach(() => {
+      document.head.innerHTML = '';
     });
-    expect(product.brand).toEqual({ '@type': 'Brand', name: 'Nicobar' });
-  });
 
-  it('asserts no seller at all when the listing has no brand (never Mela)', async () => {
-    renderPage(Component, variantType, brandListing({ brand: null }));
-    const product = await readProductSchema();
-    expect(product.offers.seller).toBeUndefined();
-    expect(JSON.stringify(product)).not.toMatch(/"seller"/);
-  });
+    it('makes the brand the seller, with its own store URL when present', async () => {
+      renderPage(
+        Component,
+        variantType,
+        brandListing({ brand: 'Nicobar', brandStoreUrl: 'https://global.nicobar.com' })
+      );
+      const product = await readProductSchema();
+      expect(product.offers.seller).toEqual({
+        '@type': 'Organization',
+        name: 'Nicobar',
+        url: 'https://global.nicobar.com',
+      });
+      expect(product.brand).toEqual({ '@type': 'Brand', name: 'Nicobar' });
+    });
 
-  it('has no audience, no Target Market property and no diaspora wording', async () => {
-    renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }));
-    const product = await readProductSchema();
-    expect(product.audience).toBeUndefined();
-    const json = JSON.stringify(product);
-    expect(json).not.toMatch(/Target Market/);
-    expect(json).not.toMatch(/diaspora/i);
-    expect(json).not.toMatch(/delivered to USA/i);
-  });
+    it('asserts no seller at all when the listing has no brand (never Mela)', async () => {
+      renderPage(Component, variantType, brandListing({ brand: null }));
+      const product = await readProductSchema();
+      expect(product.offers.seller).toBeUndefined();
+      expect(JSON.stringify(product)).not.toMatch(/"seller"/);
+    });
 
-  it('has no shipping details in the offer (PRD P2.1 is blocked)', async () => {
-    renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }));
-    const product = await readProductSchema();
-    expect(product.offers.shippingDetails).toBeUndefined();
-    expect(JSON.stringify(product)).not.toMatch(/shippingDetails|OfferShippingDetails/);
-  });
+    it('has no audience, no Target Market property and no diaspora wording', async () => {
+      renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }));
+      const product = await readProductSchema();
+      expect(product.audience).toBeUndefined();
+      const json = JSON.stringify(product);
+      expect(json).not.toMatch(/Target Market/);
+      expect(json).not.toMatch(/diaspora/i);
+      expect(json).not.toMatch(/delivered to USA/i);
+    });
 
-  it('offers.url is the canonical path without query string or hash', async () => {
-    renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }));
-    const product = await readProductSchema();
-    expect(product.offers.url).toMatch(/\/l\/cotton-kurta\/listing-schema$/);
-    expect(product.offers.url).not.toMatch(/[?#]|utm_/);
-  });
+    it('has no shipping details in the offer (PRD P2.1 is blocked)', async () => {
+      renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }));
+      const product = await readProductSchema();
+      expect(product.offers.shippingDetails).toBeUndefined();
+      expect(JSON.stringify(product)).not.toMatch(/shippingDetails|OfferShippingDetails/);
+    });
 
-  it('uses the neutral fallback description when the listing has no metaDescription', async () => {
-    renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }));
-    const product = await readProductSchema();
-    expect(product.description).toMatch(/^Cotton Kurta by Nicobar, curated on /);
-    expect(product.description.length).toBeLessThanOrEqual(160);
-    expect(product.description).not.toMatch(/diaspora|delivered|authentic/i);
-  });
+    it('offers.url is the canonical path without query string or hash', async () => {
+      renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }));
+      const product = await readProductSchema();
+      expect(product.offers.url).toMatch(/\/l\/cotton-kurta\/listing-schema$/);
+      expect(product.offers.url).not.toMatch(/[?#]|utm_/);
+    });
 
-  it('has no Cultural Heritage property and a product-first title', async () => {
-    renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }));
-    const product = await readProductSchema();
-    expect(JSON.stringify(product)).not.toMatch(/Cultural Heritage|Authentic Indian/);
-    await waitFor(() => expect(document.title).toBe('Cotton Kurta by Nicobar | MarketplaceX'));
-  });
+    it('uses the neutral fallback description when the listing has no metaDescription', async () => {
+      renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }));
+      const product = await readProductSchema();
+      expect(product.description).toMatch(/^Cotton Kurta by Nicobar, curated on /);
+      expect(product.description.length).toBeLessThanOrEqual(160);
+      expect(product.description).not.toMatch(/diaspora|delivered|authentic/i);
+    });
 
-  it('keeps a listing metaDescription when one is set', async () => {
-    renderPage(
-      Component,
-      variantType,
-      brandListing({ brand: 'Nicobar', extraPublicData: { metaDescription: 'Custom meta.' } })
-    );
-    const product = await readProductSchema();
-    expect(product.description).toBe('Custom meta.');
-  });
-});
+    it('has no Cultural Heritage property and a product-first title', async () => {
+      renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }));
+      const product = await readProductSchema();
+      expect(JSON.stringify(product)).not.toMatch(/Cultural Heritage|Authentic Indian/);
+      await waitFor(() => expect(document.title).toBe('Cotton Kurta by Nicobar | MarketplaceX'));
+    });
+
+    it('keeps a listing metaDescription when one is set', async () => {
+      renderPage(
+        Component,
+        variantType,
+        brandListing({ brand: 'Nicobar', extraPublicData: { metaDescription: 'Custom meta.' } })
+      );
+      const product = await readProductSchema();
+      expect(product.description).toBe('Custom meta.');
+    });
+  }
+);

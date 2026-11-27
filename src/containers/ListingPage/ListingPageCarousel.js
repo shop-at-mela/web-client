@@ -116,10 +116,14 @@ import ListingPageAccessWrapper from './ListingPageAccessWrapper';
 
 // Lazy-loaded components
 const RecommendedProducts = loadable(() =>
-  import(/* webpackChunkName: "RecommendedProducts" */ '../../components/RecommendedProducts/RecommendedProducts')
+  import(
+    /* webpackChunkName: "RecommendedProducts" */ '../../components/RecommendedProducts/RecommendedProducts'
+  )
 );
 const CategoryProducts = loadable(() =>
-  import(/* webpackChunkName: "CategoryProducts" */ '../../components/CategoryProducts/CategoryProducts')
+  import(
+    /* webpackChunkName: "CategoryProducts" */ '../../components/CategoryProducts/CategoryProducts'
+  )
 );
 
 import css from './ListingPage.module.css';
@@ -259,7 +263,10 @@ export const ListingPageComponent = props => {
   const recommendedProductSKUs = useMemo(() => {
     if (!publicData.recommendedProducts) return null;
     return typeof publicData.recommendedProducts === 'string'
-      ? publicData.recommendedProducts.split(',').map(sku => sku.trim()).filter(Boolean)
+      ? publicData.recommendedProducts
+          .split(',')
+          .map(sku => sku.trim())
+          .filter(Boolean)
       : Array.isArray(publicData.recommendedProducts)
       ? publicData.recommendedProducts
       : null;
@@ -347,7 +354,6 @@ export const ListingPageComponent = props => {
     }
   };
 
-
   const handleShopNow = url => {
     const trackingParams = {
       brandName: publicData.brand,
@@ -402,11 +408,14 @@ export const ListingPageComponent = props => {
         name: title,
         description: seoDescription,
         image: schemaImages,
-        brand: brandName ? {
-          '@type': 'Brand',
-          name: brandName
-        } : undefined,
-        category: publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3,
+        brand: brandName
+          ? {
+              '@type': 'Brand',
+              name: brandName,
+            }
+          : undefined,
+        category:
+          publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3,
         offers: {
           '@type': 'Offer',
           url: productURL,
@@ -503,14 +512,20 @@ export const ListingPageComponent = props => {
             <ItemSpecifics
               attributes={getItemSpecificsAttributes(publicData)}
               categoryBreadcrumb={
-                (publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3) && (() => {
+                (publicData.categoryLevel1 ||
+                  publicData.categoryLevel2 ||
+                  publicData.categoryLevel3) &&
+                (() => {
                   const categoryIds = {
                     level1: publicData.categoryLevel1,
                     level2: publicData.categoryLevel2,
-                    level3: publicData.categoryLevel3
+                    level3: publicData.categoryLevel3,
                   };
 
-                  const categoryNames = resolveCategoryNames(categoryIds, config.categoryConfiguration?.categories);
+                  const categoryNames = resolveCategoryNames(
+                    categoryIds,
+                    config.categoryConfiguration?.categories
+                  );
                   return (
                     <CategoryBreadcrumb
                       category={categoryNames}
@@ -536,21 +551,31 @@ export const ListingPageComponent = props => {
 
             {/* Internal linking for SEO - Category links */}
             <div className={css.seoLinksContainer}>
-              {(publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3) && (
+              {(publicData.categoryLevel1 ||
+                publicData.categoryLevel2 ||
+                publicData.categoryLevel3) && (
                 <div className={css.categoryLink}>
                   <FormattedMessage id="ListingPage.exploreCategory" />
                   <NamedLink
                     name="SearchPage"
                     to={{
                       search: [
-                        publicData.categoryLevel1 && `pub_categoryLevel1=${encodeURIComponent(publicData.categoryLevel1)}`,
-                        publicData.categoryLevel2 && `pub_categoryLevel2=${encodeURIComponent(publicData.categoryLevel2)}`,
-                        publicData.categoryLevel3 && `pub_categoryLevel3=${encodeURIComponent(publicData.categoryLevel3)}`
-                      ].filter(Boolean).join('&').replace(/^/, '?')
+                        publicData.categoryLevel1 &&
+                          `pub_categoryLevel1=${encodeURIComponent(publicData.categoryLevel1)}`,
+                        publicData.categoryLevel2 &&
+                          `pub_categoryLevel2=${encodeURIComponent(publicData.categoryLevel2)}`,
+                        publicData.categoryLevel3 &&
+                          `pub_categoryLevel3=${encodeURIComponent(publicData.categoryLevel3)}`,
+                      ]
+                        .filter(Boolean)
+                        .join('&')
+                        .replace(/^/, '?'),
                     }}
                     className={css.internalLink}
                   >
-                    {publicData.categoryLevel3 || publicData.categoryLevel2 || publicData.categoryLevel1}
+                    {publicData.categoryLevel3 ||
+                      publicData.categoryLevel2 ||
+                      publicData.categoryLevel1}
                   </NamedLink>
                 </div>
               )}
@@ -609,7 +634,8 @@ export const ListingPageComponent = props => {
               listingId={currentListing?.id?.uuid}
               listingData={{
                 title: currentListing?.attributes?.title || '',
-                imageUrl: currentListing?.images?.[0]?.attributes?.variants?.['listing-card']?.url || '',
+                imageUrl:
+                  currentListing?.images?.[0]?.attributes?.variants?.['listing-card']?.url || '',
               }}
               variant="button"
               className={css.listingPageSaveButton}
@@ -632,14 +658,15 @@ export const ListingPageComponent = props => {
             currentListingId={currentListing?.id?.uuid}
           />
         )}
-        {publicData.categoryLevel1 && publicData.categoryLevel1 !== publicData.categoryLevel2 && publicData.categoryLevel1 !== publicData.categoryLevel3 && (
-          <CategoryProducts
-            categoryLevel="categoryLevel1"
-            categoryName={publicData.categoryLevel1}
-            currentListingId={currentListing?.id?.uuid}
-          />
-        )}
-
+        {publicData.categoryLevel1 &&
+          publicData.categoryLevel1 !== publicData.categoryLevel2 &&
+          publicData.categoryLevel1 !== publicData.categoryLevel3 && (
+            <CategoryProducts
+              categoryLevel="categoryLevel1"
+              categoryName={publicData.categoryLevel1}
+              currentListingId={currentListing?.id?.uuid}
+            />
+          )}
       </LayoutSingleColumn>
 
       {/* Pre-redirect trust sheet — shown first CTA click per session */}

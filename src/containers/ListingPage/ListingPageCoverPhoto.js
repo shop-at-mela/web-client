@@ -115,10 +115,14 @@ import ListingPageAccessWrapper from './ListingPageAccessWrapper';
 
 // Lazy-loaded components
 const RecommendedProducts = loadable(() =>
-  import(/* webpackChunkName: "RecommendedProducts" */ '../../components/RecommendedProducts/RecommendedProducts')
+  import(
+    /* webpackChunkName: "RecommendedProducts" */ '../../components/RecommendedProducts/RecommendedProducts'
+  )
 );
 const CategoryProducts = loadable(() =>
-  import(/* webpackChunkName: "CategoryProducts" */ '../../components/CategoryProducts/CategoryProducts')
+  import(
+    /* webpackChunkName: "CategoryProducts" */ '../../components/CategoryProducts/CategoryProducts'
+  )
 );
 
 import css from './ListingPage.module.css';
@@ -286,7 +290,10 @@ export const ListingPageComponent = props => {
   const recommendedProductSKUs = useMemo(() => {
     if (!publicData.recommendedProducts) return null;
     return typeof publicData.recommendedProducts === 'string'
-      ? publicData.recommendedProducts.split(',').map(sku => sku.trim()).filter(Boolean)
+      ? publicData.recommendedProducts
+          .split(',')
+          .map(sku => sku.trim())
+          .filter(Boolean)
       : Array.isArray(publicData.recommendedProducts)
       ? publicData.recommendedProducts
       : null;
@@ -347,7 +354,6 @@ export const ListingPageComponent = props => {
       onSubmit(values);
     }
   };
-
 
   const handleShopNow = url => {
     const trackingParams = {
@@ -436,11 +442,14 @@ export const ListingPageComponent = props => {
         sku: publicData.sku, // Product SKU for identification
         material: publicData.material, // Material from itemAspects (consumer-friendly)
         countryOfOrigin: getBrandCountry(ensuredAuthor?.attributes?.profile?.publicData), // The brand's own country (India unless set)
-        brand: brandName ? {
-          '@type': 'Brand',
-          name: brandName // Helps Google show brand in search results
-        } : undefined,
-        category: publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3, // Product category for search engines
+        brand: brandName
+          ? {
+              '@type': 'Brand',
+              name: brandName, // Helps Google show brand in search results
+            }
+          : undefined,
+        category:
+          publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3, // Product category for search engines
 
         // The seller is the brand. No shippingDetails: Mela does not ship, and per-offer
         // shipping data is blocked on the price accuracy check (PRD P2.1).
@@ -465,7 +474,7 @@ export const ListingPageComponent = props => {
         additionalProperty: [
           // Parse benefit-enriched Item_Aspects from publicData
           ...(publicData.itemAspects ? getAspectsForSchema(publicData.itemAspects, true) : []),
-        ]
+        ],
       }}
     >
       <LayoutSingleColumn className={css.pageRoot} topbar={topbar} footer={<FooterContainer />}>
@@ -534,14 +543,20 @@ export const ListingPageComponent = props => {
             <ItemSpecifics
               attributes={getItemSpecificsAttributes(publicData)}
               categoryBreadcrumb={
-                (publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3) && (() => {
+                (publicData.categoryLevel1 ||
+                  publicData.categoryLevel2 ||
+                  publicData.categoryLevel3) &&
+                (() => {
                   const categoryIds = {
                     level1: publicData.categoryLevel1,
                     level2: publicData.categoryLevel2,
-                    level3: publicData.categoryLevel3
+                    level3: publicData.categoryLevel3,
                   };
 
-                  const categoryNames = resolveCategoryNames(categoryIds, config.categoryConfiguration?.categories);
+                  const categoryNames = resolveCategoryNames(
+                    categoryIds,
+                    config.categoryConfiguration?.categories
+                  );
                   return (
                     <CategoryBreadcrumb
                       category={categoryNames}
@@ -569,7 +584,9 @@ export const ListingPageComponent = props => {
             {/* This DOES appear on the visible product page as clickable links */}
             {/* Benefits: SEO link juice + user discovery of related products */}
             <div className={css.seoLinksContainer}>
-              {(publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3) && (
+              {(publicData.categoryLevel1 ||
+                publicData.categoryLevel2 ||
+                publicData.categoryLevel3) && (
                 <div className={css.categoryLink}>
                   {/* Shows: "Shop more in [Category Name]" as clickable link */}
                   <FormattedMessage id="ListingPage.exploreCategory" />
@@ -577,14 +594,22 @@ export const ListingPageComponent = props => {
                     name="SearchPage"
                     to={{
                       search: [
-                        publicData.categoryLevel1 && `pub_categoryLevel1=${encodeURIComponent(publicData.categoryLevel1)}`,
-                        publicData.categoryLevel2 && `pub_categoryLevel2=${encodeURIComponent(publicData.categoryLevel2)}`,
-                        publicData.categoryLevel3 && `pub_categoryLevel3=${encodeURIComponent(publicData.categoryLevel3)}`
-                      ].filter(Boolean).join('&').replace(/^/, '?')
+                        publicData.categoryLevel1 &&
+                          `pub_categoryLevel1=${encodeURIComponent(publicData.categoryLevel1)}`,
+                        publicData.categoryLevel2 &&
+                          `pub_categoryLevel2=${encodeURIComponent(publicData.categoryLevel2)}`,
+                        publicData.categoryLevel3 &&
+                          `pub_categoryLevel3=${encodeURIComponent(publicData.categoryLevel3)}`,
+                      ]
+                        .filter(Boolean)
+                        .join('&')
+                        .replace(/^/, '?'),
                     }}
                     className={css.internalLink}
                   >
-                    {publicData.categoryLevel3 || publicData.categoryLevel2 || publicData.categoryLevel1}
+                    {publicData.categoryLevel3 ||
+                      publicData.categoryLevel2 ||
+                      publicData.categoryLevel1}
                   </NamedLink>
                 </div>
               )}
@@ -655,14 +680,15 @@ export const ListingPageComponent = props => {
             currentListingId={currentListing?.id?.uuid}
           />
         )}
-        {publicData.categoryLevel1 && publicData.categoryLevel1 !== publicData.categoryLevel2 && publicData.categoryLevel1 !== publicData.categoryLevel3 && (
-          <CategoryProducts
-            categoryLevel="categoryLevel1"
-            categoryName={publicData.categoryLevel1}
-            currentListingId={currentListing?.id?.uuid}
-          />
-        )}
-
+        {publicData.categoryLevel1 &&
+          publicData.categoryLevel1 !== publicData.categoryLevel2 &&
+          publicData.categoryLevel1 !== publicData.categoryLevel3 && (
+            <CategoryProducts
+              categoryLevel="categoryLevel1"
+              categoryName={publicData.categoryLevel1}
+              currentListingId={currentListing?.id?.uuid}
+            />
+          )}
       </LayoutSingleColumn>
 
       {/* Pre-redirect trust sheet — shown first CTA click per session */}

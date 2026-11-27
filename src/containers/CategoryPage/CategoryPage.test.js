@@ -269,7 +269,9 @@ describe('CategoryPage', () => {
 
     it('renders the root description text', () => {
       renderRoot();
-      expect(screen.getByText(/Mela is a marketplace for independent Indian brands/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Mela is a marketplace for independent Indian brands/i)
+      ).toBeInTheDocument();
     });
   });
 
@@ -432,7 +434,9 @@ describe('CategoryPage', () => {
       };
       expect(isCategoryConfirmedEmpty(base)).toBe(true);
       expect(isCategoryConfirmedEmpty({ ...base, searchInProgress: true })).toBe(false);
-      expect(isCategoryConfirmedEmpty({ ...base, searchListingsError: { status: 429 } })).toBe(false);
+      expect(isCategoryConfirmedEmpty({ ...base, searchListingsError: { status: 429 } })).toBe(
+        false
+      );
       expect(isCategoryConfirmedEmpty({ ...base, pagination: null })).toBe(false);
       expect(isCategoryConfirmedEmpty({ ...base, pagination: { totalItems: 3 } })).toBe(false);
       expect(isCategoryConfirmedEmpty({ ...base, listings: [{ id: 'x' }] })).toBe(false);
@@ -473,9 +477,9 @@ describe('CategoryPage', () => {
     });
 
     const gridOrder = container =>
-      Array.from(container.querySelectorAll('[data-testid="listing-card"], [data-testid="brand-tile"]')).map(
-        el => ({ testid: el.getAttribute('data-testid'), text: el.textContent })
-      );
+      Array.from(
+        container.querySelectorAll('[data-testid="listing-card"], [data-testid="brand-tile"]')
+      ).map(el => ({ testid: el.getAttribute('data-testid'), text: el.textContent }));
 
     it('demotes a utility-priced item below a full-priced item from a different brand', () => {
       const listings = [
@@ -491,7 +495,10 @@ describe('CategoryPage', () => {
         marketplaceData: {
           entities: {
             listing: { cheap: listings[0], hero: listings[1] },
-            user: { brandA: userEntity('brandA', 'Brand A'), brandB: userEntity('brandB', 'Brand B') },
+            user: {
+              brandA: userEntity('brandA', 'Brand A'),
+              brandB: userEntity('brandB', 'Brand B'),
+            },
           },
         },
       }));
@@ -519,7 +526,10 @@ describe('CategoryPage', () => {
         marketplaceData: {
           entities: {
             listing: entityMap,
-            user: { brandA: userEntity('brandA', 'Brand A'), brandB: userEntity('brandB', 'Brand B') },
+            user: {
+              brandA: userEntity('brandA', 'Brand A'),
+              brandB: userEntity('brandB', 'Brand B'),
+            },
           },
         },
       }));

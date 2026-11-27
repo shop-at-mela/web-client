@@ -46,13 +46,12 @@ export const FAQ_ITEMS = [
   },
   {
     question: 'Can I use my US credit card to shop on Mela?',
-    answer:
-      enMessages['MelaHomePage.faqCardsAnswer'],
+    answer: enMessages['MelaHomePage.faqCardsAnswer'],
   },
   {
     question: 'Are there customs duties or import taxes when ordering from India to the US?',
     answer:
-      "It depends on the brand. Some brands include US import duties in their prices. For others, the courier collects duties before delivery. Each brand page and product page says which applies.",
+      'It depends on the brand. Some brands include US import duties in their prices. For others, the courier collects duties before delivery. Each brand page and product page says which applies.',
   },
   {
     question: 'What is the return policy for brands on Mela?',
@@ -69,7 +68,8 @@ const MelaHomePage = props => {
   const pageTitle = "Discover South Asia's Most Loved Brands | Fashion, Home, Beauty & Kids | Mela";
 
   // SEO-optimized meta description with target keywords
-  const pageDescription = "Mela is a curated home for proven South Asian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store.";
+  const pageDescription =
+    "Mela is a curated home for proven South Asian brands with real export experience. Explore fashion, home, beauty, jewelry, and kids, then buy directly on each brand's own store.";
 
   // Reference (not duplicate) the Organization entity Page.js already injects into
   // every page's JSON-LD @graph, so AI engines can attribute this page's editorial
@@ -92,7 +92,8 @@ const MelaHomePage = props => {
           '@context': 'http://schema.org',
           '@type': 'WebPage',
           name: pageTitle,
-          description: 'A curation of independent South Asian brands: fashion, home, beauty, jewelry, and kids',
+          description:
+            'A curation of independent South Asian brands: fashion, home, beauty, jewelry, and kids',
           mainEntity: {
             '@type': 'Store',
             name: 'Mela',
@@ -111,28 +112,28 @@ const MelaHomePage = props => {
                   itemOffered: {
                     '@type': 'Product',
                     name: 'Organic Baby Clothing',
-                    category: 'Baby & Kids'
-                  }
+                    category: 'Baby & Kids',
+                  },
                 },
                 {
                   '@type': 'Offer',
                   itemOffered: {
                     '@type': 'Product',
                     name: 'South Asian Fashion',
-                    category: 'Fashion'
-                  }
+                    category: 'Fashion',
+                  },
                 },
                 {
                   '@type': 'Offer',
                   itemOffered: {
                     '@type': 'Product',
                     name: 'South Asian Home Goods',
-                    category: 'Home & Kitchen'
-                  }
-                }
-              ]
-            }
-          }
+                    category: 'Home & Kitchen',
+                  },
+                },
+              ],
+            },
+          },
         },
         {
           '@context': 'http://schema.org',

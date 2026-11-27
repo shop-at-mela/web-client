@@ -25,7 +25,10 @@ import {
 } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
-import { OccasionStrip, AgeNavigation } from '../MelaHomePage/sections/CategoryShowcase/CategoryShowcase';
+import {
+  OccasionStrip,
+  AgeNavigation,
+} from '../MelaHomePage/sections/CategoryShowcase/CategoryShowcase';
 import BrandFilterPopup from './BrandFilterPopup/BrandFilterPopup';
 import { getCategoryBrandTiles, getCategoryBrandCarousel } from './CategoryPage.duck';
 
@@ -81,7 +84,7 @@ export const CATEGORY_CONTENT = {
   },
   Clothing: {
     description:
-      "Indian-made baby and kids clothing on Mela includes tops, bottoms, dresses, sleepwear, outerwear, and festive wear from independent Indian labels. Many pieces use organic fabrics and prints that are hand block printed or dyed in Indian workshops today, with designs spanning soft everyday basics for newborns to kurta sets and lehengas for celebrations.",
+      'Indian-made baby and kids clothing on Mela includes tops, bottoms, dresses, sleepwear, outerwear, and festive wear from independent Indian labels. Many pieces use organic fabrics and prints that are hand block printed or dyed in Indian workshops today, with designs spanning soft everyday basics for newborns to kurta sets and lehengas for celebrations.',
     faqQuestion: 'Where can I buy Indian-made organic clothes for babies and kids?',
     faqAnswer:
       'Mela carries baby and kids clothing from independent Indian brands, including tops, dresses, sleepwear, outerwear, and festive wear. Many of these pieces are made from organic fabrics and finished with hand block prints or hand-dyed patterns produced in India.',
@@ -131,7 +134,8 @@ export const CATEGORY_CONTENT = {
   Fashion: {
     description:
       'Fashion on Mela brings together handloom sarees, hand block-printed kurtas, embroidered juttis, Nehru jackets, and everyday contemporary clothing from independent Indian designers. Weavers, printers, and embroiderers across India are making these pieces today, and the labels on Mela range from modern everyday wear to festive and wedding-season outfits for women and men.',
-    faqQuestion: 'Where can I buy handloom sarees and kurtas from independent Indian designers in the US?',
+    faqQuestion:
+      'Where can I buy handloom sarees and kurtas from independent Indian designers in the US?',
     faqAnswer:
       'Mela sells handloom sarees, hand block-printed kurtas, Nehru jackets, embroidered juttis, and contemporary clothing from independent Indian designers. Pieces range from everyday wear to festive and wedding-season outfits, made by weavers, printers, and embroiderers in India today.',
   },
@@ -179,7 +183,7 @@ export const CATEGORY_CONTENT = {
   },
   'Food-Gourmet': {
     description:
-      "Food & Gourmet is a category Mela is building out for pantry staples from small-batch Indian food producers — think single-origin chai blends, stone-ground spice mixes, mango pickles, and Indian coffee, sourced from specific Indian regions. Mela is currently onboarding food and gourmet brands for this category, so check back as new producers join.",
+      'Food & Gourmet is a category Mela is building out for pantry staples from small-batch Indian food producers — think single-origin chai blends, stone-ground spice mixes, mango pickles, and Indian coffee, sourced from specific Indian regions. Mela is currently onboarding food and gourmet brands for this category, so check back as new producers join.',
     faqQuestion: 'Does Mela sell Indian food and pantry staples like chai, spices, and pickles?',
     faqAnswer:
       "Not yet — Mela is onboarding small-batch Indian food producers for chai, spice mixes, pickles, and coffee, so this category doesn't have live listings today. In the meantime, explore Mela's live categories like Fashion, Home & Kitchen, and Beauty & Wellness.",
@@ -356,14 +360,23 @@ const getBrandsPagePath = routeConfiguration => {
 
 // ── Root categories view (/categories with no level params) ───────────────
 
-const RootCategoriesPage = ({ categories, scrollingDisabled, config, routeConfiguration, intl }) => {
+const RootCategoriesPage = ({
+  categories,
+  scrollingDisabled,
+  config,
+  routeConfiguration,
+  intl,
+}) => {
   const marketplaceName = config.marketplaceName;
   const rootContent = CATEGORY_CONTENT.root;
   const rootDescription = rootContent.description;
   const pageTitle = intl.formatMessage(
     { id: 'CategoryPage.title' },
     {
-      categoryName: intl.formatMessage({ id: 'CategoryPage.allCategories', defaultMessage: 'All Categories' }),
+      categoryName: intl.formatMessage({
+        id: 'CategoryPage.allCategories',
+        defaultMessage: 'All Categories',
+      }),
       marketplaceName,
     }
   );
@@ -419,7 +432,10 @@ const RootCategoriesPage = ({ categories, scrollingDisabled, config, routeConfig
             <Link to={landingPath} className={css.breadcrumbLink}>
               <FormattedMessage id="CategoryPage.home" />
             </Link>
-            <span className={css.breadcrumbSep} aria-hidden="true"> › </span>
+            <span className={css.breadcrumbSep} aria-hidden="true">
+              {' '}
+              ›{' '}
+            </span>
             <span className={css.breadcrumbCurrent}>
               <FormattedMessage id="CategoryPage.allCategories" defaultMessage="All Categories" />
             </span>
@@ -559,9 +575,7 @@ const CategoryPageComponent = props => {
 
   // Deepest category is what we're currently viewing
   const currentCrumb = breadcrumbs[breadcrumbs.length - 1];
-  const currentCategory = currentCrumb
-    ? findCategoryById(categories, currentCrumb.id)
-    : null;
+  const currentCategory = currentCrumb ? findCategoryById(categories, currentCrumb.id) : null;
 
   // Subcategories of the current level — used for navigation pills
   const subcategories = currentCategory?.subcategories || [];
@@ -650,10 +664,7 @@ const CategoryPageComponent = props => {
         hasBrandFilter: !!selectedBrandId,
       })}
     >
-      <LayoutSingleColumn
-        topbar={<TopbarContainer />}
-        footer={<FooterContainer />}
-      >
+      <LayoutSingleColumn topbar={<TopbarContainer />} footer={<FooterContainer />}>
         <div className={css.root}>
           {/* Breadcrumb nav */}
           <nav className={css.breadcrumb} aria-label="Category navigation">
@@ -662,7 +673,10 @@ const CategoryPageComponent = props => {
             </Link>
             {breadcrumbs.map((crumb, i) => (
               <React.Fragment key={crumb.id}>
-                <span className={css.breadcrumbSep} aria-hidden="true"> › </span>
+                <span className={css.breadcrumbSep} aria-hidden="true">
+                  {' '}
+                  ›{' '}
+                </span>
                 {i < breadcrumbs.length - 1 ? (
                   <Link to={crumb.path} className={css.breadcrumbLink}>
                     {crumb.name}
@@ -750,10 +764,7 @@ const CategoryPageComponent = props => {
                     values={{ brandName: selectedBrandName, categoryName }}
                   />
                 ) : (
-                  <FormattedMessage
-                    id="CategoryPage.gridHeadingAll"
-                    values={{ categoryName }}
-                  />
+                  <FormattedMessage id="CategoryPage.gridHeadingAll" values={{ categoryName }} />
                 )}
               </h2>
               {/* Gated to >=3 options — below that (e.g. Beauty-Wellness, Home-Kitchen
@@ -775,10 +786,7 @@ const CategoryPageComponent = props => {
             ) : listings.length === 0 ? (
               <div className={css.empty}>
                 <p className={css.emptyText}>
-                  <FormattedMessage
-                    id="CategoryPage.noProducts"
-                    values={{ categoryName }}
-                  />
+                  <FormattedMessage id="CategoryPage.noProducts" values={{ categoryName }} />
                 </p>
                 <Link to={brandsPath} className={css.emptyLink}>
                   <FormattedMessage id="CategoryPage.browseBrands" />

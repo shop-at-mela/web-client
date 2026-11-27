@@ -296,8 +296,7 @@ app.get('/{*splat}', async (req, res) => {
 
   const requestUrl = new URL(req.url, 'http://localhost');
   const requestedPage = parseInt(requestUrl.searchParams.get('page'), 10);
-  const isSearchPath =
-    requestUrl.pathname === '/s' || requestUrl.pathname.startsWith('/s/');
+  const isSearchPath = requestUrl.pathname === '/s' || requestUrl.pathname.startsWith('/s/');
   if (isSearchPath && requestedPage > MAX_SSR_SEARCH_PAGE) {
     res.set({ 'X-Robots-Tag': 'noindex' });
     return res.status(404).send(errorPage404);

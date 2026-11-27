@@ -18,23 +18,23 @@ export const OCCASION_LANDING_CONTENT = {
     heading: 'Diwali Gifts',
     subheading: 'Curated Diwali gifts from independent Indian brands: diyas to festive wear.',
     metaDescription:
-      "Shop Diwali gifts from independent Indian brands: home décor, festive fashion, and gourmet hampers, ethically made.",
+      'Shop Diwali gifts from independent Indian brands: home décor, festive fashion, and gourmet hampers, ethically made.',
   },
   'diwali-festivals': {
     heading: 'Diwali & Festival Gifts',
     subheading: 'Festive wear, décor, and gifts for Diwali and the festival season.',
-    metaDescription:
-      'Shop Diwali and festival-season gifts from independent Indian brands.',
+    metaDescription: 'Shop Diwali and festival-season gifts from independent Indian brands.',
   },
   navratri: {
     heading: 'Navratri Gifts',
-    subheading: 'Vibrant Navratri-ready fashion and gifting picks from independent Indian designers.',
-    metaDescription:
-      'Shop Navratri gifts and festive fashion from independent Indian brands.',
+    subheading:
+      'Vibrant Navratri-ready fashion and gifting picks from independent Indian designers.',
+    metaDescription: 'Shop Navratri gifts and festive fashion from independent Indian brands.',
   },
   karva_chauth: {
     heading: 'Karva Chauth Gifts',
-    subheading: 'Thoughtful Karva Chauth gifts: jewelry, fashion, and self-care from Indian brands.',
+    subheading:
+      'Thoughtful Karva Chauth gifts: jewelry, fashion, and self-care from Indian brands.',
     metaDescription: 'Shop Karva Chauth gifts from independent Indian brands.',
   },
   raksha_bandhan: {

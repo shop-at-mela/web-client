@@ -106,7 +106,10 @@ const GiftingPageComponent = props => {
           {/* Gift filter chips — presentational: price bands reuse the built-in price
               filter, recipient chips light up once Day 1's `flex-cli search set --key
               recipient` has run (gifting-festival-traffic-prd.md §1G) */}
-          <div className={css.chipRow} aria-label={intl.formatMessage({ id: 'GiftingPage.priceChipsLabel' })}>
+          <div
+            className={css.chipRow}
+            aria-label={intl.formatMessage({ id: 'GiftingPage.priceChipsLabel' })}
+          >
             {GIFT_PRICE_BANDS.map(band => (
               <Link
                 key={band.priceParam}

@@ -78,9 +78,7 @@ const queryUserListingsPayloadCreator = (
   const baseParams = ownProfileOnly
     ? { states: ['published'], ...queryParams }
     : { author_id: userId, ...queryParams };
-  const queryFn = ownProfileOnly
-    ? p => sdk.ownListings.query(p)
-    : p => sdk.listings.query(p);
+  const queryFn = ownProfileOnly ? p => sdk.ownListings.query(p) : p => sdk.listings.query(p);
 
   return fetchAllPages(queryFn, baseParams)
     .then(listings => {
