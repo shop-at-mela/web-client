@@ -106,6 +106,7 @@ import {
   getDerivedRenderData,
   markPermanentRedirect,
   markUnavailable,
+  isMalformedListingId,
 } from './ListingPage.shared';
 import VariantDisplay from '../../components/VariantDisplay/VariantDisplay';
 import Notifications from './Notifications/Notifications';
@@ -277,14 +278,20 @@ export const ListingPageComponent = props => {
 
   const topbar = <TopbarContainer />;
 
-  if (showListingError && [400, 404].includes(showListingError.status)) {
-    // 404 listing not found; 400 is a malformed listing id, which is also not found
+  const isNotFoundListing =
+    showListingError &&
+    ([400, 404].includes(showListingError.status) || isMalformedListingId(rawParams.id));
+  if (isNotFoundListing) {
+    // 404 listing not found; 400 or a non-UUID id is a malformed listing id, also not found
     return <NotFoundPage staticContext={props.staticContext} />;
   } else if (showListingError) {
     // Other error in fetching listing (rate limit, API 5xx, network): temporary, so the
     // server answers 503 + Retry-After instead of an indexable 200 (soft 404).
     markUnavailable(props.staticContext);
     return <ErrorPage topbar={topbar} scrollingDisabled={scrollingDisabled} intl={intl} />;
+  } else if (!currentListing.id && props.staticContext && isMalformedListingId(rawParams.id)) {
+    // Server render of a non-UUID id whose load failed before any error was stored
+    return <NotFoundPage staticContext={props.staticContext} />;
   } else if (!currentListing.id) {
     // Still loading the listing. On the server this means the data load failed.
     markUnavailable(props.staticContext);

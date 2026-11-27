@@ -596,3 +596,8 @@ export const markUnavailable = staticContext => {
     staticContext.unavailable = true;
   }
 };
+
+// Listing ids are UUIDs. Anything else (e.g. /l/not-a-uuid) can never be a listing, so it is
+// a 404, even when the load fails before reaching the API and leaves no error status.
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const isMalformedListingId = id => typeof id !== 'string' || !UUID_PATTERN.test(id);

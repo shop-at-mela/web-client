@@ -362,11 +362,23 @@ describe.each([['carousel', CarouselComponent], ['coverPhoto', CoverPhotoCompone
       expect(staticContext.unavailable).toBeUndefined();
     });
 
+    it('answers a non-UUID listing id with a 404 even when the error has no status', () => {
+      const staticContext = {};
+      renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }), {
+        params: { id: 'not-a-uuid', slug: 'x' },
+        showListingError: { type: 'error' },
+        staticContext,
+      });
+      expect(staticContext.notfound).toBe(true);
+      expect(staticContext.unavailable).toBeUndefined();
+    });
+
     it.each([429, 500, 503])(
       'marks a %s listing error as temporarily unavailable (503)',
       status => {
         const staticContext = {};
         renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }), {
+          params: { id: '00000000-0000-0000-0000-000000000001', slug: 'cotton-kurta' },
           showListingError: { status },
           staticContext,
         });
