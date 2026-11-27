@@ -319,7 +319,7 @@ const HeroSectionComponent = ({
             )}
 
             {/* Scroll-snap track: 88%-wide slides with next-card peek on
-                mobile; single 340px slide on desktop. All slides are in the
+                mobile; single 440px slide on desktop. All slides are in the
                 DOM (keyboard/tab-reachable), snap owns the swipe gesture. */}
             <div
               className={css.brandTrack}

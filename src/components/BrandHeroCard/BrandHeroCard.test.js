@@ -138,7 +138,7 @@ describe('BrandHeroCard', () => {
       { heroImagesById: {} } // listing fetch failed / id missing from entities
     );
 
-    expect(getHeroImg(container)).toHaveAttribute('src', `${SHOPIFY_URL_0}?width=700`);
+    expect(getHeroImg(container)).toHaveAttribute('src', `${SHOPIFY_URL_0}?width=900`);
   });
 
   it('falls back to the Shopify URL when the Sharetribe URL fails at runtime (img onError)', () => {
@@ -155,7 +155,7 @@ describe('BrandHeroCard', () => {
 
     fireEvent.error(img);
 
-    expect(getHeroImg(container)).toHaveAttribute('src', `${SHOPIFY_URL_0}?width=700`);
+    expect(getHeroImg(container)).toHaveAttribute('src', `${SHOPIFY_URL_0}?width=900`);
   });
 
   it('renders the manual-entry case: Shopify URL with no Sharetribe id at that index', () => {
@@ -164,7 +164,7 @@ describe('BrandHeroCard', () => {
     });
 
     const src = getHeroImg(container).getAttribute('src');
-    expect([`${SHOPIFY_URL_0}?width=700`, `${SHOPIFY_URL_1}?width=700`]).toContain(src);
+    expect([`${SHOPIFY_URL_0}?width=900`, `${SHOPIFY_URL_1}?width=900`]).toContain(src);
   });
 
   it('renders null when the brand has no hero source at all (no logo fallback)', () => {
