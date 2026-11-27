@@ -4,6 +4,7 @@ import classNames from 'classnames';
 // Import configs and util modules
 import { FormattedMessage } from '../../../../util/reactIntl';
 import { LISTING_STATE_DRAFT } from '../../../../util/types';
+import { getListingImageMaxCount } from '../../../../util/configHelpers';
 
 // Import shared components
 import { H3, ListingLink } from '../../../../components';
@@ -53,13 +54,20 @@ const EditListingPhotosPanel = props => {
     onSubmit,
     onRemoveImage,
     listingImageConfig,
+    listingTypes = [],
     updatePageTitle: UpdatePageTitle,
     intl,
+    allFilesUploadedAndVerified,
+    filesTabParams,
+    filesRequired,
   } = props;
 
   const rootClass = rootClassName || css.root;
   const classes = classNames(rootClass, className);
   const isPublished = listing?.id && listing?.attributes?.state !== LISTING_STATE_DRAFT;
+  const listingType = listing?.attributes?.publicData?.listingType;
+  const listingTypeConfig = listingTypes.find(conf => conf.listingType === listingType);
+  const maxImages = getListingImageMaxCount(listingTypeConfig);
 
   const panelHeadingProps = isPublished
     ? {
@@ -84,19 +92,7 @@ const EditListingPhotosPanel = props => {
       <H3 as="h1">
         <FormattedMessage id={panelHeadingProps.id} values={{ ...panelHeadingProps.values }} />
       </H3>
-      {/* <H3 as="h1">
-        {isPublished ? (
-          <FormattedMessage
-            id="EditListingPhotosPanel.title"
-            values={{ listingTitle: <ListingLink listing={listing} />, lineBreak: <br /> }}
-          />
-        ) : (
-          <FormattedMessage
-            id="EditListingPhotosPanel.createListingTitle"
-            values={{ lineBreak: <br /> }}
-          />
-        )}
-      </H3> */}
+
       <EditListingPhotosForm
         className={css.form}
         disabled={disabled}
@@ -113,6 +109,10 @@ const EditListingPhotosPanel = props => {
         updated={panelUpdated}
         updateInProgress={updateInProgress}
         listingImageConfig={listingImageConfig}
+        maxImages={maxImages}
+        allFilesUploadedAndVerified={allFilesUploadedAndVerified}
+        filesTabParams={filesTabParams}
+        filesRequired={filesRequired}
       />
     </main>
   );

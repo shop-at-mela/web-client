@@ -15,7 +15,7 @@ import {
   getHostedConfiguration,
   getRouteConfiguration,
 } from '../../util/testHelpers';
-import { mergeConfig } from '../../util/configHelpers';
+import { mergeConfig } from '../../config/mergeConfig';
 
 import SavedPage from './SavedPage';
 import { pushSavedPageView } from '../../util/analytics/savedPageView';

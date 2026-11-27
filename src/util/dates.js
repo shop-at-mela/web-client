@@ -320,6 +320,11 @@ export const timeOfDayFromTimeZoneToLocal = (date, timeZone) => {
 /**
  * Get start of time unit (e.g. start of day)
  *
+ * Note: Do not use unit "week" here. Moment's startOf('week') depends on the
+ * locale set for the moment library, which the Webpack build strips out.
+ * ../../config/webpack.config.js (Line ~641).
+ * Use getStartOfWeek(date, timeZone, firstDayOfWeek) instead.
+ *
  * @param {Date} date date instance to be converted
  * @param {String} unit time-unit (e.g. "day")
  * @param {String} timeZone time zone id
@@ -481,7 +486,9 @@ const getTimeZoneMaybe = timeZone => {
  * @param {Date} date Date to be formatted
  * @param {Object} intl Intl object from react-intl
  * @param {String} todayString translation for the current day
- * @param {Object} [opts] options. Can be used to pass in timeZone. It should represent IANA time zone key.
+ * @param {Object} [opts] options. Can be used to pass in timeZone and firstDayOfWeek.
+ * @param {String} [opts.timeZone] IANA time zone key
+ * @param {0|1|2|3|4|5|6} [opts.firstDayOfWeek] first day of week (0=Sun ... 6=Sat). Defaults to 0.
  *
  * @returns {String} formatted date
  */
@@ -492,7 +499,7 @@ export const formatDateWithProximity = (date, intl, todayString, opts = {}) => {
   }
 
   // If timeZone parameter is set, use it as formatting option
-  const { timeZone } = opts;
+  const { timeZone, firstDayOfWeek = 0 } = opts;
   const timeZoneMaybe = getTimeZoneMaybe(timeZone);
 
   // By default we can use moment() directly but in tests we need to use a specific dates.
@@ -501,6 +508,12 @@ export const formatDateWithProximity = (date, intl, todayString, opts = {}) => {
 
   // isSame: if the two moments have different time zones, the time zone of the first moment will be used for the comparison.
   const localizedNow = timeZoneMaybe.timeZone ? now.tz(timeZone) : now;
+  const nowDate = localizedNow.toDate();
+
+  // Same calendar week using marketplace firstDayOfWeek (not Moment's locale week).
+  const isSameWeek =
+    getStartOfWeek(nowDate, timeZone, firstDayOfWeek).getTime() ===
+    getStartOfWeek(date, timeZone, firstDayOfWeek).getTime();
 
   if (localizedNow.isSame(date, 'day')) {
     // e.g. "Today, 9:10 PM"
@@ -510,7 +523,7 @@ export const formatDateWithProximity = (date, intl, todayString, opts = {}) => {
       ...timeZoneMaybe,
     });
     return `${todayString}, ${formattedTime}`;
-  } else if (localizedNow.isSame(date, 'week')) {
+  } else if (isSameWeek) {
     // e.g.
     // en-US: "Sun 6:02 PM"
     // en-GB: "Sun 18:02"
@@ -660,9 +673,9 @@ export const stringifyDateToISO8601 = (date, timeZone = null) => {
 // and different boundaries than sharp hours, you need to modify these functions:
 // - findBookingUnitBoundaries (DST changes)
 // - findNextBoundary
-// - getSharpHours
-// - getStartHours
-// - getEndHours
+// - getSharpHours -> use getUnitBoundaries
+// - getStartHours -> use getStartBoundaries
+// - getEndHours -> use getEndBoundaries
 
 // Helper function for exported function: getSharpHours
 // Recursively find boundaries for bookable time slots.
@@ -874,6 +887,118 @@ export const getStartHours = (startTime, endTime, timeZone, intl) => {
 export const getEndHours = (startTime, endTime, timeZone, intl) => {
   const hours = getSharpHours(startTime, endTime, timeZone, intl);
   return hours.length < 2 ? [] : hours.slice(1);
+};
+
+/**
+ * Find sharp boundaries inside given time window per time unit provided. Returned strings are localized to given time zone.
+ *
+ * > getUnitBoundaries(new Date('2019-09-18T08:00:00.000Z'), new Date('2019-09-18T09:00:00.000Z'), 'Europe/Helsinki', intl, 'quarterHour');
+ * => [
+ *    {
+ *      "timestamp": 1568793600000,
+ *      "timeOfDay": "11:00",
+ *    },
+ *    {
+ *      "timestamp": 1568794500000,
+ *      "timeOfDay": "11:15",
+ *    },
+ *    {
+ *      "timestamp": 1568795400000,
+ *      "timeOfDay": "11:30",
+ *    },
+ *    {
+ *      "timestamp": 1568796300000,
+ *      "timeOfDay": "11:45",
+ *    },
+ *    {
+ *      "timestamp": 1568797200000,
+ *      "timeOfDay": "12:00",
+ *    },
+ *  ]
+ *
+ * @param {Date} Start point of available time window.
+ * @param {Date} End point of available time window.
+ * @param {String} timezone name. It should represent IANA timezone key.
+ * @param {Object} intl containing formatting options for Intl.DateTimeFormat.
+ * @param {String} timeUnit scope. e.g. 'hour', 'quarterHour'. Defaults to 'hour'.
+ *
+ * @returns {Array} an array of objects with keys timestamp and timeOfDay.
+ */
+export const getUnitBoundaries = (startTime, endTime, timeZone, intl, timeUnit = 'hour') => {
+  return getBoundaries(startTime, endTime, 1, timeUnit, timeZone, intl);
+};
+
+/**
+ * Find sharp start boundaries for bookable time units (e.g. quarteHour) inside given time window.
+ * Returned strings are localized to given time zone.
+ *
+ * > getStartBoundaries(new Date('2019-09-18T08:00:00.000Z'), new Date('2019-09-18T09:00:00.000Z'), 'Europe/Helsinki', intl);
+ * => [
+ *    {
+ *      "timestamp": 1568793600000,
+ *      "timeOfDay": "11:00",
+ *    },
+ *    {
+ *      "timestamp": 1568794500000,
+ *      "timeOfDay": "11:15",
+ *    },
+ *    {
+ *      "timestamp": 1568795400000,
+ *      "timeOfDay": "11:30",
+ *    },
+ *    {
+ *      "timestamp": 1568796300000,
+ *      "timeOfDay": "11:45",
+ *    },
+ *  ]
+ *
+ * @param {Date} Start point of available time window.
+ * @param {Date} End point of available time window.
+ * @param {String} timezone name. It should represent IANA timezone key.
+ * @param {Object} intl containing formatting options for Intl.DateTimeFormat.
+ * @param {String} timeUnit scope. e.g. 'hour', 'quarterHour'. Defaults to 'hour'.
+ *
+ * @returns {Array} an array of objects with keys timestamp and timeOfDay.
+ */
+export const getStartBoundaries = (startTime, endTime, timeZone, intl, timeUnit = 'hour') => {
+  const boundaries = getUnitBoundaries(startTime, endTime, timeZone, intl, timeUnit);
+  return boundaries.length < 2 ? boundaries : boundaries.slice(0, -1);
+};
+
+/**
+ * Find sharp end boundaries for bookable time units (e.g. quarterHour) inside given time window.
+ * Returned strings are localized to given time zone.
+ *
+ * > getEndBoundaries(new Date('2019-09-18T08:00:00.000Z'), new Date('2019-09-18T09:00:00.000Z'), 'Europe/Helsinki', intl);
+ * => [
+ *    {
+ *      "timestamp": 1568794500000,
+ *      "timeOfDay": "11:15",
+ *    },
+ *    {
+ *      "timestamp": 1568795400000,
+ *      "timeOfDay": "11:30",
+ *    },
+ *    {
+ *      "timestamp": 1568796300000,
+ *      "timeOfDay": "11:45",
+ *    },
+ *    {
+ *      "timestamp": 1568797200000,
+ *      "timeOfDay": "12:00",
+ *    },
+ *  ]
+ *
+ * @param {Date} Start point of available time window.
+ * @param {Date} End point of available time window.
+ * @param {String} timezone name. It should represent IANA timezone key.
+ * @param {Object} intl containing formatting options for Intl.DateTimeFormat.
+ *
+ * @returns {Array} an array of objects with keys timestamp and timeOfDay.
+ */
+export const getEndBoundaries = (startTime, endTime, timeZone, intl, timeUnit = 'hour') => {
+  const boundaries = getUnitBoundaries(startTime, endTime, timeZone, intl, timeUnit);
+  return boundaries.length < 2 ? [] : boundaries.slice(1);
 };
 
 //////////

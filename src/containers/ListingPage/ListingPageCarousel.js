@@ -477,6 +477,8 @@ export const ListingPageComponent = props => {
               <SectionGallery
                 listing={currentListing}
                 variantPrefix={config.layout.listingImage.variantPrefix}
+                aspectWidth={config.layout.listingImage.aspectWidth}
+                aspectHeight={config.layout.listingImage.aspectHeight}
               />
             )}
 
@@ -641,6 +643,7 @@ export const ListingPageComponent = props => {
                   <FormattedMessage id="ListingPage.orderTitle" values={{ title: richTitle }} />
                 </H4>
               }
+              sectionHeadingAs="h2"
               payoutDetailsWarning={payoutDetailsWarning}
               author={ensuredAuthor}
               onManageDisableScrolling={onManageDisableScrolling}

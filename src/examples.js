@@ -33,10 +33,12 @@ import * as FieldRadioButton from './components/FieldRadioButton/FieldRadioButto
 import * as FieldRangeSlider from './components/FieldRangeSlider/FieldRangeSlider.example';
 import * as FieldReviewRating from './components/FieldReviewRating/FieldReviewRating.example';
 import * as FieldSelect from './components/FieldSelect/FieldSelect.example';
+import * as FieldSelectPopup from './components/FieldSelectPopup/FieldSelectPopup.example';
 import * as FieldSelectTree from './components/FieldSelectTree/FieldSelectTree.example';
 import * as FieldTextInput from './components/FieldTextInput/FieldTextInput.example';
 import * as IconAdd from './components/IconAdd/IconAdd.example';
 import * as IconAlert from './components/IconAlert/IconAlert.example';
+import * as IconArrow from './components/IconArrow/IconArrow.example';
 import * as IconArrowHead from './components/IconArrowHead/IconArrowHead.example';
 import * as IconBannedUser from './components/IconBannedUser/IconBannedUser.example';
 import * as IconCheckmark from './components/IconCheckmark/IconCheckmark.example';
@@ -82,7 +84,7 @@ import * as RangeSlider from './components/RangeSlider/RangeSlider.example';
 import * as ResponsiveImage from './components/ResponsiveImage/ResponsiveImage.example';
 import * as ReviewRating from './components/ReviewRating/ReviewRating.example';
 import * as Reviews from './components/Reviews/Reviews.example';
-import * as SavedCardDetails from './components/SavedCardDetails/SavedCardDetails.example';
+import * as PaymentMethodPicker from './components/PaymentMethodPicker/PaymentMethodPicker.example';
 import * as TabNav from './components/TabNav/TabNav.example';
 import * as TabNavHorizontal from './components/TabNavHorizontal/TabNavHorizontal.example';
 import * as Tabs from './components/Tabs/Tabs.example';
@@ -173,6 +175,7 @@ export {
   FieldRangeSlider,
   FieldReviewRating,
   FieldSelect,
+  FieldSelectPopup,
   FieldSelectTree,
   FieldSingleDatePicker,
   FieldTextInput,
@@ -182,6 +185,7 @@ export {
   FilterPopup,
   IconAdd,
   IconAlert,
+  IconArrow,
   IconArrowHead,
   IconBannedUser,
   IconCheckmark,
@@ -230,6 +234,7 @@ export {
   PanelHeading,
   PasswordRecoveryForm,
   PasswordResetForm,
+  PaymentMethodPicker,
   PriceFilter,
   PropertyGroup,
   RangeSlider,
@@ -237,7 +242,6 @@ export {
   ReviewForm,
   ReviewRating,
   Reviews,
-  SavedCardDetails,
   SeatsFilter,
   SelectMultipleFilter,
   SendMessageForm,

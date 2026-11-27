@@ -21,6 +21,7 @@ const IMAGE_GALLERY_OPTIONS = {
   showFullscreenButton: false,
   slideDuration: 350,
   swipeWithoutMouseEvents: true,
+  lazyLoad: true,
 };
 
 /**
