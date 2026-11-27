@@ -216,7 +216,9 @@
 /* Scroll-snap track for BrandHeroCard slides.
    Mobile-first: 88%-wide slides, snap-centered, so the next card peeks in
    from the edge (advertises "there are more brands" without dots doing all
-   the work). Desktop: single 340px slide; arrows/autoplay drive scrollTo. */
+   the work). Desktop: single 440px slide (was 340px until 2026-11-27; see
+   mela-docs/product/prds/homepage-image-sizing-findings.md); arrows/autoplay
+   drive scrollTo. */
 .brandTrack {
   display: flex;
   gap: 10px;
@@ -233,7 +235,7 @@
   }
 
   @media (min-width: 768px) {
-    max-width: 340px;
+    max-width: 440px;
     gap: 16px;
   }
 }
@@ -297,7 +299,7 @@
    .root, so the skeleton's height tracks its own width exactly the way the
    real square card does — at any viewport, not just the ones a fixed px
    value happened to match. Previously a flat 280px height under-matched the
-   real ~340px-wide desktop card by ~60px, shifting categoryPillsWrapper down
+   real ~340px-wide (now 440px) desktop card by ~60px, shifting categoryPillsWrapper down
    once heroBrands loaded (Lighthouse CLS finding). margin-bottom reserves
    the .carouselControls row's height too, since that row only renders once
    heroBrands.length > 1 (the common case) and doesn't exist in this loading
@@ -318,7 +320,7 @@
   margin-bottom: 2.5rem;
 
   @media (min-width: 768px) {
-    max-width: 340px;
+    max-width: 440px;
   }
 }
 

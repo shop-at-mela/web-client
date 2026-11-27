@@ -17,19 +17,19 @@ import css from './BrandHeroCard.module.css';
 // Variant names requested for hero images (see BrandsPage.duck.js's
 // heroImageVariants query params). Passed to ResponsiveImage so the browser
 // picks the right size instead of always downloading the 1200x1200 2x
-// variant for a ~340px slot (the imgix "Improve image delivery" finding).
+// variant for a ~440px slot (the imgix "Improve image delivery" finding).
 // square-small2x is a defensive fallback for images fetched before the hero
 // variants existed on their entity.
 const HERO_IMAGE_VARIANTS = ['square-hero', 'square-hero2x', 'square-small2x'];
-const HERO_IMAGE_SIZES = '(max-width: 768px) 88vw, 340px';
+const HERO_IMAGE_SIZES = '(max-width: 768px) 88vw, 440px';
 
 // Vendor/Shopify-sourced hero images bypass Sharetribe's imgix pipeline
 // entirely and are uploaded at arbitrary native dimensions (Lighthouse
-// flagged several at 2000px+ for this ~340px slot). 2x width of the largest
-// real render size (340px desktop slide) covers retina without re-fetching
+// flagged several at 2000px+ for this slot, then ~340px). 2x width of the largest
+// real render size (440px desktop slide) covers retina without re-fetching
 // per breakpoint. See util/images.js for the resize helper — BrandSpotlight
 // and CraftStories apply the same helper to the same publicData field.
-const SHOPIFY_IMAGE_TARGET_WIDTH = 700;
+const SHOPIFY_IMAGE_TARGET_WIDTH = 900;
 
 /**
  * Pick the hero index once per mount: a random index across the parallel hero

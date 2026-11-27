@@ -29,6 +29,37 @@ import css from './BrandPhotoCard.module.css';
  */
 const MAX_THUMBS = 4;
 
+// Main photo crops. Phones (<768px) get the 4:5 portrait pair when the listing
+// has it; wider screens keep the 4:3 pair. A <picture> lets the browser fetch
+// only one of the two. See mela-docs/product/prds/homepage-image-sizing-findings.md.
+const LANDSCAPE_VARIANTS = ['square-small', 'square-small2x'];
+const PORTRAIT_VARIANTS = ['portrait-card', 'portrait-card2x'];
+const PORTRAIT_MEDIA = '(max-width: 767px)';
+const MAIN_PHOTO_SIZES = '(max-width: 767px) 90vw, (max-width: 1023px) 45vw, 440px';
+
+const srcSetFor = (variants, names) =>
+  names
+    .map(name => variants[name])
+    .filter(v => v && v.url && v.width)
+    .map(v => `${v.url} ${v.width}w`)
+    .join(', ');
+
+/**
+ * Pick the main photo's sources from the active listing's first image.
+ * Falls back to any non-portrait variant when the 4:3 pair is missing.
+ */
+export const mainPhotoSources = listing => {
+  const variants = listing?.images?.[0]?.attributes?.variants || {};
+  let landscape = srcSetFor(variants, LANDSCAPE_VARIANTS);
+  if (!landscape) {
+    const others = Object.keys(variants).filter(name => !PORTRAIT_VARIANTS.includes(name));
+    landscape = srcSetFor(variants, others);
+  }
+  const portrait = srcSetFor(variants, PORTRAIT_VARIANTS);
+  const fallbackSrc = landscape ? landscape.split(', ')[0].split(' ')[0] : null;
+  return { landscape, portrait, fallbackSrc };
+};
+
 // Re-exported for existing callers (this file's own tests included) — the derivation
 // itself lives in util/brandCraft.js so other components can reuse it directly.
 export const deriveWhyLine = deriveBrandCraftLine;
@@ -51,6 +82,10 @@ const BrandPhotoCard = props => {
   const thumbs = photoProducts.slice(0, MAX_THUMBS);
   const safeIndex = Math.min(activeIndex, thumbs.length - 1);
   const activeProduct = thumbs[safeIndex];
+  const mainSources = mainPhotoSources(activeProduct);
+  // Portrait only when every thumbnail's product has the crop, so swapping
+  // photos on a phone never changes the card's height.
+  const usePortrait = thumbs.every(p => !!mainPhotoSources(p).portrait);
 
   const { displayName } = brand.attributes?.profile || {};
   const initial = displayName?.charAt(0)?.toUpperCase() || 'B';
@@ -72,17 +107,30 @@ const BrandPhotoCard = props => {
 
         {/* Large primary photo → links to the brand page. */}
         <NamedLink {...brandLinkProps} className={css.mainLink}>
-          <ListingImage
-            listing={activeProduct}
-            variant="listing-card"
-            aspectWidth={4}
-            aspectHeight={3}
-            lazy={false}
-            className={css.mainPhoto}
-            rootClassName={css.photoImg}
-            alt={displayName}
-            sizes="(max-width: 767px) 90vw, 360px"
-          />
+          <div
+            className={classNames(css.mainPhoto, {
+              [css.mainPhotoPortrait]: usePortrait,
+            })}
+          >
+            {mainSources.fallbackSrc ? (
+              <picture>
+                {usePortrait ? (
+                  <source
+                    media={PORTRAIT_MEDIA}
+                    srcSet={mainSources.portrait}
+                    sizes={MAIN_PHOTO_SIZES}
+                  />
+                ) : null}
+                <img
+                  className={css.mainImg}
+                  src={mainSources.fallbackSrc}
+                  srcSet={mainSources.landscape}
+                  sizes={MAIN_PHOTO_SIZES}
+                  alt={displayName}
+                />
+              </picture>
+            ) : null}
+          </div>
         </NamedLink>
       </div>
 

@@ -29,7 +29,28 @@ jest.mock('../../config/configBrands', () => ({
   getBrandSlugById: () => 'lucknow-brand',
 }));
 
-const product = uuid => ({ id: { uuid }, images: [{ id: { uuid: `${uuid}-img` } }] });
+const variant = (uuid, name, width) => ({ url: `https://img.test/${uuid}/${name}`, width });
+const product = (uuid, { portrait = true } = {}) => ({
+  id: { uuid },
+  images: [
+    {
+      id: { uuid: `${uuid}-img` },
+      attributes: {
+        variants: {
+          'square-small': variant(uuid, 'square-small', 400),
+          'square-small2x': variant(uuid, 'square-small2x', 800),
+          ...(portrait
+            ? {
+                'portrait-card': variant(uuid, 'portrait-card', 480),
+                'portrait-card2x': variant(uuid, 'portrait-card2x', 960),
+              }
+            : {}),
+        },
+      },
+    },
+  ],
+});
+const mainImg = () => screen.getByAltText('House of Chikankari');
 
 const brand = (publicData = {}) => ({
   id: { uuid: 'brand-1' },
@@ -78,21 +99,47 @@ describe('BrandPhotoCard', () => {
   });
 
   it('swaps the main photo when a thumbnail is hovered', () => {
-    const { container } = renderCard({ products: [product('a'), product('b'), product('c')] });
-    const mainPhoto = () => container.querySelector('[data-variant="listing-card"]');
+    renderCard({ products: [product('a'), product('b'), product('c')] });
     // Initially shows the first product.
-    expect(mainPhoto()).toHaveAttribute('data-id', 'a');
+    expect(mainImg()).toHaveAttribute('src', 'https://img.test/a/square-small');
 
     fireEvent.mouseEnter(screen.getAllByRole('tab')[2]);
-    expect(mainPhoto()).toHaveAttribute('data-id', 'c');
+    expect(mainImg()).toHaveAttribute('src', 'https://img.test/c/square-small');
     expect(screen.getAllByRole('tab')[2]).toHaveAttribute('aria-selected', 'true');
   });
 
   it('swaps the main photo when a thumbnail is tapped (click)', () => {
-    const { container } = renderCard({ products: [product('a'), product('b')] });
-    const mainPhoto = () => container.querySelector('[data-variant="listing-card"]');
+    renderCard({ products: [product('a'), product('b')] });
     fireEvent.click(screen.getAllByRole('tab')[1]);
-    expect(mainPhoto()).toHaveAttribute('data-id', 'b');
+    expect(mainImg()).toHaveAttribute('src', 'https://img.test/b/square-small');
+  });
+
+  it('serves the 4:5 portrait crop to phones and the 4:3 crop above 767px', () => {
+    const { container } = renderCard({ products: [product('a')] });
+    const source = container.querySelector('picture source');
+    expect(source).toHaveAttribute('media', '(max-width: 767px)');
+    expect(source.getAttribute('srcset')).toBe(
+      'https://img.test/a/portrait-card 480w, https://img.test/a/portrait-card2x 960w'
+    );
+    expect(mainImg().getAttribute('srcset')).toBe(
+      'https://img.test/a/square-small 400w, https://img.test/a/square-small2x 800w'
+    );
+  });
+
+  it('uses 4:3 for every photo when any thumbnail lacks the portrait crop', () => {
+    const { container } = renderCard({
+      products: [product('a'), product('b', { portrait: false })],
+    });
+    expect(container.querySelector('picture source')).toBeNull();
+    fireEvent.click(screen.getAllByRole('tab')[1]);
+    expect(container.querySelector('picture source')).toBeNull();
+    expect(mainImg()).toHaveAttribute('src', 'https://img.test/b/square-small');
+  });
+
+  it('keeps the 4:3 frame on phones when the listing has no portrait crop', () => {
+    const { container } = renderCard({ products: [product('a', { portrait: false })] });
+    expect(container.querySelector('picture source')).toBeNull();
+    expect(mainImg()).toHaveAttribute('src', 'https://img.test/a/square-small');
   });
 
   it('links the card to the brand page', () => {

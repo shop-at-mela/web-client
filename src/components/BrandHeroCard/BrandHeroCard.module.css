@@ -1,7 +1,7 @@
 @import '../../styles/customMediaQueries.css';
 
 /* Mobile-first: base styles target the ~88%-width carousel slide (~302px on a
-   375px viewport); desktop overrides scale up for the 340px hero slide.
+   375px viewport); desktop overrides scale up for the 440px hero slide.
    Values/tokens mirror BrandCardHome.module.css (copied, not imported — that
    file is shared by four surfaces and must not change). */
 
@@ -183,6 +183,30 @@
   .tagline {
     font-size: 13.5px;
     -webkit-line-clamp: 2;
+  }
+}
+
+/* Desktop: the hero slide grew from 340px to 440px (2026-11-27), so the overlay
+   type scales with it. Text still fills a smaller share of the card than the
+   scrim's 48% calibration assumes, so the contrast reasoning above holds. */
+@media (--viewportLarge) {
+  .logoChip {
+    top: 16px;
+    left: 16px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .overlay {
+    padding: 22px 22px 20px;
+  }
+
+  .brandName {
+    font-size: 30px;
+  }
+
+  .tagline {
+    font-size: 14.5px;
   }
 }
 
