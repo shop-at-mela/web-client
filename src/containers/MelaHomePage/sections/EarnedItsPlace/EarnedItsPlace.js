@@ -72,6 +72,7 @@ const EarnedItsPlace = props => {
         <BrandCarousel
           items={displayBrands}
           getKey={({ brand }) => brand.id.uuid}
+          cardSize="wide"
           renderItem={({ brand, products }) => <BrandPhotoCard brand={brand} products={products} />}
         />
 

@@ -37,9 +37,31 @@
   display: block;
 }
 
+/* Main photo frame: 4:3, or 4:5 on phones when a portrait crop exists
+   (.mainPhotoPortrait). The image covers the frame; the server crop already
+   matches it, so cover only trims rounding. */
 .mainPhoto {
+  position: relative;
   display: block;
   width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--colorGrey50);
+  overflow: hidden;
+}
+
+.mainPhotoPortrait {
+  @media (max-width: 767px) {
+    aspect-ratio: 4 / 5;
+  }
+}
+
+.mainImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 /* Applied as ListingImage's `rootClassName` — targets the actual <img>, not the

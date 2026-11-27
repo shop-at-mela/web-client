@@ -61,3 +61,11 @@
     flex: 0 0 calc(30% - 1rem);
   }
 }
+
+/* cardSize="wide": from 1024px, 2.5 cards in view so each photo is ~35% larger.
+   Declared after .card so it wins at equal specificity. */
+.cardWide {
+  @media (min-width: 1024px) {
+    flex: 0 0 calc(40% - 1rem);
+  }
+}

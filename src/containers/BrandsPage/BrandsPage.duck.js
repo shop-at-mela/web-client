@@ -21,6 +21,16 @@ import { showBrandProfileDoc } from '../../util/brandProfileCache';
 // Marketplace API has no bulk users endpoint, so brand cards fan out one call
 // per brand; throttling keeps a cold /brands load (24 brands) under
 // Sharetribe's ~1 req/sec Dev rate limit. See util/concurrencyLimit.js.
+// Portrait (4:5) crops for BrandPhotoCard's main photo on phones (homepage
+// "Earned Its Place", 2026-11-27). Requested next to the 4:3 square-small pair on
+// every query that feeds brand product photos; only URLs are added to the
+// payload, nothing is downloaded unless a card renders them.
+export const PORTRAIT_CARD_IMAGE_FIELDS = ['variants.portrait-card', 'variants.portrait-card2x'];
+export const PORTRAIT_CARD_IMAGE_VARIANTS = {
+  'imageVariant.portrait-card': 'w:480;h:600;fit:crop',
+  'imageVariant.portrait-card2x': 'w:960;h:1200;fit:crop',
+};
+
 const BRAND_FETCH_CONCURRENCY = 5;
 
 // Waits between retries of a rate-limited (429) request.
@@ -129,9 +139,14 @@ const fetchBestsellerListingsForBrand = (sdk, brandId, onFailure) => {
   return retryOnRateLimit(() =>
     sdk.listings.query({
       'fields.listing': ['title', 'price', 'publicData', 'images'],
-      'fields.image': ['variants.square-small', 'variants.square-small2x'],
+      'fields.image': [
+        'variants.square-small',
+        'variants.square-small2x',
+        ...PORTRAIT_CARD_IMAGE_FIELDS,
+      ],
       'imageVariant.square-small': 'w:400;h:300;fit:crop',
       'imageVariant.square-small2x': 'w:800;h:600;fit:crop',
+      ...PORTRAIT_CARD_IMAGE_VARIANTS,
       include: ['author', 'images'],
       author_id: brandId,
       pub_isBestseller: true,
@@ -170,9 +185,14 @@ const queryBestsellersByIds = (sdk, ids, onFailure) => {
       ids,
       include: ['author', 'images'],
       'fields.listing': ['title', 'price', 'publicData', 'images'],
-      'fields.image': ['variants.square-small', 'variants.square-small2x'],
+      'fields.image': [
+        'variants.square-small',
+        'variants.square-small2x',
+        ...PORTRAIT_CARD_IMAGE_FIELDS,
+      ],
       'imageVariant.square-small': 'w:400;h:300;fit:crop',
       'imageVariant.square-small2x': 'w:800;h:600;fit:crop',
+      ...PORTRAIT_CARD_IMAGE_VARIANTS,
       perPage: LISTINGS_IDS_PER_QUERY,
     })
   )
@@ -491,7 +511,12 @@ export const fetchBrands = (params = {}) => (dispatch, getState, sdk) => {
             ids: allProductIds,
             include: ['images'],
             'fields.listing': ['title', 'price', 'publicData'],
-            'fields.image': ['variants.square-small', 'variants.square-small2x'],
+            'fields.image': [
+              'variants.square-small',
+              'variants.square-small2x',
+              ...PORTRAIT_CARD_IMAGE_FIELDS,
+            ],
+            ...PORTRAIT_CARD_IMAGE_VARIANTS,
             perPage: 100, // Fetch up to 100 products (4 per brand * 24 brands = 96 max)
           })
         )
@@ -704,7 +729,12 @@ export const fetchFeaturedBrands = () => (dispatch, getState, sdk) => {
             ids: allProductIds,
             include: ['images'],
             'fields.listing': ['title', 'price', 'publicData'],
-            'fields.image': ['variants.square-small', 'variants.square-small2x'],
+            'fields.image': [
+              'variants.square-small',
+              'variants.square-small2x',
+              ...PORTRAIT_CARD_IMAGE_FIELDS,
+            ],
+            ...PORTRAIT_CARD_IMAGE_VARIANTS,
             perPage: 100,
           })
           .then(response => {
