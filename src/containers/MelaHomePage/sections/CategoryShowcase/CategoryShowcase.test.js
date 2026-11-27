@@ -15,6 +15,7 @@ import CategoryShowcase, {
   AgeNavigation,
   EXCLUDED_DISCOVERY_BRAND_SLUGS,
   getActiveSeasonOccasion,
+  mosaicImageSizes,
 } from './CategoryShowcase';
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
@@ -1047,5 +1048,16 @@ describe('pickMosaicImages', () => {
       gifting: [a2],
     });
     expect(picks.gifting).toBe(a2);
+  });
+});
+
+describe('mosaicImageSizes', () => {
+  it('sizes each tile as an equal share of the row', () => {
+    expect(mosaicImageSizes(2)).toBe('(min-width: 1280px) 600px, (min-width: 768px) 50vw, 44vw');
+    expect(mosaicImageSizes(4)).toBe('(min-width: 1280px) 300px, (min-width: 768px) 25vw, 44vw');
+  });
+
+  it('treats a missing or zero count as one tile', () => {
+    expect(mosaicImageSizes(0)).toBe('(min-width: 1280px) 1200px, (min-width: 768px) 100vw, 44vw');
   });
 });

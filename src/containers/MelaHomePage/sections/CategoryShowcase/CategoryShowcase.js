@@ -521,6 +521,18 @@ const withTimeout = (promise, ms, fallback) => {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 };
 
+// `sizes` for a mosaic photo. From 768px the tiles share one row equally
+// (grid-template-columns: repeat(--tile-count)), inside a container capped at
+// 1200px from 1280px up; below 768px each tile is a 44%-wide swipe card.
+// A flat "25vw" under-stated two- and three-tile rows (a 2-tile row renders
+// ~560px wide), so 1x screens fetched a smaller file than the slot needs.
+export const mosaicImageSizes = tileCount => {
+  const n = Math.max(1, tileCount || 1);
+  const desktop = Math.round(1200 / n);
+  const tablet = Math.round(100 / n);
+  return `(min-width: 1280px) ${desktop}px, (min-width: 768px) ${tablet}vw, 44vw`;
+};
+
 const fetchMosaicCandidates = async ({ matchValues }) => {
   try {
     const response = await sdk.listings.query({
@@ -684,7 +696,7 @@ export const OccasionMosaic = ({ date }) => {
                 className={css.mosaicImage}
                 src={image.url}
                 srcSet={`${image.url} 750w, ${image.url2x} 1024w`}
-                sizes="(min-width: 768px) 25vw, 44vw"
+                sizes={mosaicImageSizes(Math.min(shown.length, MOSAIC_MAX_TILES))}
                 alt=""
                 loading={index < 2 ? 'eager' : 'lazy'}
               />
