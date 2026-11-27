@@ -26,10 +26,13 @@
   margin: 0;
 }
 
+/* Mobile (2026-11-27): one wide lead tile, then the rest two-up at 4:5. Was a
+   column of 110px-tall strips, which cropped most photos to a thin band. See
+   mela-docs/product/prds/homepage-image-sizing-findings.md. */
 .tiles {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
   padding: 6px 16px 0;
 }
 
@@ -39,7 +42,7 @@
 
 .tile {
   position: relative;
-  height: 110px;
+  aspect-ratio: 4 / 5;
   border-radius: var(--borderRadiusMedium);
   overflow: hidden;
   display: flex;
@@ -57,6 +60,29 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* Brand hero photos are mostly portrait shots of a model; centring crops
+     off heads in the landscape lead tile. */
+  object-position: center 25%;
+}
+
+/* Lead tile spans the row (16:10). A lone trailing tile (2 tiles total) spans
+   it too, so no half-width tile sits next to a gap. The <span> wrapper is
+   display:contents, so the grid item is the tile inside it. */
+.tiles > :first-child,
+.tiles > :first-child > .tile,
+.tiles > :nth-child(2):last-child,
+.tiles > :nth-child(2):last-child > .tile {
+  grid-column: 1 / -1;
+  aspect-ratio: 16 / 10;
+}
+
+/* Half-width tiles: smaller type so a craft line wraps to two lines, not three. */
+.tiles > :nth-child(n + 2) .craft {
+  font-size: 14px;
+}
+
+.tiles > :nth-child(n + 2) .tileText {
+  padding: 10px 12px;
 }
 
 .scrim {
@@ -111,13 +137,27 @@
   }
 
   .tiles {
+    display: flex;
     flex-direction: row;
     padding: 6px 24px 0;
   }
 
-  .tile {
+  .tile,
+  .tiles > :first-child > .tile,
+  .tiles > :first-child,
+  .tiles > :nth-child(2):last-child,
+  .tiles > :nth-child(2):last-child > .tile {
     flex: 1;
     height: 220px;
+    aspect-ratio: auto;
+  }
+
+  .tiles > :nth-child(n + 2) .craft {
+    font-size: 16px;
+  }
+
+  .tiles > :nth-child(n + 2) .tileText {
+    padding: 12px 14px;
   }
 }
 
