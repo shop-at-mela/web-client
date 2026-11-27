@@ -102,3 +102,19 @@ export const getGiftingContent = (occasionSlug, getLabel) => {
     metaDescription: `Shop ${label} gifts from independent Indian brands.`,
   };
 };
+
+/**
+ * An /occasions/:slug is a page only if the slug is an occasion value (from the listing
+ * config labels) or has curated copy. Anything else renders the 404 page, not a generic
+ * "<slug> Gifts" page (search-console-indexing-fixes-prd.md R1-4).
+ *
+ * @param {String?} occasionSlug
+ * @param {Object} knownLabels map of occasion value -> label (OCCASION_LABELS)
+ * @returns {Boolean}
+ */
+const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
+
+export const isUnknownOccasionSlug = (occasionSlug, knownLabels = {}) =>
+  !!occasionSlug &&
+  !hasOwn(OCCASION_LANDING_CONTENT, occasionSlug) &&
+  !hasOwn(knownLabels, occasionSlug);

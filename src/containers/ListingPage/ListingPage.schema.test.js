@@ -143,10 +143,11 @@ const getConfig = variantType => {
 const SEARCH = '?utm_source=pinterest&utm_medium=social&utm_campaign=brand_w1';
 const HASH = '#reviews';
 
-const brandListing = ({ brand, brandStoreUrl, extraPublicData = {} }) =>
+const brandListing = ({ brand, brandStoreUrl, extraPublicData = {}, extraAttributes = {} }) =>
   createListing(
     'listing-schema',
     {
+      ...extraAttributes,
       title: 'Cotton Kurta',
       description: 'A soft cotton kurta.',
       publicData: {
@@ -171,7 +172,7 @@ const brandListing = ({ brand, brandStoreUrl, extraPublicData = {} }) =>
     }
   );
 
-const renderPage = (Component, variantType, listing) => {
+const renderPage = (Component, variantType, listing, overrides = {}) => {
   const config = getConfig(variantType);
   const props = {
     config: mergeConfig(config, getDefaultConfiguration()),
@@ -202,6 +203,7 @@ const renderPage = (Component, variantType, listing) => {
     onSubmitInquiry: jest.fn(),
     history: { push: jest.fn() },
     location: { search: SEARCH, hash: HASH, pathname: '/l/cotton-kurta/listing-schema' },
+    ...overrides,
   };
   return render(<Component {...props} />, { config, routeConfiguration: getRouteConfiguration() });
 };
@@ -295,5 +297,82 @@ describe.each([['carousel', CarouselComponent], ['coverPhoto', CoverPhotoCompone
       const product = await readProductSchema();
       expect(product.description).toBe('Custom meta.');
     });
+
+    it('declares the slug URL as canonical, equal to offers.url', async () => {
+      renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }));
+      const product = await readProductSchema();
+      const canonical = document.head.querySelector('link[rel="canonical"]');
+      expect(canonical.getAttribute('href')).toBe(product.offers.url);
+      expect(canonical.getAttribute('href')).toMatch(/\/l\/cotton-kurta\/listing-schema$/);
+    });
+
+    it('marks a closed listing OutOfStock', async () => {
+      renderPage(
+        Component,
+        variantType,
+        brandListing({ brand: 'Nicobar', extraAttributes: { state: 'closed' } })
+      );
+      const product = await readProductSchema();
+      expect(product.offers.availability).toBe('https://schema.org/OutOfStock');
+    });
+
+    it('emits no Product node when there is no price (never an Offer without a price)', async () => {
+      renderPage(
+        Component,
+        variantType,
+        brandListing({ brand: 'Nicobar', extraAttributes: { price: null } })
+      );
+      await waitFor(() =>
+        expect(document.head.querySelector('link[rel="canonical"]')).toBeTruthy()
+      );
+      const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
+      expect(scripts.map(sc => sc.textContent).join('')).not.toMatch(/"@type":"Product"/);
+    });
+  }
+);
+
+describe.each([['carousel', CarouselComponent], ['coverPhoto', CoverPhotoComponent]])(
+  'SSR status flags (%s layout)',
+  (variantType, Component) => {
+    it.each([['no slug (/l/:id)', undefined], ['an old or wrong slug', 'old-title']])(
+      'marks the redirect for %s as permanent (301)',
+      (_label, slug) => {
+        const staticContext = {};
+        renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }), {
+          params: { id: 'listing-schema', ...(slug ? { slug } : {}) },
+          staticContext,
+        });
+        expect(staticContext.permanentRedirect).toBe(true);
+      }
+    );
+
+    it('does not redirect the canonical slug URL', () => {
+      const staticContext = {};
+      renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }), { staticContext });
+      expect(staticContext.permanentRedirect).toBeUndefined();
+    });
+
+    it('answers a malformed listing id (400) with a 404', () => {
+      const staticContext = {};
+      renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }), {
+        showListingError: { status: 400 },
+        staticContext,
+      });
+      expect(staticContext.notfound).toBe(true);
+      expect(staticContext.unavailable).toBeUndefined();
+    });
+
+    it.each([429, 500, 503])(
+      'marks a %s listing error as temporarily unavailable (503)',
+      status => {
+        const staticContext = {};
+        renderPage(Component, variantType, brandListing({ brand: 'Nicobar' }), {
+          showListingError: { status },
+          staticContext,
+        });
+        expect(staticContext.unavailable).toBe(true);
+        expect(staticContext.notfound).toBeUndefined();
+      }
+    );
   }
 );

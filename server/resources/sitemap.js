@@ -4,6 +4,7 @@ const log = require('../log.js');
 const { createTTLCache } = require('../api-util/cache.js');
 const { getRootURL } = require('../api-util/rootURL.js');
 const sdkUtils = require('../api-util/sdk.js');
+const { createSlug } = require('../api-util/slug.js');
 const { getExtractors } = require('../importer.js');
 
 const isSitemapDisabled = process.env.SITEMAP_DISABLED === 'true';
@@ -22,7 +23,8 @@ const dev = process.env.REACT_APP_ENV === 'development';
 //       /categories pages (from the hosted listing-categories.json asset).  //
 //     - /signup, /login and /s are intentionally omitted (/s is noindex).   //
 //   b. sitemap-recent-listings.xml                                          //
-//     - This returns max 10 000 recent listings                             //
+//     - Max 10 000 published listings, as canonical /l/:slug/:id URLs       //
+//       (cached 6 hours; /l/:id would be a 301)                             //
 //   c. sitemap-recent-pages.xml                                             //
 //     - This contains Pages, which are shown from path /p/:pageId           //
 //     - Does not contain landing-page, terms-of-service and privacy-policy  //
@@ -113,6 +115,51 @@ const loadCategoryPaths = sdk =>
 // Time-to-live (ttl) is set to one day aka 86400 seconds
 const ttl = 86400; // seconds
 const cache = createTTLCache(ttl);
+
+// Listings change more often (re-harvests close and delete them), so their sitemap is
+// rebuilt every 6 hours.
+const listingsTtl = 21600; // seconds
+const listingsCache = createTTLCache(listingsTtl);
+
+const LISTINGS_PER_PAGE = 100;
+const MAX_LISTING_PAGES = 100; // 10 000 listings
+
+/**
+ * Canonical sitemap paths for listings: l/:slug/:id, with the slug built from the title
+ * exactly as the client does (search-console-indexing-fixes-prd.md R1-2). The bare
+ * /l/:id answers with a 301, so it must not be listed.
+ *
+ * @param {Array<Object>} listings listing entities with attributes.title
+ * @returns {Array<String>}
+ */
+const listingSitemapPaths = listings =>
+  (listings || [])
+    .filter(l => l?.id?.uuid)
+    .map(l => `l/${createSlug(l.attributes?.title || '')}/${l.id.uuid}`);
+
+/**
+ * Page through published listings (titles only) and return their sitemap paths.
+ * listings.query returns published listings only, so closed listings drop out.
+ *
+ * @param {Object} sdk
+ * @returns {Promise<Array<String>>}
+ */
+const queryAllListingPaths = async sdk => {
+  const paths = [];
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const response = await sdk.listings.query({
+      page,
+      perPage: LISTINGS_PER_PAGE,
+      'fields.listing': ['title'],
+    });
+    paths.push(...listingSitemapPaths(response?.data?.data));
+    totalPages = response?.data?.meta?.totalPages || 1;
+    page += 1;
+  } while (page <= totalPages && page <= MAX_LISTING_PAGES);
+  return paths;
+};
 
 /////////////////////////////////////////////
 // Handlers for /sitemap-* prefixed routes //
@@ -250,7 +297,7 @@ const sitemapListings = (req, res, rootUrl, sdk) => {
   });
 
   // If we have a cached content send it
-  const { data, timestamp } = cache.sitemapRecentListings;
+  const { data, timestamp } = listingsCache.sitemapRecentListings;
   if (data && timestamp) {
     const age = Math.floor((Date.now() - timestamp) / 1000);
     res.set('Age', age);
@@ -258,12 +305,10 @@ const sitemapListings = (req, res, rootUrl, sdk) => {
     return;
   }
 
-  sdk.sitemapData
-    .queryListings()
-    .then(response => {
-      const listings = response.data.data || [];
+  queryAllListingPaths(sdk)
+    .then(paths => {
       // Use canonical URL: https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls
-      const ids = listings.map(l => `l/${l.id?.uuid}`);
+      const ids = paths;
 
       // If there's no listings, let's just return empty sitemap
       const hasListingIds = ids.length > 0;
@@ -278,7 +323,7 @@ const sitemapListings = (req, res, rootUrl, sdk) => {
       Readable.from(ids).pipe(smStream);
 
       // Save to in-memory cache
-      streamToPromise(smStream).then(sm => (cache.sitemapRecentListings = sm));
+      streamToPromise(smStream).then(sm => (listingsCache.sitemapRecentListings = sm));
 
       // Write the stream to the response
       smStream.pipe(res).on('error', e => {
@@ -437,3 +482,5 @@ const sitemapMiddleware = (req, res, next) => {
 module.exports = sitemapMiddleware;
 // Exposed for tests
 module.exports.categoryPaths = categoryPaths;
+module.exports.listingSitemapPaths = listingSitemapPaths;
+module.exports.queryAllListingPaths = queryAllListingPaths;

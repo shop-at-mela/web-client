@@ -736,7 +736,7 @@ describe('Duck', () => {
         // from context. We render ListingPageComponent directly here, so replicate that merge.
         config: mergeConfig(config, getDefaultConfiguration()),
         intl: testIntl,
-        params: { id: 'listing-with-category', slug: 'listing-slug' },
+        params: { id: 'listing-with-category', slug: 'listing-with-category-title' },
         getListing: () => listingWithCategory,
         getOwnListing: () => null,
         reviews: [],
@@ -761,7 +761,7 @@ describe('Duck', () => {
         onContactUser: jest.fn(),
         onSubmitInquiry: jest.fn(),
         history: { push: jest.fn() },
-        location: { search: '', pathname: '/l/listing-slug/listing-with-category' },
+        location: { search: '', pathname: '/l/listing-with-category-title/listing-with-category' },
       };
 
       return render(<ListingPageComponent {...props} />, {
@@ -822,7 +822,7 @@ describe('Duck', () => {
       const props = {
         config: mergeConfig(config, getDefaultConfiguration()),
         intl: testIntl,
-        params: { id: 'listing-without-category', slug: 'listing-slug' },
+        params: { id: 'listing-without-category', slug: 'listing-without-category-title' },
         getListing: () => listingWithoutCategory,
         getOwnListing: () => null,
         reviews: [],
@@ -847,7 +847,10 @@ describe('Duck', () => {
         onContactUser: jest.fn(),
         onSubmitInquiry: jest.fn(),
         history: { push: jest.fn() },
-        location: { search: '', pathname: '/l/listing-slug/listing-without-category' },
+        location: {
+          search: '',
+          pathname: '/l/listing-without-category-title/listing-without-category',
+        },
       };
 
       render(<ListingPageComponent {...props} />, {

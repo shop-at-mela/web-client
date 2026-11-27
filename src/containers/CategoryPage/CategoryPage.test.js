@@ -31,6 +31,7 @@ jest.mock('../../util/sdkLoader', () => {
 
 jest.mock('../TopbarContainer/TopbarContainer', () => () => <div data-testid="topbar" />);
 jest.mock('../FooterContainer/FooterContainer', () => () => <div data-testid="footer" />);
+jest.mock('../NotFoundPage/NotFoundPage', () => () => <div data-testid="not-found" />);
 
 jest.mock('../../components/ListingCard/ListingCard', () => {
   return function MockListingCard({ listing }) {
@@ -456,9 +457,9 @@ describe('CategoryPage', () => {
   });
 
   describe('unknown category', () => {
-    it('renders nothing for an unknown category slug', () => {
-      const { container } = renderAt('/categories/not-a-real-category');
-      expect(container.firstChild).toBeNull();
+    it('renders the 404 page for an unknown category slug (not an empty 200)', () => {
+      renderAt('/categories/not-a-real-category');
+      expect(screen.getByTestId('not-found')).toBeInTheDocument();
     });
   });
 

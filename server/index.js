@@ -403,12 +403,20 @@ app.get('/{*splat}', async (req, res) => {
       } else if (context.forbidden) {
         res.status(403).send(html);
       } else if (context.url) {
-        // React Router injects the context.url if a redirect was rendered
-        res.redirect(context.url);
+        // React Router injects the context.url if a redirect was rendered.
+        // Pages mark permanent moves (e.g. /l/:id -> /l/:slug/:id) with
+        // context.permanentRedirect; everything else stays a 302.
+        res.redirect(context.permanentRedirect ? 301 : 302, context.url);
       } else if (context.notfound) {
         // NotFoundPage component injects the context.notfound when a
         // 404 should be returned
         res.status(404).send(html);
+      } else if (context.unavailable) {
+        // A temporary failure (API error, rate limit, data load failed): ask crawlers to
+        // come back later instead of indexing an error or loading page as a 200.
+        res.set('Retry-After', '300');
+        res.set('X-Robots-Tag', 'noindex');
+        res.status(503).send(html);
       } else {
         res.send(html);
       }

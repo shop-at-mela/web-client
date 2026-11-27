@@ -288,6 +288,14 @@ describe('MelaHomePage', () => {
       expect(visibleAnswers).toEqual(faqPage.mainEntity.map(q => q.acceptedAnswer.text));
     });
 
+    it('emits no Product node without offers (Google product snippets)', () => {
+      const { getByTestId } = renderPage();
+      const raw = getByTestId('page-schema').textContent;
+      const schema = JSON.parse(raw);
+      expect(schema.find(node => node['@type'] === 'WebPage')).toBeTruthy();
+      expect(raw).not.toMatch(/"@type":"(Product|Store|OfferCatalog)"/);
+    });
+
     it('states the reviewed date as the bumped HOMEPAGE_LAST_UPDATED', () => {
       const { container } = renderPage();
       expect(HOMEPAGE_LAST_UPDATED).toBe('2026-11-04');

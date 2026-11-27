@@ -150,6 +150,11 @@ const profilePageSlice = createSlice({
   name: 'ProfilePage',
   initialState,
   reducers: {
+    // Unknown /brands/:slug: store a 404 so ProfilePage renders NotFoundPage (HTTP 404)
+    // instead of throwing during SSR and rendering an empty 200 (soft 404).
+    setUserShowError: (state, action) => {
+      state.userShowError = action.payload;
+    },
     setInitialState: () => initialState,
     setUserId: (state, action) => {
       state.userId = action.payload;
@@ -196,7 +201,7 @@ const profilePageSlice = createSlice({
   },
 });
 
-export const { setInitialState, setUserId } = profilePageSlice.actions;
+export const { setInitialState, setUserId, setUserShowError } = profilePageSlice.actions;
 export default profilePageSlice.reducer;
 
 // ================ Load data ================ //
@@ -268,7 +273,7 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
     if (!uuidString) {
       // Slug not found — dispatch error so ProfilePage renders NotFoundPage
       dispatch(setInitialState());
-      dispatch(showUserError(storableError({ status: 404 })));
+      dispatch(setUserShowError(storableError({ status: 404, statusText: 'Not Found' })));
       return Promise.resolve();
     }
     const userId = new UUID(uuidString);

@@ -104,6 +104,8 @@ import {
   priceForSchemaMaybe,
   pinterestAvailability,
   getDerivedRenderData,
+  markPermanentRedirect,
+  markUnavailable,
 } from './ListingPage.shared';
 import VariantDisplay from '../../components/VariantDisplay/VariantDisplay';
 import Notifications from './Notifications/Notifications';
@@ -200,6 +202,7 @@ export const ListingPageComponent = props => {
     isVariant,
     currentListing,
     listingSlug,
+    canonicalSlug,
     params,
     listingPathParamType,
     listingTab,
@@ -274,24 +277,29 @@ export const ListingPageComponent = props => {
 
   const topbar = <TopbarContainer />;
 
-  if (showListingError && showListingError.status === 404) {
-    // 404 listing not found
+  if (showListingError && [400, 404].includes(showListingError.status)) {
+    // 404 listing not found; 400 is a malformed listing id, which is also not found
     return <NotFoundPage staticContext={props.staticContext} />;
   } else if (showListingError) {
-    // Other error in fetching listing
+    // Other error in fetching listing (rate limit, API 5xx, network): temporary, so the
+    // server answers 503 + Retry-After instead of an indexable 200 (soft 404).
+    markUnavailable(props.staticContext);
     return <ErrorPage topbar={topbar} scrollingDisabled={scrollingDisabled} intl={intl} />;
   } else if (!currentListing.id) {
-    // Still loading the listing
+    // Still loading the listing. On the server this means the data load failed.
+    markUnavailable(props.staticContext);
     return <LoadingPage topbar={topbar} scrollingDisabled={scrollingDisabled} intl={intl} />;
   }
 
-  if (!rawParams.slug && currentListing.id) {
-    // Preserve the query string (e.g. UTM params) through the canonical-slug
-    // redirect so campaign attribution survives the /l/:id -> /l/:slug/:id hop.
+  if (!isVariant && currentListing.id && rawParams.slug !== canonicalSlug) {
+    // /l/:id, or an old or wrong slug: 301 to the canonical /l/:slug/:id URL
+    // (search-console-indexing-fixes-prd.md R1-1). Preserve the query string (e.g. UTM
+    // params) so campaign attribution survives the hop.
+    markPermanentRedirect(props.staticContext);
     return (
       <NamedRedirect
         name="ListingPage"
-        params={{ slug: listingSlug, id: rawParams.id }}
+        params={{ slug: canonicalSlug, id: rawParams.id }}
         search={location.search}
       />
     );
@@ -381,7 +389,10 @@ export const ListingPageComponent = props => {
     getSeoDescriptionFallback(intl, { title, brandName, description, marketplaceName });
 
   const currentStock = currentListing.currentStock?.attributes?.quantity || 0;
-  const schemaAvailability = !currentListing.currentStock
+  const isClosedListing = currentListing.attributes.state === LISTING_STATE_CLOSED;
+  const schemaAvailability = isClosedListing
+    ? 'https://schema.org/OutOfStock'
+    : !currentListing.currentStock
     ? 'https://schema.org/InStock'
     : currentStock > 0
     ? 'https://schema.org/InStock'
@@ -402,36 +413,41 @@ export const ListingPageComponent = props => {
       productPriceCurrency={schemaOffer.priceCurrency}
       productAvailability={pinterestAvailability(schemaAvailability)}
       {...noIndexMaybe}
-      schema={{
-        '@context': 'http://schema.org',
-        '@type': 'Product',
-        name: title,
-        description: seoDescription,
-        image: schemaImages,
-        brand: brandName
-          ? {
-              '@type': 'Brand',
-              name: brandName,
+      canonicalURL={isVariant ? undefined : productURL}
+      schema={
+        !schemaOffer.price
+          ? undefined
+          : {
+              '@context': 'http://schema.org',
+              '@type': 'Product',
+              name: title,
+              description: seoDescription,
+              image: schemaImages,
+              brand: brandName
+                ? {
+                    '@type': 'Brand',
+                    name: brandName,
+                  }
+                : undefined,
+              category:
+                publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3,
+              offers: {
+                '@type': 'Offer',
+                url: productURL,
+                // The brand sells the product, never Mela (curated directory, no retailer claim)
+                seller: getOfferSeller(
+                  brandName,
+                  ensuredAuthor?.attributes?.profile?.publicData?.brandStoreUrl
+                ),
+                ...schemaOffer,
+                availability: schemaAvailability,
+              },
+              // Consumer search synonyms — machine-readable for AI answer engines (AEO)
+              ...(publicData.searchSynonyms?.length > 0 && {
+                keywords: publicData.searchSynonyms,
+              }),
             }
-          : undefined,
-        category:
-          publicData.categoryLevel1 || publicData.categoryLevel2 || publicData.categoryLevel3,
-        offers: {
-          '@type': 'Offer',
-          url: productURL,
-          // The brand sells the product, never Mela (curated directory, no retailer claim)
-          seller: getOfferSeller(
-            brandName,
-            ensuredAuthor?.attributes?.profile?.publicData?.brandStoreUrl
-          ),
-          ...schemaOffer,
-          availability: schemaAvailability,
-        },
-        // Consumer search synonyms — machine-readable for AI answer engines (AEO)
-        ...(publicData.searchSynonyms?.length > 0 && {
-          keywords: publicData.searchSynonyms,
-        }),
-      }}
+      }
     >
       <LayoutSingleColumn className={css.pageRoot} topbar={topbar} footer={<FooterContainer />}>
         <div className={css.contentWrapperForProductLayout}>

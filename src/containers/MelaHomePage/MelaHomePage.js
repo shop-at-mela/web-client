@@ -94,46 +94,10 @@ const MelaHomePage = props => {
           name: pageTitle,
           description:
             'A curation of independent South Asian brands: fashion, home, beauty, jewelry, and kids',
-          mainEntity: {
-            '@type': 'Store',
-            name: 'Mela',
-            description: 'A curation of independent South Asian brands',
-            currenciesAccepted: 'USD',
-            areaServed: {
-              '@type': 'Country',
-              name: 'United States',
-            },
-            hasOfferCatalog: {
-              '@type': 'OfferCatalog',
-              name: 'South Asian Design & Sustainable Fashion',
-              itemListElement: [
-                {
-                  '@type': 'Offer',
-                  itemOffered: {
-                    '@type': 'Product',
-                    name: 'Organic Baby Clothing',
-                    category: 'Baby & Kids',
-                  },
-                },
-                {
-                  '@type': 'Offer',
-                  itemOffered: {
-                    '@type': 'Product',
-                    name: 'South Asian Fashion',
-                    category: 'Fashion',
-                  },
-                },
-                {
-                  '@type': 'Offer',
-                  itemOffered: {
-                    '@type': 'Product',
-                    name: 'South Asian Home Goods',
-                    category: 'Home & Kitchen',
-                  },
-                },
-              ],
-            },
-          },
+          // No Store/OfferCatalog/Product nodes: Mela sells nothing on this page, and a
+          // Product without offers is invalid for Google's product snippets
+          // (search-console-indexing-fixes-prd.md R1-3). Organization and WebSite come
+          // from Page.js.
         },
         {
           '@context': 'http://schema.org',

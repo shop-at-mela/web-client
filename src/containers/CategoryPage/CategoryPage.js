@@ -12,7 +12,7 @@ import { createResourceLocatorString } from '../../util/routes';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { applyCategoryMerchandising } from '../../util/categoryMerchandising';
-import { parse, stringify } from '../../util/urlHelpers';
+import { parse, stringify, createSlug } from '../../util/urlHelpers';
 import { deriveBrandCraftLine } from '../../util/brandCraft';
 
 import {
@@ -25,6 +25,7 @@ import {
 } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
+import NotFoundPage from '../NotFoundPage/NotFoundPage';
 import {
   OccasionStrip,
   AgeNavigation,
@@ -588,8 +589,9 @@ const CategoryPageComponent = props => {
     : { pub_categoryLevel1: level1 };
 
   if (!currentCategory) {
-    // Unknown category slug — let it fall through to 404 via NotFoundPage
-    return null;
+    // Unknown category slug: a real 404, not an empty 200 (soft 404). If the hosted
+    // category config didn't load at all, render nothing rather than 404 a real category.
+    return categories.length > 0 ? <NotFoundPage staticContext={props.staticContext} /> : null;
   }
 
   const marketplaceName = config.marketplaceName;
@@ -613,7 +615,7 @@ const CategoryPageComponent = props => {
   const schemaListings = listings.map((l, i) => ({
     '@type': 'ListItem',
     position: i + 1,
-    url: `${config.marketplaceRootURL}/l/${l.id.uuid}`,
+    url: `${config.marketplaceRootURL}/l/${createSlug(l.attributes.title || '')}/${l.id.uuid}`,
     name: l.attributes.title,
   }));
 
