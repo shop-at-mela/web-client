@@ -66,6 +66,26 @@ export const applyHasAnySearchModeOverride = listingFields =>
       : field
   );
 
+// Mela: hosted (Console) listing fields whose categoryConfig points at category ids
+// that no longer exist in the category tree (e.g. "Baby-Clothes-Accessories",
+// "Baby-Clothing", "Baby-Accessories"). validListingFields would drop these fields, so
+// we lift their category limit and keep them for every category.
+// TODO: add the current category ids to these fields in Console (Listing fields →
+// field → categories), then remove the key from this list so the limit applies again.
+export const KEEP_WITHOUT_CATEGORY_LIMIT_KEYS = [
+  'age_group',
+  'material',
+  'certification',
+  'color',
+  'key_features',
+];
+export const liftStaleCategoryLimits = listingFields =>
+  listingFields.map(field =>
+    KEEP_WITHOUT_CATEGORY_LIMIT_KEYS.includes(field?.key) && field?.categoryConfig
+      ? { ...field, categoryConfig: { limitToCategoryIds: false } }
+      : field
+  );
+
 /**
  * Mela: built-in fields marked `localOnly` (e.g. the boolean isBestseller, whose
  * schemaType Console cannot configure) are always added to the hosted fields, whatever
@@ -986,9 +1006,12 @@ const validate = (normalized, ctx = {}) => {
   const categoriesInUse = ctx?.resolved?.categoryConfiguration?.categories || [];
   const listingTypes = validListingTypes(Array.isArray(rawTypes) ? rawTypes : [], issues);
   const listingTypesInUse = listingTypes.map(lt => `${lt.listingType}`);
-  // Mela: add localOnly built-ins and force has_any before validation (see above).
-  const fieldsToValidate = applyHasAnySearchModeOverride(
-    withLocalOnlyListingFields(fieldsForClash, ctx?.defaults?.listing?.listingFields)
+  // Mela: add localOnly built-ins, force has_any and lift stale category limits before
+  // validation (see above).
+  const fieldsToValidate = liftStaleCategoryLimits(
+    applyHasAnySearchModeOverride(
+      withLocalOnlyListingFields(fieldsForClash, ctx?.defaults?.listing?.listingFields)
+    )
   );
   const listingFields = validListingFields(
     fieldsToValidate,

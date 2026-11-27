@@ -3,6 +3,7 @@ import {
   HAS_ANY_SEARCH_MODE_KEYS,
   withLocalOnlyListingFields,
   listingConfig,
+  liftStaleCategoryLimits,
 } from './listing';
 import * as defaultListing from './defaultListing';
 
@@ -116,5 +117,50 @@ describe('Mela listing fields through listingConfig.validate', () => {
       filterConfig: { indexForSearch: true, label: 'Occasion' },
     };
     expect(run([occasion]).find(f => f.key === 'occasion').filterConfig.searchMode).toBe('has_any');
+  });
+
+  it('keeps a hosted field limited to a category id that no longer exists', () => {
+    const color = {
+      key: 'color',
+      label: 'Color',
+      scope: 'public',
+      schemaType: 'multi-enum',
+      enumOptions: [{ option: 'red', label: 'Red' }],
+      categoryConfig: { limitToCategoryIds: true, categoryIds: ['Baby-Clothes-Accessories'] },
+      filterConfig: { indexForSearch: true, label: 'Color' },
+    };
+    const validate = categories =>
+      listingConfig.validate(
+        {
+          hasListingTypesAsset: true,
+          hasNonEmptyListingTypes: true,
+          hasListingFieldsAsset: true,
+          listingTypes: [],
+          listingFields: [color],
+        },
+        {
+          defaults: { listing: defaultListing },
+          resolved: { categoryConfiguration: { categories } },
+        }
+      );
+    const { value, issues } = validate([{ id: 'fashion', name: 'Fashion', subcategories: [] }]);
+    const kept = value.listingFields.find(f => f.key === 'color');
+    expect(kept).toBeDefined();
+    expect(kept.categoryConfig.limitToCategoryIds).toBe(false);
+    expect(issues.map(i => i.code)).not.toContain('LISTING_FIELD_UNSUPPORTED');
+  });
+});
+
+describe('liftStaleCategoryLimits', () => {
+  it('clears the category limit only for the listed keys', () => {
+    const fields = [
+      { key: 'age_group', categoryConfig: { limitToCategoryIds: true, categoryIds: ['old'] } },
+      { key: 'brand', categoryConfig: { limitToCategoryIds: true, categoryIds: ['old'] } },
+      { key: 'material' },
+    ];
+    const [ageGroup, brand, material] = liftStaleCategoryLimits(fields);
+    expect(ageGroup.categoryConfig).toEqual({ limitToCategoryIds: false });
+    expect(brand.categoryConfig.limitToCategoryIds).toBe(true);
+    expect(material).toEqual({ key: 'material' });
   });
 });
