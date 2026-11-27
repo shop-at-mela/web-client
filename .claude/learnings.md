@@ -142,6 +142,12 @@ results.forEach(r => allEntities = updatedEntities(allEntities, r.responseData, 
 ### Image Variant Fallback
 - **Issue**: Filtering for `listing-card` variants returns empty array if only `default` exists
 - **Fix**: `const variants = prefixedVariants.length > 0 ? prefixedVariants : availableVariants;`
+- **Pitfall**: that fallback means a `variant` prefix with no match puts EVERY variant on the image into the srcset. If a query adds a variant with a different crop (e.g. a 4:5 `portrait-card`), a component using a non-matching prefix can start picking the wrong crop. Name the exact variants you want, as `BrandPhotoCard` does.
+
+### Different crop per breakpoint (art direction)
+- `ResponsiveImage` builds one srcset, and the browser picks by width only, so it cannot switch between a 4:3 and a 4:5 crop. Use `<picture>` with `<source media="(max-width: 767px)" srcSet={portrait}>` plus an `<img>` carrying the landscape srcset; the browser downloads only one. Example: `BrandPhotoCard` main photo (2026-11-27).
+- Keep the frame shape stable across a photo swap: only use the portrait frame if every swappable product has the crop.
+- A shared carousel that needs a page-specific card width gets an opt-in prop (`BrandCarousel cardSize="wide"`, `.cardWide` declared after `.card`) rather than an override from the page's CSS module, which cannot reach the hashed class.
 
 ### ListingCard Badges (Phase 2)
 - **TrustBadges**: Top-left, max 2 certs, white bg
@@ -366,3 +372,5 @@ const categoryPath = (level1, level2, level3) => {
 2026-11-05: /brands lost brands in the browser. Routes.js re-runs loadData after a server render, about 47 API calls, and Dev rate-limit 429s dropped brands from the list. `fetchBrands` now reuses a complete server result, retries 429s in the browser, and the reducer never removes a loaded brand. Other pages that re-run loadData can hit the same limit.
 
 2026-11-05: One price per item — no hard-coded INR rate anywhere. `server/fxRate.js` fetches the live rate and passes it as `inrToUsdRate` in the preloaded state; `renderApp` and `src/index.js` seed `util/liveInrRate.js` before first render so server and browser match (no hydration errors). Show or publish any listing price through `getDisplayMoney`/`useDisplayPrice`, never `attributes.price` directly. With no rate, INR listings show only the ₹ price. New listing queries with an explicit `fields.listing` must include `publicData.priceInINR`. `price.amount` in Sharetribe stays stale until re-priced, and the price filter searches on it.
+
+2026-11-27: Homepage bigger images (branch feat/homepage-bigger-images): hero card 340→440px, mosaic `sizes` from tile count, Craft Stories mobile lead + 2-up grid, Earned Its Place 2.5 cards on desktop and a 4:5 `portrait-card` crop on phones. Findings and tuning table: mela-docs/product/prds/homepage-image-sizing-findings.md. To measure the live dev page at exact viewports, headless Chrome via playwright-core with `channel: 'chrome'` works; the Chrome extension's window resize does not change the viewport.
