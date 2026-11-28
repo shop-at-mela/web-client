@@ -1,4 +1,5 @@
 import { storableError } from '../util/errors';
+import { createImageVariantConfig } from '../util/sdkLoader';
 import { addMarketplaceEntities } from './marketplaceData.duck';
 import { fetchCurrentUserThunk } from './user.duck';
 import { pushSaveToggle } from '../util/analytics/savedListings';
@@ -251,6 +252,11 @@ export const fetchSavedListings = listingIds => (dispatch, getState, sdk) => {
       ids: listingIds,
       include: ['images', 'author', 'currentStock'],
       'fields.image': ['variants.listing-card', 'variants.listing-card-2x'],
+      // listing-card is a custom variant: without these definitions Sharetribe returns
+      // images with no variants and every saved card renders the empty placeholder.
+      // 4:3, same as the listing cards on search (layout aspectRatio '4/3').
+      ...createImageVariantConfig('listing-card', 400, 3 / 4),
+      ...createImageVariantConfig('listing-card-2x', 800, 3 / 4),
       'fields.listing': ['title', 'price', 'publicData', 'state'],
       perPage: Math.min(listingIds.length, 200),
     })
