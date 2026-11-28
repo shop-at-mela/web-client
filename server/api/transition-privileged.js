@@ -1,4 +1,5 @@
 const sharetribeSdk = require('sharetribe-flex-sdk');
+const { assertExpectedPayinTotal } = require('../api-util/assertExpectedPayinTotal');
 const { transactionLineItems } = require('../api-util/lineItems');
 const {
   addOfferToMetadata,
@@ -9,7 +10,9 @@ const {
   isIntentionToUpdateOffer,
   throwErrorIfNegotiationOfferHasInvalidHistory,
 } = require('../api-util/negotiation');
+const { sanitizePushPaymentBodyParams } = require('../api-util/pushPaymentMethodValidation');
 const {
+  createCookieTokenStore,
   getSdk,
   getTrustedSdk,
   handleError,
@@ -114,9 +117,18 @@ const getUpdatedMetadata = (orderData, transition, existingMetadata) => {
 };
 
 module.exports = (req, res) => {
-  const { isSpeculative, orderData, bodyParams, queryParams } = req.body || {};
+  const { isSpeculative, orderData, bodyParams: incomingBodyParams, queryParams } = req.body || {};
+  let bodyParams;
+  try {
+    // Push payments (redirect): an example how to validate push payment method types. Unused by default.
+    bodyParams = sanitizePushPaymentBodyParams(incomingBodyParams);
+  } catch (e) {
+    return handleError(res, e, { skipErrorLogging: true });
+  }
 
-  const sdk = getSdk(req, res);
+  // Share one cookie token store so a refresh during transactions.show is reused for exchangeToken.
+  const tokenStore = createCookieTokenStore(req, res);
+  const sdk = getSdk(req, res, tokenStore);
   const transitionName = bodyParams.transition;
   let lineItems = null;
   let metadataMaybe = {};
@@ -149,9 +161,12 @@ module.exports = (req, res) => {
         customerCommission
       );
 
+      // If the client sends expectedPayinTotal (checkout payment flows), ensure it
+      assertExpectedPayinTotal(lineItems, orderData?.expectedPayinTotal);
+
       metadataMaybe = getUpdatedMetadata(orderData, transitionName, existingMetadata);
 
-      return getTrustedSdk(req);
+      return getTrustedSdk(req, res, tokenStore);
     })
     .then(trustedSdk => {
       // Pass role based params to make sure that protectedData only contains protected data

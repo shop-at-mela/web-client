@@ -10,7 +10,7 @@ import {
   getHostedConfiguration,
   getDefaultConfiguration,
 } from '../../util/testHelpers';
-import { mergeConfig } from '../../util/configHelpers';
+import { mergeConfig } from '../../config/mergeConfig';
 import { createIntl, createIntlCache } from '../../util/reactIntl';
 import enMessages from '../../translations/en.json';
 

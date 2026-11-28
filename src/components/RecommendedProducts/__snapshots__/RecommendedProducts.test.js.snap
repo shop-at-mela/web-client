@@ -96,9 +96,7 @@ exports[`RecommendedProducts matches snapshot with recommended products 1`] = `
                 <div
                   class="title"
                 >
-                  Product
-                   
-                  SKU001
+                  Product SKU001
                 </div>
               </div>
             </div>
@@ -178,9 +176,7 @@ exports[`RecommendedProducts matches snapshot with recommended products 1`] = `
                 <div
                   class="title"
                 >
-                  Product
-                   
-                  SKU002
+                  Product SKU002
                 </div>
               </div>
             </div>

@@ -5,7 +5,7 @@ import ListingImageGallery from './ListingImageGallery/ListingImageGallery';
 import css from './ListingPage.module.css';
 
 const SectionGallery = props => {
-  const { listing, variantPrefix } = props;
+  const { listing, variantPrefix, aspectWidth, aspectHeight } = props;
   const images = listing.images;
   const listingId = listing?.id?.uuid;
   const title = listing?.attributes?.title || '';
@@ -21,6 +21,8 @@ const SectionGallery = props => {
         images={images}
         imageVariants={imageVariants}
         thumbnailVariants={thumbnailVariants}
+        aspectWidth={aspectWidth}
+        aspectHeight={aspectHeight}
       />
       {listingId && (
         <SavedListingButton

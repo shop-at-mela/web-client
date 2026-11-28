@@ -70,17 +70,25 @@ const PriorityLink = ({ linkConfig }) => {
  * If space is limited, this doesn't include anything to the Topbar.
  *
  * @param {*} props contains links array and setLinks function
- * @returns container div with priority links included.
+ * @returns list of priority links.
  */
 const PriorityLinks = props => {
   const containerRef = useRef(null);
 
   // With this useEffect, we measure the widths of each rendered priority link
-  // This is done once before the real rendering and it's done outside the viewport.
+  // This is done before the real rendering and it's done outside the viewport.
+  // Re-run when links are reset without widths (e.g. create-listing visibility change).
+  // containerWidth comes from CustomLinksMenu's ResizeObserver — include it so we retry
+  // after a mobile→desktop resize (TopbarDesktop was display:none, so the first pass skipped).
   useEffect(() => {
     const isMeasured = props.links?.[0]?.width;
-    if (containerRef.current && !isMeasured) {
+    if (containerRef.current && props.links?.length > 0 && !isMeasured) {
       const linksFromRenderedWrapper = [...containerRef.current.childNodes];
+      // TopbarDesktop is display:none below --viewportLarge; offsetWidth is 0 then.
+      // Writing width:0 keeps isMeasured falsy and retriggers this effect forever.
+      if (!linksFromRenderedWrapper[0]?.offsetWidth) {
+        return;
+      }
       let cumulatedWidth = 0;
       // Generate an array of link configs with width & cumulatedWidth included
       const linksWithWidths = props.links.reduce((links, l, i) => {
@@ -90,7 +98,7 @@ const PriorityLinks = props => {
       }, []);
       props.setLinks(linksWithWidths);
     }
-  }, [containerRef]);
+  }, [props.links, props.setLinks, props.containerWidth]);
 
   const { links, priorityLinks } = props;
   const isMeasured = links?.[0]?.width && (priorityLinks.length === 0 || priorityLinks?.[0]?.width);
@@ -112,11 +120,15 @@ const PriorityLinks = props => {
   // Always render inline in the Topbar tree so SSR and the initial client render match.
   // (Portaling to document.body caused hydration mismatches.)
   return (
-    <div className={css.priorityLinkWrapper} {...styleWrapper} ref={containerRef}>
+    <ul className={css.priorityLinkWrapper} {...styleWrapper} ref={containerRef}>
       {linkConfigs.map((linkConfig, index) => {
-        return <PriorityLink key={`${linkConfig.text}_${index}`} linkConfig={linkConfig} />;
+        return (
+          <li key={`${linkConfig.text}_${index}`} className={css.priorityLinkItem}>
+            <PriorityLink linkConfig={linkConfig} />
+          </li>
+        );
       })}
-    </div>
+    </ul>
   );
 };
 

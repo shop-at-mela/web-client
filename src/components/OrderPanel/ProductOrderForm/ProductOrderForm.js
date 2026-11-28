@@ -63,6 +63,7 @@ const DeliveryMethodMaybe = props => {
     hasStock,
     formId,
     intl,
+    sectionHeadingAs,
   } = props;
   const showDeliveryMethodSelector = displayDeliveryMethod && hasMultipleDeliveryMethods;
   const showSingleDeliveryMethod = displayDeliveryMethod && deliveryMethod;
@@ -86,7 +87,7 @@ const DeliveryMethodMaybe = props => {
     </FieldSelect>
   ) : showSingleDeliveryMethod ? (
     <div className={css.deliveryField}>
-      <H3 rootClassName={css.singleDeliveryMethodLabel}>
+      <H3 as={sectionHeadingAs} rootClassName={css.singleDeliveryMethodLabel}>
         {intl.formatMessage({ id: 'ProductOrderForm.deliveryMethodLabel' })}
       </H3>
       <p className={css.singleDeliveryMethodSelected}>
@@ -142,6 +143,7 @@ const renderForm = formRenderProps => {
     onShopNow,
     listingData,
     values,
+    sectionHeadingAs = 'h3',
   } = formRenderProps;
 
   // Note: don't add custom logic before useEffect
@@ -265,11 +267,12 @@ const renderForm = formRenderProps => {
         hasStock={hasStock}
         formId={formId}
         intl={intl}
+        sectionHeadingAs={sectionHeadingAs}
       />
 
       {showBreakdown ? (
         <div className={css.breakdownWrapper}>
-          <H6 as="h3" className={css.bookingBreakdownTitle}>
+          <H6 as={sectionHeadingAs} className={css.bookingBreakdownTitle}>
             <FormattedMessage id="ProductOrderForm.breakdownTitle" />
           </H6>
           <hr className={css.totalDivider} />
@@ -362,6 +365,7 @@ const renderForm = formRenderProps => {
  * @param {boolean} props.fetchLineItemsInProgress - Whether the line items are being fetched
  * @param {propTypes.error} props.fetchLineItemsError - The error for fetching the line items
  * @param {Function} props.onContactUser - The function to contact the user
+ * @param {'h2'|'h3'} [props.sectionHeadingAs='h3'] - Semantic heading level for form section titles
  * @returns {JSX.Element}
  */
 const ProductOrderForm = props => {

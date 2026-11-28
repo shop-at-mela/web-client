@@ -11,7 +11,7 @@
  * (the single source of truth per gifting-festival-traffic-prd.md's data-flow reference)
  * rather than duplicated here. CategoryShowcase.js re-exports this for discoverability.
  */
-import { listingFields } from '../config/configListing';
+import { listingFields } from '../config/listing/defaultListing';
 
 const buildOccasionLabelMap = () => {
   const map = {};

@@ -29,6 +29,7 @@ const currentDay = today.getUTCDate();
 const listingTypes = [
   {
     id: 'rent-bicycles-daily',
+    label: 'Rent bicycles daily',
     transactionProcess: {
       name: 'default-booking',
       alias: 'default-booking/release-1',
@@ -37,6 +38,7 @@ const listingTypes = [
   },
   {
     id: 'rent-bicycles-nightly',
+    label: 'Rent bicycles nightly',
     transactionProcess: {
       name: 'default-booking',
       alias: 'default-booking/release-1',
@@ -45,6 +47,7 @@ const listingTypes = [
   },
   {
     id: 'rent-bicycles-hourly',
+    label: 'Rent bicycles hourly',
     transactionProcess: {
       name: 'default-booking',
       alias: 'default-booking/release-1',
@@ -53,6 +56,7 @@ const listingTypes = [
   },
   {
     id: 'sell-bicycles',
+    label: 'Sell bicycles',
     transactionProcess: {
       name: 'default-purchase',
       alias: 'default-purchase/release-1',
@@ -65,6 +69,7 @@ const listingTypes = [
 const listingFields = [
   {
     key: 'cat',
+    label: 'Cat',
     scope: 'public',
     listingTypeConfig: {
       limitToListingTypeIds: true,
@@ -86,6 +91,7 @@ const listingFields = [
   },
   {
     key: 'amenities',
+    label: 'Amenities',
     scope: 'public',
     listingTypeConfig: {
       limitToListingTypeIds: true,

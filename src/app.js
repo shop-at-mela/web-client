@@ -2,12 +2,10 @@ import React, { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter, StaticRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import loadable from '@loadable/component';
-import moment from 'moment';
 
 // Configs and store setup
-import defaultConfig from './config/configDefault';
 import appSettings from './config/settings';
+import { loadAppConfig } from './config/loadAppConfig';
 import configureStore from './store';
 
 // utils
@@ -15,7 +13,6 @@ import { RouteConfigurationProvider } from './context/routeConfigurationContext'
 import { ConfigurationProvider } from './context/configurationContext';
 import { parse } from './util/urlHelpers';
 import { difference, isEmpty } from './util/common';
-import { mergeConfig } from './util/configHelpers';
 import { IntlProvider } from './util/reactIntl';
 import {
   clearReferralDataIfExpired,
@@ -41,10 +38,9 @@ import { setInitialInrToUsdRate } from './util/liveInrRate';
 // If you want to change the language of default (fallback) translations,
 // change the imports to match the wanted locale:
 //
-//   1) Change the language in the config.js file!
-//   2) Import correct locale rules for Moment library
-//   3) Use the `messagesInLocale` import to add the correct translation file.
-//   4) (optionally) To support older browsers you need add the intl-relativetimeformat npm packages
+//   1) Change the language in Console (/general/localization) and the fallback in configDefault.js
+//   2) Use the `messagesInLocale` import to add the correct translation file.
+//   3) (optionally) To support older browsers you need add the intl-relativetimeformat npm packages
 //      and take it into use in `util/polyfills.js`
 
 // Note that there is also translations in './translations/countryCodes.js' file
@@ -52,20 +48,9 @@ import { setInitialInrToUsdRate } from './util/liveInrRate';
 // This used to collect billing address in StripePaymentAddress on CheckoutPage
 
 // Step 2:
-// If you are using a non-english locale with moment library,
-// you should also import time specific formatting rules for that locale
-// There are 2 ways to do it:
-// - you can add your preferred locale to MomentLocaleLoader or
-// - stop using MomentLocaleLoader component and directly import the locale here.
-// E.g. for French:
-// import 'moment/locale/fr';
-// const hardCodedLocale = process.env.NODE_ENV === 'test' ? 'en' : 'fr';
-
-// Step 3:
 // The "./translations/en.json" has generic English translations
 // that should work as a default translation if some translation keys are missing
-// from the hosted translation.json (which can be edited in Console). The other files
-// (e.g. en.json) in that directory has Biketribe themed translations.
+// from the hosted translation.json (which can be edited in Console).
 //
 // If you are using a non-english locale, point `messagesInLocale` to correct <lang>.json file.
 // That way the priority order would be:
@@ -108,56 +93,13 @@ const localeMessages = isTestEnv
   ? Object.fromEntries(Object.entries(defaultMessages).map(([key]) => [key, key]))
   : addMissingTranslations(defaultMessages, messagesInLocale);
 
-// For customized apps, this dynamic loading of locale files is not necessary.
-// It helps locale change from configDefault.js file or hosted configs, but customizers should probably
-// just remove this and directly import the necessary locale on step 2.
-const MomentLocaleLoader = props => {
-  const { children, locale } = props;
-  const isAlreadyImportedLocale =
-    typeof hardCodedLocale !== 'undefined' && locale === hardCodedLocale;
-
-  // Moment's built-in locale does not need loader
-  const NoLoader = props => <>{props.children()}</>;
-
-  // The default locale is en (en-US). Here we dynamically load one of the other common locales.
-  // However, the default is to include all supported locales package from moment library.
-  const MomentLocale =
-    ['en', 'en-US'].includes(locale) || isAlreadyImportedLocale
-      ? NoLoader
-      : ['fr', 'fr-FR'].includes(locale)
-      ? loadable.lib(() => import(/* webpackChunkName: "fr" */ 'moment/locale/fr'))
-      : ['de', 'de-DE'].includes(locale)
-      ? loadable.lib(() => import(/* webpackChunkName: "de" */ 'moment/locale/de'))
-      : ['es', 'es-ES'].includes(locale)
-      ? loadable.lib(() => import(/* webpackChunkName: "es" */ 'moment/locale/es'))
-      : ['fi', 'fi-FI'].includes(locale)
-      ? loadable.lib(() => import(/* webpackChunkName: "fi" */ 'moment/locale/fi'))
-      : ['nl', 'nl-NL'].includes(locale)
-      ? loadable.lib(() => import(/* webpackChunkName: "nl" */ 'moment/locale/nl'))
-      : loadable.lib(() => import(/* webpackChunkName: "locales" */ 'moment/min/locales.min'));
-
-  return (
-    <MomentLocale>
-      {() => {
-        // Set the Moment locale globally
-        // See: http://momentjs.com/docs/#/i18n/changing-locale/
-        moment.locale(locale);
-        return children;
-      }}
-    </MomentLocale>
-  );
-};
-
 const Configurations = props => {
   const { appConfig, children } = props;
   const routeConfig = routeConfiguration(appConfig.layout, appConfig?.accessControl);
-  const locale = isTestEnv ? 'en' : appConfig.localization.locale;
 
   return (
     <ConfigurationProvider value={appConfig}>
-      <MomentLocaleLoader locale={locale}>
-        <RouteConfigurationProvider value={routeConfig}>{children}</RouteConfigurationProvider>
-      </MomentLocaleLoader>
+      <RouteConfigurationProvider value={routeConfig}>{children}</RouteConfigurationProvider>
     </ConfigurationProvider>
   );
 };
@@ -215,12 +157,11 @@ const EnvironmentVariableWarning = props => {
  * @param {Object} props
  * @param {Object} props.store
  * @param {Object} props.hostedTranslations
- * @param {Object} props.hostedConfig
+ * @param {Object} props.appConfig merged hosted + built-in config
  * @returns {JSX.Element}
  */
 export const ClientApp = props => {
-  const { store, hostedTranslations = {}, hostedConfig = {} } = props;
-  const appConfig = mergeConfig(hostedConfig, defaultConfig);
+  const { store, hostedTranslations = {}, appConfig } = props;
 
   useEffect(() => {
     // Clear referral data from session storage the expiration time has passed
@@ -302,12 +243,11 @@ export const ClientApp = props => {
  * @param {Object} props.helmetContext
  * @param {Object} props.store
  * @param {Object} props.hostedTranslations
- * @param {Object} props.hostedConfig
+ * @param {Object} props.appConfig merged hosted + built-in config
  * @returns {JSX.Element}
  */
 export const ServerApp = props => {
-  const { url, context, helmetContext, store, hostedTranslations = {}, hostedConfig = {} } = props;
-  const appConfig = mergeConfig(hostedConfig, defaultConfig);
+  const { url, context, helmetContext, store, hostedTranslations = {}, appConfig } = props;
   HelmetProvider.canUseDOM = false;
 
   // Show MaintenanceMode if the mandatory configurations are not available
@@ -369,25 +309,30 @@ export const renderApp = (
 
   const helmetContext = {};
 
-  // When rendering the app on server, we wrap the app with webExtractor.collectChunks
-  // This is needed to figure out correct chunks/scripts to be included to server-rendered page.
-  // https://loadable-components.com/docs/server-side-rendering/#3-setup-chunkextractor-server-side
-  const WithChunks = collectChunks(
-    <ServerApp
-      url={url}
-      context={serverContext}
-      helmetContext={helmetContext}
-      store={store}
-      hostedTranslations={hostedTranslations}
-      hostedConfig={hostedConfig}
-    />
-  );
+  // Load defaults + mergeConfig (same async chunk as CSR), then collectChunks so
+  // the appConfig chunk is included in the SSR HTML script tags.
+  return loadAppConfig().then(({ defaultConfig, mergeConfig }) => {
+    const appConfig = mergeConfig(hostedConfig, defaultConfig);
+    // When rendering the app on server, we wrap the app with webExtractor.collectChunks
+    // This is needed to figure out correct chunks/scripts to be included to server-rendered page.
+    // https://loadable-components.com/docs/server-side-rendering/#3-setup-chunkextractor-server-side
+    const WithChunks = collectChunks(
+      <ServerApp
+        url={url}
+        context={serverContext}
+        helmetContext={helmetContext}
+        store={store}
+        hostedTranslations={hostedTranslations}
+        appConfig={appConfig}
+      />
+    );
 
-  // Let's keep react-dom/server out of the main code-chunk.
-  return import('react-dom/server').then(mod => {
-    const { default: ReactDOMServer } = mod;
-    const body = ReactDOMServer.renderToString(WithChunks);
-    const { helmet: head } = helmetContext;
-    return { head, body };
+    // Let's keep react-dom/server out of the main code-chunk.
+    return import('react-dom/server').then(mod => {
+      const { default: ReactDOMServer } = mod;
+      const body = ReactDOMServer.renderToString(WithChunks);
+      const { helmet: head } = helmetContext;
+      return { head, body };
+    });
   });
 };

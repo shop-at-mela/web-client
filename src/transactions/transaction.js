@@ -3,6 +3,7 @@ import * as purchaseProcess from './transactionProcessPurchase';
 import * as bookingProcess from './transactionProcessBooking';
 import * as inquiryProcess from './transactionProcessInquiry';
 import * as negotiationProcess from './transactionProcessNegotiation';
+import * as downloadProcess from './transactionProcessDownload';
 
 // Supported unit types
 // Note: These are passed to translations/microcopy in certain cases.
@@ -15,12 +16,16 @@ export const FIXED = 'fixed';
 export const INQUIRY = 'inquiry';
 export const OFFER = 'offer'; // The unitType 'offer' means that provider created the listing on default-negotiation process
 export const REQUEST = 'request'; // The unitType 'request' means that customer created the listing on default-negotiation process
+export const FILE = 'file';
 
 // Then names of supported processes
+// If you add a new transaction process, remember to also modify delete-account.js. This file takes care of
+// preventing users from deleting their account if a payment is in process.
 export const PURCHASE_PROCESS_NAME = 'default-purchase';
 export const BOOKING_PROCESS_NAME = 'default-booking';
 export const INQUIRY_PROCESS_NAME = 'default-inquiry';
 export const NEGOTIATION_PROCESS_NAME = 'default-negotiation';
+export const DOWNLOAD_PROCESS_NAME = 'default-download';
 
 /**
  * A process should export:
@@ -34,6 +39,9 @@ export const NEGOTIATION_PROCESS_NAME = 'default-negotiation';
  * - isCustomerReview(transition)
  * - isProviderReview(transition)
  * - statesNeedingCustomerAttention
+ * - supportedPayments
+ * - getCheckoutPaymentTransitions({ paymentProcessor, paymentMethod, state, unsupportedPaymentErrorMessage })
+ * - hasPaymentExpired(tx)
  */
 const PROCESSES = [
   {
@@ -59,6 +67,12 @@ const PROCESSES = [
     alias: `${NEGOTIATION_PROCESS_NAME}/release-1`,
     process: negotiationProcess,
     unitTypes: [OFFER, REQUEST],
+  },
+  {
+    name: DOWNLOAD_PROCESS_NAME,
+    alias: `${DOWNLOAD_PROCESS_NAME}/release-1`,
+    process: downloadProcess,
+    unitTypes: [FILE],
   },
 ];
 
@@ -206,6 +220,40 @@ const hasPassedState = process => (stateName, tx) => {
 };
 
 /**
+ * Get transaction state from a tx entity, or 'initial' when tx is null.
+ *
+ * @param {Object} process imported from a separate file
+ * @returns {function} Returns process state name or 'initial'
+ */
+const txStateOrInitial = process => tx => {
+  if (tx == null) {
+    return 'initial';
+  }
+  return getProcessState(process)(tx);
+};
+
+/**
+ * Curried checkout payment transitions: takes tx entity and passes its state.
+ *
+ * @param {Object} process imported from a separate file
+ * @returns {function} (tx, paymentParams) => { requestPaymentTransition, confirmPaymentTransition } | null
+ */
+const getCheckoutPaymentTransitionsForTx = process => (tx, paymentParams = {}) => {
+  if (typeof process.getCheckoutPaymentTransitions !== 'function') {
+    return null;
+  }
+  const state = txStateOrInitial(process)(tx);
+  // create shared error message pattern for unsupported payments
+  const { paymentProcessor, paymentMethod } = paymentParams;
+  const unsupportedPaymentErrorMessage = `Unsupported payment: processor=${paymentProcessor}, method=${paymentMethod}`;
+  return process.getCheckoutPaymentTransitions({
+    ...paymentParams,
+    state,
+    unsupportedPaymentErrorMessage,
+  });
+};
+
+/**
  * If process has been renamed, but the graph itself is the same,
  * this function allows referencing the updated name of the process.
  * ProcessName is used in some translation keys and stateData functions.
@@ -229,6 +277,8 @@ export const resolveLatestProcessName = processName => {
       return INQUIRY_PROCESS_NAME;
     case NEGOTIATION_PROCESS_NAME:
       return NEGOTIATION_PROCESS_NAME;
+    case DOWNLOAD_PROCESS_NAME:
+      return DOWNLOAD_PROCESS_NAME;
     default:
       return processName;
   }
@@ -248,6 +298,7 @@ export const getProcess = processName => {
       getStateAfterTransition: getStateAfterTransition(processInfo.process),
       getTransitionsToStates: getTransitionsToStates(processInfo.process),
       hasPassedState: hasPassedState(processInfo.process),
+      getCheckoutPaymentTransitions: getCheckoutPaymentTransitionsForTx(processInfo.process),
     };
   } else {
     const error = new Error(`Unknown transaction process name: ${processName}`);
@@ -357,6 +408,59 @@ export const isNegotiationProcessAlias = processAlias => {
   const processName = processAlias ? processAlias.split('/')[0] : null;
   return processAlias ? isNegotiationProcess(processName) : false;
 };
+/**
+ * Check if the process is download process
+ *
+ * @param {String} processName
+ */
+export const isDownloadProcess = processName => {
+  const latestProcessName = resolveLatestProcessName(processName);
+  const processInfo = PROCESSES.find(process => process.name === latestProcessName);
+  return [DOWNLOAD_PROCESS_NAME].includes(processInfo?.name);
+};
+
+/**
+ * Check if the process/alias points to a download process
+ *
+ * @param {String} processAlias
+ */
+export const isDownloadProcessAlias = processAlias => {
+  const processName = processAlias ? processAlias.split('/')[0] : null;
+  return processAlias ? isDownloadProcess(processName) : false;
+};
+
+/**
+ * Whether the process declares Stripe checkout payment methods.
+ * Uses process.supportedPayments.stripe as the source of truth (includes
+ * default-booking, default-purchase, negotiation, download, etc.).
+ *
+ * @param {String} processAlias e.g. 'default-booking/release-1'
+ * @returns {boolean}
+ */
+export const isStripeRelatedProcessAlias = processAlias => {
+  const processName = processAlias ? processAlias.split('/')[0] : null;
+  if (!processName) {
+    return false;
+  }
+  try {
+    const process = getProcess(processName);
+    return Object.keys(process?.supportedPayments?.stripe || {}).length > 0;
+  } catch (e) {
+    return false;
+  }
+};
+
+// Push payments (redirect): identify processes that support push payments.
+/**
+ * Whether the given Stripe payment method is a push payment for this process.
+ * Push = no preauthorization; charge on customer confirmation.
+ *
+ * @param {Object} process from getProcess()
+ * @param {string} paymentMethod e.g. 'ideal', 'card'
+ * @returns {boolean}
+ */
+export const isStripePushPaymentMethod = (process, paymentMethod) =>
+  process?.supportedPayments?.stripe?.[paymentMethod]?.paymentDirection === 'push';
 
 /**
  * Check from unit type if full days should be used.

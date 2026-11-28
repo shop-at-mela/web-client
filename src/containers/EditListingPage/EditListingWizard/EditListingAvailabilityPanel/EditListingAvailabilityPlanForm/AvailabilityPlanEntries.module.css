@@ -126,6 +126,14 @@
   z-index: 1;
 }
 
+/* Raised only while one of this row's FieldSelectPopup fields has its popup open, so the open
+ * popup paints above every other row's content instead of being clipped by it. Every row shares
+ * the same base z-index (1) for its own stacking context, so raising just this one above
+ * `--zIndexPopup` is enough to win. */
+.timeRangeRowRaised {
+  z-index: var(--zIndexPopup);
+}
+
 .timeRangeHidden {
   display: none;
 }
@@ -135,6 +143,7 @@
 }
 .hourField {
   flex-grow: 1;
+  flex-basis: 0;
 }
 .dashBetweenTimes {
   stroke: var(--colorGrey700);
@@ -146,6 +155,16 @@
 }
 
 .fieldArrayDelete {
+  /* Reset <button> defaults; keep appearance of the previous non-button control */
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-decoration: none;
   cursor: pointer;
 
   &:hover {
@@ -215,4 +234,17 @@
 }
 .notSelected {
   color: var(--colorGrey300);
+}
+
+/* Visually hidden but still reachable by assistive tech, unlike `visibility: hidden`, which
+ * hides from screen readers too. */
+.srOnlyLabel {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  white-space: nowrap;
+  clip: rect(0 0 0 0);
+  -webkit-clip-path: inset(50%);
+  clip-path: inset(50%);
 }

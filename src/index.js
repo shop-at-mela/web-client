@@ -23,14 +23,16 @@ import './styles/marketplaceDefaults.css';
 
 // Configs and store setup
 import appSettings from './config/settings';
-import defaultConfig from './config/configDefault';
+import appCdnAssets from './config/appCdnAssets';
+import { loadAppConfig } from './config/loadAppConfig';
 import { LoggingAnalyticsHandler, GoogleAnalyticsHandler } from './analytics/handlers';
 import configureStore from './store';
 
 // Utils
+// Mela: one shared browser SDK instance (see homepageSdk.js), not createInstance here.
+// mergeConfig now comes from loadAppConfig() (template v12.8).
 import { types as sdkTypes } from './util/sdkLoader';
 import sdk from './util/homepageSdk';
-import { mergeConfig } from './util/configHelpers';
 import { matchPathname } from './util/routes';
 import * as log from './util/log';
 import { captureEntrySource } from './util/analytics/entrySource';
@@ -59,17 +61,18 @@ const render = (store, shouldHydrate) => {
 
   info
     .then(() => {
-      // Ensure that Loadable Components is ready
-      // and fetch hosted assets in parallel before initializing the ClientApp
       // Load anon saved items from localStorage on boot (client-side only)
       store.dispatch(initAnonSaved());
+      // Ensure that Loadable Components is ready and load hosted assets +
+      // built-in defaults/mergeConfig in parallel before ClientApp.
       return Promise.all([
         loadableReady(),
-        store.dispatch(fetchAppAssets(defaultConfig.appCdnAssets, cdnAssetsVersion)),
+        store.dispatch(fetchAppAssets(appCdnAssets, cdnAssetsVersion)),
         store.dispatch(fetchCurrentUser()),
+        loadAppConfig(),
       ]);
     })
-    .then(([_, fetchedAppAssets, cu]) => {
+    .then(([_, fetchedAppAssets, cu, { defaultConfig, mergeConfig }]) => {
       const { translations: translationsRaw, ...rest } = fetchedAppAssets || {};
       // We'll handle translations as a separate data.
       // It's given to React Intl instead of pushing to config Context
@@ -80,20 +83,21 @@ const render = (store, shouldHydrate) => {
       const hostedConfig = configEntries.reduce((collectedData, [name, content]) => {
         return { ...collectedData, [name]: content.data || {} };
       }, {});
+      const appConfig = mergeConfig(hostedConfig, defaultConfig);
 
       if (shouldHydrate) {
         const container = document.getElementById('root');
 
         ReactDOMClient.hydrateRoot(
           container,
-          <ClientApp store={store} hostedTranslations={translations} hostedConfig={hostedConfig} />,
+          <ClientApp store={store} hostedTranslations={translations} appConfig={appConfig} />,
           { onRecoverableError: log.onRecoverableError }
         );
       } else {
         const container = document.getElementById('root');
         const root = ReactDOMClient.createRoot(container);
         root.render(
-          <ClientApp store={store} hostedTranslations={translations} hostedConfig={hostedConfig} />
+          <ClientApp store={store} hostedTranslations={translations} appConfig={appConfig} />
         );
       }
     })
@@ -160,7 +164,6 @@ if (typeof window !== 'undefined') {
     // Expose stuff for the browser REPL
     window.app = {
       appSettings,
-      defaultConfig,
       sdk,
       sdkTypes,
       store,
@@ -188,12 +191,13 @@ export default renderApp;
 // exporting matchPathname and configureStore for server side rendering.
 // matchPathname helps to figure out which route is called and if it has preloading needs
 // configureStore is used for creating initial store state for Redux after preloading
+// loadAppConfig loads defaultConfig + mergeConfig in a separate chunk (parallel with assets)
 export {
   matchPathname,
   configureStore,
   routeConfiguration,
-  defaultConfig,
-  mergeConfig,
+  appCdnAssets,
+  loadAppConfig,
   fetchAppAssets,
   getAllBrandSlugs,
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // Import contexts and util modules
 import { FormattedMessage, intlShape } from '../../util/reactIntl';
@@ -10,11 +10,14 @@ import {
 import { propTypes } from '../../util/types';
 import { ensureTransaction } from '../../util/data';
 import { createSlug } from '../../util/urlHelpers';
-import { isTransactionInitiateListingNotFoundError } from '../../util/errors';
+import {
+  isTransactionInitiateListingNotFoundError,
+  isTransactionsTransitionInvalidTransition,
+} from '../../util/errors';
+import { PAYMENT_METHOD_CARD, getCheckoutPaymentOptions } from '../../transactions/paymentMethods';
 import {
   getProcess,
-  isBookingProcessAlias,
-  resolveLatestProcessName,
+  isStripePushPaymentMethod,
   BOOKING_PROCESS_NAME,
   NEGOTIATION_PROCESS_NAME,
   PURCHASE_PROCESS_NAME,
@@ -23,6 +26,9 @@ import {
 // Import shared components
 import { H3, H4, NamedLink, OrderBreakdown, Page, TopbarSimplified } from '../../components';
 
+// Session helpers file needs to be imported before other CheckoutPage modules that use it
+import { clearData } from './CheckoutPageSessionHelpers';
+
 import {
   bookingDatesMaybe,
   getBillingDetails,
@@ -30,10 +36,11 @@ import {
   getShippingDetailsMaybe,
   getTransactionTypeData,
   hasDefaultPaymentMethod,
-  hasPaymentExpired,
   hasTransactionPassedPendingPayment,
   processCheckoutWithPayment,
   setOrderPageInitialValues,
+  completeCheckoutNavigation,
+  STRIPE_PI_USER_ACTIONS_DONE_STATUSES,
 } from './CheckoutPageTransactionHelpers.js';
 import { getErrorMessages } from './ErrorMessages';
 
@@ -44,19 +51,22 @@ import MobileOrderBreakdown from './MobileOrderBreakdown';
 
 import css from './CheckoutPage.module.css';
 
-// Stripe PaymentIntent statuses, where user actions are already completed
-// https://stripe.com/docs/payments/payment-intents/status
-const STRIPE_PI_USER_ACTIONS_DONE_STATUSES = ['processing', 'requires_capture', 'succeeded'];
+/**
+ * Payment naming in checkout (three different concepts):
+ * - checkoutPaymentMethod — catalog id from paymentMethods.js ('card', 'ideal', …)
+ * - cardPaymentMode — card UX ('defaultCard' | 'replaceCard' | 'onetimeCardPayment')
+ * - orderParams.paymentMethod — saved Stripe payment method id ('pm_…'), when using a saved card
+ */
 
 // Payment charge options
 const ONETIME_PAYMENT = 'ONETIME_PAYMENT';
 const PAY_AND_SAVE_FOR_LATER_USE = 'PAY_AND_SAVE_FOR_LATER_USE';
 const USE_SAVED_CARD = 'USE_SAVED_CARD';
 
-const paymentFlow = (selectedPaymentMethod, saveAfterOnetimePayment) => {
+const paymentFlow = (cardPaymentMode, saveAfterOnetimePayment) => {
   // Payment mode could be 'replaceCard', but without explicit saveAfterOnetimePayment flag,
   // we'll handle it as one-time payment
-  return selectedPaymentMethod === 'defaultCard'
+  return cardPaymentMode === 'defaultCard'
     ? USE_SAVED_CARD
     : saveAfterOnetimePayment
     ? PAY_AND_SAVE_FOR_LATER_USE
@@ -102,6 +112,10 @@ const prefixPriceVariantProperties = priceVariant => {
  * @param {Object} shippingDetails shipping address if applicable.
  * @param {Object} optionalPaymentParams (E.g. paymentMethod or setupPaymentMethodForSaving)
  * @param {Object} config app-wide configs. This contains hosted configs too.
+ * @param {Object} transactionFieldProtectedData protectedData from transaction field configs
+ * @param {string} [customerDefaultMessage] optional message saved to protectedData
+ * @param {Object} [process] from getProcess()
+ * @param {string} [checkoutPaymentMethod]
  * @returns orderParams.
  */
 const getOrderParams = (
@@ -110,7 +124,9 @@ const getOrderParams = (
   optionalPaymentParams,
   config,
   transactionFieldProtectedData,
-  customerDefaultMessage
+  customerDefaultMessage,
+  process,
+  checkoutPaymentMethod = PAYMENT_METHOD_CARD
 ) => {
   const quantity = pageData.orderData?.quantity;
   const quantityMaybe = quantity ? { quantity } : {};
@@ -128,9 +144,19 @@ const getOrderParams = (
 
   const customerDefaultMessageMaybe = customerDefaultMessage ? { customerDefaultMessage } : {};
 
+  // Persist checkoutPaymentMethod only when more than one Stripe method is offered.
+  // Card-only checkouts omit the field; readers fall back to card.
+  const currency =
+    pageData?.transaction?.attributes?.payinTotal?.currency ||
+    pageData?.listing?.attributes?.price?.currency;
+  // Push payments (redirect): an example how to save payment method to support multiple Stripe methods.
+  const checkoutPaymentMethodMaybe =
+    getCheckoutPaymentOptions({ process, currency }).length > 1 ? { checkoutPaymentMethod } : {};
+
   const protectedDataMaybe = {
     protectedData: {
       ...getTransactionTypeData(listingType, unitType, config),
+      ...checkoutPaymentMethodMaybe,
       ...deliveryMethodMaybe,
       ...shippingDetails,
       ...priceVariantMaybe,
@@ -138,6 +164,11 @@ const getOrderParams = (
       ...customerDefaultMessageMaybe,
     },
   };
+
+  // Push payments (redirect): an example how to include paymentMethodTypes for push payment options. Unused by default.
+  const pushPaymentMaybe = isStripePushPaymentMethod(process, checkoutPaymentMethod)
+    ? { paymentMethodTypes: [checkoutPaymentMethod] }
+    : {};
 
   // Note: Avoid misinterpreting the following logic as allowing arbitrary mixing of `quantity` and `seats`.
   // You can only pass either quantity OR seats and units to the orderParams object
@@ -156,12 +187,18 @@ const getOrderParams = (
     ...bookingDatesMaybe(pageData.orderData?.bookingDates),
     ...priceVariantNameMaybe,
     ...protectedDataMaybe,
+    ...pushPaymentMaybe,
     ...optionalPaymentParams,
   };
   return orderParams;
 };
 
-const fetchSpeculatedTransactionIfNeeded = (orderParams, pageData, fetchSpeculatedTransaction) => {
+const fetchSpeculatedTransactionIfNeeded = (
+  orderParams,
+  pageData,
+  fetchSpeculatedTransaction,
+  checkoutPaymentMethod = PAYMENT_METHOD_CARD
+) => {
   const tx = pageData ? pageData.transaction : null;
   const pageDataListing = pageData.listing;
   const processName =
@@ -179,25 +216,17 @@ const fetchSpeculatedTransactionIfNeeded = (orderParams, pageData, fetchSpeculat
   if (shouldFetchSpeculatedTransaction) {
     const processAlias = pageData.listing.attributes.publicData?.transactionProcessAlias;
     const transactionId = tx ? tx.id : null;
-    const isInquiryInPaymentProcess =
-      tx?.attributes?.lastTransition === process.transitions.INQUIRE;
-    const resolvedProcessName = resolveLatestProcessName(processName);
-    const isOfferPendingInNegotiationProcess =
-      resolvedProcessName === NEGOTIATION_PROCESS_NAME &&
-      tx.attributes.state === `state/${process.states.OFFER_PENDING}`;
-
-    const requestTransition = isInquiryInPaymentProcess
-      ? process.transitions.REQUEST_PAYMENT_AFTER_INQUIRY
-      : isOfferPendingInNegotiationProcess
-      ? process.transitions.REQUEST_PAYMENT_TO_ACCEPT_OFFER
-      : process.transitions.REQUEST_PAYMENT;
-    const isPrivileged = process.isPrivileged(requestTransition);
+    const { requestPaymentTransition } = process.getCheckoutPaymentTransitions(tx, {
+      paymentProcessor: 'stripe',
+      paymentMethod: checkoutPaymentMethod,
+    });
+    const isPrivileged = process.isPrivileged(requestPaymentTransition);
 
     fetchSpeculatedTransaction(
       orderParams,
       processAlias,
       transactionId,
-      requestTransition,
+      requestPaymentTransition,
       isPrivileged
     );
   }
@@ -235,9 +264,27 @@ export const loadInitialDataForStripePayments = ({
   // The way to pass it to checkout page is through pageData.orderData
   const shippingDetails = {};
   const optionalPaymentParams = {};
-  const orderParams = getOrderParams(pageData, shippingDetails, optionalPaymentParams, config);
+  const processName =
+    pageData?.transaction?.attributes?.processName ||
+    pageData?.listing?.attributes?.publicData?.transactionProcessAlias?.split('/')[0];
+  const process = processName ? getProcess(processName) : null;
+  const orderParams = getOrderParams(
+    pageData,
+    shippingDetails,
+    optionalPaymentParams,
+    config,
+    {},
+    undefined,
+    process,
+    PAYMENT_METHOD_CARD
+  );
 
-  fetchSpeculatedTransactionIfNeeded(orderParams, pageData, fetchSpeculatedTransaction);
+  fetchSpeculatedTransactionIfNeeded(
+    orderParams,
+    pageData,
+    fetchSpeculatedTransaction,
+    PAYMENT_METHOD_CARD
+  );
 };
 
 const handleSubmit = (values, process, props, stripe, submitting, setSubmitting) => {
@@ -257,15 +304,25 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
     dispatch,
     onInitiateOrder,
     onConfirmCardPayment,
+    onConfirmRedirectPayment,
     onConfirmPayment,
     onSavePaymentMethod,
+    onFetchTransaction,
     onSubmitCallback,
     pageData,
     setPageData,
     sessionStorageKey,
+    transaction: reduxTransaction,
     transactionFieldConfigs = [],
+    params: pathParams,
   } = props;
-  const { card, message, paymentMethod: selectedPaymentMethod, formValues } = values;
+  const {
+    card,
+    message,
+    cardPaymentMode,
+    formValues,
+    checkoutPaymentMethod = PAYMENT_METHOD_CARD,
+  } = values;
   const { saveAfterOnetimePayment: saveAfterOnetimePaymentRaw } = formValues;
 
   const transactionFieldsProtectedData = {
@@ -274,16 +331,35 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
 
   const saveAfterOnetimePayment =
     Array.isArray(saveAfterOnetimePaymentRaw) && saveAfterOnetimePaymentRaw.length > 0;
-  const selectedPaymentFlow = paymentFlow(selectedPaymentMethod, saveAfterOnetimePayment);
+  const selectedPaymentFlow = paymentFlow(cardPaymentMode, saveAfterOnetimePayment);
   const hasDefaultPaymentMethodSaved = hasDefaultPaymentMethod(stripeCustomerFetched, currentUser);
   const stripePaymentMethodId = hasDefaultPaymentMethodSaved
     ? currentUser?.stripeCustomer?.defaultPaymentMethod?.attributes?.stripePaymentMethodId
     : null;
 
+  // Invariant: push methods never pair with USE_SAVED_CARD. The payment-method
+  // picker already resets card mode to onetime when a push method is selected;
+  // abort here if those states are still inconsistent.
+  if (
+    isStripePushPaymentMethod(process, checkoutPaymentMethod) &&
+    selectedPaymentFlow === USE_SAVED_CARD
+  ) {
+    setSubmitting(false);
+    return;
+  }
+
   // If paymentIntent status is not waiting user action,
   // confirmCardPayment has been called previously.
   const hasPaymentIntentUserActionsDone =
     paymentIntent && STRIPE_PI_USER_ACTIONS_DONE_STATUSES.includes(paymentIntent.status);
+
+  const listingSlug = pathParams?.slug || createSlug(pageData?.listing?.attributes?.title || '');
+  const listingUuid = pageData?.listing?.id?.uuid || pathParams?.id;
+  const checkoutPageReturnPath = pathByRouteName('CheckoutRedirectReturnPage', routeConfiguration, {
+    id: listingUuid,
+    slug: listingSlug,
+  });
+  const checkoutPageReturnUrl = `${config.marketplaceRootURL}${checkoutPageReturnPath}`;
 
   const requestPaymentParams = {
     pageData,
@@ -297,6 +373,7 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
     process,
     onInitiateOrder,
     onConfirmCardPayment,
+    onConfirmRedirectPayment,
     onConfirmPayment,
     onSavePaymentMethod,
     sessionStorageKey,
@@ -304,50 +381,123 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
     isPaymentFlowUseSavedCard: selectedPaymentFlow === USE_SAVED_CARD,
     isPaymentFlowPayAndSaveCard: selectedPaymentFlow === PAY_AND_SAVE_FOR_LATER_USE,
     setPageData,
+    checkoutPaymentMethod,
+    checkoutPageReturnUrl,
   };
 
   const shippingDetails = getShippingDetailsMaybe(formValues);
-  // Note: optionalPaymentParams contains Stripe paymentMethod,
+  // Note: optionalPaymentParams contains Stripe paymentMethod ('pm_…'),
   // but that can also be passed on Step 2
   // stripe.confirmCardPayment(stripe, { payment_method: stripePaymentMethodId })
-  const optionalPaymentParams =
-    selectedPaymentFlow === USE_SAVED_CARD && hasDefaultPaymentMethodSaved
-      ? { paymentMethod: stripePaymentMethodId }
-      : selectedPaymentFlow === PAY_AND_SAVE_FOR_LATER_USE
-      ? { setupPaymentMethodForSaving: true }
-      : {};
+  const optionalPaymentParams = isStripePushPaymentMethod(process, checkoutPaymentMethod)
+    ? {}
+    : selectedPaymentFlow === USE_SAVED_CARD && hasDefaultPaymentMethodSaved
+    ? { paymentMethod: stripePaymentMethodId }
+    : selectedPaymentFlow === PAY_AND_SAVE_FOR_LATER_USE
+    ? { setupPaymentMethodForSaving: true }
+    : {};
 
   // These are the order parameters for the first payment-related transition
   // which is either initiate-transition or initiate-transition-after-enquiry
-  const orderParams = getOrderParams(
+  const baseOrderParams = getOrderParams(
     pageData,
     shippingDetails,
     optionalPaymentParams,
     config,
     transactionFieldsProtectedData,
-    message
+    message,
+    process,
+    checkoutPaymentMethod
   );
+
+  // Guard against listing price (or shipping/commission) changing between the
+  // speculated breakdown and the real payment request.
+  const breakdownTx =
+    pageData?.transaction?.attributes?.lineItems?.length > 0
+      ? pageData.transaction
+      : speculatedTransaction;
+  const payinTotal = breakdownTx?.attributes?.payinTotal;
+  const expectedPayinTotalMaybe =
+    typeof payinTotal?.amount === 'number' && payinTotal?.currency
+      ? { expectedPayinTotal: { amount: payinTotal.amount, currency: payinTotal.currency } }
+      : {};
+
+  const orderParams = {
+    ...baseOrderParams,
+    ...expectedPayinTotalMaybe,
+  };
 
   // There are multiple XHR calls that needs to be made against Stripe API and Sharetribe Marketplace API on checkout with payments
   processCheckoutWithPayment(orderParams, requestPaymentParams)
     .then(response => {
-      const { orderId, paymentMethodSaved } = response;
       setSubmitting(false);
 
-      const orderDetailsPath = pathByRouteName('OrderDetailsPage', routeConfiguration, {
-        id: orderId.uuid,
-      });
-      const initialValues = {
-        savePaymentMethodFailed: !paymentMethodSaved,
-      };
+      // Push payments (redirect): an example how to handle redirect return with push payment method.
+      // Push/redirect methods never run Marketplace confirm-payment in this submit chain —
+      // only request-payment + Stripe confirmPayment(return_url). Marketplace confirm happens
+      // on CheckoutPageRedirectReturn (route mode return-after-redirect).
+      //
+      // Usual case: Stripe navigates to the bank/app and this .then never runs; the customer
+      // lands on /checkout/return with Stripe's redirect_status + payment_intent_client_secret.
+      // Fallback: Stripe's promise resolves in-page (no navigation, e.g. PI already past
+      // confirm). Synthesize the same query params and replace to the return route so resume
+      // / Marketplace confirm still run. Do not call completeCheckoutNavigation here.
+      if (isStripePushPaymentMethod(process, checkoutPaymentMethod)) {
+        const clientSecret =
+          response?.paymentIntent?.client_secret ||
+          pageData?.transaction?.attributes?.protectedData?.stripePaymentIntents?.default
+            ?.stripePaymentIntentClientSecret;
+        const search = clientSecret
+          ? `?redirect_status=succeeded&payment_intent_client_secret=${encodeURIComponent(
+              clientSecret
+            )}`
+          : '';
+        history.replace({ pathname: checkoutPageReturnPath, search });
+        return;
+      }
 
-      setOrderPageInitialValues(initialValues, routeConfiguration, dispatch);
-      onSubmitCallback();
-      history.push(orderDetailsPath);
+      // Navigate to the TransactionPage to show the order details
+      completeCheckoutNavigation({
+        response,
+        history,
+        routeConfiguration,
+        dispatch,
+        onSubmitCallback,
+      });
     })
     .catch(err => {
       console.error(err);
       setSubmitting(false);
+
+      // After process expiry (or if payment was already confirmed), confirm/initiate can fail with
+      // invalid transition while checkout still holds a stale pending-payment transaction.
+      if (!isTransactionsTransitionInvalidTransition(err)) {
+        return;
+      }
+
+      const txId = pageData?.transaction?.id || reduxTransaction?.id;
+      if (!txId || !onFetchTransaction) {
+        return;
+      }
+
+      onFetchTransaction(txId)
+        .then(tx => {
+          if (process.hasPaymentExpired(tx)) {
+            setPageData({ ...pageData, transaction: tx });
+            clearData(sessionStorageKey);
+          } else if (process.hasPassedState(process.states.PENDING_PAYMENT, tx)) {
+            // Confirm already succeeded earlier (e.g. network drop after Marketplace confirm).
+            const orderDetailsPath = pathByRouteName('OrderDetailsPage', routeConfiguration, {
+              id: tx.id.uuid,
+            });
+            setOrderPageInitialValues({}, routeConfiguration, dispatch);
+            onSubmitCallback();
+            history.push(orderDetailsPath);
+          }
+        })
+        .catch(() => {
+          // Keep the generic confirm/initiate error UI from Redux.
+        });
     });
 };
 
@@ -361,7 +511,7 @@ const onStripeInitialized = (stripe, process, props) => {
     !paymentIntent &&
     tx?.id &&
     process?.getState(tx) === process?.states.PENDING_PAYMENT &&
-    !hasPaymentExpired(tx, process);
+    !process.hasPaymentExpired(tx);
 
   if (shouldFetchPaymentIntent) {
     const { stripePaymentIntentClientSecret } =
@@ -380,7 +530,6 @@ const onStripeInitialized = (stripe, process, props) => {
  * @param {boolean} props.scrollingDisabled - Whether the page should scroll
  * @param {string} props.speculateTransactionError - The error message for the speculate transaction
  * @param {propTypes.transaction} props.speculatedTransaction - The speculated transaction
- * @param {boolean} props.isClockInSync - Whether the clock is in sync
  * @param {string} props.initiateOrderError - The error message for the initiate order
  * @param {string} props.confirmPaymentError - The error message for the confirm payment
  * @param {intlShape} props.intl - The intl object
@@ -399,6 +548,7 @@ const onStripeInitialized = (stripe, process, props) => {
  * @param {Function} props.onInitiateOrder - The function to initiate the order
  * @param {Function} props.onConfirmCardPayment - The function to confirm the card payment
  * @param {Function} props.onConfirmPayment - The function to confirm the payment after Stripe call is made
+ * @param {Function} props.onFetchTransaction - The function to fetch an up-to-date transaction entity
  * @param {Function} props.onSavePaymentMethod - The function to save the payment method for later use
  * @param {Function} props.onSubmitCallback - The function to submit the callback
  * @param {propTypes.error} props.initiateOrderError - The error message for the initiate order
@@ -416,12 +566,13 @@ export const CheckoutPageWithPayment = props => {
   const [submitting, setSubmitting] = useState(false);
   // Initialized stripe library is saved to state - if it's needed at some point here too.
   const [stripe, setStripe] = useState(null);
+  const [checkoutPaymentMethod, setCheckoutPaymentMethod] = useState(PAYMENT_METHOD_CARD);
+  const prevCheckoutPaymentMethodRef = useRef(checkoutPaymentMethod);
 
   const {
     scrollingDisabled,
     speculateTransactionError,
     speculatedTransaction: speculatedTransactionMaybe,
-    isClockInSync,
     initiateOrderError,
     confirmPaymentError,
     intl,
@@ -438,6 +589,15 @@ export const CheckoutPageWithPayment = props => {
     transactionFieldConfigs = [],
     showTransactionFields,
     config,
+    fetchSpeculatedTransaction,
+    onRetrievePaymentIntent,
+    onConfirmPayment,
+    routeConfiguration,
+    dispatch,
+    onSubmitCallback,
+    sessionStorageKey,
+    history,
+    setPageData,
   } = props;
 
   // Since the listing data is already given from the ListingPage
@@ -484,8 +644,8 @@ export const CheckoutPageWithPayment = props => {
     tx?.attributes?.lineItems?.length > 0 ? getFormattedTotalPrice(tx, intl) : null;
 
   const process = processName ? getProcess(processName) : null;
-  const transitions = process.transitions;
-  const isPaymentExpired = hasPaymentExpired(existingTransaction, process, isClockInSync);
+  const transitions = process?.transitions;
+  const isPaymentExpired = process?.hasPaymentExpired(existingTransaction);
 
   // Allow showing page when currentUser is still being downloaded,
   // but show payment form only when user info is loaded.
@@ -523,7 +683,7 @@ export const CheckoutPageWithPayment = props => {
   const isNegotiation = processName === NEGOTIATION_PROCESS_NAME;
 
   const txTransitions = existingTransaction?.attributes?.transitions || [];
-  const hasInquireTransition = txTransitions.find(tr => tr.transition === transitions.INQUIRE);
+  const hasInquireTransition = txTransitions.find(tr => tr.transition === transitions?.INQUIRE);
   const showInitialMessageInput = !hasInquireTransition && !isNegotiation;
 
   // Get first and last name of the current user and use it in the StripePaymentForm to autofill the name field
@@ -557,12 +717,51 @@ export const CheckoutPageWithPayment = props => {
   // ensures it is supported by Stripe, as indicated by the 'stripe' parameter.
   // If using a transaction process without any stripe actions, leave out the 'stripe' parameter.
   const currency =
-    existingTransaction?.attributes?.payinTotal?.currency || listing.attributes.price?.currency;
+    existingTransaction?.attributes?.payinTotal?.currency || listing?.attributes?.price?.currency;
   const isStripeCompatibleCurrency = isValidCurrencyForTransactionProcess(
     transactionProcessAlias,
     currency,
     'stripe'
   );
+
+  const checkoutPaymentOptions = getCheckoutPaymentOptions({
+    process,
+    currency,
+  });
+
+  // When the customer switches checkout payment method (e.g. card → iDEAL), re-speculate
+  // so the order breakdown / line items stay aligned with that method's transitions.
+  // Skip the initial render — speculation for the default method already ran in loadInitialData.
+  // Only depend on checkoutPaymentMethod: `process` / `pageData` / `config` change identity often
+  // and would re-fire speculative initiate-privileged calls.
+  useEffect(() => {
+    if (prevCheckoutPaymentMethodRef.current === checkoutPaymentMethod) {
+      return;
+    }
+    prevCheckoutPaymentMethodRef.current = checkoutPaymentMethod;
+
+    if (!process) {
+      return;
+    }
+    const shippingDetails = {};
+    const optionalPaymentParams = {};
+    const orderParams = getOrderParams(
+      pageData,
+      shippingDetails,
+      optionalPaymentParams,
+      config,
+      {},
+      undefined,
+      process,
+      checkoutPaymentMethod
+    );
+    fetchSpeculatedTransactionIfNeeded(
+      orderParams,
+      pageData,
+      fetchSpeculatedTransaction,
+      checkoutPaymentMethod
+    );
+  }, [checkoutPaymentMethod]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Render an error message if the listing is using a non Stripe supported currency
   // and is using a transaction process with Stripe actions (default-booking or default-purchase)
@@ -647,10 +846,13 @@ export const CheckoutPageWithPayment = props => {
                 locale={config.localization.locale}
                 stripePublishableKey={config.stripe.publishableKey}
                 marketplaceName={config.marketplaceName}
-                isBooking={isBookingProcessAlias(transactionProcessAlias)}
+                processName={processName}
                 isFuzzyLocation={config.maps.fuzzy.enabled}
                 transactionFieldConfigs={transactionFieldConfigs}
                 showTransactionFields={showTransactionFields}
+                checkoutPaymentOptions={checkoutPaymentOptions}
+                checkoutPaymentMethod={checkoutPaymentMethod}
+                onCheckoutPaymentMethodChange={setCheckoutPaymentMethod}
               />
             ) : null}
           </section>
