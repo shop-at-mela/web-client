@@ -1,4 +1,4 @@
-import { toggleSaveListing } from './savedListings.duck';
+import { toggleSaveListing, fetchSavedListings } from './savedListings.duck';
 
 describe('toggleSaveListing: duties_type on saved_listing_toggle', () => {
   beforeEach(() => {
@@ -36,5 +36,22 @@ describe('toggleSaveListing: duties_type on saved_listing_toggle', () => {
     expect(window.dataLayer[0]).toHaveProperty('duties_type', null);
     await run(signedIn, 'l3', { title: 'T' }, 'heart_icon', null);
     expect(window.dataLayer[1]).toHaveProperty('duties_type', null);
+  });
+});
+
+describe('fetchSavedListings', () => {
+  it('defines the custom listing-card image variants it requests', async () => {
+    const query = jest.fn(() => Promise.resolve({ data: { data: [], included: [] } }));
+    await fetchSavedListings(['l1', 'l2'])(jest.fn(), () => ({}), { listings: { query } });
+    const params = query.mock.calls[0][0];
+    expect(params['fields.image']).toEqual(['variants.listing-card', 'variants.listing-card-2x']);
+    expect(params['imageVariant.listing-card']).toBe('w:400;h:300;fit:crop;q:85;f:auto');
+    expect(params['imageVariant.listing-card-2x']).toBe('w:800;h:600;fit:crop;q:85;f:auto');
+  });
+
+  it('skips the query when there are no ids', async () => {
+    const query = jest.fn();
+    await fetchSavedListings([])(jest.fn(), () => ({}), { listings: { query } });
+    expect(query).not.toHaveBeenCalled();
   });
 });
